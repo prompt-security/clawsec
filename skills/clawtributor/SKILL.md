@@ -1,6 +1,6 @@
 ---
 name: clawtributor
-version: 0.0.2
+version: 0.0.3
 description: Community incident reporting for AI agents. Contribute to collective security by reporting threats.
 homepage: https://gclawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🤝","category":"security"}}
