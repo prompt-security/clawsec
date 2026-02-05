@@ -21,7 +21,7 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const humanInstruction = `Read ${SKILL_URL} and follow the instructions to install the protection skill suite.`;
+  const humanInstruction = `Read ${SKILL_URL} and follow the instructions to install this skill. all checksums verified with source`;
 
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
