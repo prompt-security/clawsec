@@ -19,8 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
-      CLAWHUB_SITE: ${{ vars.CLAWHUB_SITE }}
-      CLAWHUB_REGISTRY: ${{ vars.CLAWHUB_REGISTRY }}
     steps:
       - name: Parse tag
         id: parse
