@@ -1,0 +1,283 @@
+name: Deploy to GitHub Pages
+
+on:
+  workflow_run:
+    workflows: ["CI", "Skill Release"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Only run if workflow_dispatch OR the triggering workflow succeeded
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Auto-discover skills from releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p public/skills
+          mkdir -p public/releases/download
+
+          echo "Fetching releases from GitHub API..."
+
+          # Helper function to download release asset by ID (works for private repos)
+          download_asset() {
+            local asset_id="$1"
+            local output_file="$2"
+            curl -fsSL \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/octet-stream" \
+              "https://api.github.com/repos/${REPO}/releases/assets/${asset_id}" \
+              -o "$output_file"
+          }
+          export -f download_asset  # Export for use in subshells (while loop)
+
+          # Fetch all releases
+          RELEASES=$(curl -sSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/releases?per_page=100")
+
+          # Start building skills index
+          echo '{"version":"1.0.0","updated":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","skills":[' > public/skills/index.json
+
+          FIRST_SKILL=true
+          PROCESSED_SKILLS=""
+
+          # Process each release (using process substitution to avoid subshell)
+          while read -r release; do
+            TAG=$(echo "$release" | jq -r '.tag_name')
+
+            # Parse skill-name-v* pattern
+            if [[ "$TAG" =~ ^(.+)-v([0-9]+\.[0-9]+\.[0-9]+.*)$ ]]; then
+              SKILL_NAME="${BASH_REMATCH[1]}"
+              VERSION="${BASH_REMATCH[2]}"
+
+              # Skip if we already processed a newer version of this skill
+              if echo "$PROCESSED_SKILLS" | grep -q "^${SKILL_NAME}$"; then
+                echo "Skipping older version: $TAG (already have newer)"
+                continue
+              fi
+
+              echo "Processing: $SKILL_NAME v$VERSION"
+
+              # Get skill.json asset ID from release
+              SKILL_JSON_ID=$(echo "$release" | jq -r '.assets[] | select(.name=="skill.json") | .id')
+
+              if [ -n "$SKILL_JSON_ID" ] && [ "$SKILL_JSON_ID" != "null" ]; then
+                # Basic safety checks before using tag/asset names as paths
+                if [[ "$TAG" == *"/"* ]] || [[ "$TAG" == *".."* ]]; then
+                  echo "  Warning: Skipping suspicious tag name: $TAG"
+                  continue
+                fi
+
+                # Download skill.json first to decide whether the skill is internal
+                SKILL_JSON_TMP=$(mktemp)
+                download_asset "$SKILL_JSON_ID" "$SKILL_JSON_TMP"
+
+                # Skip internal skills (not shown in public catalog or mirrored)
+                IS_INTERNAL=$(jq -r '.openclaw.internal // false' "$SKILL_JSON_TMP")
+                if [ "$IS_INTERNAL" = "true" ]; then
+                  echo "  Skipping internal skill: $SKILL_NAME"
+                  rm -f "$SKILL_JSON_TMP"
+                  continue
+                fi
+
+                # Mirror all release assets under a GitHub-compatible path so users can
+                # swap the host (github.com → clawsec.prompt.security) if GitHub is blocked.
+                MIRROR_DIR="public/releases/download/${TAG}"
+                mkdir -p "$MIRROR_DIR"
+                mv "$SKILL_JSON_TMP" "$MIRROR_DIR/skill.json"
+
+                # Download all remaining assets for this release (retain asset names)
+                while read -r asset; do
+                  ASSET_ID=$(echo "$asset" | jq -r '.id')
+                  ASSET_NAME=$(echo "$asset" | jq -r '.name')
+
+                  # Prevent path traversal / nested directories
+                  if [[ "$ASSET_NAME" == *"/"* ]] || [[ "$ASSET_NAME" == *".."* ]]; then
+                    echo "  Warning: Skipping suspicious asset name: $ASSET_NAME"
+                    continue
+                  fi
+
+                  # Already downloaded above
+                  if [ "$ASSET_NAME" = "skill.json" ]; then
+                    continue
+                  fi
+
+                  download_asset "$ASSET_ID" "$MIRROR_DIR/$ASSET_NAME"
+                  echo "  Mirrored: $ASSET_NAME"
+                done < <(echo "$release" | jq -c '.assets[]')
+
+                # Copy the subset needed for the site catalog (skill pages)
+                mkdir -p "public/skills/${SKILL_NAME}"
+                cp "$MIRROR_DIR/skill.json" "public/skills/${SKILL_NAME}/skill.json"
+                echo "  Added to catalog: skill.json"
+
+                for file in checksums.json README.md SKILL.md; do
+                  if [ -f "$MIRROR_DIR/$file" ]; then
+                    cp "$MIRROR_DIR/$file" "public/skills/${SKILL_NAME}/$file"
+                    echo "  Added to catalog: $file"
+                  fi
+                done
+
+                # Build skill entry for index
+                SKILL_DATA=$(jq -c --arg tag "$TAG" '{
+                  id: .name,
+                  name: .name,
+                  version: .version,
+                  description: .description,
+                  emoji: .openclaw.emoji,
+                  category: .openclaw.category,
+                  trust: .trust.level,
+                  tag: $tag
+                }' "$MIRROR_DIR/skill.json")
+
+                # Append to index (handle first entry without comma)
+                if [ -f "public/skills/.first_done" ]; then
+                  echo "," >> public/skills/index.json
+                else
+                  touch "public/skills/.first_done"
+                fi
+                echo "$SKILL_DATA" >> public/skills/index.json
+
+                # Mark this skill as processed (track newest only)
+                PROCESSED_SKILLS="${PROCESSED_SKILLS}${SKILL_NAME}\n"
+              else
+                echo "  Warning: skill.json not found in release assets"
+              fi
+            fi
+          done < <(echo "$RELEASES" | jq -c '.[]')
+
+          # Close the JSON array
+          echo ']}' >> public/skills/index.json
+
+          # Clean up temp file
+          rm -f "public/skills/.first_done"
+
+          echo ""
+          echo "=== Skills Index ==="
+          cat public/skills/index.json | jq . || cat public/skills/index.json
+
+          echo ""
+          echo "=== Skills Directory ==="
+          ls -la public/skills/
+
+      - name: Create root checksums placeholder
+        run: |
+          # Create empty checksums.json placeholder for root level
+          echo '{"version":"1.0.0","files":{}}' > public/checksums.json
+          echo "Created checksums.json placeholder"
+
+      - name: Copy advisory feed to public
+        run: |
+          mkdir -p public/advisories
+          cp advisories/feed.json public/advisories/feed.json
+          echo "Copied advisory feed to public/advisories/"
+          cat public/advisories/feed.json | jq '.advisories | length' | xargs -I {} echo "Feed contains {} advisories"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get latest clawsec-suite release URL
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          LATEST_TAG=$(curl -sSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/releases?per_page=100" | \
+            jq -r '[.[] | select(.tag_name | startswith("clawsec-suite-v"))] | first | .tag_name // empty')
+          
+          if [ -n "$LATEST_TAG" ]; then
+            echo "Found latest clawsec-suite tag: $LATEST_TAG"
+            echo "VITE_CLAWSEC_SUITE_URL=https://clawsec.prompt.security/releases/download/${LATEST_TAG}/SKILL.md" >> $GITHUB_ENV
+
+            # Create a local "latest" mirror path for clients that use GitHub-style URLs.
+            # This enables swapping the host:
+            #   https://github.com/<repo>/releases/latest/download/<file>
+            # → https://clawsec.prompt.security/releases/latest/download/<file>
+            MIRROR_TAG_DIR="public/releases/download/${LATEST_TAG}"
+            MIRROR_LATEST_DIR="public/releases/latest/download"
+            rm -rf "$MIRROR_LATEST_DIR"
+            mkdir -p "$MIRROR_LATEST_DIR"
+
+            if [ -d "$MIRROR_TAG_DIR" ]; then
+              cp -f "$MIRROR_TAG_DIR"/* "$MIRROR_LATEST_DIR"/ 2>/dev/null || true
+              echo "Mirrored suite release assets to: $MIRROR_LATEST_DIR"
+            else
+              echo "Warning: Suite release assets not mirrored (missing: $MIRROR_TAG_DIR)"
+            fi
+
+            # Mirror advisories feed at the path referenced by suite docs/heartbeat
+            if [ -f "public/advisories/feed.json" ]; then
+              mkdir -p "$MIRROR_LATEST_DIR/advisories"
+              cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/advisories/feed.json"
+              cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/feed.json"
+            fi
+          else
+            echo "No clawsec-suite release found, using fallback"
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_CLAWSEC_SUITE_URL: ${{ env.VITE_CLAWSEC_SUITE_URL }}
+
+      - name: Copy skills data to dist
+        run: |
+          cp -r public/skills dist/skills 2>/dev/null || echo "No skills directory"
+          cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No legacy checksums"
+          cp -r public/advisories dist/advisories 2>/dev/null || echo "No advisories directory"
+
+          echo "=== Dist contents ==="
+          ls -la dist/
+          ls -la dist/skills/ 2>/dev/null || echo "No skills in dist"
+          ls -la dist/advisories/ 2>/dev/null || echo "No advisories in dist"
+
+      - name: Add .nojekyll file
+        run: touch dist/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
+  deploy:
+    # Deploy after build succeeds (CI or Skill Release must pass first, or manual dispatch)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

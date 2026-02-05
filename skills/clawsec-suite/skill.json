@@ -1,0 +1,160 @@
+{
+  "name": "clawsec-suite",
+  "version": "0.0.1",
+  "description": "Use when users want to explore or set up ClawSec security protections - this is a wrapper that helps discover and install individual security skills, but requires initial configuration to activate any protections.",
+  "author": "prompt-security",
+  "license": "MIT",
+  "homepage": "https://clawsec.prompt.security/",
+  "keywords": [
+    "security",
+    "skills",
+    "catalog",
+    "installer",
+    "integrity",
+    "agents",
+    "ai",
+    "guardian",
+    "suite",
+    "openclaw"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Suite skill documentation and installation guide"
+      },
+      {
+        "path": "HEARTBEAT.md",
+        "required": true,
+        "description": "update checks and integrity verification"
+      },
+      {
+        "path": "bundled/clawsec-feed/skill.json",
+        "required": true,
+        "description": "Bundled feed metadata"
+      },
+      {
+        "path": "bundled/clawsec-feed/SKILL.md",
+        "required": true,
+        "description": "Bundled feed documentation"
+      },
+      {
+        "path": "bundled/clawsec-feed/advisories/feed.json",
+        "required": true,
+        "description": "Bundled security advisory feed data"
+      },
+      {
+        "path": "bundled/openclaw-audit-watchdog/skill.json",
+        "required": true,
+        "description": "Bundled audit watchdog metadata"
+      },
+      {
+        "path": "bundled/openclaw-audit-watchdog/SKILL.md",
+        "required": true,
+        "description": "Bundled audit watchdog documentation"
+      },
+      {
+        "path": "bundled/soul-guardian/skill.json",
+        "required": true,
+        "description": "Bundled soul guardian metadata"
+      },
+      {
+        "path": "bundled/soul-guardian/SKILL.md",
+        "required": true,
+        "description": "Bundled soul guardian documentation"
+      }
+    ]
+  },
+  "catalog": {
+    "description": "Available skills in the ClawSec security suite",
+    "base_url": "https://ClawSec.prompt.security/releases/download",
+    "skills": {
+      "clawsec-feed": {
+        "description": "Security advisory feed monitoring",
+        "default_install": true,
+        "required": true,
+        "compatible": [
+          "openclaw",
+          "moltbot",
+          "clawdbot",
+          "other"
+        ]
+      },
+      "soul-guardian": {
+        "description": "Drift detection and file integrity guard",
+        "default_install": false,
+        "compatible": [
+          "openclaw",
+          "moltbot",
+          "clawdbot",
+          "other"
+        ]
+      },
+      "clawtributor": {
+        "description": "Community incident reporting (may share anonymized data)",
+        "default_install": false,
+        "requires_explicit_consent": true,
+        "compatible": [
+          "openclaw",
+          "moltbot",
+          "clawdbot",
+          "other"
+        ]
+      },
+      "openclaw-audit-watchdog": {
+        "description": "Automated daily audits with email reporting",
+        "default_install": true,
+        "required": true,
+        "compatible": [
+          "openclaw",
+          "moltbot",
+          "clawdbot"
+        ],
+        "note": "Tailored for OpenClaw/MoltBot family only"
+      }
+    }
+  },
+  "bundled_skills": {
+    "clawsec-feed": {
+      "description": "Security advisory feed (bundled for convenient deployment)",
+      "mandatory": true,
+      "standalone_available": true,
+      "rationale": "Provides crucial CVE and threat intelligence information"
+    },
+    "openclaw-audit-watchdog": {
+      "description": "Daily security audits (bundled for convenient deployment)",
+      "mandatory": true,
+      "standalone_available": true,
+      "rationale": "Provides crucial automated security audit capabilities"
+    },
+    "soul-guardian": {
+      "description": "File integrity monitoring (bundled for convenient deployment)",
+      "mandatory": false,
+      "standalone_available": true,
+      "rationale": "Provides important file integrity and drift detection"
+    }
+  },
+  "openclaw": {
+    "emoji": "📦",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "curl",
+        "shasum"
+      ]
+    },
+    "triggers": [
+      "install skills",
+      "install security skills",
+      "clawsec suite",
+      "skill catalog",
+      "verify skills",
+      "check skill integrity",
+      "update skills",
+      "list available skills",
+      "install clawsec",
+      "security suite"
+    ]
+  }
+}

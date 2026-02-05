@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- BOT INSTRUCTIONS (plain text for curl/head) -->
+    <!--
+    ClawSec
+    Security skill suite for AI agents (integrity checks, drift detection, advisory feed).
+    Agent install:
+    curl -sL https://clawsec.prompt.security/releases/latest/download/SKILL.md
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <title>ClawSec | Agent Hardening | Prompt Security, SentinelOne </title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @font-face {
+        font-family: 'Prometo';
+        src: url('/font/Prometo_Trial_Rg.ttf') format('truetype');
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Prometo';
+        src: url('/font/Prometo_Trial_Md.ttf') format('truetype');
+        font-weight: 500;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Prometo';
+        src: url('/font/Prometo_Trial_Bd.ttf') format('truetype');
+        font-weight: 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Prometo';
+        src: url('/font/Prometo_Trial_XBd.ttf') format('truetype');
+        font-weight: 800;
+        font-style: normal;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Prometo', 'system-ui', 'sans-serif'],
+              display: ['Prometo', 'system-ui', 'sans-serif'],
+              mono: ['Prometo', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+              clawd: {
+                900: '#26115d', // Deep base
+                800: '#3a1f7a', // Mid base
+                700: '#523899', // Lifted mid
+                600: '#8c6ae7', // Light highlight
+                accent: '#ffa23f', // Prompt orange (target)
+                accentHover: '#e89232',
+                secondary: '#c7b6ff', // Soft lavender
+              }
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'float-delayed': 'float 6s ease-in-out 3s infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background:
+          linear-gradient(90deg, rgba(12, 6, 24, 0.55) 0%, rgba(12, 6, 24, 0.0) 45%),
+          radial-gradient(circle at 10% 18%, rgba(255, 162, 63, 0.06), transparent 28%),
+          radial-gradient(circle at 82% 18%, rgba(140, 106, 231, 0.20), transparent 30%),
+          radial-gradient(circle at 55% 78%, rgba(82, 56, 153, 0.22), transparent 34%),
+          linear-gradient(180deg, #26115d 0%, #523899 52%, #8c6ae7 100%);
+        color: #f4f0ff;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #14103b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2f2261;
+        border-radius: 6px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #f9b347;
+      }
+      /* Mobile overflow fixes */
+      html, body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+      }
+      #root {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+      }
+      /* Ensure code blocks wrap properly */
+      code, pre {
+        word-break: break-word;
+        overflow-wrap: break-word;
+      }
+      /* Fix for tables on mobile */
+      table {
+        display: block;
+        overflow-x: auto;
+        max-width: 100%;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0"
+  }
+}
+</script>
+  </head>
+  <body>
+    <noscript>
+ClawSec
+Security skill suite for AI agents (integrity checks, drift detection, advisory feed).
+Agent install:
+curl -sL https://clawsec.prompt.security/releases/latest/download/SKILL.md
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

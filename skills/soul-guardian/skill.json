@@ -1,0 +1,62 @@
+{
+  "name": "soul-guardian",
+  "version": "0.0.1",
+  "description": "Drift detection and baseline integrity guard for agent workspace prompt files. Auto-restore critical files with tamper-evident audit logging.",
+  "author": "prompt-security",
+  "license": "MIT",
+  "homepage": "https://clawsec.prompt.security",
+  "keywords": [
+    "security",
+    "integrity",
+    "drift-detection",
+    "agents",
+    "ai",
+    "protection",
+    "audit",
+    "baseline"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Soul guardian skill documentation"
+      },
+      {
+        "path": "scripts/soul_guardian.py",
+        "required": true,
+        "description": "Main guardian script"
+      },
+      {
+        "path": "scripts/onboard_state_dir.py",
+        "required": true,
+        "description": "State directory setup"
+      },
+      {
+        "path": "scripts/install_launchd_plist.py",
+        "required": false,
+        "description": "macOS launchd installer"
+      }
+    ]
+  },
+  "openclaw": {
+    "emoji": "👻",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "python3"
+      ]
+    },
+    "triggers": [
+      "soul guardian",
+      "integrity check",
+      "drift detection",
+      "baseline check",
+      "file integrity",
+      "protect soul",
+      "guard files",
+      "workspace security",
+      "tamper detection"
+    ]
+  }
+}

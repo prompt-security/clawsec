@@ -1,0 +1,251 @@
+name: Process Community Advisory
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: community-advisory
+  cancel-in-progress: false
+
+env:
+  FEED_PATH: advisories/feed.json
+  SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
+
+jobs:
+  process-advisory:
+    if: github.event.label.name == 'advisory-approved'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Parse issue and create advisory
+        id: parse
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_CREATED_AT: ${{ github.event.issue.created_at }}
+        run: |
+          # Generate advisory ID: CLAW-YYYY-{issue_number padded to 4 digits}
+          # Use issue creation year, not current year, to ensure consistency
+          YEAR=$(echo "$ISSUE_CREATED_AT" | cut -c1-4)
+          PADDED_NUM=$(printf "%04d" "$ISSUE_NUMBER")
+          ADVISORY_ID="CLAW-${YEAR}-${PADDED_NUM}"
+          echo "advisory_id=$ADVISORY_ID" >> $GITHUB_OUTPUT
+          echo "Generated advisory ID: $ADVISORY_ID"
+
+          # Check if advisory already exists by issue URL (dedupe by issue, not by ID)
+          # This prevents duplicates when the same issue is labeled in different years
+          if jq -e --arg url "$ISSUE_URL" '.advisories[] | select(.github_issue_url == $url)' "$FEED_PATH" > /dev/null 2>&1; then
+            echo "Advisory for issue $ISSUE_URL already exists in feed"
+            echo "already_exists=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "already_exists=false" >> $GITHUB_OUTPUT
+
+          # Parse opener type (human vs agent)
+          if echo "$ISSUE_BODY" | grep -q '\[x\] Agent'; then
+            OPENER_TYPE="agent"
+          else
+            OPENER_TYPE="human"
+          fi
+          echo "Opener type: $OPENER_TYPE"
+
+          # Parse report type
+          if echo "$ISSUE_BODY" | grep -q '\[x\] Malicious Prompt'; then
+            REPORT_TYPE="prompt_injection"
+          elif echo "$ISSUE_BODY" | grep -q '\[x\] Vulnerable Skill'; then
+            REPORT_TYPE="vulnerable_skill"
+          elif echo "$ISSUE_BODY" | grep -q '\[x\] Tampering Attempt'; then
+            REPORT_TYPE="tampering_attempt"
+          else
+            REPORT_TYPE="unknown"
+          fi
+          echo "Report type: $REPORT_TYPE"
+
+          # Parse severity
+          if echo "$ISSUE_BODY" | grep -q '\[x\] Critical'; then
+            SEVERITY="critical"
+          elif echo "$ISSUE_BODY" | grep -q '\[x\] High'; then
+            SEVERITY="high"
+          elif echo "$ISSUE_BODY" | grep -q '\[x\] Medium'; then
+            SEVERITY="medium"
+          elif echo "$ISSUE_BODY" | grep -q '\[x\] Low'; then
+            SEVERITY="low"
+          else
+            SEVERITY="medium"
+          fi
+          echo "Severity: $SEVERITY"
+
+          # Parse title (between ## Title and ## Description)
+          TITLE=$(echo "$ISSUE_BODY" | sed -n '/^## Title/,/^## Description/p' | grep -v '^## ' | grep -v '^<!--' | grep -v '^\s*$' | head -1 | xargs)
+          if [ -z "$TITLE" ]; then
+            TITLE="$ISSUE_TITLE"
+          fi
+          echo "Title: $TITLE"
+
+          # Parse description (between ## Description and ---)
+          DESCRIPTION=$(echo "$ISSUE_BODY" | sed -n '/^## Description/,/^---/p' | grep -v '^## Description' | grep -v '^---' | grep -v '^<!--' | sed '/^\s*$/d' | tr '\n' ' ' | xargs)
+          if [ -z "$DESCRIPTION" ]; then
+            DESCRIPTION="See issue for details."
+          fi
+          echo "Description: ${DESCRIPTION:0:100}..."
+
+          # Parse skill name and version
+          SKILL_NAME=$(echo "$ISSUE_BODY" | sed -n '/^### Skill Name/,/^### /p' | grep -v '^### ' | grep -v '^<!--' | grep -v '^\s*$' | head -1 | xargs)
+          SKILL_VERSION=$(echo "$ISSUE_BODY" | sed -n '/^### Skill Version/,/^### /p' | grep -v '^### ' | grep -v '^<!--' | grep -v '^\s*$' | head -1 | xargs)
+
+          # Build affected array
+          AFFECTED="[]"
+          if [ -n "$SKILL_NAME" ] && [ -n "$SKILL_VERSION" ]; then
+            AFFECTED=$(jq -n --arg name "$SKILL_NAME" --arg ver "$SKILL_VERSION" '[$name + "@" + $ver]')
+          elif [ -n "$SKILL_NAME" ]; then
+            AFFECTED=$(jq -n --arg name "$SKILL_NAME" '[$name]')
+          fi
+          echo "Affected: $AFFECTED"
+
+          # Parse recommended action
+          ACTION=$(echo "$ISSUE_BODY" | sed -n '/^## Recommended Action/,/^---/p' | grep -v '^## Recommended Action' | grep -v '^---' | grep -v '^<!--' | sed '/^\s*$/d' | tr '\n' ' ' | xargs)
+          if [ -z "$ACTION" ]; then
+            ACTION="Review the advisory details and take appropriate action."
+          fi
+          echo "Action: ${ACTION:0:100}..."
+
+          # Parse reporter name
+          REPORTER_NAME=$(echo "$ISSUE_BODY" | grep -A1 '\*\*Agent/User Name:\*\*' | tail -1 | sed 's/\*\*Contact:\*\*.*//' | xargs)
+          if [ -z "$REPORTER_NAME" ]; then
+            REPORTER_NAME=$(echo "$ISSUE_BODY" | sed -n 's/.*\*\*Agent\/User Name:\*\*\s*\(.*\)/\1/p' | xargs)
+          fi
+          echo "Reporter: $REPORTER_NAME"
+
+          # Get current timestamp
+          PUBLISHED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # Create advisory JSON
+          jq -n \
+            --arg id "$ADVISORY_ID" \
+            --arg severity "$SEVERITY" \
+            --arg type "$REPORT_TYPE" \
+            --arg title "$TITLE" \
+            --arg description "$DESCRIPTION" \
+            --argjson affected "$AFFECTED" \
+            --arg action "$ACTION" \
+            --arg published "$PUBLISHED" \
+            --arg source "Community Report" \
+            --arg issue_url "$ISSUE_URL" \
+            --arg reporter_name "$REPORTER_NAME" \
+            --arg opener_type "$OPENER_TYPE" \
+            '{
+              id: $id,
+              severity: $severity,
+              type: $type,
+              title: $title,
+              description: $description,
+              affected: $affected,
+              action: $action,
+              published: $published,
+              references: [],
+              source: $source,
+              github_issue_url: $issue_url,
+              reporter: {
+                agent_name: $reporter_name,
+                opener_type: $opener_type
+              }
+            }' > tmp_advisory.json
+
+          echo "Created advisory JSON:"
+          cat tmp_advisory.json
+
+      - name: Update feed
+        if: steps.parse.outputs.already_exists != 'true'
+        run: |
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # Add new advisory to feed
+          jq --argjson new "$(cat tmp_advisory.json)" --arg now "$NOW" '
+            .updated = $now |
+            .advisories = ([$new] + .advisories)
+          ' "$FEED_PATH" > tmp_feed.json
+
+          # Validate JSON
+          if jq empty tmp_feed.json 2>/dev/null; then
+            echo "Feed JSON is valid"
+            mv tmp_feed.json "$FEED_PATH"
+
+            # Sync to skill feed
+            mkdir -p "$(dirname "$SKILL_FEED_PATH")"
+            cp "$FEED_PATH" "$SKILL_FEED_PATH"
+
+            echo "Updated feeds:"
+            echo "  - $FEED_PATH"
+            echo "  - $SKILL_FEED_PATH"
+
+            TOTAL=$(jq '.advisories | length' "$FEED_PATH")
+            echo "Total advisories: $TOTAL"
+          else
+            echo "Error: Generated invalid JSON"
+            exit 1
+          fi
+
+      - name: Commit changes
+        if: steps.parse.outputs.already_exists != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "$FEED_PATH" "$SKILL_FEED_PATH"
+
+          ADVISORY_ID="${{ steps.parse.outputs.advisory_id }}"
+          git commit -m "chore: add community advisory $ADVISORY_ID
+
+          Added from issue #${{ github.event.issue.number }}
+          Issue: ${{ github.event.issue.html_url }}"
+
+          git push
+
+      - name: Comment on issue
+        if: steps.parse.outputs.already_exists != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Advisory Published
+
+            This security report has been published to the ClawSec advisory feed.
+
+            **Advisory ID:** \`${advisoryId}\`
+
+            The advisory is now available in the feed and will be picked up by agents on their next feed check.
+
+            Thank you for your contribution to community security!`
+            });
+
+      - name: Comment if already exists
+        if: steps.parse.outputs.already_exists == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Advisory Already Exists
+
+            An advisory with ID \`${advisoryId}\` already exists in the feed. No changes were made.
+
+            If this is a different issue, please open a new issue.`
+            });

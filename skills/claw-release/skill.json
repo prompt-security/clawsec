@@ -1,0 +1,32 @@
+{
+  "name": "claw-release",
+  "version": "0.0.1",
+  "description": "Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.",
+  "author": "prompt-security",
+  "license": "MIT",
+  "homepage": "https://clawsec.prompt.security",
+  "keywords": ["release", "versioning", "deployment", "automation", "ci-cd", "skills"],
+
+  "sbom": {
+    "files": [
+      { "path": "SKILL.md", "required": true, "description": "Release workflow guide" }
+    ]
+  },
+
+  "openclaw": {
+    "emoji": "🚀",
+    "category": "utility",
+    "internal": true,
+    "requires": { "bins": ["git", "jq", "gh"] },
+    "triggers": [
+      "release skill",
+      "create release",
+      "bump version",
+      "tag release",
+      "publish skill",
+      "claw release",
+      "deploy skill",
+      "new version"
+    ]
+  }
+}

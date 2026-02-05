@@ -1,0 +1,12 @@
+# Exclude local caches and build outputs from ClawHub upload
+.DS_Store
+.git/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.env
+.venv/
+.cache/

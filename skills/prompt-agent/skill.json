@@ -1,0 +1,53 @@
+{
+  "name": "prompt-agent",
+  "version": "0.0.1",
+  "description": "Security audit enforcement for AI agents. Automated security scans, health verification, and soul.md hardening.",
+  "author": "prompt-security",
+  "license": "MIT",
+  "internal": true,
+  "homepage": "https://clawsec.prompt.security",
+  "keywords": [
+    "security",
+    "audit",
+    "prompt-agent",
+    "agents",
+    "ai",
+    "hardening",
+    "protection"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Main audit skill documentation"
+      },
+      {
+        "path": "heartbeat.md",
+        "required": true,
+        "description": "Health check and verification protocol"
+      }
+    ]
+  },
+  "openclaw": {
+    "emoji": "🛡️",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "curl",
+        "git"
+      ]
+    },
+    "triggers": [
+      "security audit",
+      "check security",
+      "prompt-agent",
+      "security scan",
+      "vulnerability check",
+      "protect agent",
+      "security health",
+      "run audit",
+      "scan for vulnerabilities"
+    ]
+  }
+}

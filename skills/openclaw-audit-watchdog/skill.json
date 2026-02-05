@@ -1,0 +1,82 @@
+{
+  "name": "openclaw-audit-watchdog",
+  "version": "0.0.1",
+  "description": "Automated daily security audits for OpenClaw agents with email reporting. Runs deep audits and sends formatted reports.",
+  "author": "prompt-security",
+  "license": "MIT",
+  "homepage": "https://clawsec.prompt.security",
+  "keywords": [
+    "security",
+    "audit",
+    "watchdog",
+    "agents",
+    "ai",
+    "reporting",
+    "cron",
+    "monitoring"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Audit watchdog skill documentation"
+      },
+      {
+        "path": "scripts/runner.sh",
+        "required": true,
+        "description": "Main runner script"
+      },
+      {
+        "path": "scripts/run_audit_and_format.sh",
+        "required": true,
+        "description": "Audit execution and formatting"
+      },
+      {
+        "path": "scripts/codex_review.sh",
+        "required": false,
+        "description": "Codex-based code review"
+      },
+      {
+        "path": "scripts/render_report.mjs",
+        "required": false,
+        "description": "Report rendering (Node.js)"
+      },
+      {
+        "path": "scripts/sendmail_report.sh",
+        "required": false,
+        "description": "Sendmail delivery"
+      },
+      {
+        "path": "scripts/send_smtp.mjs",
+        "required": false,
+        "description": "SMTP delivery (Node.js)"
+      },
+      {
+        "path": "scripts/setup_cron.mjs",
+        "required": false,
+        "description": "Cron job setup"
+      }
+    ]
+  },
+  "openclaw": {
+    "emoji": "🔭",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "bash",
+        "curl"
+      ]
+    },
+    "triggers": [
+      "audit watchdog",
+      "security audit",
+      "daily audit",
+      "run audit",
+      "audit report",
+      "security report",
+      "watchdog check",
+      "deep audit"
+    ]
+  }
+}

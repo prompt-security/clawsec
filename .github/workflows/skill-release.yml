@@ -1,0 +1,434 @@
+name: Skill Release
+
+on:
+  push:
+    tags:
+      - '*-v[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: skill-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse tag
+        id: parse
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Extract skill name (everything before -v)
+          SKILL_NAME="${TAG%-v*}"
+          # Extract version (everything after -v)
+          VERSION="${TAG#*-v}"
+
+          echo "skill_name=${SKILL_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "skill_path=skills/${SKILL_NAME}" >> $GITHUB_OUTPUT
+
+          echo "Parsed tag: skill=${SKILL_NAME}, version=${VERSION}"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate skill exists
+        run: |
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          if [ ! -d "$SKILL_PATH" ]; then
+            echo "Error: Skill directory not found: $SKILL_PATH"
+            exit 1
+          fi
+          if [ ! -f "$SKILL_PATH/skill.json" ]; then
+            echo "Error: skill.json not found in $SKILL_PATH"
+            exit 1
+          fi
+          echo "Skill validated: $SKILL_PATH"
+
+      - name: Validate version match
+        run: |
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          TAG_VERSION="${{ steps.parse.outputs.version }}"
+
+          # Extract version from skill.json
+          JSON_VERSION=$(jq -r '.version' "$SKILL_PATH/skill.json")
+
+          if [ "$TAG_VERSION" != "$JSON_VERSION" ]; then
+            echo "::error::Version mismatch! Tag version ($TAG_VERSION) != skill.json version ($JSON_VERSION)"
+            echo "Please ensure the version in $SKILL_PATH/skill.json matches your tag."
+            exit 1
+          fi
+
+          echo "Version validated: $TAG_VERSION"
+
+      - name: Validate SKILL.md frontmatter version
+        run: |
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          TAG_VERSION="${{ steps.parse.outputs.version }}"
+
+          # Check if SKILL.md exists
+          if [ -f "$SKILL_PATH/SKILL.md" ]; then
+            # Extract version from YAML frontmatter
+            MD_VERSION=$(grep -m 1 "^version:" "$SKILL_PATH/SKILL.md" | sed 's/version: *//' | tr -d '\r')
+
+            if [ -z "$MD_VERSION" ]; then
+              echo "::warning::No version found in $SKILL_PATH/SKILL.md frontmatter"
+            elif [ "$TAG_VERSION" != "$MD_VERSION" ]; then
+              echo "::error::Version mismatch! Tag version ($TAG_VERSION) != SKILL.md version ($MD_VERSION)"
+              echo "Please ensure the version in $SKILL_PATH/SKILL.md frontmatter matches your tag."
+              exit 1
+            else
+              echo "SKILL.md version validated: $MD_VERSION"
+            fi
+          else
+            echo "No SKILL.md found, skipping frontmatter validation"
+          fi
+
+      - name: Detect publishability
+        id: publishable
+        run: |
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          INTERNAL=$(jq -r '.openclaw.internal // false' "$SKILL_PATH/skill.json")
+
+          PUBLISHABLE=true
+          if [ "$INTERNAL" = "true" ]; then
+            PUBLISHABLE=false
+            echo "Skill marked internal=true; will skip ClawHub publish."
+          fi
+
+          echo "internal=${INTERNAL}" >> $GITHUB_OUTPUT
+          echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install clawhub CLI
+        if: steps.publishable.outputs.publishable == 'true'
+        run: npm install -g clawhub
+
+      - name: Login to ClawHub
+        if: steps.publishable.outputs.publishable == 'true' && secrets.CLAWHUB_TOKEN != ''
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+          CLAWHUB_SITE: ${{ vars.CLAWHUB_SITE }}
+          CLAWHUB_REGISTRY: ${{ vars.CLAWHUB_REGISTRY }}
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          mkdir -p "$(dirname "$CLAWHUB_CONFIG_PATH")"
+          CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
+            clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
+
+      - name: Generate checksums from SBOM
+        id: checksums
+        run: |
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+
+          mkdir -p dist
+
+          # Start checksums JSON
+          cat > "dist/checksums.json" << EOF
+          {
+            "skill": "${SKILL_NAME}",
+            "version": "${VERSION}",
+            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "repository": "${{ github.repository }}",
+            "tag": "${{ github.ref_name }}",
+            "files": {
+          EOF
+
+          # Read SBOM files and generate checksums
+          FIRST=true
+          TEMPFILE=$(mktemp)
+
+          # Get files from SBOM
+          jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
+
+          while IFS= read -r file; do
+            FULL_PATH="$SKILL_PATH/$file"
+            if [ -f "$FULL_PATH" ]; then
+              SHA256=$(sha256sum "$FULL_PATH" | awk '{print $1}')
+              SIZE=$(stat -c%s "$FULL_PATH" 2>/dev/null || stat -f%z "$FULL_PATH")
+              FILENAME=$(basename "$file")
+
+              if [ "$FIRST" = true ]; then
+                FIRST=false
+              else
+                echo "    ," >> "dist/checksums.json"
+              fi
+
+              cat >> "dist/checksums.json" << FILEENTRY
+              "${FILENAME}": {
+                "sha256": "${SHA256}",
+                "size": ${SIZE},
+                "path": "${file}",
+                "url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${FILENAME}"
+              }
+          FILEENTRY
+            else
+              echo "Warning: File not found: $FULL_PATH"
+            fi
+          done < "$TEMPFILE"
+
+          # Also add skill.json checksum
+          SKILL_JSON_SHA=$(sha256sum "$SKILL_PATH/skill.json" | awk '{print $1}')
+          SKILL_JSON_SIZE=$(stat -c%s "$SKILL_PATH/skill.json" 2>/dev/null || stat -f%z "$SKILL_PATH/skill.json")
+
+          cat >> "dist/checksums.json" << SKILLJSON
+              ,
+              "skill.json": {
+                "sha256": "${SKILL_JSON_SHA}",
+                "size": ${SKILL_JSON_SIZE},
+                "url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skill.json"
+              }
+          SKILLJSON
+
+          # Note: checksums.json is NOT closed here - will be finalized after .skill package is created
+
+          echo "=== Intermediate checksums.json (before .skill) ==="
+          cat "dist/checksums.json"
+
+      - name: Bundle security skills into suite
+        if: steps.parse.outputs.skill_name == 'clawsec-suite'
+        run: |
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+
+          echo "=== Bundling security skills into suite ==="
+
+          # Create bundled directory
+          mkdir -p "$SKILL_PATH/bundled"
+
+          # List of skills to bundle (exclude clawtributor - opt-in only)
+          BUNDLE_SKILLS=("clawsec-feed" "openclaw-audit-watchdog" "soul-guardian")
+
+          for skill in "${BUNDLE_SKILLS[@]}"; do
+            if [ -d "skills/$skill" ]; then
+              echo "Bundling $skill..."
+              mkdir -p "$SKILL_PATH/bundled/$skill"
+              cp -r "skills/$skill"/* "$SKILL_PATH/bundled/$skill/"
+
+              # Verify skill.json exists
+              if [ -f "$SKILL_PATH/bundled/$skill/skill.json" ]; then
+                SKILL_VERSION=$(jq -r '.version' "$SKILL_PATH/bundled/$skill/skill.json")
+                echo "✓ Bundled $skill v${SKILL_VERSION}"
+              else
+                echo "ERROR: $skill/skill.json not found"
+                exit 1
+              fi
+            else
+              echo "WARNING: skills/$skill not found, skipping..."
+            fi
+          done
+
+          echo "Bundling complete"
+
+      - name: Create .skill package
+        run: |
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+
+          cd "$SKILL_PATH"
+
+          # Create zip starting with skill.json
+          zip -q "../../dist/${SKILL_NAME}.skill" skill.json
+
+          # Add each SBOM file individually to preserve directory structure
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              zip -qu "../../dist/${SKILL_NAME}.skill" "$file"
+              echo "Added: $file"
+            else
+              echo "Warning: SBOM file not found: $file"
+            fi
+          done < <(jq -r '.sbom.files[].path' skill.json)
+
+          # Add README if it exists
+          if [ -f README.md ]; then
+            zip -qu "../../dist/${SKILL_NAME}.skill" README.md
+            echo "Added: README.md"
+          fi
+
+          cd ../..
+
+          echo "=== Created ${SKILL_NAME}.skill ==="
+          unzip -l "dist/${SKILL_NAME}.skill"
+
+      - name: Add .skill checksum and finalize checksums.json
+        run: |
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          SKILL_PACKAGE="dist/${SKILL_NAME}.skill"
+
+          # Calculate .skill package checksum
+          SKILL_PACKAGE_SHA=$(sha256sum "$SKILL_PACKAGE" | awk '{print $1}')
+          SKILL_PACKAGE_SIZE=$(stat -c%s "$SKILL_PACKAGE" 2>/dev/null || stat -f%z "$SKILL_PACKAGE")
+
+          # Add .skill package entry to checksums
+          cat >> "dist/checksums.json" << SKILLPACKAGE
+              ,
+              "${SKILL_NAME}.skill": {
+                "sha256": "${SKILL_PACKAGE_SHA}",
+                "size": ${SKILL_PACKAGE_SIZE},
+                "url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${SKILL_NAME}.skill"
+              }
+          SKILLPACKAGE
+
+          # Close JSON
+          cat >> "dist/checksums.json" << EOF
+            }
+          }
+          EOF
+
+          echo "=== Final checksums.json ==="
+          cat "dist/checksums.json"
+
+      - name: Prepare release assets
+        run: |
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+
+          mkdir -p release-assets
+
+          # Copy individual SBOM files
+          TEMPFILE=$(mktemp)
+          jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
+
+          while IFS= read -r file; do
+            if [ -f "$SKILL_PATH/$file" ]; then
+              # Flatten directory structure for release assets
+              cp "$SKILL_PATH/$file" "release-assets/$(basename "$file")"
+              echo "Added: $(basename "$file")"
+            fi
+          done < "$TEMPFILE"
+
+          # Copy metadata files
+          cp "$SKILL_PATH/skill.json" release-assets/
+
+          # Copy README if exists
+          if [ -f "$SKILL_PATH/README.md" ]; then
+            cp "$SKILL_PATH/README.md" release-assets/
+          fi
+
+          # Copy package and checksums
+          cp "dist/${SKILL_NAME}.skill" release-assets/
+          cp "dist/checksums.json" release-assets/
+
+          echo "=== Release assets ==="
+          ls -la release-assets/
+
+      - name: Publish to ClawHub
+        if: steps.publishable.outputs.publishable == 'true' && secrets.CLAWHUB_TOKEN != ''
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+          CLAWHUB_SITE: ${{ vars.CLAWHUB_SITE }}
+          CLAWHUB_REGISTRY: ${{ vars.CLAWHUB_REGISTRY }}
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          NAME=$(jq -r '.name' "$SKILL_PATH/skill.json")
+          CHANGELOG="Release ${VERSION} via CI"
+
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
+            clawhub publish "$SKILL_PATH" \
+              --slug "$SKILL_NAME" \
+              --name "$NAME" \
+              --version "$VERSION" \
+              --changelog "$CHANGELOG" \
+              --tags "latest" \
+              --no-input
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}"
+          tag_name: ${{ github.ref_name }}
+          files: release-assets/*
+          body: |
+            ## ${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}
+
+            ### Quick Install
+
+            Download the complete skill package:
+            ```bash
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.parse.outputs.skill_name }}.skill
+            ```
+
+            Or fetch the main skill file directly:
+            ```bash
+            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SKILL.md
+            ```
+
+            ### Verification
+
+            All files include SHA256 checksums. Download `checksums.json` and verify:
+            ```bash
+            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json | jq .
+            ```
+
+            Verify a file:
+            ```bash
+            sha256sum SKILL.md
+            # Compare with value in checksums.json
+            ```
+
+            ### Files
+
+            See `checksums.json` for the complete file manifest with SHA256 hashes.
+
+            ---
+            *Released by ClawSec skill distribution pipeline*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete superseded releases
+        run: |
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          CURRENT_VERSION="${{ steps.parse.outputs.version }}"
+
+          # Extract major version from current release
+          CURRENT_MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
+
+          echo "Current release: $SKILL_NAME v$CURRENT_VERSION (major: $CURRENT_MAJOR)"
+
+          # List all releases for this skill
+          gh release list --limit 100 | grep "^${SKILL_NAME} " | while read -r line; do
+            # Extract tag from release list (3rd tab-delimited column)
+            TAG=$(echo "$line" | awk -F'\t' '{print $3}')
+            VERSION="${TAG#${SKILL_NAME}-v}"
+
+            # Skip current version
+            if [ "$VERSION" = "$CURRENT_VERSION" ]; then
+              continue
+            fi
+
+            # Extract major version
+            RELEASE_MAJOR=$(echo "$VERSION" | cut -d. -f1)
+
+            # Only delete if same major version (preserve old majors for backwards compat)
+            if [ "$RELEASE_MAJOR" = "$CURRENT_MAJOR" ]; then
+              echo "Deleting $TAG (superseded by v$CURRENT_VERSION)"
+              gh release delete "$TAG" --yes || echo "Warning: Could not delete $TAG"
+            else
+              echo "Keeping $TAG as latest for major version $RELEASE_MAJOR"
+            fi
+          done
+
+          echo "Superseded release cleanup complete"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
