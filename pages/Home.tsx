@@ -207,7 +207,7 @@ export const Home: React.FC = () => {
           )}
 
           <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-          Also Available via clawhub: npx molthub@latest install clawsec-suite
+          Also Available via clawhub: npx clawhub@latest install clawsec-suite
           </p>
         </div>
       </section>
