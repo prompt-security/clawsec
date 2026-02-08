@@ -82,9 +82,12 @@ export function findMatches(feed: FeedPayload, installedSkills: InstalledSkill[]
 }
 
 export function matchKey(match: AdvisoryMatch): string {
-  return `${match.advisory.id ?? "unknown-advisory"}::${normalizeSkillName(match.skill.name)}@${
-    match.skill.version ?? "unknown"
-  }`;
+  const normalizedSkillName = normalizeSkillName(match.skill.name);
+  const version = match.skill.version ?? "unknown";
+  const advisoryId =
+    match.advisory.id ??
+    `${match.advisory.title ?? "untitled"}::${match.advisory.published ?? match.advisory.updated ?? "unknown-ts"}`;
+  return `${advisoryId}::${normalizedSkillName}@${version}`;
 }
 
 export function looksMalicious(advisory: Advisory): boolean {
