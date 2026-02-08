@@ -103,12 +103,17 @@ export const Home: React.FC = () => {
               background-color: rgb(191 107 42 / 0.15);
             }
           }
+          @keyframes mascotHover {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+          }
         `}</style>
       </section>
 
       {/* Install Card with Toggle */}
-      <section className="max-w-2xl mx-auto mb-16">
-        <div className="bg-clawd-900 rounded-2xl border border-clawd-700 p-8">
+      <section className="max-w-4xl mx-auto mb-16">
+        <div className="flex items-center justify-center gap-8">
+        <div className="bg-clawd-900 rounded-2xl border border-clawd-700 p-8 flex-1 max-w-2xl">
           {/* Toggle */}
           <div className="flex justify-center mb-8">
             <div className="inline-flex bg-clawd-800 rounded-lg p-1">
@@ -209,6 +214,13 @@ export const Home: React.FC = () => {
           <p className="mt-4 text-xs text-gray-500 leading-relaxed">
           Also Available via clawhub: npx clawhub@latest install clawsec-suite
           </p>
+        </div>
+        <img
+          src="/img/mascot.png"
+          alt="ClawSec mascot"
+          className="hidden md:block w-48 flex-shrink-0"
+          style={{ animation: 'mascotHover 3s ease-in-out infinite' }}
+        />
         </div>
       </section>
 
