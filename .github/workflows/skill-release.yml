@@ -273,7 +273,7 @@ jobs:
               "repository": "${{ github.repository }}",
               "tag": "${tag}",
               "files": {
-            EOF
+          EOF
 
             first=true
             temp_sbom_file="$(mktemp)"
@@ -300,7 +300,7 @@ jobs:
                   "path": "${file}",
                   "url": "https://github.com/${{ github.repository }}/releases/download/${tag}/${filename}"
                 }
-            FILEENTRY
+          FILEENTRY
 
                 cp "${full_path}" "${out_assets}/${filename}"
               else
@@ -321,12 +321,12 @@ jobs:
                   "size": ${skill_json_size},
                   "url": "https://github.com/${{ github.repository }}/releases/download/${tag}/skill.json"
                 }
-            SKILLJSON
+          SKILLJSON
 
             cat >> "${checksums_file}" << EOF
               }
             }
-            EOF
+          EOF
 
             if ! jq -e . "${checksums_file}" >/dev/null 2>&1; then
               echo "::error file=${checksums_file}::Generated checksums.json is invalid JSON."
