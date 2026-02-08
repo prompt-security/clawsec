@@ -1,7 +1,7 @@
 {
   "name": "clawsec-suite",
-  "version": "0.0.6",
-  "description": "Use when users want to explore or set up ClawSec security protections - this is a wrapper that helps discover and install individual security skills, but requires initial configuration to activate any protections.",
+  "version": "0.0.8",
+  "description": "ClawSec suite manager with embedded advisory-feed monitoring, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "MIT",
   "homepage": "https://clawsec.prompt.security/",
@@ -11,9 +11,13 @@
     "catalog",
     "installer",
     "integrity",
+    "advisory",
+    "feed",
+    "threat-intel",
+    "hooks",
+    "approval",
     "agents",
     "ai",
-    "guardian",
     "suite",
     "openclaw"
   ],
@@ -27,59 +31,97 @@
       {
         "path": "HEARTBEAT.md",
         "required": true,
-        "description": "update checks and integrity verification"
+        "description": "Portable heartbeat and update-check procedure"
       },
       {
-        "path": "bundled/clawsec-feed/skill.json",
+        "path": "advisories/feed.json",
         "required": true,
-        "description": "Bundled feed metadata"
+        "description": "Embedded advisory feed seed (merged from clawsec-feed)"
       },
       {
-        "path": "bundled/clawsec-feed/SKILL.md",
+        "path": "hooks/clawsec-advisory-guardian/HOOK.md",
         "required": true,
-        "description": "Bundled feed documentation"
+        "description": "OpenClaw hook metadata for advisory-driven malicious-skill checks"
       },
       {
-        "path": "bundled/clawsec-feed/advisories/feed.json",
+        "path": "hooks/clawsec-advisory-guardian/handler.ts",
         "required": true,
-        "description": "Bundled security advisory feed data"
+        "description": "OpenClaw hook handler for approval-gated advisory actions"
       },
       {
-        "path": "bundled/openclaw-audit-watchdog/skill.json",
+        "path": "hooks/clawsec-advisory-guardian/lib/utils.mjs",
         "required": true,
-        "description": "Bundled audit watchdog metadata"
+        "description": "Shared utility functions (isObject, normalizeSkillName, uniqueStrings)"
       },
       {
-        "path": "bundled/openclaw-audit-watchdog/SKILL.md",
+        "path": "hooks/clawsec-advisory-guardian/lib/version.mjs",
         "required": true,
-        "description": "Bundled audit watchdog documentation"
+        "description": "Shared semver parsing and version matching logic"
       },
       {
-        "path": "bundled/soul-guardian/skill.json",
+        "path": "hooks/clawsec-advisory-guardian/lib/feed.mjs",
         "required": true,
-        "description": "Bundled soul guardian metadata"
+        "description": "Shared advisory feed loading and validation"
       },
       {
-        "path": "bundled/soul-guardian/SKILL.md",
+        "path": "scripts/setup_advisory_hook.mjs",
         "required": true,
-        "description": "Bundled soul guardian documentation"
+        "description": "Installer script for enabling the advisory guardian hook"
+      },
+      {
+        "path": "scripts/setup_advisory_cron.mjs",
+        "required": true,
+        "description": "Installer script for optional periodic advisory scan cron"
+      },
+      {
+        "path": "scripts/guarded_skill_install.mjs",
+        "required": true,
+        "description": "Two-step confirmation installer that blocks risky skill installs until explicit second approval"
       }
     ]
   },
+  "embedded_components": {
+    "clawsec-feed": {
+      "source_skill": "clawsec-feed",
+      "source_version": "0.0.4",
+      "paths": [
+        "advisories/feed.json"
+      ],
+      "capabilities": [
+        "advisory-feed monitoring",
+        "new-advisory detection",
+        "affected-skill cross-reference",
+        "approval-gated malicious-skill removal recommendations",
+        "double-confirmation gating for risky skill installs"
+      ],
+      "standalone_available": true,
+      "deprecation_plan": "standalone skill may be retired after suite migration is verified"
+    }
+  },
   "catalog": {
-    "description": "Available skills in the ClawSec security suite",
-    "base_url": "https://ClawSec.prompt.security/releases/download",
+    "description": "Available protections in the ClawSec suite",
+    "base_url": "https://clawsec.prompt.security/releases/download",
     "skills": {
       "clawsec-feed": {
-        "description": "Security advisory feed monitoring",
-        "default_install": true,
-        "required": true,
+        "description": "Advisory monitoring is now embedded in clawsec-suite",
+        "integrated_in_suite": true,
+        "standalone_available": true,
         "compatible": [
           "openclaw",
           "moltbot",
           "clawdbot",
           "other"
         ]
+      },
+      "openclaw-audit-watchdog": {
+        "description": "Automated daily audits with email reporting",
+        "default_install": true,
+        "compatible": [
+          "openclaw",
+          "moltbot",
+          "clawdbot"
+        ],
+        "note": "Tailored for OpenClaw/MoltBot family"
       },
       "soul-guardian": {
         "description": "Drift detection and file integrity guard",
@@ -92,7 +134,7 @@
         ]
       },
       "clawtributor": {
-        "description": "Community incident reporting (may share anonymized data)",
+        "description": "Community incident reporting (shares anonymized data)",
         "default_install": false,
         "requires_explicit_consent": true,
         "compatible": [
@@ -101,38 +143,7 @@
           "clawdbot",
           "other"
         ]
-      },
-      "openclaw-audit-watchdog": {
-        "description": "Automated daily audits with email reporting",
-        "default_install": true,
-        "required": true,
-        "compatible": [
-          "openclaw",
-          "moltbot",
-          "clawdbot"
-        ],
-        "note": "Tailored for OpenClaw/MoltBot family only"
       }
-    }
-  },
-  "bundled_skills": {
-    "clawsec-feed": {
-      "description": "Security advisory feed (bundled for convenient deployment)",
-      "default": true,
-      "standalone_available": true,
-      "rationale": "Provides crucial CVE and threat intelligence information"
-    },
-    "openclaw-audit-watchdog": {
-      "description": "Daily security audits (bundled for convenient deployment)",
-      "default": true,
-      "standalone_available": true,
-      "rationale": "Provides crucial automated security audit capabilities"
-    },
-    "soul-guardian": {
-      "description": "File integrity monitoring (bundled for convenient deployment)",
-      "default": false,
-      "standalone_available": true,
-      "rationale": "Provides important file integrity and drift detection"
     }
   },
   "openclaw": {
@@ -141,20 +152,24 @@
     "requires": {
       "bins": [
         "curl",
+        "jq",
         "shasum"
       ]
     },
     "triggers": [
-      "install skills",
-      "install security skills",
       "clawsec suite",
-      "skill catalog",
+      "security suite",
+      "security advisories",
+      "malicious skill alert",
+      "remove malicious skills",
+      "safe skill install",
+      "confirm skill install",
+      "check advisories",
+      "advisory feed",
+      "install security skills",
       "verify skills",
       "check skill integrity",
-      "update skills",
-      "list available skills",
-      "install clawsec",
-      "security suite"
+      "update skills"
     ]
   }
 }

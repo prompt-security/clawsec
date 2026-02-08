@@ -1,311 +1,251 @@
 ---
 name: clawsec-suite
-version: 0.0.6
-description: Use when users or agents want to explore or set up ClawSec security protections - this is a wrapper that helps discover and install individual security skills, but requires initial configuration to activate any protections.
+version: 0.0.8
+description: ClawSec suite manager with embedded advisory-feed monitoring, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "📦"
   requires:
-    bins: [curl, shasum]
+    bins: [curl, jq, shasum]
 ---
 
 # ClawSec Suite
 
-## Installation steps
+This means `clawsec-suite` can:
+- monitor the ClawSec advisory feed,
+- track which advisories are new since last check,
+- cross-reference advisories against locally installed skills,
+- recommend removal for malicious-skill advisories and require explicit user approval first,
+- and still act as the setup/management entrypoint for other ClawSec protections.
 
-**IMPORTANT**: ClawSec Suite includes bundled security skills that provide crucial threat intelligence and monitoring capabilities. These skills are bundled alongside the suite for your convenience and should be deployed to standard skill locations.
+## Included vs Optional Protections
 
-The suite includes the following bundled skills:
-- **clawsec-feed**: Provides crucial CVE and security advisory information
-- **openclaw-audit-watchdog**: Provides crucial automated security audit capabilities
-- **soul-guardian**: Provides file integrity and drift detection
+### Built into clawsec-suite
+- Embedded feed seed file: `advisories/feed.json`
+- Portable heartbeat workflow in `HEARTBEAT.md`
+- Advisory polling + state tracking + affected-skill checks
+- OpenClaw advisory guardian hook package: `hooks/clawsec-advisory-guardian/`
+- Setup scripts for hook and optional cron scheduling: `scripts/`
+- Guarded installer: `scripts/guarded_skill_install.mjs`
 
-Finalize deployment with post-script after suite installation:
+### installed separately
+- `openclaw-audit-watchdog`
+- `soul-guardian`
+- `clawtributor` (explicit opt-in)
+
+## Installation
+
+### Option A: Via clawhub (recommended)
 
 ```bash
-#!/bin/bash
-# BUNDLED SKILLS DEPLOYMENT
-# These skills are bundled alongside the suite to provide crucial security information
-set -euo pipefail
-
-INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.openclaw/skills}"
-SUITE_DIR="$INSTALL_ROOT/clawsec-suite"
-
-echo "=== Deploying bundled security skills ==="
-
-# Function to deploy a bundled skill
-deploy_skill() {
-  local skill_name="$1"
-  local skill_dir="$INSTALL_ROOT/$skill_name"
-  local bundled_dir="$SUITE_DIR/bundled/$skill_name"
-
-  # Check if skill already exists
-  if [ -d "$skill_dir" ] && [ -f "$skill_dir/skill.json" ]; then
-    INSTALLED_VERSION=$(jq -r '.version // "unknown"' "$skill_dir/skill.json" 2>/dev/null)
-    echo "$skill_name already installed (v${INSTALLED_VERSION}), preserving existing installation"
-    return 0
-  fi
-
-  # Check if bundled version exists
-  if [ ! -d "$bundled_dir" ] || [ ! -f "$bundled_dir/skill.json" ]; then
-    echo "Bundled $skill_name not found, skipping"
-    return 0
-  fi
-
-  # Deploy bundled skill
-  echo "Deploying bundled $skill_name..."
-  mkdir -p "$skill_dir"
-  cp -r "$bundled_dir"/* "$skill_dir/"
-
-  # Set proper permissions
-  chmod 600 "$skill_dir/skill.json"
-  find "$skill_dir" -type f ! -name "skill.json" -exec chmod 644 {} \;
-
-  # Verify installation
-  if [ -f "$skill_dir/skill.json" ]; then
-    SKILL_VERSION=$(jq -r '.version' "$skill_dir/skill.json")
-    echo "✓ $skill_name v${SKILL_VERSION} deployed successfully"
-  else
-    echo "✗ $skill_name deployment verification failed"
-    return 1
-  fi
-}
-
-# Deploy each bundled skill
-deploy_skill "clawsec-feed"
-deploy_skill "openclaw-audit-watchdog"
-deploy_skill "soul-guardian"
-
-echo ""
-echo "✓ ClawSec Suite deployment complete"
+npx clawhub@latest install clawsec-suite
 ```
 
-### ✅ On Successful Installation (IMPORTANT)
-
-On success the user should know: which skills were installed, that protections are active, and where to learn more if interested.
-On success, inform the user which skills were installed and that the default protections are active. (add an encouraging call - like Congrats, you are safe!)
-
-
-On partial success or errors, list what succeeded, what failed with reasons, and suggest retry or troubleshooting
-## Contract (what this skill is)
-
-ClawSec Suite is a small "manager" package that helps an agent runtime:
-
-- install ClawSec security components
-- verify integrity of installed files (checksums + optional signatures)
-- check for updates from a signed checksums.json manifest
-- run a periodic "health check" (security skill updates + chain of supply integrity + advisories)
-
-This document is written to be **portable**: it does not assume a specific agent framework or CLI. However it was tested to work best with OpenClaw, Moltbot, Clawdbot and variants
-
-## 🎯 Let's Get You Protected
-
-Great! You've installed the ClawSec Suite wrapper. Now let's get you set up with the security protections you came here for.
-
-**Quick heads up:** The suite you just installed is like a toolbox - it helps you install and manage security skills, but doesn't provide protections by itself. Think of it as your security skill manager.
-
-**Here's how to activate your protections:**
-
-1. Browse the available security skills (see below, or browse to https://clawsec.prompt.security/)
-2. Choose which protections match your needs
-3. Install your selected skills using the installation guide
-4. Auto Configure defaults for each skill for your environment. 
-
-Each skill protects against different threats - from security advisories to file tampering. Let's explore your options and get you secured.
-
-## Available Security Skills
-
-The ClawSec suite includes these security skills:
-
-| Skill | Protection Type | Installation |
-|-------|----------------|-------------|
-| **clawsec-feed** | Security advisory monitoring from NVD CVE database | ✓ Included by default |
-| **openclaw-audit-watchdog** | Automated daily security audits with email reporting | ✓ Included by default |
-| **soul-guardian** | File integrity & drift detection for agent workspace files | ✗ Optional |
-| **clawtributor** | Community incident reporting (shares anonymized data)* | ✗ Optional (Opt-in) |
-
-**Clawtributor requires explicit consent** as it shares anonymized data with the community for collective threat intelligence.
-
-## Getting Started
-
-### Step 1: Review Available Skills
-Take a moment to review the security skills table above. Each skill provides a different layer of protection:
-
-- **Threat awareness** (clawsec-feed): Stay informed about vulnerabilities [Included by default]
-- **Scheduled audits** (openclaw-audit-watchdog): Daily automated security reviews [Included by default]
-- **File integrity** (soul-guardian): Detect unauthorized changes to workspace files [Optional]
-- **Community intelligence** (clawtributor): Share and receive threat data [Optional - Opt-in]
-
-### Step 2: Choose Your Protection Level
-
-**default protections** (automatically installed):
-- clawsec-feed
-- openclaw-audit-watchdog
-
-**Optional protections** (install as needed):
-- soul-guardian (file integrity and drift detection)
-- clawtributor (community threat intelligence - requires explicit consent for data sharing)
-
-### Step 3: Bundled Security Skills
-
-Good news! The following security skills are bundled alongside ClawSec Suite:
-
-✓ **clawsec-feed** - Provides crucial CVE and threat intelligence information
-✓ **openclaw-audit-watchdog** - Provides automated security audit capabilities
-✓ **soul-guardian** - Provides file integrity and drift detection
-
-These skills are included in the suite package for your convenience.
-
-**Deployment options:**
-- If you don't already have these skills installed, they will be deployed from the bundled copies
-- If you already have any of these skills, your existing installations will be preserved
-- Each skill is installed to its standard location: `~/.openclaw/skills/{skill-name}/`
-
-**What this means:**
-- Convenient setup - no separate downloads needed if you don't have them
-- Standard installation - follows skill conventions
-- Independent management - each skill can be configured separately
-- Always current - feed data is fetched online (always up-to-date)
-
-### Step 4: Optional Opt-In Component
-
-**clawtributor** (Community threat intelligence):
-- Share and receive anonymized threat data
-- Requires explicit opt-in and user consent
-- Not bundled with suite (available as separate download)
-- Installation instructions: https://clawsec.prompt.security/skills/clawtributor
-
-### Step 5: Configure Each Skill
-
-After installation, each skill requires configuration, to reduce security fatigue start with the defaults for soul guardian (and dont use email sending for audit reports in watchdog):
-
-- **clawsec-feed**: Configure update frequency and alert preferences
-- **openclaw-audit-watchdog**: Set email addresses for audit reports
-- **soul-guardian**: Set baseline checksums for protected files 
-- **clawtributor**: Provide explicit consent and configure data sharing preferences (if installed)
-
-Refer to each skill's SKILL.md file for detailed configuration instructions. if the user wants to change the defaults.
-
-## Trust, provenance, and safety
-
-Agents should review scripts before execution!
-
-**Do not install anything you cannot verify.** A secure installer must:
-
-1) download artifacts from a stable origin
-2) verify integrity (checksum)
-3) ideally verify authenticity (signature)
-4) fail closed (stop on any mismatch)
-
-If your project does not yet publish signatures, publish at least:
-
-- `checksums.json` (sha256 hashes + version metadata)
-
-### Canonical release origin
-
-All releases are published at:
-
-- `https://clawsec.prompt.security/releases/download/<SKILL>-v<VERSION>/...`
-
-Example for clawsec-suite v0.0.9:
-
-- `https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.6/checksums.json`
-- `https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.6/clawsec-suite.skill`
-
-## Installation (generic, version-pinned, verified)
-
-### Requirements
-
-- `curl`
-- `jq` (for parsing checksums.json)
-- `unzip`
-- a SHA-256 tool (`shasum -a 256` on macOS, or `sha256sum` on Linux)
-
-### Install steps
-
-Pick a stable install root:
-
-- `INSTALL_ROOT` default: `~/.openclaw/skills`
-
-> If your agent runtime has its own skills directory, set `INSTALL_ROOT` accordingly.
+### Option B: Manual download with verification
 
 ```bash
 set -euo pipefail
 
-VERSION="${SKILL_VERSION}"
+VERSION="${SKILL_VERSION:?Set SKILL_VERSION (e.g. 0.0.8)}"
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.openclaw/skills}"
 DEST="$INSTALL_ROOT/clawsec-suite"
+BASE="https://github.com/prompt-security/clawsec/releases/download/clawsec-suite-v${VERSION}"
 
-BASE="https://clawsec.prompt.security/releases/download/clawsec-suite-v${VERSION}"
+TEMP_DIR="$(mktemp -d)"
+DOWNLOAD_DIR="$TEMP_DIR/downloads"
+trap 'rm -rf "$TEMP_DIR"' EXIT
+mkdir -p "$DOWNLOAD_DIR"
 
-mkdir -p "$DEST"
-cd "$(mktemp -d)"
-
-# 1) Download checksums.json and artifact
-curl -fsSL "$BASE/checksums.json" -o checksums.json
-curl -fsSL "$BASE/SKILL.md" -o SKILL.md
-
-# 2) Extract expected checksum from checksums.json
-EXPECTED_SHA256=$(jq -r '.files["clawsec-suite.skill"].sha256' checksums.json)
-if [ -z "$EXPECTED_SHA256" ] || [ "$EXPECTED_SHA256" = "null" ]; then
-  echo "ERROR: Could not extract checksum from checksums.json" >&2
-  exit 2
-fi
-
-# 3) Compute actual checksum
-if command -v shasum >/dev/null 2>&1; then
-  ACTUAL_SHA256=$(shasum -a 256 clawsec-suite.skill | awk '{print $1}')
-else
-  ACTUAL_SHA256=$(sha256sum SKILL.md | awk '{print $1}')
-fi
-
-# 4) Verify checksum (fail closed)
-if [ "$EXPECTED_SHA256" != "$ACTUAL_SHA256" ]; then
-  echo "ERROR: Checksum mismatch!" >&2
-  echo "  Expected: $EXPECTED_SHA256" >&2
-  echo "  Actual:   $ACTUAL_SHA256" >&2
+# 1) Download checksums manifest
+curl -fsSL "$BASE/checksums.json" -o "$TEMP_DIR/checksums.json"
+if ! jq -e '.skill and .version and .files' "$TEMP_DIR/checksums.json" >/dev/null 2>&1; then
+  echo "ERROR: Invalid checksums.json format" >&2
   exit 1
 fi
-echo "Checksum verified: $ACTUAL_SHA256"
 
-# 5) Install
-rm -rf "$DEST"/*
-#download specific files by checksum list, or .skill file which is supported by openclaw
-# 6) Sanity check
-test -f "$DEST/skill.json"
-test -f "$DEST/SKILL.md"
-test -f "$DEST/HEARTBEAT.md"
+# 2) Download every file listed in checksums and verify immediately
+DOWNLOAD_FAILED=0
+for file in $(jq -r '.files | keys[]' "$TEMP_DIR/checksums.json"); do
+  FILE_URL="$(jq -r --arg f "$file" '.files[$f].url' "$TEMP_DIR/checksums.json")"
+  EXPECTED="$(jq -r --arg f "$file" '.files[$f].sha256' "$TEMP_DIR/checksums.json")"
 
-echo "Installed ClawSec Suite v${VERSION} to: $DEST"
+  if ! curl -fsSL "$FILE_URL" -o "$DOWNLOAD_DIR/$file"; then
+    echo "ERROR: Download failed for $file" >&2
+    DOWNLOAD_FAILED=1
+    continue
+  fi
+
+  if command -v shasum >/dev/null 2>&1; then
+    ACTUAL="$(shasum -a 256 "$DOWNLOAD_DIR/$file" | awk '{print $1}')"
+  else
+    ACTUAL="$(sha256sum "$DOWNLOAD_DIR/$file" | awk '{print $1}')"
+  fi
+
+  if [ "$EXPECTED" != "$ACTUAL" ]; then
+    echo "ERROR: Checksum mismatch for $file" >&2
+    DOWNLOAD_FAILED=1
+  else
+    echo "Verified: $file"
+  fi
+done
+
+if [ "$DOWNLOAD_FAILED" -eq 1 ]; then
+  echo "ERROR: One or more files failed verification" >&2
+  exit 1
+fi
+
+# 3) Install files using paths from checksums.json
+while IFS= read -r file; do
+  [ -z "$file" ] && continue
+  REL_PATH="$(jq -r --arg f "$file" '.files[$f].path // $f' "$TEMP_DIR/checksums.json")"
+  SRC_PATH="$DOWNLOAD_DIR/$file"
+  DST_PATH="$DEST/$REL_PATH"
+
+  mkdir -p "$(dirname "$DST_PATH")"
+  cp "$SRC_PATH" "$DST_PATH"
+done < <(jq -r '.files | keys[]' "$TEMP_DIR/checksums.json")
+
+chmod 600 "$DEST/skill.json"
+find "$DEST" -type f ! -name "skill.json" -exec chmod 644 {} \;
+
+echo "Installed clawsec-suite v${VERSION} to: $DEST"
+echo "Next step (OpenClaw): node \"$DEST/scripts/setup_advisory_hook.mjs\""
 ```
 
-### What this does (disclosure)
+## OpenClaw Automation (Hook + Optional Cron)
 
-**Installing clawsec-suite:**
-- Writes only under: `$DEST` (default `~/.openclaw/skills/clawsec-suite`)
-- Makes network requests only to fetch the suite artifact + checksums (and optionally signatures)
-- Does **not** provide any security protections by itself - it's just the wrapper/manager
-- Does **not** auto-install any security skills - you choose which skills to install
-- Does **not** auto-enable telemetry/community reporting
-- Does **not** schedule anything automatically
+After installing the suite, enable the advisory guardian hook:
 
-**To get actual security protections**, you need to install and configure individual security skills (see "Getting Started" above).
+```bash
+SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
+node "$SUITE_DIR/scripts/setup_advisory_hook.mjs"
+```
 
-## Update checking (portable design)
+Optional: create/update a periodic cron nudge (default every `6h`) that triggers a main-session advisory scan:
 
-Each release publishes a `checksums.json` file that contains version info and SHA256 hashes for all artifacts:
+```bash
+SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
+node "$SUITE_DIR/scripts/setup_advisory_cron.mjs"
+```
 
-- `https://clawsec.prompt.security/releases/download/clawsec-suite-v<VERSION>/checksums.json`
+What this adds:
+- scan on `agent:bootstrap` and `/new` (`command:new`),
+- compare advisory `affected` entries against installed skills,
+- notify when new matches appear,
+- and ask for explicit user approval before any removal flow.
 
+Restart the OpenClaw gateway after enabling the hook. Then run `/new` once to force an immediate scan in the next session context.
 
-To check for updates, compare the installed version against the latest `checksums.json`. See `HEARTBEAT.md` for the upgrade check procedure.
+## Guarded Skill Install Flow (Double Confirmation)
 
-## Platform adapters (optional sections)
+When the user asks to install a skill, treat that as the first request and run a guarded install check:
 
-If you want this to work well everywhere, add short adapter sections that only map:
+```bash
+SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
+node "$SUITE_DIR/scripts/guarded_skill_install.mjs" --skill helper-plus --version 1.0.1
+```
 
-- install directory
-- scheduler integration
-- message/alert delivery integration
+Behavior:
+- If no advisory match is found, install proceeds.
+- If advisory match is found, the script prints advisory context and exits with code `42`.
+- Then require an explicit second confirmation from the user and rerun with `--confirm-advisory`:
 
-Keep the core verify/install/update logic identical.
+```bash
+node "$SUITE_DIR/scripts/guarded_skill_install.mjs" --skill helper-plus --version 1.0.1 --confirm-advisory
+```
+
+This enforces:
+1. First confirmation: user asked to install.
+2. Second confirmation: user explicitly approves install after seeing advisory details.
+
+## Embedded Advisory Feed Behavior
+
+The embedded feed logic uses these defaults:
+
+- Remote feed URL: `https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json`
+- Local seed fallback: `~/.openclaw/skills/clawsec-suite/advisories/feed.json`
+- State file: `~/.openclaw/clawsec-suite-feed-state.json`
+- Hook rate-limit env (OpenClaw hook): `CLAWSEC_HOOK_INTERVAL_SECONDS` (default `300`)
+
+### Quick feed check
+
+```bash
+FEED_URL="${CLAWSEC_FEED_URL:-https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json}"
+STATE_FILE="${CLAWSEC_SUITE_STATE_FILE:-$HOME/.openclaw/clawsec-suite-feed-state.json}"
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+if ! curl -fsSLo "$TMP/feed.json" "$FEED_URL"; then
+  echo "ERROR: Failed to fetch advisory feed"
+  exit 1
+fi
+
+if ! jq -e '.version and (.advisories | type == "array")' "$TMP/feed.json" >/dev/null; then
+  echo "ERROR: Invalid advisory feed format"
+  exit 1
+fi
+
+mkdir -p "$(dirname "$STATE_FILE")"
+if [ ! -f "$STATE_FILE" ]; then
+  echo '{"schema_version":"1.0","known_advisories":[],"last_feed_check":null,"last_feed_updated":null}' > "$STATE_FILE"
+  chmod 600 "$STATE_FILE"
+fi
+
+NEW_IDS_FILE="$TMP/new_ids.txt"
+jq -r --argfile state "$STATE_FILE" '($state.known_advisories // []) as $known | [.advisories[]?.id | select(. != null and ($known | index(.) | not))] | .[]?' "$TMP/feed.json" > "$NEW_IDS_FILE"
+
+if [ -s "$NEW_IDS_FILE" ]; then
+  echo "New advisories detected:"
+  while IFS= read -r id; do
+    [ -z "$id" ] && continue
+    jq -r --arg id "$id" '.advisories[] | select(.id == $id) | "- [\(.severity | ascii_upcase)] \(.id): \(.title)"' "$TMP/feed.json"
+  done < "$NEW_IDS_FILE"
+else
+  echo "FEED_OK - no new advisories"
+fi
+```
+
+## Heartbeat Integration
+
+Use the suite heartbeat script as the single periodic security check entrypoint:
+
+- `skills/clawsec-suite/HEARTBEAT.md`
+
+It handles:
+- suite update checks,
+- feed polling,
+- new-advisory detection,
+- affected-skill cross-referencing,
+- approval-gated response guidance for malicious/removal advisories,
+- and persistent state updates.
+
+## Approval-Gated Response Contract
+
+If an advisory indicates a malicious or removal-recommended skill and that skill is installed:
+
+1. Notify the user immediately with advisory details and severity.
+2. Recommend removing or disabling the affected skill.
+3. Treat the original install request as first intent only.
+4. Ask for explicit second confirmation before deletion/disable action (or before proceeding with risky install).
+5. Only proceed after that second confirmation.
+
+The suite hook and heartbeat guidance are intentionally non-destructive by default.
+
+## Optional Skill Installation
+
+Install additional protections as needed:
+
+```bash
+npx clawhub@latest install openclaw-audit-watchdog
+npx clawhub@latest install soul-guardian
+# opt-in only:
+npx clawhub@latest install clawtributor
+```
+
+## Security Notes
+
+- Always verify checksums before installing files manually.
+- Keep advisory polling rate-limited (at least 5 minutes between checks).
+- Treat `critical` and `high` advisories affecting installed skills as immediate action items.
+- If you migrate off standalone `clawsec-feed`, keep one canonical state file to avoid duplicate notifications.

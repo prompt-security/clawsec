@@ -1,27 +1,44 @@
 #!/bin/bash
-# Usage: ./scripts/release-skill.sh <skill-name> <version>
+# Usage: ./scripts/release-skill.sh <skill-name> <version> [--force-tag]
 # Example: ./scripts/release-skill.sh clawsec-feed 1.1.0
 #
 # This script ensures version consistency by:
 # 1. Updating skill.json with the new version
 # 2. Updating any hardcoded version URLs in skill.json and SKILL.md
 # 3. Committing the changes
-# 4. Creating the git tag
+# 4. Creating the git tag (only on main/master branch)
 #
-# After running, push your current branch and tag:
-#   git push origin <branch>
-#   git push origin <tag>
+# Branch-aware workflow:
+#   Feature branch: Updates versions, commits, pushes → CI validates build
+#   Main branch:    Updates versions, commits, creates tag → push triggers release
+#
+# Use --force-tag to create a tag even when not on main/master.
 
 set -euo pipefail
 
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <skill-name> <version>"
+# Parse arguments
+FORCE_TAG=false
+POSITIONAL_ARGS=()
+
+for arg in "$@"; do
+  case $arg in
+    --force-tag)
+      FORCE_TAG=true
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$arg")
+      ;;
+  esac
+done
+
+if [ "${#POSITIONAL_ARGS[@]}" -ne 2 ]; then
+  echo "Usage: $0 <skill-name> <version> [--force-tag]"
   echo "Example: $0 clawsec-feed 1.1.0"
   exit 1
 fi
 
-SKILL_NAME="$1"
-VERSION="$2"
+SKILL_NAME="${POSITIONAL_ARGS[0]}"
+VERSION="${POSITIONAL_ARGS[1]}"
 SKILL_PATH="skills/$SKILL_NAME"
 
 # Ensure we're on a branch (not detached HEAD) so release flow works from feature branches
@@ -29,6 +46,12 @@ CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
 if [ -z "$CURRENT_BRANCH" ]; then
   echo "Error: Detached HEAD detected. Checkout a branch before running release." >&2
   exit 1
+fi
+
+# Determine if we're on a release branch (main/master)
+IS_RELEASE_BRANCH=false
+if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "master" ]]; then
+  IS_RELEASE_BRANCH=true
 fi
 
 # Security: Validate skill name to prevent path injection
@@ -52,12 +75,6 @@ fi
 
 TAG="${SKILL_NAME}-v${VERSION}"
 
-# Check if tag already exists
-if git rev-parse "$TAG" >/dev/null 2>&1; then
-  echo "Error: Tag $TAG already exists"
-  exit 1
-fi
-
 # Check for uncommitted changes in skill directory
 if ! git diff --quiet "$SKILL_PATH/" 2>/dev/null; then
   echo "Error: $SKILL_PATH/ has uncommitted changes. Please commit or stash them first."
@@ -66,6 +83,11 @@ fi
 
 echo "Releasing $SKILL_NAME version $VERSION"
 echo "Branch: $CURRENT_BRANCH"
+if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
+  echo "Mode: Full release (will create tag)"
+else
+  echo "Mode: Prep only (tag deferred until merge to main)"
+fi
 echo "======================================="
 
 # Create a temporary directory for atomic operations
@@ -195,37 +217,62 @@ if ! git commit -m "chore($SKILL_NAME): bump version to $VERSION"; then
   exit 1
 fi
 
-# Save commit SHA for recovery (in case tag creation fails)
+# Save commit SHA for recovery
 COMMIT_SHA=$(git rev-parse HEAD)
 echo "Committed: $COMMIT_SHA"
 
-# Create annotated tag
-echo "Creating tag: $TAG"
-if ! git tag -a "$TAG" -m "$SKILL_NAME version $VERSION"; then
-  echo "Error: Failed to create tag $TAG" >&2
-  echo "" >&2
-  echo "The commit has been created but NOT tagged:" >&2
-  echo "  Commit: $COMMIT_SHA" >&2
-  echo "" >&2
-  echo "Recovery options:" >&2
-  echo "  1. Fix the issue and tag manually:" >&2
-  echo "     git tag -a '$TAG' -m '$SKILL_NAME version $VERSION' $COMMIT_SHA" >&2
-  echo "" >&2
-  echo "  2. Investigate why tagging failed:" >&2
-  echo "     - Check if tag exists: git tag -l '$TAG'" >&2
-  echo "     - Check permissions: ls -ld .git/refs/tags" >&2
-  echo "" >&2
-  echo "  3. To rollback the commit (if desired):" >&2
-  echo "     git reset --hard HEAD~1" >&2
-  echo "" >&2
-  echo "The commit has NOT been pushed. Fix the issue before pushing." >&2
-  exit 1
-fi
+# Create tag only on release branches (or if forced)
+if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
+  # Check if tag already exists (only matters when we're creating one)
+  if git rev-parse "$TAG" >/dev/null 2>&1; then
+    echo "Error: Tag $TAG already exists; rolling back last commit"
+    git reset --hard HEAD~1
+    exit 1
+  fi
 
-echo ""
-echo "Done! To release, push the commit and tag:"
-echo "  git push origin $CURRENT_BRANCH"
-echo "  git push origin $TAG"
-echo ""
-echo "Or to undo:"
-echo "  git reset --hard HEAD~1 && git tag -d $TAG"
+  echo "Creating tag: $TAG"
+  if ! git tag -a "$TAG" -m "$SKILL_NAME version $VERSION"; then
+    echo "Error: Failed to create tag $TAG" >&2
+    echo "" >&2
+    echo "The commit has been created but NOT tagged:" >&2
+    echo "  Commit: $COMMIT_SHA" >&2
+    echo "" >&2
+    echo "Recovery options:" >&2
+    echo "  1. Fix the issue and tag manually:" >&2
+    echo "     git tag -a '$TAG' -m '$SKILL_NAME version $VERSION' $COMMIT_SHA" >&2
+    echo "" >&2
+    echo "  2. Investigate why tagging failed:" >&2
+    echo "     - Check if tag exists: git tag -l '$TAG'" >&2
+    echo "     - Check permissions: ls -ld .git/refs/tags" >&2
+    echo "" >&2
+    echo "  3. To rollback the commit (if desired):" >&2
+    echo "     git reset --hard HEAD~1" >&2
+    echo "" >&2
+    echo "The commit has NOT been pushed. Fix the issue before pushing." >&2
+    exit 1
+  fi
+
+  echo ""
+  echo "Done! To release, push the commit and tag:"
+  echo "  git push origin $CURRENT_BRANCH"
+  echo "  git push origin $TAG"
+  echo ""
+  echo "Or to undo:"
+  echo "  git reset --hard HEAD~1 && git tag -d $TAG"
+else
+  # Feature branch: skip tagging, instruct user on next steps
+  echo ""
+  echo "Done! Version updated and committed (tag deferred)."
+  echo ""
+  echo "Next steps:"
+  echo "  1. Push your branch for CI validation:"
+  echo "     git push origin $CURRENT_BRANCH"
+  echo ""
+  echo "  2. After CI passes and PR is merged to main, create the tag:"
+  echo "     git checkout main && git pull"
+  echo "     git tag -a '$TAG' $COMMIT_SHA -m '$SKILL_NAME version $VERSION'"
+  echo "     git push origin $TAG"
+  echo ""
+  echo "Or to undo the version bump:"
+  echo "  git reset --hard HEAD~1"
+fi

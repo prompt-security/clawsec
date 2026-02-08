@@ -141,8 +141,11 @@ jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_REF_PATTERN" '
 FILTERED=$(jq 'length' "$TEMP_DIR/filtered_cves.json")
 echo "Filtered CVEs (matching criteria): $FILTERED"
 
-# Get existing advisory IDs
-if [ -f "$FEED_PATH" ]; then
+# Get existing advisory IDs (unless force mode)
+if [ "$FORCE" = "true" ]; then
+  echo "Force mode: ignoring existing advisory IDs during transform"
+  EXISTING_IDS=""
+elif [ -f "$FEED_PATH" ]; then
   EXISTING_IDS=$(jq -r '.advisories[]?.id // empty' "$FEED_PATH" | sort -u)
 else
   EXISTING_IDS=""
@@ -165,13 +168,82 @@ jq --argjson existing "$EXISTING_JSON" '
     .cve.metrics.cvssMetricV30[0]?.cvssData.baseScore //
     .cve.metrics.cvssMetricV2[0]?.cvssData.baseScore //
     null;
+
+  def nvd_category_raw:
+    (
+      [.cve.weaknesses[]?.description[]? | select(.lang == "en") | .value | strings | select(length > 0)]
+      | unique
+      | map(select(. != "NVD-CWE-noinfo" and . != "NVD-CWE-Other"))
+      | .[0]
+    );
+
+  def cwe_id:
+    (
+      nvd_category_raw
+      | if . == null then null
+        else (try (capture("^CWE-(?<id>[0-9]+)$").id) catch null)
+        end
+    );
+
+  def cwe_name_map($id):
+    ({
+      "20": "improper_input_validation",
+      "22": "path_traversal",
+      "77": "command_injection",
+      "78": "os_command_injection",
+      "79": "cross_site_scripting",
+      "89": "sql_injection",
+      "94": "code_injection",
+      "119": "memory_buffer_bounds_violation",
+      "120": "classic_buffer_overflow",
+      "125": "out_of_bounds_read",
+      "134": "format_string_vulnerability",
+      "200": "exposure_of_sensitive_information",
+      "250": "execution_with_unnecessary_privileges",
+      "269": "improper_privilege_management",
+      "284": "improper_access_control",
+      "285": "improper_authorization",
+      "287": "improper_authentication",
+      "295": "improper_certificate_validation",
+      "306": "missing_authentication_for_critical_function",
+      "319": "cleartext_transmission_of_sensitive_information",
+      "326": "inadequate_encryption_strength",
+      "327": "risky_cryptographic_algorithm",
+      "352": "cross_site_request_forgery",
+      "362": "race_condition",
+      "400": "uncontrolled_resource_consumption",
+      "416": "use_after_free",
+      "434": "unrestricted_file_upload",
+      "502": "deserialization_of_untrusted_data",
+      "601": "open_redirect",
+      "611": "xml_external_entity_injection",
+      "639": "insecure_direct_object_reference",
+      "668": "exposure_of_resource_to_wrong_sphere",
+      "669": "incorrect_resource_transfer_between_spheres",
+      "732": "incorrect_permission_assignment",
+      "787": "out_of_bounds_write",
+      "798": "hard_coded_credentials",
+      "862": "missing_authorization",
+      "863": "incorrect_authorization",
+      "918": "server_side_request_forgery",
+      "922": "insecure_storage_of_sensitive_information"
+    }[$id]);
+
+  def nvd_category_name:
+    (
+      cwe_id as $id
+      | if $id == null then "unspecified_weakness"
+        else (cwe_name_map($id) // ("unknown_cwe_" + $id))
+        end
+    );
   
   [.[] | 
     select(.cve.id as $id | $existing | index($id) | not) |
     {
       id: .cve.id,
       severity: (get_cvss_score | map_severity),
-      type: "vulnerable_skill",
+      type: nvd_category_name,
+      nvd_category_id: nvd_category_raw,
       title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
       description: (.cve.descriptions[] | select(.lang == "en") | .value),
       affected: [.cve.configurations[]?.nodes[]?.cpeMatch[]?.criteria // empty] | unique | .[0:5],
@@ -207,7 +279,20 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 if [ -f "$FEED_PATH" ]; then
   jq --argjson new "$(cat "$TEMP_DIR/new_advisories.json")" --arg now "$NOW" '
     .updated = $now |
-    .advisories = (.advisories + $new | sort_by(.published) | reverse)
+    # Merge by advisory ID so force mode can refresh existing CVEs without duplicates
+    .advisories = (
+      reduce (.advisories + $new)[] as $adv
+        ({};
+          if ($adv.id // "") == "" then
+            .
+          else
+            .[$adv.id] = $adv
+          end
+        )
+      | [.[]]
+      | sort_by(.published)
+      | reverse
+    )
   ' "$FEED_PATH" > "$TEMP_DIR/updated_feed.json"
 else
   jq -n --argjson advisories "$(cat "$TEMP_DIR/new_advisories.json")" --arg now "$NOW" '{

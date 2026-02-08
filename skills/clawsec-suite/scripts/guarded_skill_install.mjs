@@ -1,0 +1,222 @@
+#!/usr/bin/env node
+
+import { spawnSync } from "node:child_process";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { normalizeSkillName, uniqueStrings } from "../hooks/clawsec-advisory-guardian/lib/utils.mjs";
+import { versionMatches } from "../hooks/clawsec-advisory-guardian/lib/version.mjs";
+import { parseAffectedSpecifier, isValidFeedPayload, loadRemoteFeed } from "../hooks/clawsec-advisory-guardian/lib/feed.mjs";
+
+const DEFAULT_FEED_URL =
+  "https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json";
+const DEFAULT_SUITE_DIR = path.join(os.homedir(), ".openclaw", "skills", "clawsec-suite");
+const DEFAULT_LOCAL_FEED = path.join(DEFAULT_SUITE_DIR, "advisories", "feed.json");
+const EXIT_CONFIRM_REQUIRED = 42;
+
+function printUsage() {
+  process.stderr.write(
+    [
+      "Usage:",
+      "  node scripts/guarded_skill_install.mjs --skill <skill-name> [--version <version>] [--confirm-advisory] [--dry-run]",
+      "",
+      "Examples:",
+      "  node scripts/guarded_skill_install.mjs --skill helper-plus --version 1.0.1",
+      "  node scripts/guarded_skill_install.mjs --skill helper-plus --version 1.0.1 --confirm-advisory",
+      "",
+      "Exit codes:",
+      "  0  success / no advisory block",
+      "  42 advisory matched and second confirmation is required",
+      "  1  error",
+      "",
+    ].join("\n"),
+  );
+}
+
+function parseArgs(argv) {
+  const parsed = {
+    skill: "",
+    version: "",
+    confirmAdvisory: false,
+    dryRun: false,
+  };
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const token = argv[i];
+
+    if (token === "--skill") {
+      parsed.skill = String(argv[i + 1] ?? "").trim();
+      i += 1;
+      continue;
+    }
+    if (token === "--version") {
+      parsed.version = String(argv[i + 1] ?? "").trim();
+      i += 1;
+      continue;
+    }
+    if (token === "--confirm-advisory") {
+      parsed.confirmAdvisory = true;
+      continue;
+    }
+    if (token === "--dry-run") {
+      parsed.dryRun = true;
+      continue;
+    }
+    if (token === "--help" || token === "-h") {
+      printUsage();
+      process.exit(0);
+    }
+
+    throw new Error(`Unknown argument: ${token}`);
+  }
+
+  if (!parsed.skill) {
+    throw new Error("Missing required argument: --skill");
+  }
+  if (!/^[a-z0-9-]+$/.test(parsed.skill)) {
+    throw new Error("Invalid --skill value. Use lowercase letters, digits, and hyphens only.");
+  }
+
+  return parsed;
+}
+
+function affectedSpecifierMatches(specifier, skillName, version) {
+  const parsed = parseAffectedSpecifier(specifier);
+  if (!parsed) return false;
+  if (normalizeSkillName(parsed.name) !== normalizeSkillName(skillName)) return false;
+  return versionMatches(version, parsed.versionSpec);
+}
+
+function affectedSpecifierMatchesNameOnly(specifier, skillName) {
+  const parsed = parseAffectedSpecifier(specifier);
+  if (!parsed) return false;
+  if (normalizeSkillName(parsed.name) !== normalizeSkillName(skillName)) return false;
+  const vs = parsed.versionSpec.trim();
+  return !vs || vs === "*" || vs.toLowerCase() === "any";
+}
+
+function advisoryLooksHighRisk(advisory) {
+  const type = String(advisory.type ?? "").toLowerCase();
+  const severity = String(advisory.severity ?? "").toLowerCase();
+  const combined = `${advisory.title ?? ""} ${advisory.description ?? ""} ${advisory.action ?? ""}`.toLowerCase();
+  if (type === "malicious_skill" || type === "malicious_plugin") return true;
+  if (/\b(malicious|exfiltrate|exfiltration|backdoor|trojan|stealer|credential theft)\b/.test(combined)) return true;
+  if (/\b(remove|uninstall|disable|do not use|quarantine)\b/.test(combined)) return true;
+  if (severity === "critical") return true;
+  return false;
+}
+
+async function loadFeed() {
+  const feedUrl = process.env.CLAWSEC_FEED_URL || DEFAULT_FEED_URL;
+  const localFeedPath = process.env.CLAWSEC_LOCAL_FEED || DEFAULT_LOCAL_FEED;
+
+  const remoteFeed = await loadRemoteFeed(feedUrl);
+  if (remoteFeed) return { feed: remoteFeed, source: `remote:${feedUrl}` };
+
+  const raw = await fs.readFile(localFeedPath, "utf8");
+  const payload = JSON.parse(raw);
+  if (!isValidFeedPayload(payload)) {
+    throw new Error(`Invalid fallback advisory feed format: ${localFeedPath}`);
+  }
+  return { feed: payload, source: `local:${localFeedPath}` };
+}
+
+function findMatches(feed, skillName, version) {
+  const advisories = Array.isArray(feed.advisories) ? feed.advisories : [];
+  const matches = [];
+
+  for (const advisory of advisories) {
+    const affected = Array.isArray(advisory.affected) ? advisory.affected : [];
+    if (affected.length === 0) continue;
+
+    const matchedAffected = uniqueStrings(
+      affected.filter((specifier) =>
+        version
+          ? affectedSpecifierMatches(specifier, skillName, version)
+          : affectedSpecifierMatchesNameOnly(specifier, skillName),
+      ),
+    );
+
+    if (matchedAffected.length > 0) {
+      matches.push({ advisory, matchedAffected });
+    }
+  }
+
+  return matches;
+}
+
+function printMatches(matches, skillName, version) {
+  process.stdout.write("Advisory matches detected for requested install target.\n");
+  process.stdout.write(`Target: ${skillName}${version ? `@${version}` : ""}\n`);
+
+  for (const entry of matches) {
+    const advisory = entry.advisory;
+    const severity = String(advisory.severity ?? "unknown").toUpperCase();
+    const advisoryId = advisory.id ?? "unknown-id";
+    const title = advisory.title ?? "Untitled advisory";
+    process.stdout.write(`- [${severity}] ${advisoryId}: ${title}\n`);
+    process.stdout.write(`  matched: ${entry.matchedAffected.join(", ")}\n`);
+    if (advisory.action) {
+      process.stdout.write(`  action: ${advisory.action}\n`);
+    }
+  }
+}
+
+function runInstall(skillName, version) {
+  const target = version ? `${skillName}@${version}` : skillName;
+  process.stdout.write(`Install target: ${target}\n`);
+
+  const result = spawnSync("npx", ["clawhub@latest", "install", target], {
+    stdio: "inherit",
+  });
+
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const { feed, source } = await loadFeed();
+  const matches = findMatches(feed, args.skill, args.version);
+  const highRisk = matches.some((entry) => advisoryLooksHighRisk(entry.advisory));
+
+  process.stdout.write(`Advisory source: ${source}\n`);
+
+  if (matches.length > 0) {
+    printMatches(matches, args.skill, args.version);
+
+    process.stdout.write("\n");
+    process.stdout.write("Install request recognized as first confirmation.\n");
+    process.stdout.write("Additional explicit confirmation is required with advisory context.\n");
+
+    if (!args.confirmAdvisory) {
+      process.stdout.write(
+        "Re-run with --confirm-advisory to proceed after the user explicitly confirms.\n",
+      );
+      process.exit(EXIT_CONFIRM_REQUIRED);
+    }
+    process.stdout.write("Second confirmation provided via --confirm-advisory.\n");
+  }
+
+  if (args.dryRun) {
+    process.stdout.write("Dry run only; install command was not executed.\n");
+    return;
+  }
+
+  if (highRisk) {
+    process.stdout.write(
+      "High-risk advisory context acknowledged. Proceeding only because --confirm-advisory was provided.\n",
+    );
+  }
+
+  runInstall(args.skill, args.version);
+}
+
+main().catch((error) => {
+  process.stderr.write(`${String(error)}\n`);
+  process.exit(1);
+});
