@@ -1,6 +1,6 @@
 {
   "version": "0.0.2",
-  "updated": "2026-02-05T21:19:17Z",
+  "updated": "2026-02-08T06:16:28Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
