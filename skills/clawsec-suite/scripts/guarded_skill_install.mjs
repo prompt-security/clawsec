@@ -279,8 +279,11 @@ function printMatches(matches, skillName, version) {
   }
 }
 
-function runInstall(skillName) {
-  const result = spawnSync("npx", ["clawhub@latest", "install", skillName], {
+function runInstall(skillName, version) {
+  const target = version ? `${skillName}@${version}` : skillName;
+  process.stdout.write(`Install target: ${target}\n`);
+
+  const result = spawnSync("npx", ["clawhub@latest", "install", target], {
     stdio: "inherit",
   });
 
@@ -316,12 +319,6 @@ async function main() {
     process.stdout.write("Second confirmation provided via --confirm-advisory.\n");
   }
 
-  if (args.version) {
-    process.stdout.write(
-      "Note: version was used for advisory matching; clawhub install currently runs by skill name.\n",
-    );
-  }
-
   if (args.dryRun) {
     process.stdout.write("Dry run only; install command was not executed.\n");
     return;
@@ -333,7 +330,7 @@ async function main() {
     );
   }
 
-  runInstall(args.skill);
+  runInstall(args.skill, args.version);
 }
 
 main().catch((error) => {

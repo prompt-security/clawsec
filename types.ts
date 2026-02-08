@@ -16,11 +16,23 @@ export interface FeedItem {
   description: string;
 }
 
+export type AdvisoryType =
+  | 'malicious_skill'
+  | 'vulnerable_skill'
+  | 'prompt_injection'
+  | 'attack_pattern'
+  | 'best_practice'
+  | 'tampering_attempt'
+  // NVD CVE advisories use normalized weakness names (for example:
+  // "missing_authentication_for_critical_function", "os_command_injection").
+  // Keep this open for new categories without requiring type updates.
+  | string;
+
 // Full advisory type from NVD CVE feed or community reports
 export interface Advisory {
   id: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  type: 'malicious_skill' | 'vulnerable_skill' | 'prompt_injection' | 'attack_pattern' | 'best_practice' | 'tampering_attempt';
+  type: AdvisoryType;
   title: string;
   description: string;
   affected?: string[];
