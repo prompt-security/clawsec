@@ -11,7 +11,7 @@ export const Home: React.FC = () => {
   const [copiedHuman, setCopiedHuman] = useState(false);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
 
-  const curlCommand = `curl -s ${SKILL_URL}`;
+  const curlCommand = `npx clawhub@latest install clawsec-suite`;
 
   // Rotate file names every 2-3 seconds
   useEffect(() => {
@@ -21,7 +21,7 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const humanInstruction = `Read ${SKILL_URL} and follow the instructions to install this skill. all checksums verified with source`;
+  const humanInstruction = `Please install clawsec-suite from clawhubnpx clawhub@latest install clawsec-suite`;
 
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
