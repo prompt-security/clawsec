@@ -327,12 +327,23 @@ async function persistState(stateFile: string, state: AdvisoryState): Promise<vo
   const normalized = normalizeState(state);
   await fs.mkdir(path.dirname(stateFile), { recursive: true });
   const tmpFile = `${stateFile}.tmp-${process.pid}-${Date.now()}`;
-  await fs.writeFile(tmpFile, `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
+  await fs.writeFile(tmpFile, `${JSON.stringify(normalized, null, 2)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
   await fs.rename(tmpFile, stateFile);
   try {
     await fs.chmod(stateFile, 0o600);
-  } catch {
-    // ignore chmod errors on platforms/filesystems that do not support POSIX permissions
+  } catch (err: unknown) {
+    const code = err instanceof Error && "code" in err ? (err as { code: string }).code : undefined;
+    if (code === "ENOTSUP" || code === "EPERM") {
+      console.warn(
+        `Warning: chmod 0600 failed for ${stateFile} (${code}). ` +
+          "File permissions may not be enforced on this platform/filesystem.",
+      );
+    } else {
+      throw err;
+    }
   }
 }
 
