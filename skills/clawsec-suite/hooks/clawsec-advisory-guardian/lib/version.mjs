@@ -80,7 +80,9 @@ export function versionMatches(version, rawSpec) {
     const target = parseSemver(spec.slice(1));
     const current = parseSemver(normalizedVersion);
     if (!target || !current) return false;
-    return current[0] === target[0] && compareSemver(normalizedVersion, spec.slice(1)) !== -1;
+    if (current[0] !== target[0]) return false;
+    if (target[0] === 0 && current[1] !== target[1]) return false;
+    return compareSemver(normalizedVersion, spec.slice(1)) !== -1;
   }
 
   if (spec.startsWith("~")) {
