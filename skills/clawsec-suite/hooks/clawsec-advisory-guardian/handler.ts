@@ -344,8 +344,8 @@ async function loadRemoteFeed(feedUrl: string): Promise<FeedPayload | null> {
   const fetchFn = (globalThis as { fetch?: unknown }).fetch;
   if (typeof fetchFn !== "function") return null;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const controller = new globalThis.AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetchFn(feedUrl, {
       method: "GET",
@@ -360,7 +360,7 @@ async function loadRemoteFeed(feedUrl: string): Promise<FeedPayload | null> {
   } catch {
     return null;
   } finally {
-    clearTimeout(timeout);
+    globalThis.clearTimeout(timeout);
   }
 }
 
