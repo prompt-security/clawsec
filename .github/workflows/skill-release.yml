@@ -597,6 +597,44 @@ jobs:
           echo "=== Release assets ==="
           ls -la release-assets/
 
+      - name: Sign checksums and verify
+        env:
+          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
+            exit 1
+          fi
+
+          umask 077
+          TMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TMP_DIR"' EXIT
+
+          KEY_FILE="$TMP_DIR/private.pem"
+          PUB_FILE="$TMP_DIR/public.pem"
+
+          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
+
+          PASSIN_ARGS=()
+          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
+            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
+          fi
+
+          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
+
+          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "release-assets/checksums.json" | openssl base64 -A > "release-assets/checksums.sig"
+
+          openssl base64 -d -A -in "release-assets/checksums.sig" -out "$TMP_DIR/checksums.sig.bin"
+          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/checksums.sig.bin" "release-assets/checksums.json"
+
+          cp "$PUB_FILE" "release-assets/signing-public.pem"
+
+          echo "Signed and verified release-assets/checksums.json"
+          ls -la release-assets/
+
       - name: Publish to ClawHub
         if: steps.publishable.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
@@ -637,22 +675,33 @@ jobs:
 
             **Manual download with verification:**
             ```bash
-            # 1. Download the release archive and checksums
+            # 1. Download the release archive, checksums, and signing material
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
 
-            # 2. Verify archive checksum
+            # 2. Verify the checksums manifest signature
+            openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
+            openssl dgst -sha256 -verify signing-public.pem -signature checksums.sig.bin checksums.json
+
+            # 3. Verify archive checksum from the signed manifest
             echo "$(jq -r '.archive.sha256' checksums.json)  ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip" | sha256sum -c
 
-            # 3. Extract (creates ${{ steps.parse.outputs.skill_name }}/ directory)
+            # 4. Extract (creates ${{ steps.parse.outputs.skill_name }}/ directory)
             unzip ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip
             ```
 
             ### Verification
 
-            All files include SHA256 checksums in `checksums.json`:
+            `checksums.json` is cryptographically signed (`checksums.sig`) using the ClawSec CI signing key.
+            Verify the signature first, then trust hashes from `checksums.json`:
             ```bash
-            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json | jq .
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
+            openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
+            openssl dgst -sha256 -verify signing-public.pem -signature checksums.sig.bin checksums.json
             ```
 
             ### Files

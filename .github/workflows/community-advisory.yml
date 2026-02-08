@@ -14,7 +14,9 @@ concurrency:
 
 env:
   FEED_PATH: advisories/feed.json
+  FEED_SIG_PATH: advisories/feed.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
+  SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
 
 jobs:
   process-advisory:
@@ -196,13 +198,51 @@ jobs:
             exit 1
           fi
 
+      - name: Sign advisory feed and verify
+        if: steps.parse.outputs.already_exists != 'true'
+        env:
+          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
+            exit 1
+          fi
+
+          umask 077
+          TMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TMP_DIR"' EXIT
+
+          KEY_FILE="$TMP_DIR/private.pem"
+          PUB_FILE="$TMP_DIR/public.pem"
+
+          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
+
+          PASSIN_ARGS=()
+          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
+            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
+          fi
+
+          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
+
+          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$FEED_PATH" | openssl base64 -A > "$FEED_SIG_PATH"
+          cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
+
+          openssl base64 -d -A -in "$FEED_SIG_PATH" -out "$TMP_DIR/feed.sig.bin"
+          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/feed.sig.bin" "$FEED_PATH"
+          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/feed.sig.bin" "$SKILL_FEED_PATH"
+
+          echo "Signed and verified advisory feed at: $FEED_SIG_PATH"
+
       - name: Commit changes
         if: steps.parse.outputs.already_exists != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add "$FEED_PATH" "$SKILL_FEED_PATH"
+          git add "$FEED_PATH" "$FEED_SIG_PATH" "$SKILL_FEED_PATH" "$SKILL_FEED_SIG_PATH"
 
           ADVISORY_ID="${{ steps.parse.outputs.advisory_id }}"
           git commit -m "chore: add community advisory $ADVISORY_ID

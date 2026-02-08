@@ -125,12 +125,27 @@ jobs:
                   echo "  Mirrored: $ASSET_NAME"
                 done < <(echo "$release" | jq -c '.assets[]')
 
+                # Verify signed checksums when signature artifacts are present.
+                # Legacy releases without signatures are still mirrored for backward compatibility.
+                if [ -f "$MIRROR_DIR/checksums.sig" ] && [ -f "$MIRROR_DIR/signing-public.pem" ] && [ -f "$MIRROR_DIR/checksums.json" ]; then
+                  openssl base64 -d -A -in "$MIRROR_DIR/checksums.sig" -out "$MIRROR_DIR/checksums.sig.bin"
+                  if ! openssl dgst -sha256 -verify "$MIRROR_DIR/signing-public.pem" -signature "$MIRROR_DIR/checksums.sig.bin" "$MIRROR_DIR/checksums.json"; then
+                    echo "  Warning: Invalid checksums signature for $TAG; skipping skill"
+                    rm -f "$MIRROR_DIR/checksums.sig.bin"
+                    continue
+                  fi
+                  rm -f "$MIRROR_DIR/checksums.sig.bin"
+                  echo "  Verified checksums signature"
+                elif [ -f "$MIRROR_DIR/checksums.json" ]; then
+                  echo "  Warning: Unsigned legacy checksums for $TAG (missing checksums.sig/signing-public.pem)"
+                fi
+
                 # Copy the subset needed for the site catalog (skill pages)
                 mkdir -p "public/skills/${SKILL_NAME}"
                 cp "$MIRROR_DIR/skill.json" "public/skills/${SKILL_NAME}/skill.json"
                 echo "  Added to catalog: skill.json"
 
-                for file in checksums.json README.md SKILL.md; do
+                for file in checksums.json checksums.sig signing-public.pem README.md SKILL.md; do
                   if [ -f "$MIRROR_DIR/$file" ]; then
                     cp "$MIRROR_DIR/$file" "public/skills/${SKILL_NAME}/$file"
                     echo "  Added to catalog: $file"
@@ -179,18 +194,91 @@ jobs:
           echo "=== Skills Directory ==="
           ls -la public/skills/
 
-      - name: Create root checksums placeholder
-        run: |
-          # Create empty checksums.json placeholder for root level
-          echo '{"version":"1.0.0","files":{}}' > public/checksums.json
-          echo "Created checksums.json placeholder"
-
       - name: Copy advisory feed to public
         run: |
+          set -euo pipefail
           mkdir -p public/advisories
           cp advisories/feed.json public/advisories/feed.json
           echo "Copied advisory feed to public/advisories/"
           cat public/advisories/feed.json | jq '.advisories | length' | xargs -I {} echo "Feed contains {} advisories"
+
+      - name: Generate advisory checksums manifest
+        run: |
+          set -euo pipefail
+
+          FEED_FILE="public/advisories/feed.json"
+          FEED_SHA=$(sha256sum "$FEED_FILE" | awk '{print $1}')
+          FEED_SIZE=$(stat -c%s "$FEED_FILE" 2>/dev/null || stat -f%z "$FEED_FILE")
+
+          jq -n \
+            --arg version "1.1.0" \
+            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repo "${{ github.repository }}" \
+            --arg sha "$FEED_SHA" \
+            --argjson size "$FEED_SIZE" \
+            '{
+              version: $version,
+              generated_at: $generated,
+              repository: $repo,
+              files: {
+                "advisories/feed.json": {
+                  sha256: $sha,
+                  size: $size,
+                  path: "advisories/feed.json",
+                  url: "https://clawsec.prompt.security/advisories/feed.json"
+                }
+              }
+            }' > public/checksums.json
+
+          echo "Generated public/checksums.json"
+          jq . public/checksums.json
+
+      - name: Sign feed/checksums and verify
+        env:
+          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
+            exit 1
+          fi
+
+          umask 077
+          TMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TMP_DIR"' EXIT
+
+          KEY_FILE="$TMP_DIR/private.pem"
+          PUB_FILE="$TMP_DIR/public.pem"
+
+          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
+
+          PASSIN_ARGS=()
+          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
+            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
+          fi
+
+          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
+
+          sign_and_verify() {
+            local input_file="$1"
+            local output_sig="$2"
+            local tmp_sig="$TMP_DIR/$(basename "$output_sig").bin"
+
+            openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$input_file" | openssl base64 -A > "$output_sig"
+            openssl base64 -d -A -in "$output_sig" -out "$tmp_sig"
+            openssl dgst -sha256 -verify "$PUB_FILE" -signature "$tmp_sig" "$input_file"
+          }
+
+          sign_and_verify "public/advisories/feed.json" "public/advisories/feed.json.sig"
+          sign_and_verify "public/checksums.json" "public/checksums.sig"
+
+          cp "$PUB_FILE" "public/signing-public.pem"
+
+          echo "Signed advisory artifacts:"
+          ls -la public/advisories/feed.json*
+          ls -la public/checksums.json public/checksums.sig public/signing-public.pem
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -229,11 +317,25 @@ jobs:
               echo "Warning: Suite release assets not mirrored (missing: $MIRROR_TAG_DIR)"
             fi
 
-            # Mirror advisories feed at the path referenced by suite docs/heartbeat
+            # Mirror advisories feed + signatures at the path referenced by suite docs/heartbeat
             if [ -f "public/advisories/feed.json" ]; then
               mkdir -p "$MIRROR_LATEST_DIR/advisories"
               cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/advisories/feed.json"
               cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/feed.json"
+            fi
+            if [ -f "public/advisories/feed.json.sig" ]; then
+              mkdir -p "$MIRROR_LATEST_DIR/advisories"
+              cp "public/advisories/feed.json.sig" "$MIRROR_LATEST_DIR/advisories/feed.json.sig"
+              cp "public/advisories/feed.json.sig" "$MIRROR_LATEST_DIR/feed.json.sig"
+            fi
+            if [ -f "public/checksums.json" ]; then
+              cp "public/checksums.json" "$MIRROR_LATEST_DIR/checksums.json"
+            fi
+            if [ -f "public/checksums.sig" ]; then
+              cp "public/checksums.sig" "$MIRROR_LATEST_DIR/checksums.sig"
+            fi
+            if [ -f "public/signing-public.pem" ]; then
+              cp "public/signing-public.pem" "$MIRROR_LATEST_DIR/signing-public.pem"
             fi
           else
             echo "No clawsec-suite release found, using fallback"
@@ -251,7 +353,9 @@ jobs:
       - name: Copy skills data to dist
         run: |
           cp -r public/skills dist/skills 2>/dev/null || echo "No skills directory"
-          cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No legacy checksums"
+          cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No checksums manifest"
+          cp public/checksums.sig dist/checksums.sig 2>/dev/null || echo "No checksums signature"
+          cp public/signing-public.pem dist/signing-public.pem 2>/dev/null || echo "No signing public key"
           cp -r public/advisories dist/advisories 2>/dev/null || echo "No advisories directory"
 
           echo "=== Dist contents ==="
