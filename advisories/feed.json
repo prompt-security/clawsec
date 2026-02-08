@@ -1,6 +1,6 @@
 {
   "version": "0.0.2",
-  "updated": "2026-02-05T12:53:37Z",
+  "updated": "2026-02-05T21:19:17Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -58,7 +58,7 @@
       "severity": "high",
       "type": "vulnerable_skill",
       "title": "OpenClaw (formerly  Clawdbot) is a personal AI assistant you run on your own devices. Prior to 2026....",
-      "description": "OpenClaw (formerly  Clawdbot) is a personal AI assistant you run on your own devices. Prior to 2026.1.29, a command injection vulnerability existed in OpenClaw's Docker sandbox execution mechanism due to unsafe handling of the PATH environment variable when constructing shell commands. An authenticated user able to control environment variables could influence command execution within the container context. This vulnerability is fixed in 2026.1.29.",
+      "description": "OpenClaw (formerly  Clawdbot) is a personal AI assistant you run on your own devices. Prior to 2026.1.29, a command injection vulnerability existed in OpenClaw’s Docker sandbox execution mechanism due to unsafe handling of the PATH environment variable when constructing shell commands. An authenticated user able to control environment variables could influence command execution within the container context. This vulnerability is fixed in 2026.1.29.",
       "affected": [],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-02T23:16:08.593",
