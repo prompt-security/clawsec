@@ -15,9 +15,9 @@
 <div align="center">
 
 ![Prompt Security Logo](./img/Black+Color.png)
+![clawsec mascot](./public/img/mascot.png)
 
 </div>
-![clawsec mascot](./public/img/Black+Color.png)
 <div align="center">
 
 🌐 **Live at: [https://clawsec.prompt.security](https://clawsec.prompt.security) [https://prompt.security/clawsec](https://prompt.security/clawsec)**
