@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Bot, Copy, Check } from 'lucide-react';
 import { Footer } from '../components/Footer';
-import { SKILL_URL } from '../constants';
 
 const FILE_NAMES = ['SOUL.md', 'AGENTS.md', 'USER.md', 'TOOLS.md', 'IDENTITY.md', 'HEARTBEAT.md', 'MEMORY.md'];
 
@@ -11,7 +10,7 @@ export const Home: React.FC = () => {
   const [copiedHuman, setCopiedHuman] = useState(false);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
 
-  const curlCommand = `curl -s ${SKILL_URL}`;
+  const curlCommand = `npx clawhub@latest install clawsec-suite`;
 
   // Rotate file names every 2-3 seconds
   useEffect(() => {
@@ -21,7 +20,7 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const humanInstruction = `Read ${SKILL_URL} and follow the instructions to install this skill. all checksums verified with source`;
+  const humanInstruction = `Please install clawsec-suite from clawhubnpx clawhub@latest install clawsec-suite`;
 
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
@@ -212,7 +211,7 @@ export const Home: React.FC = () => {
           )}
 
           <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-          Also Available via clawhub: npx clawhub@latest install clawsec-suite
+          
           </p>
         </div>
         <img
