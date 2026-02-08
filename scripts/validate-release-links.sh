@@ -45,8 +45,7 @@ get_release_assets() {
   # Always included
   assets+=("skill.json")
   assets+=("checksums.json")
-  assets+=("${skill_name}.skill")
-  
+
   # README if exists
   if [ -f "$skill_path/README.md" ]; then
     assets+=("README.md")
@@ -151,12 +150,6 @@ validate_skill() {
       fi
     done < <(extract_all_referenced_files "$skill_path/SKILL.md")
     
-    # Check for common patterns that reference this skill
-    if grep -qE "/${skill_name}\.skill" "$skill_path/SKILL.md"; then
-      if printf '%s\n' "${RELEASE_ASSETS[@]}" | grep -q "^${skill_name}.skill$"; then
-        echo -e "    ${GREEN}✓${NC} ${skill_name}.skill reference found and will be created"
-      fi
-    fi
   fi
   echo ""
   
@@ -199,7 +192,7 @@ validate_skill() {
     for doc in "$other_skill_dir"/*.md; do
       [ -f "$doc" ] || continue
       
-      if grep -qE "/${skill_name}\.skill|/${skill_name}-v" "$doc" 2>/dev/null; then
+      if grep -qE "/${skill_name}-v" "$doc" 2>/dev/null; then
         echo -e "    → Referenced by ${other_skill}/$(basename "$doc")"
         cross_refs_found=true
       fi

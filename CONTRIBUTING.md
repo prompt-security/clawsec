@@ -10,6 +10,7 @@ Thank you for your interest in contributing security skills to the ClawSec ecosy
 - [skill.json Reference](#skilljson-reference)
 - [Testing Your Skill](#testing-your-skill)
 - [Submission Process](#submission-process)
+- [Version Bump and Release Flow](#version-bump-and-release-flow)
 - [Review Criteria](#review-criteria)
 - [After Acceptance](#after-acceptance)
 - [Submitting Security Advisories](#submitting-security-advisories)
@@ -49,7 +50,7 @@ git checkout -b skill/my-new-skill
 All skills distributed through ClawSec undergo security review and are hashed for agent verification. Trust is implicit:
 
 - **Backend Verification**: Every skill is validated against checksums, SBOM manifests, and security policies
-- **Transparent Security**: SHA256 checksums, signature verification, and advisory feeds operate automatically
+- **Transparent Security**: SHA256 checksums, and advisory feeds operate automatically
 - **Contribution Flow**: Submit skills via PR → maintainer review → approval → release
 
 
@@ -145,14 +146,22 @@ Create `skill.json` with the following structure:
 ```
 
 **Important Notes:**
-- Start with version `0.0.1`
+- Start with version `0.0.1` in both `skill.json` and `SKILL.md` frontmatter
 - List ALL files your skill needs in the SBOM
 
 ### Step 3: Create SKILL.md
 
-This is the main documentation for your skill. Use this template:
+This is the main documentation for your skill. Include YAML frontmatter with a `version` that matches `skill.json`:
 
+````markdown
 ```markdown
+---
+name: my-skill-name
+version: 0.0.1
+description: Brief description of what your skill does
+metadata: {"openclaw":{"emoji":"🔒","category":"security"}}
+---
+
 # My Skill Name
 
 ## Overview
@@ -161,11 +170,7 @@ Brief description of what this skill does and why it's useful for AI agent secur
 
 ## Usage
 
-How to use the skill:
-
-```bash
-# Example commands or usage patterns
-```
+How to use the skill.
 
 ## Features
 
@@ -182,25 +187,8 @@ How to use the skill:
 ## Security Considerations
 
 Important security notes about this skill.
-
-## Examples
-
-### Example 1: Basic Usage
-
-Description and example output.
-
-### Example 2: Advanced Usage
-
-Description and example output.
-
-## Troubleshooting
-
-Common issues and solutions.
-
-## Contributing
-
-How others can improve this skill.
 ```
+````
 
 ### Step 4: Add Supporting Files
 
@@ -314,7 +302,8 @@ If your skill includes executable scripts or requires testing:
 
 - [ ] All SBOM files exist
 - [ ] skill.json is valid JSON
-- [ ] Version is 1.0.0 for new skills
+- [ ] Version is `0.0.1` for new skills
+- [ ] `skill.json` version matches `SKILL.md` frontmatter version
 - [ ] No hardcoded credentials or secrets
 - [ ] Trigger phrases are descriptive
 - [ ] Required binaries are documented
@@ -380,6 +369,39 @@ Any special considerations for reviewers.
 
 ---
 
+## Version Bump and Release Flow
+
+This repository uses a branch-first workflow for skill versions:
+
+1. Make skill changes on a branch (`skill/<name>-...`).
+2. Keep versions in sync:
+   - `skills/<skill>/skill.json` -> `.version`
+   - `skills/<skill>/SKILL.md` -> frontmatter `version`
+3. For existing skills, you can bump versions on your branch with:
+
+```bash
+./scripts/release-skill.sh <skill-name> <new-version>
+```
+
+4. Push your branch and open a PR. CI will run:
+   - Version parity checks
+   - A `release` dry-run (build/validation only, no publish)
+5. Do **not** push release tags from PR branches.
+   - `scripts/release-skill.sh` creates a local tag. Keep it local during PR review.
+   - If you need to remove that local tag: `git tag -d <skill-name>-v<version>`
+6. After merge, a maintainer creates and pushes the release tag from `main`:
+
+```bash
+git checkout main
+git pull --ff-only origin main
+git tag -a <skill-name>-v<version> -m "<skill-name> version <version>"
+git push origin <skill-name>-v<version>
+```
+
+7. Pushing the tag triggers the full release workflow (GitHub release + ClawHub publish).
+
+---
+
 ## Review Criteria
 
 Maintainers will review your skill based on:
@@ -419,8 +441,8 @@ Once your skill is accepted:
 1. **Maintainers will:**
    - Review your PR (Prompt Security staff or designated maintainers)
    - Merge your PR after security review
-   - Create the first release using `scripts/release-skill.sh`
-   - Generate checksums and publish to GitHub Releases
+   - Create and push a release tag from merged `main` (`<skill>-v<version>`)
+   - Generate checksums and publish to GitHub Releases + ClawHub
    - Update the skills catalog website
 
 2. **You'll be credited:**
@@ -463,7 +485,7 @@ mkdir -p skills/simple-scanner
 cat > skills/simple-scanner/skill.json << 'EOF'
 {
   "name": "simple-scanner",
-  "version": "0.0.1,
+  "version": "0.0.1",
   "description": "Basic security scanner for AI agents",
   "author": "contributor-name",
   "license": "MIT",
@@ -484,6 +506,13 @@ cat > skills/simple-scanner/skill.json << 'EOF'
 EOF
 
 cat > skills/simple-scanner/SKILL.md << 'EOF'
+---
+name: simple-scanner
+version: 0.0.1
+description: Basic security scanner for AI agents
+metadata: {"openclaw":{"emoji":"🔍","category":"security"}}
+---
+
 # Simple Scanner
 
 A basic security scanner for AI agents.

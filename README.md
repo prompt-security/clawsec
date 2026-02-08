@@ -41,7 +41,7 @@ ClawSec is a **complete security skill suite for the OpenClaw family of agents (
 - **🛡️ File Integrity Protection** - Drift detection and auto-restore for critical agent files (SOUL.md, IDENTITY.md, etc.)
 - **📡 Live Security Advisories** - Automated NVD CVE polling and community threat intelligence
 - **🔍 Security Audits** - Self-check scripts to detect prompt injection markers and vulnerabilities
-- **🔐 Checksum Verification** - SHA256 checksums for all skill artifacts via `.skill` packages
+- **🔐 Checksum Verification** - SHA256 checksums for all skill artifacts
 - **Health Checks** - Automated updates and integrity verification for all installed skills
 
 ---
@@ -170,10 +170,9 @@ When a skill is tagged (e.g., `soul-guardian-v1.0.0`), the pipeline:
 
 1. **Validates** - Checks `skill.json` version matches tag
 2. **Generates Checksums** - Creates `checksums.json` with SHA256 hashes for all SBOM files
-3. **Packages** - Creates `.skill` zip file with all required files
-4. **Releases** - Publishes to GitHub Releases with all artifacts
-5. **Supersedes Old Releases** - Marks older versions (same major) as pre-releases
-6. **Triggers Pages Update** - Refreshes the skills catalog on the website
+3. **Releases** - Publishes to GitHub Releases with all artifacts
+4. **Supersedes Old Releases** - Marks older versions (same major) as pre-releases
+5. **Triggers Pages Update** - Refreshes the skills catalog on the website
 
 ### Release Versioning & Superseding
 
@@ -194,7 +193,6 @@ When you release `skill-v0.0.2`, the previous `skill-v0.0.1` release is automati
 ### Release Artifacts
 
 Each skill release includes:
-- `<skill>.skill` - Packaged skill (zip format)
 - `checksums.json` - SHA256 hashes for integrity verification
 - `skill.json` - Skill metadata
 - `SKILL.md` - Main skill documentation
@@ -220,16 +218,15 @@ Checks:
 - SBOM files exist and are readable
 - OpenClaw metadata is properly structured
 
-### Skill Packager
+### Skill Checksums Generator
 
-Creates a distributable `.skill` file with checksums:
+Generates `checksums.json` with SHA256 hashes for a skill:
 
 ```bash
 python utils/package_skill.py skills/clawsec-feed ./dist
 ```
 
 Outputs:
-- `clawsec-feed.skill` - Zip package with all SBOM files
 - `checksums.json` - SHA256 hashes for verification
 
 ---

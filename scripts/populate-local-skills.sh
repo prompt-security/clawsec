@@ -1,7 +1,7 @@
 #!/bin/bash
 # populate-local-skills.sh
 # Builds local skills index from skills/ directory for development preview.
-# This mirrors the skill-release.yml pipeline exactly - generates real checksums and .skill packages.
+# This mirrors the skill-release.yml pipeline exactly - generates real checksums.
 #
 # Usage: ./scripts/populate-local-skills.sh
 
@@ -159,50 +159,6 @@ FILEENTRY
     }
 SKILLJSON
   
-  # === Create .skill package BEFORE closing checksums JSON ===
-  SKILL_PACKAGE="$PUBLIC_SKILLS_DIR/$SKILL_NAME/${SKILL_NAME}.skill"
-  
-  # Get files from SBOM and create zip
-  pushd "$SKILL_DIR" > /dev/null
-  
-  FILES=$(jq -r '.sbom.files[].path' skill.json 2>/dev/null | tr '\n' ' ')
-  
-  if [ -n "$FILES" ]; then
-    # Create zip with SBOM files + skill.json
-    zip -r "$SKILL_PACKAGE" $FILES skill.json 2>/dev/null || true
-    
-    # Add README if exists
-    if [ -f README.md ]; then
-      zip -u "$SKILL_PACKAGE" README.md 2>/dev/null || true
-    fi
-    
-    if [ -f "$SKILL_PACKAGE" ]; then
-      PACKAGE_SIZE=$(stat -f%z "$SKILL_PACKAGE" 2>/dev/null || stat -c%s "$SKILL_PACKAGE")
-      echo "  ✓ Created: ${SKILL_NAME}.skill ($(( PACKAGE_SIZE / 1024 ))KB)"
-      
-      # Add .skill package checksum
-      if command -v sha256sum &> /dev/null; then
-        SKILL_PACKAGE_SHA=$(sha256sum "$SKILL_PACKAGE" | awk '{print $1}')
-      else
-        SKILL_PACKAGE_SHA=$(shasum -a 256 "$SKILL_PACKAGE" | awk '{print $1}')
-      fi
-      
-      echo "," >> "$CHECKSUMS_FILE"
-      cat >> "$CHECKSUMS_FILE" << SKILLPACKAGE
-    "${SKILL_NAME}.skill": {
-      "sha256": "$SKILL_PACKAGE_SHA",
-      "size": $PACKAGE_SIZE,
-      "url": "https://clawsec.prompt.security/releases/download/$TAG/${SKILL_NAME}.skill"
-    }
-SKILLPACKAGE
-      echo "  ✓ Checksum: ${SKILL_NAME}.skill ($SKILL_PACKAGE_SHA)"
-    fi
-  else
-    echo "  ⚠️  No SBOM files, skipping .skill package"
-  fi
-  
-  popd > /dev/null
-
   # Close checksums JSON
   cat >> "$CHECKSUMS_FILE" << EOF
   }
