@@ -54,7 +54,7 @@ export function escapeRegex(value) {
 export function versionMatches(version, rawSpec) {
   const spec = String(rawSpec ?? "").trim();
   if (!spec || spec === "*" || spec.toLowerCase() === "any") return true;
-  if (!version || String(version).trim().toLowerCase() === "unknown") return true;
+  if (!version || String(version).trim().toLowerCase() === "unknown") return false;
 
   const normalizedVersion = String(version).trim().replace(/^v/i, "");
 
