@@ -42,7 +42,13 @@ function requireOpenClawCli() {
 }
 
 function assertSourceHookExists() {
-  const requiredFiles = ["HOOK.md", "handler.ts"];
+  const requiredFiles = [
+    "HOOK.md",
+    "handler.ts",
+    "lib/utils.mjs",
+    "lib/version.mjs",
+    "lib/feed.mjs",
+  ];
   for (const file of requiredFiles) {
     const fullPath = path.join(SOURCE_HOOK_DIR, file);
     if (!fs.existsSync(fullPath)) {

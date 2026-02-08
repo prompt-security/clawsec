@@ -4,6 +4,9 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { normalizeSkillName, uniqueStrings } from "../hooks/clawsec-advisory-guardian/lib/utils.mjs";
+import { versionMatches } from "../hooks/clawsec-advisory-guardian/lib/version.mjs";
+import { parseAffectedSpecifier, isValidFeedPayload, loadRemoteFeed } from "../hooks/clawsec-advisory-guardian/lib/feed.mjs";
 
 const DEFAULT_FEED_URL =
   "https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json";
@@ -77,104 +80,6 @@ function parseArgs(argv) {
   return parsed;
 }
 
-function isObject(value) {
-  return typeof value === "object" && value !== null;
-}
-
-function normalizeSkillName(value) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase();
-}
-
-function uniqueStrings(values) {
-  return [...new Set(values)];
-}
-
-function parseSemver(version) {
-  const cleaned = String(version ?? "")
-    .trim()
-    .replace(/^v/i, "")
-    .split("-")[0];
-  const parts = cleaned.split(".");
-  if (parts.length === 0) return null;
-
-  const normalized = parts.slice(0, 3).map((part) => Number.parseInt(part, 10));
-  while (normalized.length < 3) normalized.push(0);
-  if (normalized.some((part) => Number.isNaN(part))) return null;
-  return normalized;
-}
-
-function compareSemver(left, right) {
-  const a = parseSemver(left);
-  const b = parseSemver(right);
-  if (!a || !b) return null;
-  for (let index = 0; index < 3; index += 1) {
-    if (a[index] > b[index]) return 1;
-    if (a[index] < b[index]) return -1;
-  }
-  return 0;
-}
-
-function escapeRegex(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function versionMatches(version, rawSpec) {
-  const spec = String(rawSpec ?? "").trim();
-  if (!spec || spec === "*" || spec.toLowerCase() === "any") return true;
-  if (!version) return false;
-
-  const normalizedVersion = String(version).trim().replace(/^v/i, "");
-
-  if (spec.includes("*")) {
-    const regex = new RegExp(`^${escapeRegex(spec).replace(/\\\*/g, ".*")}$`);
-    return regex.test(normalizedVersion);
-  }
-
-  const comparatorMatch = spec.match(/^(>=|<=|>|<|=)\s*(.+)$/);
-  if (comparatorMatch) {
-    const operator = comparatorMatch[1];
-    const target = comparatorMatch[2].trim();
-    const compared = compareSemver(normalizedVersion, target);
-    if (compared === null) return false;
-    if (operator === ">=") return compared >= 0;
-    if (operator === "<=") return compared <= 0;
-    if (operator === ">") return compared > 0;
-    if (operator === "<") return compared < 0;
-    return compared === 0;
-  }
-
-  if (spec.startsWith("^")) {
-    const target = parseSemver(spec.slice(1));
-    const current = parseSemver(normalizedVersion);
-    if (!target || !current) return false;
-    return current[0] === target[0] && compareSemver(normalizedVersion, spec.slice(1)) !== -1;
-  }
-
-  if (spec.startsWith("~")) {
-    const target = parseSemver(spec.slice(1));
-    const current = parseSemver(normalizedVersion);
-    if (!target || !current) return false;
-    return current[0] === target[0] && current[1] === target[1] && compareSemver(normalizedVersion, spec.slice(1)) !== -1;
-  }
-
-  return normalizedVersion === spec || normalizedVersion === spec.replace(/^v/i, "");
-}
-
-function parseAffectedSpecifier(rawSpecifier) {
-  const specifier = String(rawSpecifier ?? "").trim();
-  if (!specifier) return null;
-  const atIndex = specifier.lastIndexOf("@");
-  if (atIndex <= 0) {
-    return { name: specifier, versionSpec: "*" };
-  }
-  return {
-    name: specifier.slice(0, atIndex),
-    versionSpec: specifier.slice(atIndex + 1),
-  };
-}
-
 function affectedSpecifierMatches(specifier, skillName, version) {
   const parsed = parseAffectedSpecifier(specifier);
   if (!parsed) return false;
@@ -199,30 +104,6 @@ function advisoryLooksHighRisk(advisory) {
   return false;
 }
 
-async function loadRemoteFeed(feedUrl) {
-  const fetchFn = globalThis.fetch;
-  if (typeof fetchFn !== "function") return null;
-
-  const controller = new globalThis.AbortController();
-  const timeout = globalThis.setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const response = await fetchFn(feedUrl, {
-      method: "GET",
-      signal: controller.signal,
-      headers: { accept: "application/json" },
-    });
-    if (!response.ok) return null;
-    const payload = await response.json();
-    if (!isObject(payload) || !Array.isArray(payload.advisories)) return null;
-    return payload;
-  } catch {
-    return null;
-  } finally {
-    globalThis.clearTimeout(timeout);
-  }
-}
-
 async function loadFeed() {
   const feedUrl = process.env.CLAWSEC_FEED_URL || DEFAULT_FEED_URL;
   const localFeedPath = process.env.CLAWSEC_LOCAL_FEED || DEFAULT_LOCAL_FEED;
@@ -232,7 +113,7 @@ async function loadFeed() {
 
   const raw = await fs.readFile(localFeedPath, "utf8");
   const payload = JSON.parse(raw);
-  if (!isObject(payload) || !Array.isArray(payload.advisories)) {
+  if (!isValidFeedPayload(payload)) {
     throw new Error(`Invalid fallback advisory feed format: ${localFeedPath}`);
   }
   return { feed: payload, source: `local:${localFeedPath}` };

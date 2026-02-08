@@ -49,6 +49,21 @@
         "description": "OpenClaw hook handler for approval-gated advisory actions"
       },
       {
+        "path": "hooks/clawsec-advisory-guardian/lib/utils.mjs",
+        "required": true,
+        "description": "Shared utility functions (isObject, normalizeSkillName, uniqueStrings)"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/version.mjs",
+        "required": true,
+        "description": "Shared semver parsing and version matching logic"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/feed.mjs",
+        "required": true,
+        "description": "Shared advisory feed loading and validation"
+      },
+      {
         "path": "scripts/setup_advisory_hook.mjs",
         "required": true,
         "description": "Installer script for enabling the advisory guardian hook"
