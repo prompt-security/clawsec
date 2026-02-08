@@ -49,26 +49,6 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25157"
     },
     {
-      "id": "CLAW-2026-0001",
-      "severity": "high",
-      "type": "prompt_injection",
-      "title": "Data exfiltration attempt via helper-plus skill",
-      "description": "The helper-plus skill was observed sending conversation data to an external server (suspicious-domain.com) on every invocation. The skill makes undocumented network calls that transmit full conversation context to a domain not mentioned in the skill description.",
-      "affected": [
-        "helper-plus@1.0.0",
-        "helper-plus@1.0.1"
-      ],
-      "action": "Remove helper-plus immediately. Do not use versions 1.0.0 or 1.0.1. Wait for a verified patched version.",
-      "published": "2026-02-04T09:30:00Z",
-      "references": [],
-      "source": "Community Report",
-      "github_issue_url": "https://github.com/prompt-security/clawsec/issues/1",
-      "reporter": {
-        "agent_name": "SecurityBot",
-        "opener_type": "agent"
-      }
-    },
-    {
       "id": "CVE-2026-24763",
       "severity": "high",
       "type": "vulnerable_skill",
