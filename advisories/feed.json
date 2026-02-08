@@ -4,6 +4,21 @@
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
+      "id": "CVE-2026-25593",
+      "severity": "high",
+      "type": "vulnerable_skill",
+      "title": "OpenClaw is a personal AI assistant. Prior to 2026.1.20, an unauthenticated local client could use t...",
+      "description": "OpenClaw is a personal AI assistant. Prior to 2026.1.20, an unauthenticated local client could use the Gateway WebSocket API to write config via config.apply and set unsafe cliPath values that were later used for command discovery, enabling command injection as the gateway user. This vulnerability is fixed in 2026.1.20.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-06T21:16:17.790",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-g55j-c2v4-pjcg"
+      ],
+      "cvss_score": 8.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25593"
+    },
+    {
       "id": "CVE-2026-25475",
       "severity": "medium",
       "type": "vulnerable_skill",
