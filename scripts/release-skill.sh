@@ -225,7 +225,8 @@ echo "Committed: $COMMIT_SHA"
 if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   # Check if tag already exists (only matters when we're creating one)
   if git rev-parse "$TAG" >/dev/null 2>&1; then
-    echo "Error: Tag $TAG already exists"
+    echo "Error: Tag $TAG already exists; rolling back last commit"
+    git reset --hard HEAD~1
     exit 1
   fi
 
