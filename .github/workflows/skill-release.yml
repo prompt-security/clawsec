@@ -260,22 +260,13 @@ jobs:
             echo "::group::Dry-run release ${tag}"
 
             out_root="dist/dry-run/${tag}"
-            out_dist="${out_root}/dist"
             out_assets="${out_root}/release-assets"
-            checksums_file="${out_dist}/checksums.json"
-            mkdir -p "${out_dist}" "${out_assets}"
+            mkdir -p "${out_assets}"
 
-            cat > "${checksums_file}" << EOF
-            {
-              "skill": "${skill_name}",
-              "version": "${version}",
-              "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-              "repository": "${{ github.repository }}",
-              "tag": "${tag}",
-              "files": {
-          EOF
-
-            first=true
+            # --- Stage SBOM files preserving directory structure ---
+            staging_dir="$(mktemp -d)"
+            inner_dir="${staging_dir}/${skill_name}"
+            mkdir -p "${inner_dir}"
             temp_sbom_file="$(mktemp)"
             jq -r '.sbom.files[].path' "${json_path}" > "${temp_sbom_file}"
 
@@ -283,29 +274,33 @@ jobs:
               [ -z "${file}" ] && continue
               full_path="${skill_dir}/${file}"
               if [ -f "${full_path}" ]; then
-                sha256="$(sha256sum "${full_path}" | awk '{print $1}')"
-                size="$(stat -c%s "${full_path}" 2>/dev/null || stat -f%z "${full_path}")"
-                filename="$(basename "${file}")"
-
-                if [ "${first}" = true ]; then
-                  first=false
-                else
-                  echo "    ," >> "${checksums_file}"
-                fi
-
-                cat >> "${checksums_file}" << FILEENTRY
-                "${filename}": {
-                  "sha256": "${sha256}",
-                  "size": ${size},
-                  "path": "${file}",
-                  "url": "https://github.com/${{ github.repository }}/releases/download/${tag}/${filename}"
-                }
-          FILEENTRY
-
-                cp "${full_path}" "${out_assets}/${filename}"
+                mkdir -p "${inner_dir}/$(dirname "${file}")"
+                cp "${full_path}" "${inner_dir}/${file}"
               else
                 echo "::error file=${json_path}::SBOM references missing file: ${file}"
                 failures=$((failures + 1))
+              fi
+            done < "${temp_sbom_file}"
+
+            cp "${json_path}" "${inner_dir}/skill.json"
+
+            # --- Create zip preserving directory structure ---
+            zip_name="${skill_name}-v${version}.zip"
+            (cd "${staging_dir}" && zip -qr "${OLDPWD}/${out_assets}/${zip_name}" .)
+
+            # --- Generate checksums.json via jq ---
+            files_json="{}"
+            while IFS= read -r file; do
+              [ -z "${file}" ] && continue
+              full_path="${skill_dir}/${file}"
+              if [ -f "${full_path}" ]; then
+                sha256="$(sha256sum "${full_path}" | awk '{print $1}')"
+                size="$(stat -c%s "${full_path}" 2>/dev/null || stat -f%z "${full_path}")"
+                files_json="$(echo "${files_json}" | jq \
+                  --arg key "${file}" \
+                  --arg sha "${sha256}" \
+                  --argjson sz "${size}" \
+                  '. + {($key): {sha256: $sha, size: $sz, path: $key}}')"
               fi
             done < "${temp_sbom_file}"
 
@@ -313,33 +308,57 @@ jobs:
 
             skill_json_sha="$(sha256sum "${json_path}" | awk '{print $1}')"
             skill_json_size="$(stat -c%s "${json_path}" 2>/dev/null || stat -f%z "${json_path}")"
+            files_json="$(echo "${files_json}" | jq \
+              --arg sha "${skill_json_sha}" \
+              --argjson sz "${skill_json_size}" \
+              '. + {"skill.json": {sha256: $sha, size: $sz}}')"
 
-            cat >> "${checksums_file}" << SKILLJSON
-                ,
-                "skill.json": {
-                  "sha256": "${skill_json_sha}",
-                  "size": ${skill_json_size},
-                  "url": "https://github.com/${{ github.repository }}/releases/download/${tag}/skill.json"
-                }
-          SKILLJSON
+            zip_sha="$(sha256sum "${out_assets}/${zip_name}" | awk '{print $1}')"
+            zip_size="$(stat -c%s "${out_assets}/${zip_name}" 2>/dev/null || stat -f%z "${out_assets}/${zip_name}")"
 
-            cat >> "${checksums_file}" << EOF
-              }
-            }
-          EOF
+            jq -n \
+              --arg skill "${skill_name}" \
+              --arg version "${version}" \
+              --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg repo "${{ github.repository }}" \
+              --arg tag "${tag}" \
+              --arg zip_file "${zip_name}" \
+              --arg zip_sha "${zip_sha}" \
+              --argjson zip_size "${zip_size}" \
+              --arg zip_url "https://github.com/${{ github.repository }}/releases/download/${tag}/${zip_name}" \
+              --argjson files "${files_json}" \
+              '{
+                skill: $skill,
+                version: $version,
+                generated_at: $generated,
+                repository: $repo,
+                tag: $tag,
+                archive: {
+                  filename: $zip_file,
+                  sha256: $zip_sha,
+                  size: $zip_size,
+                  url: $zip_url
+                },
+                files: $files
+              }' > "${out_assets}/checksums.json"
 
-            if ! jq -e . "${checksums_file}" >/dev/null 2>&1; then
-              echo "::error file=${checksums_file}::Generated checksums.json is invalid JSON."
+            if ! jq -e . "${out_assets}/checksums.json" >/dev/null 2>&1; then
+              echo "::error::Generated checksums.json is invalid JSON."
               failures=$((failures + 1))
+              rm -rf "${staging_dir}"
               echo "::endgroup::"
               continue
             fi
 
-            cp "${json_path}" "${out_assets}/skill.json"
+            # --- Copy root-level docs alongside the zip ---
+            if [ -f "${skill_dir}/SKILL.md" ]; then
+              cp "${skill_dir}/SKILL.md" "${out_assets}/SKILL.md"
+            fi
             if [ -f "${skill_dir}/README.md" ]; then
               cp "${skill_dir}/README.md" "${out_assets}/README.md"
             fi
-            cp "${checksums_file}" "${out_assets}/checksums.json"
+
+            rm -rf "${staging_dir}"
 
             echo "Prepared dry-run assets for ${tag}:"
             ls -la "${out_assets}"
@@ -471,111 +490,108 @@ jobs:
           CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
 
-      - name: Generate checksums from SBOM
-        id: checksums
+      - name: Package release assets
         run: |
+          set -euo pipefail
           SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
           SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
           VERSION="${{ steps.parse.outputs.version }}"
+          TAG="${{ github.ref_name }}"
 
-          mkdir -p dist
+          mkdir -p release-assets
 
-          # Start checksums JSON
-          cat > "dist/checksums.json" << EOF
-          {
-            "skill": "${SKILL_NAME}",
-            "version": "${VERSION}",
-            "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "repository": "${{ github.repository }}",
-            "tag": "${{ github.ref_name }}",
-            "files": {
-          EOF
-
-          # Read SBOM files and generate checksums
-          FIRST=true
-          TEMPFILE=$(mktemp)
-
-          # Get files from SBOM
+          # --- Stage SBOM files preserving directory structure ---
+          STAGING_DIR="$(mktemp -d)"
+          INNER_DIR="$STAGING_DIR/$SKILL_NAME"
+          mkdir -p "$INNER_DIR"
+          TEMPFILE="$(mktemp)"
           jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
 
           while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            FULL_PATH="$SKILL_PATH/$file"
+            if [ -f "$FULL_PATH" ]; then
+              mkdir -p "$INNER_DIR/$(dirname "$file")"
+              cp "$FULL_PATH" "$INNER_DIR/$file"
+            else
+              echo "::error file=$SKILL_PATH/skill.json::SBOM references missing file: $file"
+              exit 1
+            fi
+          done < "$TEMPFILE"
+
+          cp "$SKILL_PATH/skill.json" "$INNER_DIR/skill.json"
+
+          # --- Create zip preserving directory structure ---
+          ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
+          (cd "$STAGING_DIR" && zip -qr "$OLDPWD/release-assets/$ZIP_NAME" .)
+
+          # --- Generate checksums.json via jq ---
+          FILES_JSON="{}"
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
             FULL_PATH="$SKILL_PATH/$file"
             if [ -f "$FULL_PATH" ]; then
               SHA256=$(sha256sum "$FULL_PATH" | awk '{print $1}')
               SIZE=$(stat -c%s "$FULL_PATH" 2>/dev/null || stat -f%z "$FULL_PATH")
-              FILENAME=$(basename "$file")
-
-              if [ "$FIRST" = true ]; then
-                FIRST=false
-              else
-                echo "    ," >> "dist/checksums.json"
-              fi
-
-              cat >> "dist/checksums.json" << FILEENTRY
-              "${FILENAME}": {
-                "sha256": "${SHA256}",
-                "size": ${SIZE},
-                "path": "${file}",
-                "url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${FILENAME}"
-              }
-          FILEENTRY
-            else
-              echo "Warning: File not found: $FULL_PATH"
+              FILES_JSON="$(echo "$FILES_JSON" | jq \
+                --arg key "$file" \
+                --arg sha "$SHA256" \
+                --argjson sz "$SIZE" \
+                '. + {($key): {sha256: $sha, size: $sz, path: $key}}')"
             fi
           done < "$TEMPFILE"
 
-          # Also add skill.json checksum
+          rm -f "$TEMPFILE"
+
           SKILL_JSON_SHA=$(sha256sum "$SKILL_PATH/skill.json" | awk '{print $1}')
           SKILL_JSON_SIZE=$(stat -c%s "$SKILL_PATH/skill.json" 2>/dev/null || stat -f%z "$SKILL_PATH/skill.json")
+          FILES_JSON="$(echo "$FILES_JSON" | jq \
+            --arg sha "$SKILL_JSON_SHA" \
+            --argjson sz "$SKILL_JSON_SIZE" \
+            '. + {"skill.json": {sha256: $sha, size: $sz}}')"
 
-          cat >> "dist/checksums.json" << SKILLJSON
-              ,
-              "skill.json": {
-                "sha256": "${SKILL_JSON_SHA}",
-                "size": ${SKILL_JSON_SIZE},
-                "url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skill.json"
-              }
-          SKILLJSON
+          ZIP_SHA=$(sha256sum "release-assets/$ZIP_NAME" | awk '{print $1}')
+          ZIP_SIZE=$(stat -c%s "release-assets/$ZIP_NAME" 2>/dev/null || stat -f%z "release-assets/$ZIP_NAME")
 
-          # Close checksums JSON
-          cat >> "dist/checksums.json" << EOF
-            }
-          }
-          EOF
+          jq -n \
+            --arg skill "$SKILL_NAME" \
+            --arg version "$VERSION" \
+            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repo "${{ github.repository }}" \
+            --arg tag "$TAG" \
+            --arg zip_file "$ZIP_NAME" \
+            --arg zip_sha "$ZIP_SHA" \
+            --argjson zip_size "$ZIP_SIZE" \
+            --arg zip_url "https://github.com/${{ github.repository }}/releases/download/$TAG/$ZIP_NAME" \
+            --argjson files "$FILES_JSON" \
+            '{
+              skill: $skill,
+              version: $version,
+              generated_at: $generated,
+              repository: $repo,
+              tag: $tag,
+              archive: {
+                filename: $zip_file,
+                sha256: $zip_sha,
+                size: $zip_size,
+                url: $zip_url
+              },
+              files: $files
+            }' > "release-assets/checksums.json"
 
-          echo "=== Final checksums.json ==="
-          cat "dist/checksums.json"
-
-      - name: Prepare release assets
-        run: |
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-
-          mkdir -p release-assets
-
-          # Copy individual SBOM files
-          TEMPFILE=$(mktemp)
-          jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
-
-          while IFS= read -r file; do
-            if [ -f "$SKILL_PATH/$file" ]; then
-              # Flatten directory structure for release assets
-              cp "$SKILL_PATH/$file" "release-assets/$(basename "$file")"
-              echo "Added: $(basename "$file")"
-            fi
-          done < "$TEMPFILE"
-
-          # Copy metadata files
-          cp "$SKILL_PATH/skill.json" release-assets/
-
-          # Copy README if exists
+          # --- Copy root-level docs alongside the zip ---
+          if [ -f "$SKILL_PATH/SKILL.md" ]; then
+            cp "$SKILL_PATH/SKILL.md" release-assets/
+          fi
           if [ -f "$SKILL_PATH/README.md" ]; then
             cp "$SKILL_PATH/README.md" release-assets/
           fi
 
-          # Copy checksums
-          cp "dist/checksums.json" release-assets/
+          rm -rf "$STAGING_DIR"
 
+          echo "=== checksums.json ==="
+          jq . "release-assets/checksums.json"
+          echo ""
           echo "=== Release assets ==="
           ls -la release-assets/
 
@@ -619,16 +635,15 @@ jobs:
 
             **Manual download with verification:**
             ```bash
-            # 1. Download checksums
+            # 1. Download the release archive and checksums
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json
 
-            # 2. Download individual files
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SKILL.md
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skill.json
+            # 2. Verify archive checksum
+            echo "$(jq -r '.archive.sha256' checksums.json)  ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip" | sha256sum -c
 
-            # 3. Verify checksums
-            sha256sum SKILL.md
-            # Compare with value in checksums.json
+            # 3. Extract (creates ${{ steps.parse.outputs.skill_name }}/ directory)
+            unzip ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip
             ```
 
             ### Verification
@@ -641,6 +656,7 @@ jobs:
             ### Files
 
             See `checksums.json` for the complete file manifest with SHA256 hashes.
+            The zip archive preserves the full directory structure of the skill.
 
             ---
             *Released by ClawSec skill distribution pipeline*
