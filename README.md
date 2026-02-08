@@ -15,7 +15,7 @@
 <div align="center">
 
 ![Prompt Security Logo](./img/Black+Color.png)
-![clawsec mascot](./public/img/mascot.png)
+<img src="./public/img/mascot.png" alt="clawsec mascot" width="200" />
 
 </div>
 <div align="center">
