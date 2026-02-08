@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Bot, Copy, Check } from 'lucide-react';
 import { Footer } from '../components/Footer';
-import { SKILL_URL } from '../constants';
 
 const FILE_NAMES = ['SOUL.md', 'AGENTS.md', 'USER.md', 'TOOLS.md', 'IDENTITY.md', 'HEARTBEAT.md', 'MEMORY.md'];
 
