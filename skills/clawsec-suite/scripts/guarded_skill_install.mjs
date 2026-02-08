@@ -125,7 +125,7 @@ function versionMatches(version, rawSpec) {
   if (!spec || spec === "*" || spec.toLowerCase() === "any") return true;
   if (!version) return false;
 
-  const normalizedVersion = String(version).trim();
+  const normalizedVersion = String(version).trim().replace(/^v/i, "");
 
   if (spec.includes("*")) {
     const regex = new RegExp(`^${escapeRegex(spec).replace(/\\\*/g, ".*")}$`);
