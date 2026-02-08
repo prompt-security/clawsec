@@ -270,7 +270,7 @@ else
   echo ""
   echo "  2. After CI passes and PR is merged to main, create the tag:"
   echo "     git checkout main && git pull"
-  echo "     git tag -a '$TAG' -m '$SKILL_NAME version $VERSION'"
+  echo "     git tag -a '$TAG' $COMMIT_SHA -m '$SKILL_NAME version $VERSION'"
   echo "     git push origin $TAG"
   echo ""
   echo "Or to undo the version bump:"
