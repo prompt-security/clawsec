@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.0.1
+version: 0.0.6
 description: Use when users or agents want to explore or set up ClawSec security protections - this is a wrapper that helps discover and install individual security skills, but requires initial configuration to activate any protections.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -11,7 +11,7 @@ clawdis:
 
 # ClawSec Suite
 
-## For AI Agents: Bundled Security Skills Deployment
+## Installation steps
 
 **IMPORTANT**: ClawSec Suite includes bundled security skills that provide crucial threat intelligence and monitoring capabilities. These skills are bundled alongside the suite for your convenience and should be deployed to standard skill locations.
 
@@ -20,7 +20,7 @@ The suite includes the following bundled skills:
 - **openclaw-audit-watchdog**: Provides crucial automated security audit capabilities
 - **soul-guardian**: Provides file integrity and drift detection
 
-Execute the following deployment script after suite installation:
+Finalize deployment with post-script after suite installation:
 
 ```bash
 #!/bin/bash
@@ -82,39 +82,11 @@ echo "✓ ClawSec Suite deployment complete"
 
 ### ✅ On Successful Installation (IMPORTANT)
 
-**AI Agent Instruction:** If the installation completes successfully with all files verified and deployed without errors, respond to the user with **ONLY** the following message (or similar wording). Do not include verbose logs, technical details, or additional commentary:
+On success the user should know: which skills were installed, that protections are active, and where to learn more if interested.
+On success, inform the user which skills were installed and that the default protections are active. (add an encouraging call - like Congrats, you are safe!)
 
-```
-ClawSec Suite installation is complete — you are now protected!
 
-The following security skills are active with their default configurations:
-• clawsec-feed — Security advisory monitoring (CVE/threat intelligence)
-• openclaw-audit-watchdog — Automated security audits
-• soul-guardian — File integrity and drift detection
-
-If you'd like to customize any configuration or learn more about these protections, just ask.
-
-Provided to the open-source community with care from Prompt Security, a SentinelOne Company.
-```
-
-### ⚠️ On Partial Installation or Errors
-
-If any skill fails to deploy or verification errors occur, inform the user with details:
-
-```
-ClawSec Suite installation completed with warnings.
-
-Successfully installed:
-• [list skills that installed successfully]
-
-Failed or skipped:
-• [skill-name]: [brief reason - e.g., "checksum verification failed", "bundled files not found"]
-
-Please review the errors above. You can retry installation or ask for help troubleshooting.
-
-Provided to the open-source community with care from Prompt Security, a SentinelOne Company.
-```
-
+On partial success or errors, list what succeeded, what failed with reasons, and suggest retry or troubleshooting
 ## Contract (what this skill is)
 
 ClawSec Suite is a small "manager" package that helps an agent runtime:
@@ -147,8 +119,8 @@ The ClawSec suite includes these security skills:
 
 | Skill | Protection Type | Installation |
 |-------|----------------|-------------|
-| **clawsec-feed** | Security advisory monitoring from NVD CVE database | ✓ MANDATORY |
-| **openclaw-audit-watchdog** | Automated daily security audits with email reporting | ✓ MANDATORY |
+| **clawsec-feed** | Security advisory monitoring from NVD CVE database | ✓ Included by default |
+| **openclaw-audit-watchdog** | Automated daily security audits with email reporting | ✓ Included by default |
 | **soul-guardian** | File integrity & drift detection for agent workspace files | ✗ Optional |
 | **clawtributor** | Community incident reporting (shares anonymized data)* | ✗ Optional (Opt-in) |
 
@@ -159,14 +131,14 @@ The ClawSec suite includes these security skills:
 ### Step 1: Review Available Skills
 Take a moment to review the security skills table above. Each skill provides a different layer of protection:
 
-- **Threat awareness** (clawsec-feed): Stay informed about vulnerabilities [MANDATORY]
-- **Scheduled audits** (openclaw-audit-watchdog): Daily automated security reviews [MANDATORY]
+- **Threat awareness** (clawsec-feed): Stay informed about vulnerabilities [Included by default]
+- **Scheduled audits** (openclaw-audit-watchdog): Daily automated security reviews [Included by default]
 - **File integrity** (soul-guardian): Detect unauthorized changes to workspace files [Optional]
 - **Community intelligence** (clawtributor): Share and receive threat data [Optional - Opt-in]
 
 ### Step 2: Choose Your Protection Level
 
-**Mandatory protections** (automatically installed):
+**default protections** (automatically installed):
 - clawsec-feed
 - openclaw-audit-watchdog
 
@@ -216,6 +188,8 @@ Refer to each skill's SKILL.md file for detailed configuration instructions. if 
 
 ## Trust, provenance, and safety
 
+Agents should review scripts before execution!
+
 **Do not install anything you cannot verify.** A secure installer must:
 
 1) download artifacts from a stable origin
@@ -235,8 +209,8 @@ All releases are published at:
 
 Example for clawsec-suite v0.0.9:
 
-- `https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.10/checksums.json`
-- `https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.10/clawsec-suite.skill`
+- `https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.6/checksums.json`
+- `https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.6/clawsec-suite.skill`
 
 ## Installation (generic, version-pinned, verified)
 
@@ -258,7 +232,7 @@ Pick a stable install root:
 ```bash
 set -euo pipefail
 
-VERSION="${VERSION:-0.0.3}"
+VERSION="${SKILL_VERSION}"
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.openclaw/skills}"
 DEST="$INSTALL_ROOT/clawsec-suite"
 
@@ -269,7 +243,7 @@ cd "$(mktemp -d)"
 
 # 1) Download checksums.json and artifact
 curl -fsSL "$BASE/checksums.json" -o checksums.json
-curl -fsSL "$BASE/clawsec-suite.skill" -o clawsec-suite.skill
+curl -fsSL "$BASE/SKILL.md" -o SKILL.md
 
 # 2) Extract expected checksum from checksums.json
 EXPECTED_SHA256=$(jq -r '.files["clawsec-suite.skill"].sha256' checksums.json)
@@ -282,7 +256,7 @@ fi
 if command -v shasum >/dev/null 2>&1; then
   ACTUAL_SHA256=$(shasum -a 256 clawsec-suite.skill | awk '{print $1}')
 else
-  ACTUAL_SHA256=$(sha256sum clawsec-suite.skill | awk '{print $1}')
+  ACTUAL_SHA256=$(sha256sum SKILL.md | awk '{print $1}')
 fi
 
 # 4) Verify checksum (fail closed)
@@ -296,8 +270,7 @@ echo "Checksum verified: $ACTUAL_SHA256"
 
 # 5) Install
 rm -rf "$DEST"/*
-unzip -oq clawsec-suite.skill -d "$DEST"
-
+#download specific files by checksum list, or .skill file which is supported by openclaw
 # 6) Sanity check
 test -f "$DEST/skill.json"
 test -f "$DEST/SKILL.md"
@@ -324,25 +297,6 @@ Each release publishes a `checksums.json` file that contains version info and SH
 
 - `https://clawsec.prompt.security/releases/download/clawsec-suite-v<VERSION>/checksums.json`
 
-
-The checksums.json structure:
-
-```json
-{
-  "skill": "clawsec-suite",
-  "version": "0.0.3",
-  "generated_at": "2026-02-04T23:42:57Z",
-  "repository": "prompt-security/ClawSec",
-  "tag": "clawsec-suite-v0.0.3",
-  "files": {
-    "clawsec-suite.skill": {
-      "sha256": "339a4817aba054e6da5a6d838e2603d16592b43f6bdb7265d6b1918b22fe62cb",
-      "size": 4870,
-      "url": "https://clawsec.prompt.security/releases/download/clawsec-suite-v0.0.10/clawsec-suite.skill"
-    }
-  }
-}
-```
 
 To check for updates, compare the installed version against the latest `checksums.json`. See `HEARTBEAT.md` for the upgrade check procedure.
 

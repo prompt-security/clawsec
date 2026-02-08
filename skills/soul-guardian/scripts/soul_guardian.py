@@ -546,7 +546,52 @@ def restore_one(state: GuardianState, relp: str, info: dict[str, Any]) -> dict[s
     return {"quarantinePath": str(quarantine_path), **info}
 
 
-def check_cmd(state: GuardianState, actor: str, note: str, *, no_restore: bool = False) -> int:
+def format_alert_human(drifted: list[dict[str, Any]]) -> str:
+    """Format drift results as human-readable alert for TUI notification."""
+    lines = []
+    lines.append("")
+    lines.append("=" * 50)
+    lines.append("🚨 SOUL GUARDIAN SECURITY ALERT")
+    lines.append("=" * 50)
+    lines.append("")
+    
+    for d in drifted:
+        path = d.get("path", "unknown")
+        mode = d.get("mode", "unknown")
+        restored = d.get("restored", False)
+        error = d.get("error")
+        
+        if error:
+            lines.append(f"⚠️  ERROR: {path}")
+            lines.append(f"   {error}")
+        else:
+            lines.append(f"📄 FILE: {path}")
+            lines.append(f"   Mode: {mode}")
+            if restored:
+                lines.append(f"   Status: ✅ RESTORED to approved baseline")
+                if d.get("quarantinePath"):
+                    lines.append(f"   Quarantined: {d.get('quarantinePath')}")
+            else:
+                lines.append(f"   Status: ⚠️  DRIFT DETECTED (not auto-restored)")
+            
+            if d.get("approvedSha"):
+                lines.append(f"   Expected hash: {d.get('approvedSha')[:16]}...")
+            if d.get("currentSha"):
+                lines.append(f"   Found hash:    {d.get('currentSha')[:16]}...")
+            if d.get("patchPath"):
+                lines.append(f"   Diff saved: {d.get('patchPath')}")
+        lines.append("")
+    
+    lines.append("=" * 50)
+    lines.append("Review changes and investigate the source of drift.")
+    lines.append("If intentional, run: soul_guardian.py approve --file <path>")
+    lines.append("=" * 50)
+    lines.append("")
+    
+    return "\n".join(lines)
+
+
+def check_cmd(state: GuardianState, actor: str, note: str, *, no_restore: bool = False, output_format: str = "json") -> int:
     state.ensure_dirs()
     policy = load_policy(state)
     baselines = load_baselines(state)
@@ -611,28 +656,110 @@ def check_cmd(state: GuardianState, actor: str, note: str, *, no_restore: bool =
         drifted.append(rec)
 
     if not drifted:
+        # Silent on OK for alert format
+        if output_format != "alert":
+            pass  # Could print "OK" here if desired
         return 0
 
-    # Single-line summary suitable for cron parsing.
-    # Keep it small; details are in audit + patch paths.
-    summary = {
-        "event": "SOUL_GUARDIAN_DRIFT",
-        "count": len(drifted),
-        "files": [
-            {
-                "path": d["path"],
-                "mode": d.get("mode"),
-                "restored": d.get("restored"),
-                "patch": d.get("patchPath"),
-                "error": d.get("error"),
-            }
-            for d in drifted
-        ],
-    }
-    print("SOUL_GUARDIAN_DRIFT " + json.dumps(summary, ensure_ascii=False))
+    # Output based on format
+    if output_format == "alert":
+        # Human-readable alert suitable for direct relay to user
+        print(format_alert_human(drifted))
+    else:
+        # JSON format (default) - single-line summary suitable for cron parsing
+        summary = {
+            "event": "SOUL_GUARDIAN_DRIFT",
+            "count": len(drifted),
+            "files": [
+                {
+                    "path": d["path"],
+                    "mode": d.get("mode"),
+                    "restored": d.get("restored"),
+                    "patch": d.get("patchPath"),
+                    "error": d.get("error"),
+                }
+                for d in drifted
+            ],
+        }
+        print("SOUL_GUARDIAN_DRIFT " + json.dumps(summary, ensure_ascii=False))
 
     # Drift occurred (even if restored).
     return 2
+
+
+def watch_cmd(state: GuardianState, actor: str, note: str, *, interval: int = 30) -> int:
+    """Continuous watch mode - checks periodically and alerts on drift."""
+    import time
+    
+    print(f"👻 Soul Guardian watching... (interval: {interval}s)")
+    print("Press Ctrl+C to stop.\n")
+    
+    try:
+        while True:
+            result = check_cmd(state, actor, note, output_format="alert")
+            if result == 0:
+                # No drift - stay silent
+                pass
+            # Sleep before next check
+            time.sleep(interval)
+    except KeyboardInterrupt:
+        print("\n👻 Soul Guardian stopped.")
+        return 0
+
+
+def enable_monitoring_cmd(state: GuardianState) -> None:
+    """Output instructions and HEARTBEAT.md snippet for easy monitoring setup."""
+    
+    heartbeat_snippet = """
+## Soul Guardian Check
+- Run `cd {workspace} && python3 skills/soul-guardian/scripts/soul_guardian.py check --actor heartbeat --output-format alert`
+- If any output is produced, relay it to the user immediately as a security alert
+- This checks for unauthorized changes to SOUL.md, AGENTS.md, and other protected files
+""".format(workspace=WORKSPACE_ROOT)
+
+    print("""
+╔══════════════════════════════════════════════════════════════╗
+║           SOUL GUARDIAN - ENABLE MONITORING                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+To enable automatic drift detection and alerting, you have two options:
+
+────────────────────────────────────────────────────────────────
+OPTION 1: Heartbeat Integration (Recommended)
+────────────────────────────────────────────────────────────────
+
+Add the following to your HEARTBEAT.md file:
+""")
+    print(heartbeat_snippet)
+    print("""
+────────────────────────────────────────────────────────────────
+OPTION 2: Watch Mode (Foreground)
+────────────────────────────────────────────────────────────────
+
+Run this in a terminal to continuously monitor:
+
+    python3 skills/soul-guardian/scripts/soul_guardian.py watch --interval 30
+
+────────────────────────────────────────────────────────────────
+OPTION 3: Manual Check
+────────────────────────────────────────────────────────────────
+
+Run a one-time check with human-readable output:
+
+    python3 skills/soul-guardian/scripts/soul_guardian.py check --output-format alert
+
+────────────────────────────────────────────────────────────────
+
+The guardian will:
+✓ Detect unauthorized changes to protected files
+✓ Auto-restore SOUL.md and AGENTS.md to approved baselines
+✓ Alert you immediately when drift is detected
+✓ Save diffs and quarantine modified files for review
+
+""")
+    print(f"State directory: {state.state_dir}")
+    print(f"Workspace: {WORKSPACE_ROOT}")
+    print()
 
 
 def approve_cmd(state: GuardianState, actor: str, note: str, *, files: list[str] | None, all_files: bool = False) -> None:
@@ -796,7 +923,10 @@ def verify_audit_cmd(state: GuardianState) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(
+        description="Soul Guardian - Workspace file integrity guard with alerting support.",
+        epilog="For easy setup, run: soul_guardian.py enable-monitoring"
+    )
     p.add_argument(
         "--state-dir",
         default=str(DEFAULT_STATE_DIR),
@@ -818,6 +948,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     sp_check = sub.add_parser("check", help="Check for drift; restore restore-mode by default.")
     add_common(sp_check)
     sp_check.add_argument("--no-restore", action="store_true", help="Never restore during check (alert-only run).")
+    sp_check.add_argument("--output-format", choices=["json", "alert"], default="json",
+                          help="Output format: json (machine-readable) or alert (human-readable for TUI).")
 
     sp_approve = sub.add_parser("approve", help="Approve current contents as baselines.")
     add_common(sp_approve)
@@ -830,6 +962,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     sp_restore.add_argument("--all", action="store_true", help="Restore all restore-mode targets.")
 
     sub.add_parser("verify-audit", help="Verify audit log hash chain.")
+    
+    # New commands for easier monitoring setup
+    sp_watch = sub.add_parser("watch", help="Continuous watch mode - monitors and alerts on drift.")
+    add_common(sp_watch)
+    sp_watch.add_argument("--interval", type=int, default=30, help="Check interval in seconds (default: 30).")
+    
+    sub.add_parser("enable-monitoring", help="Show instructions for enabling automatic monitoring and alerts.")
 
     return p.parse_args(argv)
 
@@ -846,7 +985,11 @@ def main(argv: list[str]) -> int:
             status_cmd(state)
             return 0
         if args.cmd == "check":
-            return check_cmd(state, args.actor, args.note, no_restore=bool(getattr(args, "no_restore", False)))
+            return check_cmd(
+                state, args.actor, args.note,
+                no_restore=bool(getattr(args, "no_restore", False)),
+                output_format=getattr(args, "output_format", "json")
+            )
         if args.cmd == "approve":
             approve_cmd(state, args.actor, args.note, files=getattr(args, "files", None), all_files=bool(getattr(args, "all", False)))
             return 0
@@ -855,6 +998,11 @@ def main(argv: list[str]) -> int:
             return 0
         if args.cmd == "verify-audit":
             verify_audit_cmd(state)
+            return 0
+        if args.cmd == "watch":
+            return watch_cmd(state, args.actor, args.note, interval=getattr(args, "interval", 30))
+        if args.cmd == "enable-monitoring":
+            enable_monitoring_cmd(state)
             return 0
 
         raise RuntimeError(f"Unknown cmd: {args.cmd}")

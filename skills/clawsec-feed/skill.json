@@ -1,6 +1,6 @@
 {
   "name": "clawsec-feed",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence.",
   "author": "prompt-security",
   "license": "MIT",

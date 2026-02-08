@@ -37,7 +37,7 @@ Once you have this skill file, proceed to **[Deploy Prompt Agent](#deploy-prompt
 
 ## Deploy Prompt Agent
 
-**Agent: Follow these steps to deploy Prompt Agent to your environment.**
+Installation Steps:
 
 ### Step 1: Detect active agent folder and create skill directory
 

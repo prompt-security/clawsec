@@ -301,6 +301,12 @@ jobs:
           jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
 
           while IFS= read -r file; do
+            # Skip bundled files - they're only for the .skill package
+            if [[ "$file" == bundled/* ]]; then
+              echo "Skipping bundled file: $file"
+              continue
+            fi
+
             if [ -f "$SKILL_PATH/$file" ]; then
               # Flatten directory structure for release assets
               cp "$SKILL_PATH/$file" "release-assets/$(basename "$file")"

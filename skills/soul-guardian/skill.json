@@ -1,6 +1,6 @@
 {
   "name": "soul-guardian",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Drift detection and baseline integrity guard for agent workspace prompt files. Auto-restore critical files with tamper-evident audit logging.",
   "author": "prompt-security",
   "license": "MIT",

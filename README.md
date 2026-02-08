@@ -77,8 +77,8 @@ The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and 
 
 | Skill | Description | Installation | Compatibility |
 |-------|-------------|--------------|---------------|
-| 📡 **clawsec-feed** | Security advisory feed monitoring with live CVE updates | ✅ MANDATORY | All agents |
-| 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ✅ MANDATORY | OpenClaw/MoltBot/ClawdBot |
+| 📡 **clawsec-feed** | Security advisory feed monitoring with live CVE updates | ✅ Included by default | All agents |
+| 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ✅ Included by default | OpenClaw/MoltBot/ClawdBot |
 | 👻 **soul-guardian** | Drift detection and file integrity guard with auto-restore | ⚙️ Optional | All agents |
 | 🤝 **clawtributor** | Community incident reporting | ❌ Optional (Explicit request) | All agents |
 

@@ -1,7 +1,7 @@
 ---
 name: soul-guardian
-version: 0.0.1
-description: Drift detection + baseline integrity guard for an agent workspace's auto-loaded prompt/instruction markdown files (SOUL.md, AGENTS.md, etc.), with per-file policies, tamper-evident audit logging, and optional auto-restore.
+version: 0.0.2
+description: Drift detection + baseline integrity guard for agent workspace files with automatic alerting support
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"👻","category":"security"}}
 clawdis:
@@ -10,91 +10,154 @@ clawdis:
     bins: [python3]
 ---
 
-# soul-guardian
+# soul-guardian 👻
 
-Use this skill to detect and respond to unexpected edits in the workspace files that the agent auto-loads.
+Protects your agent's core files (SOUL.md, AGENTS.md, etc.) from unauthorized changes with automatic detection, restoration, and **user alerting**.
 
-## Installation Options
+## Quick Start (3 Steps)
 
-You can get soul-guardian in two ways:
+### Step 1: Initialize baselines
+```bash
+cd ~/.openclaw/workspace
+python3 skills/soul-guardian/scripts/soul_guardian.py init --actor setup --note "initial baseline"
+```
 
-### Option A: Bundled with ClawSec Suite (Recommended)
+### Step 2: Enable monitoring
+```bash
+python3 skills/soul-guardian/scripts/soul_guardian.py enable-monitoring
+```
+This shows you how to add monitoring to your workflow.
 
-**If you've installed clawsec-suite, you may already have this!**
+### Step 3: Add to HEARTBEAT.md (Recommended)
 
-Soul-guardian is bundled alongside ClawSec Suite to provide file integrity and drift detection capabilities. When you install the suite, if you don't already have soul-guardian installed, it will be deployed from the bundled copy.
+Add this to your HEARTBEAT.md for automatic monitoring:
 
-**Advantages:**
-- Convenient - no separate download needed
-- Standard location - installed to `~/.openclaw/skills/soul-guardian/`
-- Preserved - if you already have soul-guardian installed, it won't be overwritten
-- Single verification - integrity checked as part of suite package
+```markdown
+## Soul Guardian Check
+- Run `python3 skills/soul-guardian/scripts/soul_guardian.py check --actor heartbeat --output-format alert`
+- If any output is produced, relay it to the user immediately as a security alert
+```
 
-### Option B: Standalone Installation (This Page)
-
-Install soul-guardian independently without the full suite.
-
-**When to use standalone:**
-- You only need file integrity monitoring (not other suite components)
-- You want to install before installing the suite
-- You prefer explicit control over soul-guardian installation
-
-**Advantages:**
-- Lighter weight installation
-- Independent from suite
-- Direct control over installation process
-
-Continue below for standalone installation instructions.
+That's it! Soul Guardian will now:
+- ✅ Detect unauthorized changes to protected files
+- ✅ Auto-restore SOUL.md and AGENTS.md to approved baseline
+- ✅ Alert you when drift is detected and handled
 
 ---
 
 ## What it protects (default policy)
 
-- **Auto-restore + alert:** `SOUL.md`, `AGENTS.md`
-- **Alert-only:** `USER.md`, `TOOLS.md`, `IDENTITY.md`, `HEARTBEAT.md`, `MEMORY.md`
-- **Ignored by default:** `memory/*.md` (daily notes)
-
-Policy is stored in the guardian state directory as `policy.json`.
-
-## Quick start (first run)
-
-Recommended: onboard an **external** state dir, then initialize baselines there.
-
-```bash
-python3 skills/soul-guardian/scripts/onboard_state_dir.py --agent-id <agentId>
-python3 skills/soul-guardian/scripts/soul_guardian.py --state-dir ~/.clawdbot/soul-guardian/<agentId> init --actor sam --note "first baseline"
-```
-
-(Full step-by-step + scheduling options are in `README.md`.)
+| File | Mode | Action on drift |
+|------|------|-----------------|
+| SOUL.md | restore | Auto-restore + alert |
+| AGENTS.md | restore | Auto-restore + alert |
+| USER.md | alert | Alert only |
+| TOOLS.md | alert | Alert only |
+| IDENTITY.md | alert | Alert only |
+| HEARTBEAT.md | alert | Alert only |
+| MEMORY.md | alert | Alert only |
+| memory/*.md | ignore | Ignored |
 
 ## Commands
 
-Run from the agent workspace root:
+### Check for drift (with alert output)
+```bash
+python3 skills/soul-guardian/scripts/soul_guardian.py check --output-format alert
+```
+- Silent if no drift
+- Outputs human-readable alert if drift detected
+- Perfect for heartbeat integration
 
+### Watch mode (continuous monitoring)
+```bash
+python3 skills/soul-guardian/scripts/soul_guardian.py watch --interval 30
+```
+Runs continuously, checking every 30 seconds.
+
+### Approve intentional changes
+```bash
+python3 skills/soul-guardian/scripts/soul_guardian.py approve --file SOUL.md --actor user --note "intentional update"
+```
+
+### View status
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py status
-python3 skills/soul-guardian/scripts/soul_guardian.py check
-python3 skills/soul-guardian/scripts/soul_guardian.py check --no-restore
-python3 skills/soul-guardian/scripts/soul_guardian.py approve --file SOUL.md
-python3 skills/soul-guardian/scripts/soul_guardian.py restore --file SOUL.md
+```
+
+### Verify audit log integrity
+```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py verify-audit
 ```
 
-### State directory
+---
 
-- Default (backward compatible): `memory/soul-guardian/`
-- Recommended external override:
+## Alert Format
 
-```bash
-python3 skills/soul-guardian/scripts/soul_guardian.py --state-dir ~/.clawdbot/soul-guardian/<agentId> check
+When drift is detected, the `--output-format alert` produces output like:
+
+```
+==================================================
+🚨 SOUL GUARDIAN SECURITY ALERT
+==================================================
+
+📄 FILE: SOUL.md
+   Mode: restore
+   Status: ✅ RESTORED to approved baseline
+   Expected hash: abc123def456...
+   Found hash:    789xyz000111...
+   Diff saved: /path/to/patches/drift.patch
+
+==================================================
+Review changes and investigate the source of drift.
+If intentional, run: soul_guardian.py approve --file <path>
+==================================================
 ```
 
-## Cron pattern
+This output is designed to be relayed directly to the user in TUI/chat.
 
-Keep the existing gateway cron pattern: run `check` every N minutes and notify only when drift is detected.
+---
 
-For onboarding/migration to an external state directory, see `README.md` and:
+## Security Model
+
+**What it does:**
+- Detects filesystem drift vs approved baseline (sha256)
+- Produces unified diffs for review
+- Maintains tamper-evident audit log with hash chaining
+- Refuses to operate on symlinks
+- Uses atomic writes for restores
+
+**What it doesn't do:**
+- Cannot prove WHO made a change (actor is best-effort metadata)
+- Cannot protect if attacker controls both workspace AND state directory
+- Is not a substitute for backups
+
+**Recommendation:** Store state directory outside workspace for better resilience.
+
+---
+
+## Demo
+
+Run the full demo flow to see soul-guardian in action:
 
 ```bash
-python3 skills/soul-guardian/scripts/onboard_state_dir.py
+bash skills/soul-guardian/scripts/demo.sh
 ```
+
+This will:
+1. Verify clean state (silent check)
+2. Inject malicious content into SOUL.md
+3. Run heartbeat check (produces alert)
+4. Show SOUL.md was restored
+
+---
+
+## Troubleshooting
+
+**"Not initialized" error:**
+Run `init` first to set up baselines.
+
+**Drift keeps happening:**
+Check what's modifying your files. Review the audit log and patches.
+
+**Want to approve a change:**
+Run `approve --file <path>` after reviewing the change.

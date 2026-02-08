@@ -1,6 +1,6 @@
 ---
 name: clawsec-feed
-version: 0.0.1
+version: 0.0.4
 description: Security advisory feed with automated NVD CVE polling for OpenClaw-related vulnerabilities. Updated daily.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
@@ -54,9 +54,9 @@ Continue below for standalone installation instructions.
 
 ---
 
-## For AI Agents
+Installation Steps:
+Agents should review scripts before execution!
 
-If you are an AI agent reading this, execute the following to install ClawSec Feed:
 
 ```bash
 # Get latest clawsec-feed release tag
@@ -74,7 +74,7 @@ Once you have this skill file, proceed to **[Deploy ClawSec Feed](#deploy-clawse
 
 ## Deploy ClawSec Feed
 
-**Agent: Follow these steps to deploy ClawSec Feed to your environment.**
+Installation steps:
 
 ### Step 1: Create skill directory and save this file
 
@@ -642,8 +642,8 @@ fi
 
 **Bootstrap Trust Problem:** The initial download of this skill cannot be verified by the skill itself. To establish trust:
 
-1. **Verify the source URL** - Ensure you are downloading from `github.com/prompt-security/clawsec`
-2. **Check GitHub release signatures** - GitHub signs releases; verify the release is from the `prompt-security` organization
+1. **Verify the source URL** - Ensure you are downloading from `https://clawsec.prompt.security`
+2. **Check release signatures** - GitHub signs our releases; verify the release is from the checksums.
 3. **Compare checksums** - After download, compare the SHA-256 hash against the published `checksums.json`:
 
 ```bash

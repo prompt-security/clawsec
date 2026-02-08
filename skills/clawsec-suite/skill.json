@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "Use when users want to explore or set up ClawSec security protections - this is a wrapper that helps discover and install individual security skills, but requires initial configuration to activate any protections.",
   "author": "prompt-security",
   "license": "MIT",
@@ -118,19 +118,19 @@
   "bundled_skills": {
     "clawsec-feed": {
       "description": "Security advisory feed (bundled for convenient deployment)",
-      "mandatory": true,
+      "default": true,
       "standalone_available": true,
       "rationale": "Provides crucial CVE and threat intelligence information"
     },
     "openclaw-audit-watchdog": {
       "description": "Daily security audits (bundled for convenient deployment)",
-      "mandatory": true,
+      "default": true,
       "standalone_available": true,
       "rationale": "Provides crucial automated security audit capabilities"
     },
     "soul-guardian": {
       "description": "File integrity monitoring (bundled for convenient deployment)",
-      "mandatory": false,
+      "default": false,
       "standalone_available": true,
       "rationale": "Provides important file integrity and drift detection"
     }

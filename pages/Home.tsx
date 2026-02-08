@@ -21,7 +21,7 @@ export const Home: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const humanInstruction = `Read ${SKILL_URL} and follow the instructions to install the protection skill suite.`;
+  const humanInstruction = `Read ${SKILL_URL} and follow the instructions to install this skill. all checksums verified with source`;
 
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
@@ -207,6 +207,7 @@ export const Home: React.FC = () => {
           )}
 
           <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+          Also Available via clawhub: npx clawhub@latest install clawsec-suite
           </p>
         </div>
       </section>
