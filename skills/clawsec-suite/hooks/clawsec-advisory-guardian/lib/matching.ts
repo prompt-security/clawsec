@@ -22,7 +22,7 @@ export async function discoverInstalledSkills(installRoot: string): Promise<Inst
     const skillJsonPath = path.join(skillDir, "skill.json");
 
     let skillName = fallbackName;
-    let version: string | null = null;
+    let version: string | null = "unknown";
 
     try {
       const rawSkillJson = await fs.readFile(skillJsonPath, "utf8");
