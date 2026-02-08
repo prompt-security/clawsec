@@ -11,6 +11,7 @@ export type Advisory = {
   title?: string;
   description?: string;
   action?: string;
+  published?: string;
   updated?: string;
   affected?: string[];
 };

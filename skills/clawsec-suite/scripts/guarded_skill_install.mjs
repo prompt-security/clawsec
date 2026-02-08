@@ -90,7 +90,9 @@ function affectedSpecifierMatches(specifier, skillName, version) {
 function affectedSpecifierMatchesNameOnly(specifier, skillName) {
   const parsed = parseAffectedSpecifier(specifier);
   if (!parsed) return false;
-  return normalizeSkillName(parsed.name) === normalizeSkillName(skillName);
+  if (normalizeSkillName(parsed.name) !== normalizeSkillName(skillName)) return false;
+  const vs = parsed.versionSpec.trim();
+  return !vs || vs === "*" || vs.toLowerCase() === "any";
 }
 
 function advisoryLooksHighRisk(advisory) {
