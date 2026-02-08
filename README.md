@@ -15,12 +15,12 @@
 <div align="center">
 
 ![Prompt Security Logo](./img/Black+Color.png)
+<img src="./public/img/mascot.png" alt="clawsec mascot" width="200" />
 
 </div>
-
 <div align="center">
 
-🌐 **Live at: [https://clawsec.prompt.security](https://clawsec.prompt.security)**
+🌐 **Live at: [https://clawsec.prompt.security](https://clawsec.prompt.security) [https://prompt.security/clawsec](https://prompt.security/clawsec)**
 
 [![CI](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
