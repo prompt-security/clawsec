@@ -31,6 +31,7 @@ type FeedPayload = {
 
 type InstalledSkill = {
   name: string;
+  dirName: string;
   version: string | null;
 };
 
@@ -265,6 +266,7 @@ function buildAlertMessage(matches: AdvisoryMatch[], installRoot: string): strin
   const removalMatches = matches.filter((entry) => looksMalicious(entry.advisory) || looksRemovalRecommended(entry.advisory));
   if (removalMatches.length > 0) {
     const impactedSkills = uniqueStrings(removalMatches.map((entry) => entry.skill.name));
+    const impactedDirs = uniqueStrings(removalMatches.map((entry) => entry.skill.dirName));
     lines.push("");
     lines.push("Recommendation: one or more matches indicate potentially malicious or unsafe skills.");
     lines.push("Best practice: remove or disable affected skills only after explicit user approval.");
@@ -273,8 +275,8 @@ function buildAlertMessage(matches: AdvisoryMatch[], installRoot: string): strin
     );
     lines.push(`Approval needed: ask the user to approve removal of: ${impactedSkills.join(", ")}.`);
     lines.push("Candidate removal paths:");
-    for (const skillName of impactedSkills) {
-      lines.push(`- ${path.join(installRoot, skillName)}`);
+    for (const dir of impactedDirs) {
+      lines.push(`- ${path.join(installRoot, dir)}`);
     }
   } else {
     lines.push("");
@@ -412,7 +414,7 @@ async function discoverInstalledSkills(installRoot: string): Promise<InstalledSk
       // best-effort scan: keep fallback directory name when skill.json is missing or invalid
     }
 
-    skills.push({ name: skillName, version });
+    skills.push({ name: skillName, dirName: entry.name, version });
   }
 
   return skills;
