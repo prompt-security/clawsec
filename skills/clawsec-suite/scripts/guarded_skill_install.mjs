@@ -193,7 +193,7 @@ function advisoryLooksHighRisk(advisory) {
   const severity = String(advisory.severity ?? "").toLowerCase();
   const combined = `${advisory.title ?? ""} ${advisory.description ?? ""} ${advisory.action ?? ""}`.toLowerCase();
   if (type === "malicious_skill" || type === "malicious_plugin") return true;
-  if (/\b(malicious|exfiltrat|backdoor|trojan|stealer|credential theft)\b/.test(combined)) return true;
+  if (/\b(malicious|exfiltrate|exfiltration|backdoor|trojan|stealer|credential theft)\b/.test(combined)) return true;
   if (/\b(remove|uninstall|disable|do not use|quarantine)\b/.test(combined)) return true;
   if (severity === "critical") return true;
   return false;
