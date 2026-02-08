@@ -95,7 +95,7 @@ export function looksMalicious(advisory: Advisory): boolean {
   const combined = `${advisory.title ?? ""} ${advisory.description ?? ""} ${advisory.action ?? ""}`.toLowerCase();
 
   if (type === "malicious_skill" || type === "malicious_plugin") return true;
-  if (/\b(malicious|exfiltrat|backdoor|trojan|credential theft|stealer)\b/.test(combined)) return true;
+  if (/\b(malicious|exfiltrat(e|ion)|backdoor|trojan|credential theft|stealer)\b/.test(combined)) return true;
   return false;
 }
 
