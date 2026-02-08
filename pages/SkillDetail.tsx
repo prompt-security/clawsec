@@ -106,7 +106,7 @@ export const SkillDetail: React.FC = () => {
   };
 
   const installCommand = skillData
-    ? `curl -sLO https://clawsec.prompt.security/releases/download/${skillData.name}-v${skillData.version}/${skillData.name}.skill`
+    ? `npx clawhub@latest install ${skillData.name}`
     : '';
 
   const releasePageUrl = useMemo(() => {

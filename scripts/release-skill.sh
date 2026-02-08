@@ -8,18 +8,26 @@
 # 3. Committing the changes
 # 4. Creating the git tag
 #
-# After running, push with: git push && git push origin <tag>
+# After running, push your current branch and tag:
+#   git push origin <branch>
+#   git push origin <tag>
 
 set -euo pipefail
+
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <skill-name> <version>"
+  echo "Example: $0 clawsec-feed 1.1.0"
+  exit 1
+fi
 
 SKILL_NAME="$1"
 VERSION="$2"
 SKILL_PATH="skills/$SKILL_NAME"
 
-# Validation
-if [ -z "$SKILL_NAME" ] || [ -z "$VERSION" ]; then
-  echo "Usage: $0 <skill-name> <version>"
-  echo "Example: $0 clawsec-feed 1.1.0"
+# Ensure we're on a branch (not detached HEAD) so release flow works from feature branches
+CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+if [ -z "$CURRENT_BRANCH" ]; then
+  echo "Error: Detached HEAD detected. Checkout a branch before running release." >&2
   exit 1
 fi
 
@@ -57,6 +65,7 @@ if ! git diff --quiet "$SKILL_PATH/" 2>/dev/null; then
 fi
 
 echo "Releasing $SKILL_NAME version $VERSION"
+echo "Branch: $CURRENT_BRANCH"
 echo "======================================="
 
 # Create a temporary directory for atomic operations
@@ -215,7 +224,8 @@ fi
 
 echo ""
 echo "Done! To release, push the commit and tag:"
-echo "  git push && git push origin $TAG"
+echo "  git push origin $CURRENT_BRANCH"
+echo "  git push origin $TAG"
 echo ""
 echo "Or to undo:"
 echo "  git reset --hard HEAD~1 && git tag -d $TAG"

@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - '*-v[0-9]*.[0-9]*.[0-9]*'
+  pull_request:
+    paths:
+      - 'skills/*/skill.json'
+      - 'skills/*/SKILL.md'
 
 permissions:
   contents: write
@@ -15,7 +19,349 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate-pr-version-sync:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version parity for bumped skills
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          get_md_version() {
+            local md_file="$1"
+            awk '
+              NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+              in_frontmatter && $0 == "---" { exit }
+              in_frontmatter && $0 ~ /^version:[[:space:]]*/ {
+                sub(/^version:[[:space:]]*/, "", $0)
+                gsub(/[[:space:]]+$/, "", $0)
+                print $0
+                exit
+              }
+            ' "$md_file"
+          }
+
+          get_md_version_from_git() {
+            local sha="$1"
+            local path="$2"
+            local tmp_file
+            tmp_file="$(mktemp)"
+
+            if git cat-file -e "${sha}:${path}" 2>/dev/null; then
+              git show "${sha}:${path}" > "$tmp_file"
+              get_md_version "$tmp_file"
+            fi
+
+            rm -f "$tmp_file"
+          }
+
+          touched_skills_file="$(mktemp)"
+          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/skill.json' 'skills/*/SKILL.md' \
+            | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
+            | sort -u > "${touched_skills_file}"
+
+          if [ ! -s "${touched_skills_file}" ]; then
+            echo "No skill metadata files changed in this PR."
+            rm -f "${touched_skills_file}"
+            exit 0
+          fi
+
+          checked_skills=0
+          failures=0
+
+          while IFS= read -r skill_dir; do
+            json_path="${skill_dir}/skill.json"
+            md_path="${skill_dir}/SKILL.md"
+
+            head_json_version=""
+            if [ -f "${json_path}" ]; then
+              head_json_version="$(jq -r '.version // empty' "${json_path}" 2>/dev/null || true)"
+            fi
+
+            head_md_version=""
+            if [ -f "${md_path}" ]; then
+              head_md_version="$(get_md_version "${md_path}")"
+            fi
+
+            base_json_version=""
+            if git cat-file -e "${BASE_SHA}:${json_path}" 2>/dev/null; then
+              base_json_version="$(git show "${BASE_SHA}:${json_path}" | jq -r '.version // empty' 2>/dev/null || true)"
+            fi
+
+            base_md_version="$(get_md_version_from_git "${BASE_SHA}" "${md_path}")"
+
+            json_version_changed=false
+            md_version_changed=false
+
+            if [ "${head_json_version}" != "${base_json_version}" ]; then
+              json_version_changed=true
+            fi
+
+            if [ "${head_md_version}" != "${base_md_version}" ]; then
+              md_version_changed=true
+            fi
+
+            if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
+              echo "No version bump detected for ${skill_dir}; skipping."
+              continue
+            fi
+
+            checked_skills=$((checked_skills + 1))
+            echo "Version bump detected for ${skill_dir} (skill.json changed: ${json_version_changed}, SKILL.md changed: ${md_version_changed})"
+
+            if [ ! -f "${json_path}" ]; then
+              echo "::error file=${json_path}::Missing skill.json after version bump."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if [ ! -f "${md_path}" ]; then
+              echo "::error file=${md_path}::Missing SKILL.md after version bump."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if [ -z "${head_json_version}" ]; then
+              echo "::error file=${json_path}::Missing .version in skill.json."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if [ -z "${head_md_version}" ]; then
+              echo "::error file=${md_path}::Missing version in SKILL.md frontmatter."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if [ "${head_json_version}" != "${head_md_version}" ]; then
+              echo "::error file=${json_path}::Version mismatch. skill.json=${head_json_version}, SKILL.md=${head_md_version}"
+              failures=$((failures + 1))
+              continue
+            fi
+
+            echo "Version parity OK for ${skill_dir}: ${head_json_version}"
+          done < "${touched_skills_file}"
+
+          rm -f "${touched_skills_file}"
+
+          if [ "${checked_skills}" -eq 0 ]; then
+            echo "No version bumps detected in changed skill metadata files."
+            exit 0
+          fi
+
+          if [ "${failures}" -gt 0 ]; then
+            echo "::error::Found ${failures} version parity issue(s) across ${checked_skills} bumped skill(s)."
+            exit 1
+          fi
+
+          echo "Validated ${checked_skills} bumped skill(s): skill.json and SKILL.md versions are present and equal."
+
   release:
+    if: github.event_name == 'pull_request'
+    needs: validate-pr-version-sync
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run release dry-run for changed skills
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          get_md_version() {
+            local md_file="$1"
+            awk '
+              NR == 1 && $0 == "---" { in_frontmatter = 1; next }
+              in_frontmatter && $0 == "---" { exit }
+              in_frontmatter && $0 ~ /^version:[[:space:]]*/ {
+                sub(/^version:[[:space:]]*/, "", $0)
+                gsub(/[[:space:]]+$/, "", $0)
+                print $0
+                exit
+              }
+            ' "$md_file"
+          }
+
+          touched_skills_file="$(mktemp)"
+          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/skill.json' 'skills/*/SKILL.md' \
+            | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
+            | sort -u > "${touched_skills_file}"
+
+          if [ ! -s "${touched_skills_file}" ]; then
+            echo "No skill metadata files changed in this PR."
+            rm -f "${touched_skills_file}"
+            exit 0
+          fi
+
+          dry_run_count=0
+          failures=0
+          mkdir -p dist/dry-run
+
+          while IFS= read -r skill_dir; do
+            json_path="${skill_dir}/skill.json"
+            md_path="${skill_dir}/SKILL.md"
+
+            head_json_version=""
+            if [ -f "${json_path}" ]; then
+              head_json_version="$(jq -r '.version // empty' "${json_path}" 2>/dev/null || true)"
+            fi
+
+            head_md_version=""
+            if [ -f "${md_path}" ]; then
+              head_md_version="$(get_md_version "${md_path}")"
+            fi
+
+            if [ -z "${head_json_version}" ] || [ -z "${head_md_version}" ] || [ "${head_json_version}" != "${head_md_version}" ]; then
+              echo "::error file=${skill_dir}::Version metadata is invalid for dry-run. Ensure validate-pr-version-sync passes."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if [ ! -f "${json_path}" ]; then
+              echo "::error file=${json_path}::Missing skill.json."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if [ ! -f "${md_path}" ]; then
+              echo "::error file=${md_path}::Missing SKILL.md."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            if ! jq -e '.name and .version and .sbom and .sbom.files and (.sbom.files | type == "array")' "${json_path}" >/dev/null 2>&1; then
+              echo "::error file=${json_path}::skill.json missing required release fields (name/version/sbom.files)."
+              failures=$((failures + 1))
+              continue
+            fi
+
+            skill_name="$(basename "${skill_dir}")"
+            version="${head_json_version}"
+            tag="${skill_name}-v${version}"
+            dry_run_count=$((dry_run_count + 1))
+
+            echo "::group::Dry-run release ${tag}"
+
+            out_root="dist/dry-run/${tag}"
+            out_dist="${out_root}/dist"
+            out_assets="${out_root}/release-assets"
+            checksums_file="${out_dist}/checksums.json"
+            mkdir -p "${out_dist}" "${out_assets}"
+
+            cat > "${checksums_file}" << EOF
+            {
+              "skill": "${skill_name}",
+              "version": "${version}",
+              "generated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "repository": "${{ github.repository }}",
+              "tag": "${tag}",
+              "files": {
+            EOF
+
+            first=true
+            temp_sbom_file="$(mktemp)"
+            jq -r '.sbom.files[].path' "${json_path}" > "${temp_sbom_file}"
+
+            while IFS= read -r file; do
+              [ -z "${file}" ] && continue
+              full_path="${skill_dir}/${file}"
+              if [ -f "${full_path}" ]; then
+                sha256="$(sha256sum "${full_path}" | awk '{print $1}')"
+                size="$(stat -c%s "${full_path}" 2>/dev/null || stat -f%z "${full_path}")"
+                filename="$(basename "${file}")"
+
+                if [ "${first}" = true ]; then
+                  first=false
+                else
+                  echo "    ," >> "${checksums_file}"
+                fi
+
+                cat >> "${checksums_file}" << FILEENTRY
+                "${filename}": {
+                  "sha256": "${sha256}",
+                  "size": ${size},
+                  "path": "${file}",
+                  "url": "https://github.com/${{ github.repository }}/releases/download/${tag}/${filename}"
+                }
+            FILEENTRY
+
+                cp "${full_path}" "${out_assets}/${filename}"
+              else
+                echo "::error file=${json_path}::SBOM references missing file: ${file}"
+                failures=$((failures + 1))
+              fi
+            done < "${temp_sbom_file}"
+
+            rm -f "${temp_sbom_file}"
+
+            skill_json_sha="$(sha256sum "${json_path}" | awk '{print $1}')"
+            skill_json_size="$(stat -c%s "${json_path}" 2>/dev/null || stat -f%z "${json_path}")"
+
+            cat >> "${checksums_file}" << SKILLJSON
+                ,
+                "skill.json": {
+                  "sha256": "${skill_json_sha}",
+                  "size": ${skill_json_size},
+                  "url": "https://github.com/${{ github.repository }}/releases/download/${tag}/skill.json"
+                }
+            SKILLJSON
+
+            cat >> "${checksums_file}" << EOF
+              }
+            }
+            EOF
+
+            if ! jq -e . "${checksums_file}" >/dev/null 2>&1; then
+              echo "::error file=${checksums_file}::Generated checksums.json is invalid JSON."
+              failures=$((failures + 1))
+              echo "::endgroup::"
+              continue
+            fi
+
+            cp "${json_path}" "${out_assets}/skill.json"
+            if [ -f "${skill_dir}/README.md" ]; then
+              cp "${skill_dir}/README.md" "${out_assets}/README.md"
+            fi
+            cp "${checksums_file}" "${out_assets}/checksums.json"
+
+            echo "Prepared dry-run assets for ${tag}:"
+            ls -la "${out_assets}"
+            echo "::endgroup::"
+          done < "${touched_skills_file}"
+
+          rm -f "${touched_skills_file}"
+
+          if [ "${failures}" -gt 0 ]; then
+            echo "::error::Release dry-run failed with ${failures} issue(s) across ${dry_run_count} skill(s)."
+            exit 1
+          fi
+
+          if [ "${dry_run_count}" -eq 0 ]; then
+            echo "No changed skills found for dry-run."
+            exit 0
+          fi
+
+          echo "Release dry-run completed successfully for ${dry_run_count} changed skill(s)."
+
+  release-tag:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
@@ -191,96 +537,7 @@ jobs:
               }
           SKILLJSON
 
-          # Note: checksums.json is NOT closed here - will be finalized after .skill package is created
-
-          echo "=== Intermediate checksums.json (before .skill) ==="
-          cat "dist/checksums.json"
-
-      - name: Bundle security skills into suite
-        if: steps.parse.outputs.skill_name == 'clawsec-suite'
-        run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-
-          echo "=== Bundling security skills into suite ==="
-
-          # Create bundled directory
-          mkdir -p "$SKILL_PATH/bundled"
-
-          # List of skills to bundle (exclude clawtributor - opt-in only)
-          BUNDLE_SKILLS=("clawsec-feed" "openclaw-audit-watchdog" "soul-guardian")
-
-          for skill in "${BUNDLE_SKILLS[@]}"; do
-            if [ -d "skills/$skill" ]; then
-              echo "Bundling $skill..."
-              mkdir -p "$SKILL_PATH/bundled/$skill"
-              cp -r "skills/$skill"/* "$SKILL_PATH/bundled/$skill/"
-
-              # Verify skill.json exists
-              if [ -f "$SKILL_PATH/bundled/$skill/skill.json" ]; then
-                SKILL_VERSION=$(jq -r '.version' "$SKILL_PATH/bundled/$skill/skill.json")
-                echo "✓ Bundled $skill v${SKILL_VERSION}"
-              else
-                echo "ERROR: $skill/skill.json not found"
-                exit 1
-              fi
-            else
-              echo "WARNING: skills/$skill not found, skipping..."
-            fi
-          done
-
-          echo "Bundling complete"
-
-      - name: Create .skill package
-        run: |
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-
-          cd "$SKILL_PATH"
-
-          # Create zip starting with skill.json
-          zip -q "../../dist/${SKILL_NAME}.skill" skill.json
-
-          # Add each SBOM file individually to preserve directory structure
-          while IFS= read -r file; do
-            if [ -f "$file" ]; then
-              zip -qu "../../dist/${SKILL_NAME}.skill" "$file"
-              echo "Added: $file"
-            else
-              echo "Warning: SBOM file not found: $file"
-            fi
-          done < <(jq -r '.sbom.files[].path' skill.json)
-
-          # Add README if it exists
-          if [ -f README.md ]; then
-            zip -qu "../../dist/${SKILL_NAME}.skill" README.md
-            echo "Added: README.md"
-          fi
-
-          cd ../..
-
-          echo "=== Created ${SKILL_NAME}.skill ==="
-          unzip -l "dist/${SKILL_NAME}.skill"
-
-      - name: Add .skill checksum and finalize checksums.json
-        run: |
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          SKILL_PACKAGE="dist/${SKILL_NAME}.skill"
-
-          # Calculate .skill package checksum
-          SKILL_PACKAGE_SHA=$(sha256sum "$SKILL_PACKAGE" | awk '{print $1}')
-          SKILL_PACKAGE_SIZE=$(stat -c%s "$SKILL_PACKAGE" 2>/dev/null || stat -f%z "$SKILL_PACKAGE")
-
-          # Add .skill package entry to checksums
-          cat >> "dist/checksums.json" << SKILLPACKAGE
-              ,
-              "${SKILL_NAME}.skill": {
-                "sha256": "${SKILL_PACKAGE_SHA}",
-                "size": ${SKILL_PACKAGE_SIZE},
-                "url": "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${SKILL_NAME}.skill"
-              }
-          SKILLPACKAGE
-
-          # Close JSON
+          # Close checksums JSON
           cat >> "dist/checksums.json" << EOF
             }
           }
@@ -301,12 +558,6 @@ jobs:
           jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
 
           while IFS= read -r file; do
-            # Skip bundled files - they're only for the .skill package
-            if [[ "$file" == bundled/* ]]; then
-              echo "Skipping bundled file: $file"
-              continue
-            fi
-
             if [ -f "$SKILL_PATH/$file" ]; then
               # Flatten directory structure for release assets
               cp "$SKILL_PATH/$file" "release-assets/$(basename "$file")"
@@ -322,8 +573,7 @@ jobs:
             cp "$SKILL_PATH/README.md" release-assets/
           fi
 
-          # Copy package and checksums
-          cp "dist/${SKILL_NAME}.skill" release-assets/
+          # Copy checksums
           cp "dist/checksums.json" release-assets/
 
           echo "=== Release assets ==="
@@ -362,27 +612,30 @@ jobs:
 
             ### Quick Install
 
-            Download the complete skill package:
+            **Via clawhub (recommended):**
             ```bash
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.parse.outputs.skill_name }}.skill
+            npx clawhub@latest install ${{ steps.parse.outputs.skill_name }}
             ```
 
-            Or fetch the main skill file directly:
+            **Manual download with verification:**
             ```bash
-            curl -sL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SKILL.md
+            # 1. Download checksums
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json
+
+            # 2. Download individual files
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SKILL.md
+            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skill.json
+
+            # 3. Verify checksums
+            sha256sum SKILL.md
+            # Compare with value in checksums.json
             ```
 
             ### Verification
 
-            All files include SHA256 checksums. Download `checksums.json` and verify:
+            All files include SHA256 checksums in `checksums.json`:
             ```bash
             curl -sL https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json | jq .
-            ```
-
-            Verify a file:
-            ```bash
-            sha256sum SKILL.md
-            # Compare with value in checksums.json
             ```
 
             ### Files
