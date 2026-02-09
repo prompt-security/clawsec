@@ -44,7 +44,7 @@ export const Home: React.FC = () => {
       {/* Hero Section */}
       <section className="text-center space-y-6 max-w-3xl mx-auto mb-12 md:mb-16">
         <h2 className="text-3xl md:text-4xl tracking-tight text-white">
-          Harden your <span className="text-clawd-accent">OpenClaw</span> security posture
+          Secure your <span className="text-clawd-accent">OpenClaw</span> agents
         </h2>
         <p className="text-lg md:text-xl text-gray-400 leading-relaxed">
           A complete security skill suite for OpenClaw's family of agents. Protect your{' '}
