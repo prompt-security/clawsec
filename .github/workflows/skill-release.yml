@@ -350,7 +350,8 @@ jobs:
               continue
             fi
 
-            # --- Copy root-level docs alongside the zip ---
+            # --- Copy skill.json and root-level docs alongside the zip ---
+            cp "${json_path}" "${out_assets}/skill.json"
             if [ -f "${skill_dir}/SKILL.md" ]; then
               cp "${skill_dir}/SKILL.md" "${out_assets}/SKILL.md"
             fi
@@ -579,7 +580,8 @@ jobs:
               files: $files
             }' > "release-assets/checksums.json"
 
-          # --- Copy root-level docs alongside the zip ---
+          # --- Copy skill.json and root-level docs alongside the zip ---
+          cp "$SKILL_PATH/skill.json" release-assets/skill.json
           if [ -f "$SKILL_PATH/SKILL.md" ]; then
             cp "$SKILL_PATH/SKILL.md" release-assets/
           fi
