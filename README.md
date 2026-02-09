@@ -202,6 +202,12 @@ Each skill release includes:
 - `SKILL.md` - Main skill documentation
 - Additional files from SBOM (scripts, configs, etc.)
 
+### Signing Operations Documentation
+
+For feed/release signing rollout and operations guidance:
+- [`SECURITY-SIGNING.md`](SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
+- [`MIGRATION-SIGNED-FEED.md`](MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
+
 ---
 
 ## 🛠️ Offline Tools

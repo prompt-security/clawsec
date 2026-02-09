@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { uniqueStrings } from "./lib/utils.mjs";
-import { isValidFeedPayload, loadRemoteFeed } from "./lib/feed.mjs";
+import { defaultChecksumsUrl, loadLocalFeed, loadRemoteFeed } from "./lib/feed.mjs";
 import type { HookEvent, FeedPayload, AdvisoryMatch } from "./lib/types.ts";
 import { loadState, persistState } from "./lib/state.ts";
 import { discoverInstalledSkills, findMatches, matchKey, buildAlertMessage } from "./lib/matching.ts";
@@ -10,6 +10,7 @@ import { discoverInstalledSkills, findMatches, matchKey, buildAlertMessage } fro
 const DEFAULT_FEED_URL =
   "https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json";
 const DEFAULT_SCAN_INTERVAL_SECONDS = 300;
+let unsignedModeWarningShown = false;
 
 function expandHome(inputPath: string): string {
   if (!inputPath) return inputPath;
@@ -49,16 +50,42 @@ function scannedRecently(lastScan: string | null, minIntervalSeconds: number): b
   return sinceMs >= 0 && sinceMs < minIntervalSeconds * 1000;
 }
 
-async function loadFeed(feedUrl: string, localFeedPath: string): Promise<FeedPayload> {
-  const remoteFeed = await loadRemoteFeed(feedUrl);
+async function loadFeed(options: {
+  feedUrl: string;
+  feedSignatureUrl: string;
+  feedChecksumsUrl: string;
+  feedChecksumsSignatureUrl: string;
+  localFeedPath: string;
+  localFeedSignaturePath: string;
+  localFeedChecksumsPath: string;
+  localFeedChecksumsSignaturePath: string;
+  feedPublicKeyPath: string;
+  allowUnsigned: boolean;
+  verifyChecksumManifest: boolean;
+}): Promise<FeedPayload> {
+  const publicKeyPem = options.allowUnsigned ? "" : await fs.readFile(options.feedPublicKeyPath, "utf8");
+
+  const remoteFeed = await loadRemoteFeed(options.feedUrl, {
+    signatureUrl: options.feedSignatureUrl,
+    checksumsUrl: options.feedChecksumsUrl,
+    checksumsSignatureUrl: options.feedChecksumsSignatureUrl,
+    publicKeyPem,
+    checksumsPublicKeyPem: publicKeyPem,
+    allowUnsigned: options.allowUnsigned,
+    verifyChecksumManifest: options.verifyChecksumManifest,
+  });
   if (remoteFeed) return remoteFeed;
 
-  const fallbackRaw = await fs.readFile(localFeedPath, "utf8");
-  const fallbackPayload = JSON.parse(fallbackRaw);
-  if (!isValidFeedPayload(fallbackPayload)) {
-    throw new Error(`Invalid advisory feed format in fallback file: ${localFeedPath}`);
-  }
-  return fallbackPayload;
+  return await loadLocalFeed(options.localFeedPath, {
+    signaturePath: options.localFeedSignaturePath,
+    checksumsPath: options.localFeedChecksumsPath,
+    checksumsSignaturePath: options.localFeedChecksumsSignaturePath,
+    publicKeyPem,
+    checksumsPublicKeyPem: publicKeyPem,
+    allowUnsigned: options.allowUnsigned,
+    verifyChecksumManifest: options.verifyChecksumManifest,
+    checksumPublicKeyEntry: path.basename(options.feedPublicKeyPath),
+  });
 }
 
 const handler = async (event: HookEvent): Promise<void> => {
@@ -69,14 +96,40 @@ const handler = async (event: HookEvent): Promise<void> => {
   );
   const suiteDir = expandHome(process.env.CLAWSEC_SUITE_DIR || path.join(installRoot, "clawsec-suite"));
   const localFeedPath = expandHome(process.env.CLAWSEC_LOCAL_FEED || path.join(suiteDir, "advisories", "feed.json"));
+  const localFeedSignaturePath = expandHome(
+    process.env.CLAWSEC_LOCAL_FEED_SIG || `${localFeedPath}.sig`,
+  );
+  const localFeedChecksumsPath = expandHome(
+    process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS || path.join(path.dirname(localFeedPath), "checksums.json"),
+  );
+  const localFeedChecksumsSignaturePath = expandHome(
+    process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG || `${localFeedChecksumsPath}.sig`,
+  );
+  const feedPublicKeyPath = expandHome(
+    process.env.CLAWSEC_FEED_PUBLIC_KEY || path.join(suiteDir, "advisories", "feed-signing-public.pem"),
+  );
   const stateFile = expandHome(
     process.env.CLAWSEC_SUITE_STATE_FILE || path.join(os.homedir(), ".openclaw", "clawsec-suite-feed-state.json"),
   );
   const feedUrl = process.env.CLAWSEC_FEED_URL || DEFAULT_FEED_URL;
+  const feedSignatureUrl = process.env.CLAWSEC_FEED_SIG_URL || `${feedUrl}.sig`;
+  const feedChecksumsUrl = process.env.CLAWSEC_FEED_CHECKSUMS_URL || defaultChecksumsUrl(feedUrl);
+  const feedChecksumsSignatureUrl =
+    process.env.CLAWSEC_FEED_CHECKSUMS_SIG_URL || `${feedChecksumsUrl}.sig`;
+  const allowUnsigned = process.env.CLAWSEC_ALLOW_UNSIGNED_FEED === "1";
+  const verifyChecksumManifest = process.env.CLAWSEC_VERIFY_CHECKSUM_MANIFEST !== "0";
   const scanIntervalSeconds = parsePositiveInteger(
     process.env.CLAWSEC_HOOK_INTERVAL_SECONDS,
     DEFAULT_SCAN_INTERVAL_SECONDS,
   );
+
+  if (allowUnsigned && !unsignedModeWarningShown) {
+    unsignedModeWarningShown = true;
+    console.warn(
+      "[clawsec-advisory-guardian] CLAWSEC_ALLOW_UNSIGNED_FEED=1 is enabled. " +
+        "This bypass is temporary migration compatibility and should be removed as soon as signed feed artifacts are available.",
+    );
+  }
 
   const forceScan = toEventName(event) === "command:new";
   const state = await loadState(stateFile);
@@ -86,7 +139,19 @@ const handler = async (event: HookEvent): Promise<void> => {
 
   let feed: FeedPayload;
   try {
-    feed = await loadFeed(feedUrl, localFeedPath);
+    feed = await loadFeed({
+      feedUrl,
+      feedSignatureUrl,
+      feedChecksumsUrl,
+      feedChecksumsSignatureUrl,
+      localFeedPath,
+      localFeedSignaturePath,
+      localFeedChecksumsPath,
+      localFeedChecksumsSignaturePath,
+      feedPublicKeyPath,
+      allowUnsigned,
+      verifyChecksumManifest,
+    });
   } catch (error) {
     console.warn(`[clawsec-advisory-guardian] failed to load advisory feed: ${String(error)}`);
     return;

@@ -6,12 +6,21 @@ import os from "node:os";
 import path from "node:path";
 import { normalizeSkillName, uniqueStrings } from "../hooks/clawsec-advisory-guardian/lib/utils.mjs";
 import { versionMatches } from "../hooks/clawsec-advisory-guardian/lib/version.mjs";
-import { parseAffectedSpecifier, isValidFeedPayload, loadRemoteFeed } from "../hooks/clawsec-advisory-guardian/lib/feed.mjs";
+import {
+  defaultChecksumsUrl,
+  parseAffectedSpecifier,
+  loadLocalFeed,
+  loadRemoteFeed,
+} from "../hooks/clawsec-advisory-guardian/lib/feed.mjs";
 
 const DEFAULT_FEED_URL =
   "https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json";
 const DEFAULT_SUITE_DIR = path.join(os.homedir(), ".openclaw", "skills", "clawsec-suite");
 const DEFAULT_LOCAL_FEED = path.join(DEFAULT_SUITE_DIR, "advisories", "feed.json");
+const DEFAULT_LOCAL_FEED_SIG = `${DEFAULT_LOCAL_FEED}.sig`;
+const DEFAULT_LOCAL_FEED_CHECKSUMS = path.join(DEFAULT_SUITE_DIR, "advisories", "checksums.json");
+const DEFAULT_LOCAL_FEED_CHECKSUMS_SIG = `${DEFAULT_LOCAL_FEED_CHECKSUMS}.sig`;
+const DEFAULT_FEED_PUBLIC_KEY = path.join(DEFAULT_SUITE_DIR, "advisories", "feed-signing-public.pem");
 const EXIT_CONFIRM_REQUIRED = 42;
 
 function printUsage() {
@@ -87,12 +96,10 @@ function affectedSpecifierMatches(specifier, skillName, version) {
   return versionMatches(version, parsed.versionSpec);
 }
 
-function affectedSpecifierMatchesNameOnly(specifier, skillName) {
+function affectedSpecifierMatchesWithoutVersion(specifier, skillName) {
   const parsed = parseAffectedSpecifier(specifier);
   if (!parsed) return false;
-  if (normalizeSkillName(parsed.name) !== normalizeSkillName(skillName)) return false;
-  const vs = parsed.versionSpec.trim();
-  return !vs || vs === "*" || vs.toLowerCase() === "any";
+  return normalizeSkillName(parsed.name) === normalizeSkillName(skillName);
 }
 
 function advisoryLooksHighRisk(advisory) {
@@ -108,17 +115,47 @@ function advisoryLooksHighRisk(advisory) {
 
 async function loadFeed() {
   const feedUrl = process.env.CLAWSEC_FEED_URL || DEFAULT_FEED_URL;
+  const feedSignatureUrl = process.env.CLAWSEC_FEED_SIG_URL || `${feedUrl}.sig`;
+  const feedChecksumsUrl = process.env.CLAWSEC_FEED_CHECKSUMS_URL || defaultChecksumsUrl(feedUrl);
+  const feedChecksumsSignatureUrl = process.env.CLAWSEC_FEED_CHECKSUMS_SIG_URL || `${feedChecksumsUrl}.sig`;
   const localFeedPath = process.env.CLAWSEC_LOCAL_FEED || DEFAULT_LOCAL_FEED;
+  const localFeedSigPath = process.env.CLAWSEC_LOCAL_FEED_SIG || DEFAULT_LOCAL_FEED_SIG;
+  const localFeedChecksumsPath = process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS || DEFAULT_LOCAL_FEED_CHECKSUMS;
+  const localFeedChecksumsSigPath = process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG || DEFAULT_LOCAL_FEED_CHECKSUMS_SIG;
+  const feedPublicKeyPath = process.env.CLAWSEC_FEED_PUBLIC_KEY || DEFAULT_FEED_PUBLIC_KEY;
+  const allowUnsigned = process.env.CLAWSEC_ALLOW_UNSIGNED_FEED === "1";
+  const verifyChecksumManifest = process.env.CLAWSEC_VERIFY_CHECKSUM_MANIFEST !== "0";
 
-  const remoteFeed = await loadRemoteFeed(feedUrl);
+  if (allowUnsigned) {
+    process.stderr.write(
+      "WARNING: CLAWSEC_ALLOW_UNSIGNED_FEED=1 is enabled. This temporary migration compatibility bypass should be removed once signed feed artifacts are available.\n",
+    );
+  }
+
+  const publicKeyPem = allowUnsigned ? "" : await fs.readFile(feedPublicKeyPath, "utf8");
+
+  const remoteFeed = await loadRemoteFeed(feedUrl, {
+    signatureUrl: feedSignatureUrl,
+    checksumsUrl: feedChecksumsUrl,
+    checksumsSignatureUrl: feedChecksumsSignatureUrl,
+    publicKeyPem,
+    checksumsPublicKeyPem: publicKeyPem,
+    allowUnsigned,
+    verifyChecksumManifest,
+  });
   if (remoteFeed) return { feed: remoteFeed, source: `remote:${feedUrl}` };
 
-  const raw = await fs.readFile(localFeedPath, "utf8");
-  const payload = JSON.parse(raw);
-  if (!isValidFeedPayload(payload)) {
-    throw new Error(`Invalid fallback advisory feed format: ${localFeedPath}`);
-  }
-  return { feed: payload, source: `local:${localFeedPath}` };
+  const localFeed = await loadLocalFeed(localFeedPath, {
+    signaturePath: localFeedSigPath,
+    checksumsPath: localFeedChecksumsPath,
+    checksumsSignaturePath: localFeedChecksumsSigPath,
+    publicKeyPem,
+    checksumsPublicKeyPem: publicKeyPem,
+    allowUnsigned,
+    verifyChecksumManifest,
+    checksumPublicKeyEntry: path.basename(feedPublicKeyPath),
+  });
+  return { feed: localFeed, source: `local:${localFeedPath}` };
 }
 
 function findMatches(feed, skillName, version) {
@@ -133,7 +170,7 @@ function findMatches(feed, skillName, version) {
       affected.filter((specifier) =>
         version
           ? affectedSpecifierMatches(specifier, skillName, version)
-          : affectedSpecifierMatchesNameOnly(specifier, skillName),
+          : affectedSpecifierMatchesWithoutVersion(specifier, skillName),
       ),
     );
 
@@ -185,6 +222,12 @@ async function main() {
   const highRisk = matches.some((entry) => advisoryLooksHighRisk(entry.advisory));
 
   process.stdout.write(`Advisory source: ${source}\n`);
+
+  if (!args.version) {
+    process.stdout.write(
+      "No --version provided. Conservatively matching any advisory for the requested skill name.\n",
+    );
+  }
 
   if (matches.length > 0) {
     printMatches(matches, args.skill, args.version);

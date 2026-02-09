@@ -1,7 +1,7 @@
 {
   "name": "clawsec-suite",
   "version": "0.0.9",
-  "description": "ClawSec suite manager with embedded advisory-feed monitoring, approval-gated malicious-skill response, and guided setup for additional security skills.",
+  "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "MIT",
   "homepage": "https://clawsec.prompt.security/",
@@ -19,7 +19,9 @@
     "agents",
     "ai",
     "suite",
-    "openclaw"
+    "openclaw",
+    "signature",
+    "verification"
   ],
   "sbom": {
     "files": [
@@ -39,6 +41,26 @@
         "description": "Embedded advisory feed seed (merged from clawsec-feed)"
       },
       {
+        "path": "advisories/feed.json.sig",
+        "required": true,
+        "description": "Detached Ed25519 signature for advisory feed"
+      },
+      {
+        "path": "advisories/checksums.json",
+        "required": true,
+        "description": "SHA-256 checksum manifest for advisory artifacts"
+      },
+      {
+        "path": "advisories/checksums.json.sig",
+        "required": true,
+        "description": "Detached Ed25519 signature for checksum manifest"
+      },
+      {
+        "path": "advisories/feed-signing-public.pem",
+        "required": true,
+        "description": "Pinned Ed25519 public key for feed signature verification"
+      },
+      {
         "path": "hooks/clawsec-advisory-guardian/HOOK.md",
         "required": true,
         "description": "OpenClaw hook metadata for advisory-driven malicious-skill checks"
@@ -46,7 +68,7 @@
       {
         "path": "hooks/clawsec-advisory-guardian/handler.ts",
         "required": true,
-        "description": "OpenClaw hook handler for approval-gated advisory actions"
+        "description": "OpenClaw hook handler for approval-gated advisory actions with signature verification"
       },
       {
         "path": "hooks/clawsec-advisory-guardian/lib/utils.mjs",
@@ -61,7 +83,22 @@
       {
         "path": "hooks/clawsec-advisory-guardian/lib/feed.mjs",
         "required": true,
-        "description": "Shared advisory feed loading and validation"
+        "description": "Advisory feed loading with Ed25519 signature and checksum manifest verification"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/types.ts",
+        "required": true,
+        "description": "TypeScript type definitions for hook and feed structures"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/state.ts",
+        "required": true,
+        "description": "Advisory state persistence and loading"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/matching.ts",
+        "required": true,
+        "description": "Advisory-to-skill matching and alert message generation"
       },
       {
         "path": "scripts/setup_advisory_hook.mjs",
@@ -76,7 +113,22 @@
       {
         "path": "scripts/guarded_skill_install.mjs",
         "required": true,
-        "description": "Two-step confirmation installer that blocks risky skill installs until explicit second approval"
+        "description": "Two-step confirmation installer with signature verification that blocks risky skill installs"
+      },
+      {
+        "path": "scripts/sign_detached_ed25519.mjs",
+        "required": false,
+        "description": "Utility script for generating Ed25519 detached signatures"
+      },
+      {
+        "path": "scripts/verify_detached_ed25519.mjs",
+        "required": false,
+        "description": "Utility script for verifying Ed25519 detached signatures"
+      },
+      {
+        "path": "scripts/generate_checksums_json.mjs",
+        "required": false,
+        "description": "Utility script for generating SHA-256 checksum manifests"
       }
     ]
   },
@@ -85,14 +137,20 @@
       "source_skill": "clawsec-feed",
       "source_version": "0.0.4",
       "paths": [
-        "advisories/feed.json"
+        "advisories/feed.json",
+        "advisories/feed.json.sig",
+        "advisories/checksums.json",
+        "advisories/checksums.json.sig",
+        "advisories/feed-signing-public.pem"
       ],
       "capabilities": [
         "advisory-feed monitoring",
         "new-advisory detection",
         "affected-skill cross-reference",
         "approval-gated malicious-skill removal recommendations",
-        "double-confirmation gating for risky skill installs"
+        "double-confirmation gating for risky skill installs",
+        "Ed25519 signature verification",
+        "checksum manifest verification"
       ],
       "standalone_available": true,
       "deprecation_plan": "standalone skill may be retired after suite migration is verified"
@@ -153,7 +211,8 @@
       "bins": [
         "curl",
         "jq",
-        "shasum"
+        "shasum",
+        "openssl"
       ]
     },
     "triggers": [

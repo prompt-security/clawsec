@@ -1,12 +1,12 @@
 ---
 name: clawsec-suite
 version: 0.0.9
-description: ClawSec suite manager with embedded advisory-feed monitoring, approval-gated malicious-skill response, and guided setup for additional security skills.
+description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "📦"
   requires:
-    bins: [curl, jq, shasum]
+    bins: [curl, jq, shasum, openssl]
 ---
 
 # ClawSec Suite
@@ -41,7 +41,7 @@ This means `clawsec-suite` can:
 npx clawhub@latest install clawsec-suite
 ```
 
-### Option B: Manual download with verification
+### Option B: Manual download with signature + checksum verification
 
 ```bash
 set -euo pipefail
@@ -56,14 +56,45 @@ DOWNLOAD_DIR="$TEMP_DIR/downloads"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 mkdir -p "$DOWNLOAD_DIR"
 
-# 1) Download checksums manifest
+# Pinned release-signing public key (verify fingerprint out-of-band on first use)
+# Fingerprint (SHA-256 of SPKI DER): 35866e1b1479a043ae816899562ac877e879320c3c5660be1e79f06241ca0854
+RELEASE_PUBKEY_SHA256="35866e1b1479a043ae816899562ac877e879320c3c5660be1e79f06241ca0854"
+cat > "$TEMP_DIR/release-signing-public.pem" <<'PEM'
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAtaRGONGp0Syl9EBS17hEYgGTwUtfZgigklS6vAe5MlQ=
+-----END PUBLIC KEY-----
+PEM
+
+ACTUAL_KEY_SHA256="$(openssl pkey -pubin -in "$TEMP_DIR/release-signing-public.pem" -outform DER | shasum -a 256 | awk '{print $1}')"
+if [ "$ACTUAL_KEY_SHA256" != "$RELEASE_PUBKEY_SHA256" ]; then
+  echo "ERROR: Release public key fingerprint mismatch" >&2
+  exit 1
+fi
+
+# 1) Download checksums manifest + detached signature
 curl -fsSL "$BASE/checksums.json" -o "$TEMP_DIR/checksums.json"
+curl -fsSL "$BASE/checksums.json.sig" -o "$TEMP_DIR/checksums.json.sig"
+
+# 2) Verify checksums manifest signature before trusting any file URLs or hashes
+openssl base64 -d -A -in "$TEMP_DIR/checksums.json.sig" -out "$TEMP_DIR/checksums.json.sig.bin"
+if ! openssl pkeyutl -verify \
+  -pubin \
+  -inkey "$TEMP_DIR/release-signing-public.pem" \
+  -sigfile "$TEMP_DIR/checksums.json.sig.bin" \
+  -rawin \
+  -in "$TEMP_DIR/checksums.json" >/dev/null 2>&1; then
+  echo "ERROR: checksums.json signature verification failed" >&2
+  exit 1
+fi
+
 if ! jq -e '.skill and .version and .files' "$TEMP_DIR/checksums.json" >/dev/null 2>&1; then
   echo "ERROR: Invalid checksums.json format" >&2
   exit 1
 fi
 
-# 2) Download every file listed in checksums and verify immediately
+echo "Checksums manifest signature verified."
+
+# 3) Download every file listed in checksums and verify immediately
 DOWNLOAD_FAILED=0
 for file in $(jq -r '.files | keys[]' "$TEMP_DIR/checksums.json"); do
   FILE_URL="$(jq -r --arg f "$file" '.files[$f].url' "$TEMP_DIR/checksums.json")"
@@ -94,7 +125,7 @@ if [ "$DOWNLOAD_FAILED" -eq 1 ]; then
   exit 1
 fi
 
-# 3) Install files using paths from checksums.json
+# 4) Install files using paths from checksums.json
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   REL_PATH="$(jq -r --arg f "$file" '.files[$f].path // $f' "$TEMP_DIR/checksums.json")"
@@ -109,7 +140,7 @@ chmod 600 "$DEST/skill.json"
 find "$DEST" -type f ! -name "skill.json" -exec chmod 644 {} \;
 
 echo "Installed clawsec-suite v${VERSION} to: $DEST"
-echo "Next step (OpenClaw): node \"$DEST/scripts/setup_advisory_hook.mjs\""
+echo "Next step (OpenClaw): node \"\$DEST/scripts/setup_advisory_hook.mjs\""
 ```
 
 ## OpenClaw Automation (Hook + Optional Cron)
@@ -147,6 +178,7 @@ node "$SUITE_DIR/scripts/guarded_skill_install.mjs" --skill helper-plus --versio
 
 Behavior:
 - If no advisory match is found, install proceeds.
+- If `--version` is omitted, matching is conservative: any advisory that references the skill name is treated as a match.
 - If advisory match is found, the script prints advisory context and exits with code `42`.
 - Then require an explicit second confirmation from the user and rerun with `--confirm-advisory`:
 
@@ -163,9 +195,16 @@ This enforces:
 The embedded feed logic uses these defaults:
 
 - Remote feed URL: `https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json`
+- Remote feed signature URL: `${CLAWSEC_FEED_URL}.sig` (override with `CLAWSEC_FEED_SIG_URL`)
+- Remote checksums manifest URL: sibling `checksums.json` (override with `CLAWSEC_FEED_CHECKSUMS_URL`)
 - Local seed fallback: `~/.openclaw/skills/clawsec-suite/advisories/feed.json`
+- Local feed signature: `${CLAWSEC_LOCAL_FEED}.sig` (override with `CLAWSEC_LOCAL_FEED_SIG`)
+- Local checksums manifest: `~/.openclaw/skills/clawsec-suite/advisories/checksums.json`
+- Pinned feed signing key: `~/.openclaw/skills/clawsec-suite/advisories/feed-signing-public.pem` (override with `CLAWSEC_FEED_PUBLIC_KEY`)
 - State file: `~/.openclaw/clawsec-suite-feed-state.json`
 - Hook rate-limit env (OpenClaw hook): `CLAWSEC_HOOK_INTERVAL_SECONDS` (default `300`)
+
+**Fail-closed verification:** Both signature and checksum manifest verification are required by default. Set `CLAWSEC_ALLOW_UNSIGNED_FEED=1` only as a temporary migration bypass when adopting this version before signed feed artifacts are available upstream.
 
 ### Quick feed check
 
@@ -245,7 +284,9 @@ npx clawhub@latest install clawtributor
 
 ## Security Notes
 
-- Always verify checksums before installing files manually.
+- Always verify `checksums.json` signature before trusting its file URLs/hashes, then verify each file checksum.
+- Verify advisory feed detached signatures; do not enable `CLAWSEC_ALLOW_UNSIGNED_FEED` outside temporary migration windows.
 - Keep advisory polling rate-limited (at least 5 minutes between checks).
 - Treat `critical` and `high` advisories affecting installed skills as immediate action items.
 - If you migrate off standalone `clawsec-feed`, keep one canonical state file to avoid duplicate notifications.
+- Pin and verify public key fingerprints out-of-band before first use.

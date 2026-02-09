@@ -85,3 +85,16 @@ jobs:
         run: npm audit --audit-level=high --registry=https://registry.npmjs.org
       - name: Check for outdated deps
         run: npm outdated || true
+
+  clawsec-suite-tests:
+    name: ClawSec Suite Verification Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Feed Verification Tests
+        run: node skills/clawsec-suite/test/feed_verification.test.mjs
+      - name: Guarded Install Tests
+        run: node skills/clawsec-suite/test/guarded_install.test.mjs
