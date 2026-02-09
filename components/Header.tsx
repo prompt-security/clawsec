@@ -52,7 +52,7 @@ export const Header: React.FC = () => {
       {desktopNav}
 
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#26115d]/92 border-b border-[#3a1f7a]">
+      <header className="md:hidden fixed top-[72px] left-0 right-0 z-50 backdrop-blur-md bg-[#26115d]/92 border-b border-[#3a1f7a]">
         <div className="px-4 h-14 flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2 text-white font-semibold text-lg">
             <img src="/img/favicon.ico" alt="" className="w-5 h-5 rounded-sm" />
