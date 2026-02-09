@@ -102,7 +102,7 @@ export const FeedSetup: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {currentAdvisories.map((item) => (
                 <AdvisoryCard key={item.id} advisory={item} formatDate={formatDate} />
               ))}

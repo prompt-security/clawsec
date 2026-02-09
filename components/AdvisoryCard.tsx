@@ -47,19 +47,19 @@ export const AdvisoryCard: React.FC<AdvisoryCardProps> = ({ advisory, formatDate
   return (
     <Link
       to={`/feed/${encodeURIComponent(advisory.id)}`}
-      className="block bg-clawd-800 border border-clawd-700 rounded-xl p-5 hover:border-clawd-accent/30 transition-all group cursor-pointer"
+      className="block h-full bg-clawd-800 border border-clawd-700 rounded-xl p-5 hover:border-clawd-accent/30 transition-all group cursor-pointer"
     >
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2 mb-3">
+        <div className="flex min-w-0 flex-wrap gap-2">
           <span className={`text-xs font-bold px-2 py-1 rounded uppercase ${getSeverityClasses(advisory.severity)}`}>
             {advisory.severity}
             {advisory.cvss_score && <span className="ml-1 opacity-75">({advisory.cvss_score})</span>}
           </span>
-          <span className="text-xs px-2 py-1 rounded bg-clawd-700 text-gray-400">
+          <span className="text-xs px-2 py-1 rounded bg-clawd-700 text-gray-400 min-w-0 max-w-full truncate">
             {getTypeLabel(advisory.type)}
           </span>
         </div>
-        <span className="text-xs text-gray-500 font-mono">{formatDate(advisory.published)}</span>
+        <span className="text-xs text-gray-500 font-mono text-right whitespace-nowrap">{formatDate(advisory.published)}</span>
       </div>
       <h3 className="text-white font-bold mb-2 group-hover:text-clawd-accent transition-colors text-sm">
         {advisory.id}
