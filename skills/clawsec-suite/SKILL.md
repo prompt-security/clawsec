@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.0.8
+version: 0.0.9
 description: ClawSec suite manager with embedded advisory-feed monitoring, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
