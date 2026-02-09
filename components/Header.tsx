@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, Menu, X, Terminal, Layers, Rss, Home } from 'lucide-react';
+import { Menu, X, Terminal, Layers, Rss, Home } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +55,7 @@ export const Header: React.FC = () => {
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#26115d]/92 border-b border-[#3a1f7a]">
         <div className="px-4 h-14 flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-2 text-white font-semibold text-lg">
-            <Shield className="w-5 h-5 text-clawd-accent" />
+            <img src="/img/favicon.ico" alt="" className="w-5 h-5 rounded-sm" />
             ClawSec
           </NavLink>
           <button

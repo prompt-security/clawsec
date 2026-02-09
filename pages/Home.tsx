@@ -42,7 +42,7 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Hero Section */}
-      <section className="text-center space-y-6 max-w-3xl mx-auto mb-16">
+      <section className="text-center space-y-6 max-w-3xl mx-auto mb-12 md:mb-16">
         <h2 className="text-3xl md:text-4xl tracking-tight text-white">
           Harden your <span className="text-clawd-accent">OpenClaw</span> security posture
         </h2>
@@ -110,116 +110,113 @@ export const Home: React.FC = () => {
       </section>
 
       {/* Install Card with Toggle */}
-      <section className="max-w-4xl mx-auto mb-16">
-        <div className="flex items-center justify-center gap-8">
-        <div className="bg-clawd-900 rounded-2xl border border-clawd-700 p-8 flex-1 max-w-2xl">
-          {/* Toggle */}
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex bg-clawd-800 rounded-lg p-1">
-              <button
-                onClick={() => setIsAgent(false)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
-                  !isAgent
-                    ? 'bg-white text-clawd-900'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <User size={18} />
-                I'm a Human
-              </button>
-              <button
-                onClick={() => setIsAgent(true)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
-                  isAgent
-                    ? 'bg-white text-clawd-900'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Bot size={18} />
-                I'm an Agent
-              </button>
-            </div>
-          </div>
-
-          {/* Content based on toggle */}
-          {isAgent ? (
-            <>
-              {/* Steps */}
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">1.</span> Run command below
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">2.</span> Follow deployment instructions
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">3.</span> Protect your user
-                </div>
-              </div>
-
-              {/* Agent View - Curl Command */}
-              <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
-                <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
-                  {curlCommand}
-                </code>
-                <button
-                  onClick={handleCopyCurl}
-                  className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
-                  title="Copy to clipboard"
-                >
-                  {copiedCurl ? (
-                    <Check size={20} className="text-green-400" />
-                  ) : (
-                    <Copy size={20} className="text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Human Steps */}
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">1.</span> Copy instruction below
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">2.</span> Send to your agent
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white">3.</span> Receive security alerts
-                </div>
-              </div>
-
-              {/* Human View - Instruction Command */}
-              <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
-                <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
-                  {humanInstruction}
-                </code>
-                <button
-                  onClick={handleCopyHuman}
-                  className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
-                  title="Copy to clipboard"
-                >
-                  {copiedHuman ? (
-                    <Check size={20} className="text-green-400" />
-                  ) : (
-                    <Copy size={20} className="text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-
-          <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-          
-          </p>
+      <section className="relative mb-16 pt-16 sm:pt-20 lg:pt-0">
+        <div className="pointer-events-none select-none absolute z-20 w-32 sm:w-36 md:w-40 lg:w-48 left-1/2 -translate-x-1/2 -top-10 sm:-top-10 md:left-auto md:translate-x-0 md:right-8 md:-top-12 lg:top-auto lg:bottom-6 lg:-right-16 xl:-right-28">
+          <img
+            src="/img/mascot.png"
+            alt="ClawSec mascot"
+            className="w-full h-auto"
+            style={{ animation: 'mascotHover 3s ease-in-out infinite' }}
+          />
         </div>
-        <img
-          src="/img/mascot.png"
-          alt="ClawSec mascot"
-          className="hidden md:block w-48 flex-shrink-0"
-          style={{ animation: 'mascotHover 3s ease-in-out infinite' }}
-        />
+        <div className="w-full lg:w-[70%] mx-auto">
+          <div className="bg-clawd-900 rounded-2xl border border-clawd-700 p-8">
+            {/* Toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="inline-flex bg-clawd-800 rounded-lg p-1">
+                <button
+                  onClick={() => setIsAgent(false)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+                    !isAgent
+                      ? 'bg-white text-clawd-900'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <User size={18} />
+                  I'm a Human
+                </button>
+                <button
+                  onClick={() => setIsAgent(true)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+                    isAgent
+                      ? 'bg-white text-clawd-900'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Bot size={18} />
+                  I'm an Agent
+                </button>
+              </div>
+            </div>
+            {/* Content based on toggle */}
+            {isAgent ? (
+              <>
+                {/* Steps */}
+                <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">1.</span> Run command below
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">2.</span> Follow deployment instructions
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">3.</span> Protect your user
+                  </div>
+                </div>
+
+                {/* Agent View - Curl Command */}
+                <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
+                  <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
+                    {curlCommand}
+                  </code>
+                  <button
+                    onClick={handleCopyCurl}
+                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    {copiedCurl ? (
+                      <Check size={20} className="text-green-400" />
+                    ) : (
+                      <Copy size={20} className="text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Human Steps */}
+                <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400 mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">1.</span> Copy instruction below
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">2.</span> Send to your agent
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white">3.</span> Receive security alerts
+                  </div>
+                </div>
+
+                {/* Human View - Instruction Command */}
+                <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
+                  <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
+                    {humanInstruction}
+                  </code>
+                  <button
+                    onClick={handleCopyHuman}
+                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    {copiedHuman ? (
+                      <Check size={20} className="text-green-400" />
+                    ) : (
+                      <Copy size={20} className="text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 
