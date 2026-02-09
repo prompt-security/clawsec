@@ -205,28 +205,33 @@ for file in "${FILES_TO_STAGE[@]}"; do
 done
 
 # Verify staged changes before committing
+MADE_COMMIT=false
 if git diff --cached --quiet; then
-  echo "Warning: No changes to commit"
-  exit 0
-fi
-
-# Commit the version bump
-echo "Committing changes..."
-if ! git commit -m "chore($SKILL_NAME): bump version to $VERSION"; then
-  echo "Error: Failed to commit changes"
-  exit 1
+  echo "Note: Version already at $VERSION — no changes to commit"
+  COMMIT_SHA=$(git rev-parse HEAD)
+else
+  # Commit the version bump
+  echo "Committing changes..."
+  if ! git commit -m "chore($SKILL_NAME): bump version to $VERSION"; then
+    echo "Error: Failed to commit changes"
+    exit 1
+  fi
+  COMMIT_SHA=$(git rev-parse HEAD)
+  MADE_COMMIT=true
 fi
 
 # Save commit SHA for recovery
-COMMIT_SHA=$(git rev-parse HEAD)
 echo "Committed: $COMMIT_SHA"
 
 # Create tag only on release branches (or if forced)
 if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   # Check if tag already exists (only matters when we're creating one)
   if git rev-parse "$TAG" >/dev/null 2>&1; then
-    echo "Error: Tag $TAG already exists; rolling back last commit"
-    git reset --hard HEAD~1
+    echo "Error: Tag $TAG already exists"
+    if [[ "$MADE_COMMIT" == "true" ]]; then
+      echo "Rolling back version-bump commit..."
+      git reset --hard HEAD~1
+    fi
     exit 1
   fi
 
@@ -253,12 +258,18 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   fi
 
   echo ""
-  echo "Done! To release, push the commit and tag:"
-  echo "  git push origin $CURRENT_BRANCH"
+  echo "Done! To release, push the tag:"
+  if [[ "$MADE_COMMIT" == "true" ]]; then
+    echo "  git push origin $CURRENT_BRANCH"
+  fi
   echo "  git push origin $TAG"
   echo ""
   echo "Or to undo:"
-  echo "  git reset --hard HEAD~1 && git tag -d $TAG"
+  if [[ "$MADE_COMMIT" == "true" ]]; then
+    echo "  git reset --hard HEAD~1 && git tag -d $TAG"
+  else
+    echo "  git tag -d $TAG"
+  fi
 else
   # Feature branch: skip tagging, instruct user on next steps
   echo ""
