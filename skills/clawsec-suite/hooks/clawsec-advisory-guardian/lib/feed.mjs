@@ -427,8 +427,9 @@ export async function loadRemoteFeed(feedUrl, options = {}) {
   const allowUnsigned = options.allowUnsigned === true;
   const verifyChecksumManifest = options.verifyChecksumManifest !== false;
 
-  const payloadRaw = await fetchText(fetchFn, feedUrl);
-  if (!payloadRaw) return null;
+  try {
+    const payloadRaw = await fetchText(fetchFn, feedUrl);
+    if (!payloadRaw) return null;
 
   if (!allowUnsigned) {
     const signatureRaw = await fetchText(fetchFn, signatureUrl);
@@ -464,11 +465,20 @@ export async function loadRemoteFeed(feedUrl, options = {}) {
     }
   }
 
-  try {
-    const payload = JSON.parse(payloadRaw);
-    if (!isValidFeedPayload(payload)) return null;
-    return payload;
-  } catch {
-    return null;
+    try {
+      const payload = JSON.parse(payloadRaw);
+      if (!isValidFeedPayload(payload)) return null;
+      return payload;
+    } catch {
+      return null;
+    }
+  } catch (error) {
+    // Security policy violations (invalid URLs, non-HTTPS, disallowed domains) return null
+    // to allow graceful fallback to local feed
+    if (error instanceof SecurityPolicyError) {
+      return null;
+    }
+    // Re-throw unexpected errors
+    throw error;
   }
 }
