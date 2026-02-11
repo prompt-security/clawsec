@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "MIT",
