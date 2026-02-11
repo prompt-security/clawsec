@@ -99,13 +99,16 @@ jobs:
                   continue
                 fi
 
-                # Mirror all release assets under a GitHub-compatible path so users can
-                # swap the host (github.com → clawsec.prompt.security) if GitHub is blocked.
-                MIRROR_DIR="public/releases/download/${TAG}"
-                mkdir -p "$MIRROR_DIR"
-                mv "$SKILL_JSON_TMP" "$MIRROR_DIR/skill.json"
+                # Security: Download to temp directory first, verify signatures, then mirror to final location.
+                # This ensures unverified releases never appear in public/releases or the skills catalog.
 
-                # Download all remaining assets for this release (retain asset names)
+                # Use temp directory for downloads before verification
+                TEMP_DOWNLOAD_DIR=$(mktemp -d)
+
+                # Move skill.json to temp dir first
+                mv "$SKILL_JSON_TMP" "$TEMP_DOWNLOAD_DIR/skill.json"
+
+                # Download all remaining assets to temp dir
                 while read -r asset; do
                   ASSET_ID=$(echo "$asset" | jq -r '.id')
                   ASSET_NAME=$(echo "$asset" | jq -r '.name')
@@ -121,24 +124,33 @@ jobs:
                     continue
                   fi
 
-                  download_asset "$ASSET_ID" "$MIRROR_DIR/$ASSET_NAME"
-                  echo "  Mirrored: $ASSET_NAME"
+                  download_asset "$ASSET_ID" "$TEMP_DOWNLOAD_DIR/$ASSET_NAME"
+                  echo "  Downloaded to temp: $ASSET_NAME"
                 done < <(echo "$release" | jq -c '.assets[]')
 
                 # Verify signed checksums when signature artifacts are present.
                 # Legacy releases without signatures are still mirrored for backward compatibility.
-                if [ -f "$MIRROR_DIR/checksums.sig" ] && [ -f "$MIRROR_DIR/signing-public.pem" ] && [ -f "$MIRROR_DIR/checksums.json" ]; then
-                  openssl base64 -d -A -in "$MIRROR_DIR/checksums.sig" -out "$MIRROR_DIR/checksums.sig.bin"
-                  if ! openssl dgst -sha256 -verify "$MIRROR_DIR/signing-public.pem" -signature "$MIRROR_DIR/checksums.sig.bin" "$MIRROR_DIR/checksums.json"; then
+                if [ -f "$TEMP_DOWNLOAD_DIR/checksums.sig" ] && [ -f "$TEMP_DOWNLOAD_DIR/signing-public.pem" ] && [ -f "$TEMP_DOWNLOAD_DIR/checksums.json" ]; then
+                  openssl base64 -d -A -in "$TEMP_DOWNLOAD_DIR/checksums.sig" -out "$TEMP_DOWNLOAD_DIR/checksums.sig.bin"
+                  if ! openssl dgst -sha256 -verify "$TEMP_DOWNLOAD_DIR/signing-public.pem" -signature "$TEMP_DOWNLOAD_DIR/checksums.sig.bin" "$TEMP_DOWNLOAD_DIR/checksums.json"; then
                     echo "  Warning: Invalid checksums signature for $TAG; skipping skill"
-                    rm -f "$MIRROR_DIR/checksums.sig.bin"
+                    rm -rf "$TEMP_DOWNLOAD_DIR"
                     continue
                   fi
-                  rm -f "$MIRROR_DIR/checksums.sig.bin"
+                  rm -f "$TEMP_DOWNLOAD_DIR/checksums.sig.bin"
                   echo "  Verified checksums signature"
-                elif [ -f "$MIRROR_DIR/checksums.json" ]; then
+                elif [ -f "$TEMP_DOWNLOAD_DIR/checksums.json" ]; then
                   echo "  Warning: Unsigned legacy checksums for $TAG (missing checksums.sig/signing-public.pem)"
                 fi
+
+                # Verification passed or skipped (legacy) - mirror to final location
+                MIRROR_DIR="public/releases/download/${TAG}"
+                mkdir -p "$MIRROR_DIR"
+                cp -r "$TEMP_DOWNLOAD_DIR"/* "$MIRROR_DIR"/
+                echo "  Mirrored to: $MIRROR_DIR"
+
+                # Clean up temp directory
+                rm -rf "$TEMP_DOWNLOAD_DIR"
 
                 # Copy the subset needed for the site catalog (skill pages)
                 mkdir -p "public/skills/${SKILL_NAME}"
@@ -210,13 +222,23 @@ jobs:
           FEED_SHA=$(sha256sum "$FEED_FILE" | awk '{print $1}')
           FEED_SIZE=$(stat -c%s "$FEED_FILE" 2>/dev/null || stat -f%z "$FEED_FILE")
 
+          # Generate checksums manifest conforming to parseChecksumsManifest expectations:
+          # - schema_version: "1" (manifest format version)
+          # - algorithm: "sha256" (hash algorithm)
+          # - version: "1.1.0" (feed content version, for informational purposes)
+          # - generated_at, repository: metadata
+          # - files: map of path -> {sha256, size, path, url}
           jq -n \
+            --arg schema_version "1" \
+            --arg algorithm "sha256" \
             --arg version "1.1.0" \
             --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg repo "${{ github.repository }}" \
             --arg sha "$FEED_SHA" \
             --argjson size "$FEED_SIZE" \
             '{
+              schema_version: $schema_version,
+              algorithm: $algorithm,
               version: $version,
               generated_at: $generated,
               repository: $repo,

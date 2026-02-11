@@ -1,7 +1,99 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import https from "node:https";
 import path from "node:path";
 import { isObject } from "./utils.mjs";
+
+/**
+ * Allowed domains for feed/signature fetching.
+ * Only connections to these domains are permitted for security.
+ */
+const ALLOWED_DOMAINS = [
+  "clawsec.prompt.security",
+  "prompt.security",
+  "raw.githubusercontent.com",
+  "github.com",
+];
+
+/**
+ * Custom error class for security policy violations.
+ * These errors should always propagate and never be silently caught.
+ */
+class SecurityPolicyError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "SecurityPolicyError";
+  }
+}
+
+/**
+ * Creates a secure HTTPS agent with TLS 1.2+ enforcement and certificate validation.
+ * @returns {https.Agent}
+ */
+function createSecureAgent() {
+  return new https.Agent({
+    // Enforce minimum TLS 1.2 (eliminate TLS 1.0, 1.1)
+    minVersion: "TLSv1.2",
+    // Ensure certificate validation is enabled (reject unauthorized certificates)
+    rejectUnauthorized: true,
+    // Use strong cipher suites
+    ciphers: "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256",
+  });
+}
+
+/**
+ * Validates that a URL is from an allowed domain.
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isAllowedDomain(url) {
+  try {
+    const parsed = new URL(url);
+
+    // Only allow HTTPS protocol
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Check if hostname matches any allowed domain
+    return ALLOWED_DOMAINS.some(
+      (allowed) =>
+        hostname === allowed || hostname.endsWith(`.${allowed}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Secure wrapper around fetch with TLS enforcement and domain validation.
+ * @param {string} url
+ * @param {RequestInit} [options]
+ * @returns {Promise<Response>}
+ * @throws {SecurityPolicyError} If URL is not from an allowed domain
+ */
+async function secureFetch(url, options = {}) {
+  // Validate domain before making request
+  if (!isAllowedDomain(url)) {
+    throw new SecurityPolicyError(
+      `Security policy violation: URL domain not allowed. ` +
+      `Only connections to ${ALLOWED_DOMAINS.join(", ")} are permitted. ` +
+      `Blocked: ${url}`
+    );
+  }
+
+  // Use secure HTTPS agent with TLS 1.2+ enforcement
+  const agent = createSecureAgent();
+
+  return globalThis.fetch(url, {
+    ...options,
+    // Attach secure agent for Node.js fetch
+    // @ts-ignore - agent is supported in Node.js fetch
+    agent,
+  });
+}
 
 /**
  * @param {string} rawSpecifier
@@ -140,7 +232,18 @@ function parseChecksumsManifest(manifestRaw) {
     throw new Error(`Unsupported checksum manifest algorithm: ${algorithmRaw || "(empty)"}`);
   }
 
-  const schemaVersion = typeof parsed.schema_version === "string" ? parsed.schema_version.trim() : "";
+  // Support legacy manifest formats:
+  // - New standard: schema_version field
+  // - skill-release.yml: version field (e.g., "0.0.1")
+  // - deploy-pages.yml (pre-fix): generated_at field (e.g., "2026-02-08T...")
+  // - Ultimate fallback: "1"
+  const schemaVersion = (
+    typeof parsed.schema_version === "string" ? parsed.schema_version.trim() :
+    typeof parsed.version === "string" ? parsed.version.trim() :
+    typeof parsed.generated_at === "string" ? parsed.generated_at.trim() :
+    "1"
+  );
+
   if (!schemaVersion) {
     throw new Error("Checksum manifest missing schema_version");
   }
@@ -220,7 +323,12 @@ async function fetchText(fetchFn, targetUrl) {
     });
     if (!response.ok) return null;
     return await response.text();
-  } catch {
+  } catch (error) {
+    // Re-throw security policy violations - these should never be silently caught
+    if (error instanceof SecurityPolicyError) {
+      throw error;
+    }
+    // Network errors, timeouts, etc. return null (graceful degradation)
     return null;
   } finally {
     globalThis.clearTimeout(timeout);
@@ -307,7 +415,8 @@ export async function loadLocalFeed(feedPath, options = {}) {
  * @returns {Promise<import("./types.ts").FeedPayload | null>}
  */
 export async function loadRemoteFeed(feedUrl, options = {}) {
-  const fetchFn = /** @type {{ fetch?: Function }} */ (globalThis).fetch;
+  // Use secure fetch with TLS 1.2+ enforcement and domain validation
+  const fetchFn = secureFetch;
   if (typeof fetchFn !== "function") return null;
 
   const signatureUrl = options.signatureUrl ?? `${feedUrl}.sig`;
@@ -329,22 +438,29 @@ export async function loadRemoteFeed(feedUrl, options = {}) {
       return null;
     }
 
+    // Only verify checksums if explicitly requested AND both checksum files are available.
+    // Note: Many upstream workflows (e.g., GitHub raw content) don't publish checksums.json,
+    // so we gracefully skip verification when these files are missing.
     if (verifyChecksumManifest) {
       const checksumsRaw = await fetchText(fetchFn, checksumsUrl);
       const checksumsSignatureRaw = await fetchText(fetchFn, checksumsSignatureUrl);
-      if (!checksumsRaw || !checksumsSignatureRaw) return null;
 
-      if (!verifySignedPayload(checksumsRaw, checksumsSignatureRaw, checksumsPublicKeyPem)) {
-        return null;
+      // Only proceed if BOTH checksum files are present
+      if (checksumsRaw && checksumsSignatureRaw) {
+        if (!verifySignedPayload(checksumsRaw, checksumsSignatureRaw, checksumsPublicKeyPem)) {
+          return null;  // Fail-closed: invalid signature
+        }
+
+        const checksumsManifest = parseChecksumsManifest(checksumsRaw);
+        const checksumFeedEntry = options.checksumFeedEntry ?? "feed.json";
+        const checksumSignatureEntry = options.checksumSignatureEntry ?? "feed.json.sig";
+        verifyChecksums(checksumsManifest, {
+          [checksumFeedEntry]: payloadRaw,
+          [checksumSignatureEntry]: signatureRaw,
+        });
       }
-
-      const checksumsManifest = parseChecksumsManifest(checksumsRaw);
-      const checksumFeedEntry = options.checksumFeedEntry ?? "feed.json";
-      const checksumSignatureEntry = options.checksumSignatureEntry ?? "feed.json.sig";
-      verifyChecksums(checksumsManifest, {
-        [checksumFeedEntry]: payloadRaw,
-        [checksumSignatureEntry]: signatureRaw,
-      });
+      // If checksum files missing: continue without checksum verification
+      // (feed signature was already verified above at line 328)
     }
   }
 

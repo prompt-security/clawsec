@@ -31,6 +31,11 @@
         "description": "Suite skill documentation and installation guide"
       },
       {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and security improvements changelog"
+      },
+      {
         "path": "HEARTBEAT.md",
         "required": true,
         "description": "Portable heartbeat and update-check procedure"
