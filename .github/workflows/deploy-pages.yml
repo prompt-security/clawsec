@@ -132,7 +132,8 @@ jobs:
                 # Legacy releases without signatures are still mirrored for backward compatibility.
                 if [ -f "$TEMP_DOWNLOAD_DIR/checksums.sig" ] && [ -f "$TEMP_DOWNLOAD_DIR/signing-public.pem" ] && [ -f "$TEMP_DOWNLOAD_DIR/checksums.json" ]; then
                   openssl base64 -d -A -in "$TEMP_DOWNLOAD_DIR/checksums.sig" -out "$TEMP_DOWNLOAD_DIR/checksums.sig.bin"
-                  if ! openssl dgst -sha256 -verify "$TEMP_DOWNLOAD_DIR/signing-public.pem" -signature "$TEMP_DOWNLOAD_DIR/checksums.sig.bin" "$TEMP_DOWNLOAD_DIR/checksums.json"; then
+                  # Verify Ed25519 signature
+                  if ! openssl pkeyutl -verify -pubin -inkey "$TEMP_DOWNLOAD_DIR/signing-public.pem" -sigfile "$TEMP_DOWNLOAD_DIR/checksums.sig.bin" -in "$TEMP_DOWNLOAD_DIR/checksums.json"; then
                     echo "  Warning: Invalid checksums signature for $TAG; skipping skill"
                     rm -rf "$TEMP_DOWNLOAD_DIR"
                     continue
@@ -288,9 +289,11 @@ jobs:
             local output_sig="$2"
             local tmp_sig="$TMP_DIR/$(basename "$output_sig").bin"
 
-            openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$input_file" | openssl base64 -A > "$output_sig"
+            # Sign with Ed25519 (use pkeyutl, not dgst)
+            openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$input_file" | openssl base64 -A > "$output_sig"
             openssl base64 -d -A -in "$output_sig" -out "$tmp_sig"
-            openssl dgst -sha256 -verify "$PUB_FILE" -signature "$tmp_sig" "$input_file"
+            # Verify Ed25519 signature
+            openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$tmp_sig" -in "$input_file"
           }
 
           sign_and_verify "public/advisories/feed.json" "public/advisories/feed.json.sig"

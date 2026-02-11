@@ -208,10 +208,22 @@ jobs:
 
             local key_file="$TEST_SIGNING_KEY_DIR/private.pem"
             local pub_file="$TEST_SIGNING_KEY_DIR/public.pem"
+            local tmp_sig_bin
 
-            # Sign feed.json
-            openssl dgst -sha256 -sign "$key_file" "$advisory_dir/feed.json" | \
+            # Sign feed.json with Ed25519/RSA (use pkeyutl for compatibility)
+            openssl pkeyutl -sign -inkey "$key_file" -in "$advisory_dir/feed.json" | \
               openssl base64 -A > "$advisory_dir/feed.json.sig"
+
+            # Verify feed.json signature
+            tmp_sig_bin=$(mktemp)
+            openssl base64 -d -A -in "$advisory_dir/feed.json.sig" -out "$tmp_sig_bin"
+            if ! openssl pkeyutl -verify -pubin -inkey "$pub_file" -sigfile "$tmp_sig_bin" -in "$advisory_dir/feed.json" >/dev/null 2>&1; then
+              echo "::error file=${skill_dir}/advisories/feed.json.sig::Feed signature verification failed after signing"
+              rm -f "$tmp_sig_bin"
+              return 1
+            fi
+            rm -f "$tmp_sig_bin"
+            echo "  [Dry-run] Verified feed.json signature"
 
             # Generate checksums.json
             local feed_sha=$(sha256sum "$advisory_dir/feed.json" | awk '{print $1}')
@@ -239,14 +251,25 @@ jobs:
                 }
               }' > "$advisory_dir/checksums.json"
 
-            # Sign checksums.json
-            openssl dgst -sha256 -sign "$key_file" "$advisory_dir/checksums.json" | \
+            # Sign checksums.json with Ed25519/RSA (use pkeyutl for compatibility)
+            openssl pkeyutl -sign -inkey "$key_file" -in "$advisory_dir/checksums.json" | \
               openssl base64 -A > "$advisory_dir/checksums.json.sig"
+
+            # Verify checksums.json signature
+            tmp_sig_bin=$(mktemp)
+            openssl base64 -d -A -in "$advisory_dir/checksums.json.sig" -out "$tmp_sig_bin"
+            if ! openssl pkeyutl -verify -pubin -inkey "$pub_file" -sigfile "$tmp_sig_bin" -in "$advisory_dir/checksums.json" >/dev/null 2>&1; then
+              echo "::error file=${skill_dir}/advisories/checksums.json.sig::Checksums signature verification failed after signing"
+              rm -f "$tmp_sig_bin"
+              return 1
+            fi
+            rm -f "$tmp_sig_bin"
+            echo "  [Dry-run] Verified checksums.json signature"
 
             # Copy public key
             cp "$pub_file" "$advisory_dir/feed-signing-public.pem"
 
-            echo "  [Dry-run] Advisory artifacts signed with test key"
+            echo "  [Dry-run] Advisory artifacts signed and verified with test key"
           }
 
           get_md_version() {
@@ -328,7 +351,11 @@ jobs:
             mkdir -p "${out_assets}"
 
             # --- Sign advisory artifacts if present (dry-run with test key) ---
-            sign_advisory_artifacts "${skill_dir}"
+            if ! sign_advisory_artifacts "${skill_dir}"; then
+              failures=$((failures + 1))
+              echo "::endgroup::"
+              continue
+            fi
 
             # --- Stage SBOM files preserving directory structure ---
             staging_dir="$(mktemp -d)"
@@ -351,9 +378,27 @@ jobs:
 
             cp "${json_path}" "${inner_dir}/skill.json"
 
+            # --- Remove test-only artifacts from staging (don't include in release zip) ---
+            # The test signatures/keys were needed for SBOM validation but shouldn't ship
+            if [ -d "${inner_dir}/advisories" ]; then
+              rm -f "${inner_dir}/advisories/feed.json.sig"
+              rm -f "${inner_dir}/advisories/checksums.json"
+              rm -f "${inner_dir}/advisories/checksums.json.sig"
+              rm -f "${inner_dir}/advisories/feed-signing-public.pem"
+              echo "  [Dry-run] Removed test signatures from release staging"
+            fi
+
             # --- Create zip preserving directory structure ---
             zip_name="${skill_name}-v${version}.zip"
             (cd "${staging_dir}" && zip -qr "${OLDPWD}/${out_assets}/${zip_name}" .)
+
+            # --- Clean up test artifacts from source directory ---
+            if [ -d "${skill_dir}/advisories" ]; then
+              rm -f "${skill_dir}/advisories/feed.json.sig"
+              rm -f "${skill_dir}/advisories/checksums.json"
+              rm -f "${skill_dir}/advisories/checksums.json.sig"
+              rm -f "${skill_dir}/advisories/feed-signing-public.pem"
+            fi
 
             # --- Generate checksums.json via jq ---
             files_json="{}"
@@ -585,14 +630,14 @@ jobs:
           # Extract public key
           openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
 
-          # Sign feed.json
+          # Sign feed.json with Ed25519 (use pkeyutl, not dgst)
           echo "Signing $ADVISORY_DIR/feed.json"
-          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$ADVISORY_DIR/feed.json" | \
+          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$ADVISORY_DIR/feed.json" | \
             openssl base64 -A > "$ADVISORY_DIR/feed.json.sig"
 
-          # Verify feed signature
+          # Verify Ed25519 feed signature
           openssl base64 -d -A -in "$ADVISORY_DIR/feed.json.sig" -out "$TMP_DIR/feed.sig.bin"
-          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/feed.sig.bin" "$ADVISORY_DIR/feed.json"
+          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/feed.sig.bin" -in "$ADVISORY_DIR/feed.json"
           echo "  ✓ Feed signature verified"
 
           # Generate checksums.json for advisory artifacts
@@ -634,14 +679,14 @@ jobs:
           echo "Generated $ADVISORY_DIR/checksums.json"
           jq . "$ADVISORY_DIR/checksums.json"
 
-          # Sign checksums.json
+          # Sign checksums.json with Ed25519 (use pkeyutl, not dgst)
           echo "Signing $ADVISORY_DIR/checksums.json"
-          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$ADVISORY_DIR/checksums.json" | \
+          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$ADVISORY_DIR/checksums.json" | \
             openssl base64 -A > "$ADVISORY_DIR/checksums.json.sig"
 
-          # Verify checksums signature
+          # Verify Ed25519 checksums signature
           openssl base64 -d -A -in "$ADVISORY_DIR/checksums.json.sig" -out "$TMP_DIR/checksums.sig.bin"
-          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/checksums.sig.bin" "$ADVISORY_DIR/checksums.json"
+          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/checksums.sig.bin" -in "$ADVISORY_DIR/checksums.json"
           echo "  ✓ Checksums signature verified"
 
           # Copy public key for distribution
@@ -800,10 +845,12 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
 
-          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "release-assets/checksums.json" | openssl base64 -A > "release-assets/checksums.sig"
+          # Sign with Ed25519 (use pkeyutl, not dgst)
+          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "release-assets/checksums.json" | openssl base64 -A > "release-assets/checksums.sig"
 
+          # Verify Ed25519 signature
           openssl base64 -d -A -in "release-assets/checksums.sig" -out "$TMP_DIR/checksums.sig.bin"
-          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/checksums.sig.bin" "release-assets/checksums.json"
+          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/checksums.sig.bin" -in "release-assets/checksums.json"
 
           cp "$PUB_FILE" "release-assets/signing-public.pem"
 
@@ -856,9 +903,9 @@ jobs:
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
 
-            # 2. Verify the checksums manifest signature
+            # 2. Verify the checksums manifest signature (Ed25519)
             openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
-            openssl dgst -sha256 -verify signing-public.pem -signature checksums.sig.bin checksums.json
+            openssl pkeyutl -verify -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
 
             # 3. Verify archive checksum from the signed manifest
             echo "$(jq -r '.archive.sha256' checksums.json)  ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip" | sha256sum -c
@@ -876,7 +923,7 @@ jobs:
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
             openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
-            openssl dgst -sha256 -verify signing-public.pem -signature checksums.sig.bin checksums.json
+            openssl pkeyutl -verify -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
             ```
 
             ### Files

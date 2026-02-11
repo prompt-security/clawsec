@@ -539,12 +539,14 @@ jobs:
 
           openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
 
-          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$FEED_PATH" | openssl base64 -A > "$FEED_SIG_PATH"
+          # Sign with Ed25519 (use pkeyutl, not dgst)
+          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$FEED_PATH" | openssl base64 -A > "$FEED_SIG_PATH"
           cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
 
+          # Verify Ed25519 signatures
           openssl base64 -d -A -in "$FEED_SIG_PATH" -out "$TMP_DIR/feed.sig.bin"
-          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/feed.sig.bin" "$FEED_PATH"
-          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/feed.sig.bin" "$SKILL_FEED_PATH"
+          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/feed.sig.bin" -in "$FEED_PATH"
+          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/feed.sig.bin" -in "$SKILL_FEED_PATH"
 
           echo "Signed and verified advisory feed at: $FEED_SIG_PATH"
 
