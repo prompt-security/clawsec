@@ -178,12 +178,76 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Generate test signing key for dry-run
+        run: |
+          set -euo pipefail
+          echo "Generating temporary test signing key for dry-run validation"
+          umask 077
+          mkdir -p /tmp/test-signing
+          openssl genpkey -algorithm RSA -out /tmp/test-signing/private.pem -pkeyopt rsa_keygen_bits:2048
+          openssl pkey -in /tmp/test-signing/private.pem -pubout -out /tmp/test-signing/public.pem
+          echo "TEST_SIGNING_KEY_DIR=/tmp/test-signing" >> $GITHUB_ENV
+
       - name: Run release dry-run for changed skills
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
+
+          # Helper function to sign advisory artifacts with test key (dry-run only)
+          sign_advisory_artifacts() {
+            local skill_dir="$1"
+            local advisory_dir="${skill_dir}/advisories"
+
+            if [ ! -d "$advisory_dir" ] || [ ! -f "$advisory_dir/feed.json" ]; then
+              return 0
+            fi
+
+            echo "  [Dry-run] Signing advisory artifacts with test key"
+
+            local key_file="$TEST_SIGNING_KEY_DIR/private.pem"
+            local pub_file="$TEST_SIGNING_KEY_DIR/public.pem"
+
+            # Sign feed.json
+            openssl dgst -sha256 -sign "$key_file" "$advisory_dir/feed.json" | \
+              openssl base64 -A > "$advisory_dir/feed.json.sig"
+
+            # Generate checksums.json
+            local feed_sha=$(sha256sum "$advisory_dir/feed.json" | awk '{print $1}')
+            local feed_size=$(stat -c%s "$advisory_dir/feed.json" 2>/dev/null || stat -f%z "$advisory_dir/feed.json")
+            local feed_sig_sha=$(sha256sum "$advisory_dir/feed.json.sig" | awk '{print $1}')
+            local feed_sig_size=$(stat -c%s "$advisory_dir/feed.json.sig" 2>/dev/null || stat -f%z "$advisory_dir/feed.json.sig")
+
+            jq -n \
+              --arg schema_version "1" \
+              --arg algorithm "sha256" \
+              --arg version "test" \
+              --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --arg feed_sha "$feed_sha" \
+              --argjson feed_size "$feed_size" \
+              --arg feed_sig_sha "$feed_sig_sha" \
+              --argjson feed_sig_size "$feed_sig_size" \
+              '{
+                schema_version: $schema_version,
+                algorithm: $algorithm,
+                version: $version,
+                generated_at: $generated,
+                files: {
+                  "advisories/feed.json": {sha256: $feed_sha, size: $feed_size},
+                  "advisories/feed.json.sig": {sha256: $feed_sig_sha, size: $feed_sig_size}
+                }
+              }' > "$advisory_dir/checksums.json"
+
+            # Sign checksums.json
+            openssl dgst -sha256 -sign "$key_file" "$advisory_dir/checksums.json" | \
+              openssl base64 -A > "$advisory_dir/checksums.json.sig"
+
+            # Copy public key
+            cp "$pub_file" "$advisory_dir/feed-signing-public.pem"
+
+            echo "  [Dry-run] Advisory artifacts signed with test key"
+          }
 
           get_md_version() {
             local md_file="$1"
@@ -262,6 +326,9 @@ jobs:
             out_root="dist/dry-run/${tag}"
             out_assets="${out_root}/release-assets"
             mkdir -p "${out_assets}"
+
+            # --- Sign advisory artifacts if present (dry-run with test key) ---
+            sign_advisory_artifacts "${skill_dir}"
 
             # --- Stage SBOM files preserving directory structure ---
             staging_dir="$(mktemp -d)"
@@ -475,6 +542,114 @@ jobs:
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: 20
+
+      - name: Sign embedded advisory artifacts
+        if: hashFiles('skills/${{ steps.parse.outputs.skill_name }}/advisories/feed.json') != ''
+        env:
+          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          ADVISORY_DIR="$SKILL_PATH/advisories"
+
+          if [ ! -d "$ADVISORY_DIR" ] || [ ! -f "$ADVISORY_DIR/feed.json" ]; then
+            echo "No advisories directory or feed.json found, skipping advisory signing"
+            exit 0
+          fi
+
+          echo "Signing embedded advisory artifacts for $SKILL_NAME"
+
+          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
+            exit 1
+          fi
+
+          # Setup temporary signing environment
+          umask 077
+          TMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TMP_DIR"' EXIT
+
+          KEY_FILE="$TMP_DIR/private.pem"
+          PUB_FILE="$TMP_DIR/public.pem"
+
+          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
+
+          PASSIN_ARGS=()
+          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
+            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
+          fi
+
+          # Extract public key
+          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
+
+          # Sign feed.json
+          echo "Signing $ADVISORY_DIR/feed.json"
+          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$ADVISORY_DIR/feed.json" | \
+            openssl base64 -A > "$ADVISORY_DIR/feed.json.sig"
+
+          # Verify feed signature
+          openssl base64 -d -A -in "$ADVISORY_DIR/feed.json.sig" -out "$TMP_DIR/feed.sig.bin"
+          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/feed.sig.bin" "$ADVISORY_DIR/feed.json"
+          echo "  ✓ Feed signature verified"
+
+          # Generate checksums.json for advisory artifacts
+          FEED_SHA=$(sha256sum "$ADVISORY_DIR/feed.json" | awk '{print $1}')
+          FEED_SIZE=$(stat -c%s "$ADVISORY_DIR/feed.json" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed.json")
+          FEED_SIG_SHA=$(sha256sum "$ADVISORY_DIR/feed.json.sig" | awk '{print $1}')
+          FEED_SIG_SIZE=$(stat -c%s "$ADVISORY_DIR/feed.json.sig" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed.json.sig")
+
+          jq -n \
+            --arg schema_version "1" \
+            --arg algorithm "sha256" \
+            --arg version "${{ steps.parse.outputs.version }}" \
+            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repo "${{ github.repository }}" \
+            --arg feed_sha "$FEED_SHA" \
+            --argjson feed_size "$FEED_SIZE" \
+            --arg feed_sig_sha "$FEED_SIG_SHA" \
+            --argjson feed_sig_size "$FEED_SIG_SIZE" \
+            '{
+              schema_version: $schema_version,
+              algorithm: $algorithm,
+              version: $version,
+              generated_at: $generated,
+              repository: $repo,
+              files: {
+                "advisories/feed.json": {
+                  sha256: $feed_sha,
+                  size: $feed_size,
+                  path: "advisories/feed.json"
+                },
+                "advisories/feed.json.sig": {
+                  sha256: $feed_sig_sha,
+                  size: $feed_sig_size,
+                  path: "advisories/feed.json.sig"
+                }
+              }
+            }' > "$ADVISORY_DIR/checksums.json"
+
+          echo "Generated $ADVISORY_DIR/checksums.json"
+          jq . "$ADVISORY_DIR/checksums.json"
+
+          # Sign checksums.json
+          echo "Signing $ADVISORY_DIR/checksums.json"
+          openssl dgst -sha256 -sign "$KEY_FILE" "${PASSIN_ARGS[@]}" "$ADVISORY_DIR/checksums.json" | \
+            openssl base64 -A > "$ADVISORY_DIR/checksums.json.sig"
+
+          # Verify checksums signature
+          openssl base64 -d -A -in "$ADVISORY_DIR/checksums.json.sig" -out "$TMP_DIR/checksums.sig.bin"
+          openssl dgst -sha256 -verify "$PUB_FILE" -signature "$TMP_DIR/checksums.sig.bin" "$ADVISORY_DIR/checksums.json"
+          echo "  ✓ Checksums signature verified"
+
+          # Copy public key for distribution
+          cp "$PUB_FILE" "$ADVISORY_DIR/feed-signing-public.pem"
+
+          echo ""
+          echo "Successfully signed embedded advisory artifacts:"
+          ls -la "$ADVISORY_DIR"
 
       - name: Install clawhub CLI
         if: steps.publishable.outputs.publishable == 'true'
