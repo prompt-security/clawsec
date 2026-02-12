@@ -269,7 +269,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
     # Pattern: ## [VERSION] - DATE ... until next ## [ or end of file
     RELEASE_NOTES=$(awk -v version="$VERSION" '
       BEGIN { in_section = 0; found = 0 }
-      /^## \['version'\]/ { in_section = 1; found = 1; next }
+      $0 ~ ("^## \\[" version "\\]") { in_section = 1; found = 1; next }
       in_section && /^## \[/ && found { exit }
       in_section { print }
     ' "$SKILL_PATH/CHANGELOG.md" | sed '/^$/d' | sed '1{/^$/d;}')
