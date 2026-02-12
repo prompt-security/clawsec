@@ -262,6 +262,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
 
   # Extract changelog entry for this version and create GitHub release
   RELEASE_NOTES=""
+  GH_RELEASE_CREATED=false
   if [ -f "$SKILL_PATH/CHANGELOG.md" ]; then
     echo "Extracting changelog entry for version $VERSION..."
 
@@ -287,6 +288,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
           echo "You can manually create the release at: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\([^.]*\).*/\1/')/releases/new" >&2
         else
           echo "✓ GitHub release created with changelog notes"
+          GH_RELEASE_CREATED=true
         fi
       else
         echo "Warning: GitHub CLI (gh) not found. Skipping automatic release creation." >&2
@@ -313,7 +315,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   else
     echo "  git tag -d $TAG"
   fi
-  if [ -n "$RELEASE_NOTES" ]; then
+  if [[ "$GH_RELEASE_CREATED" == "true" ]]; then
     echo ""
     echo "Note: GitHub release was created automatically with changelog notes."
   fi
