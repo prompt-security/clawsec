@@ -801,13 +801,14 @@ jobs:
           fi
 
           # Extract the changelog section for this version
-          # Pattern: ## [VERSION] - DATE ... until next ## [ or end of file
+          # Pattern: ## [VERSION] - DATE ... until next ## [, separator (---), or any other ## heading
           CHANGELOG_ENTRY=$(awk -v version="$VERSION" '
             BEGIN { in_section = 0; found = 0 }
             $0 ~ ("^## \\[" version "\\]") { in_section = 1; found = 1; next }
-            in_section && /^## \[/ && found { exit }
+            in_section && found && /^---/ { exit }
+            in_section && found && /^## / { exit }
             in_section { print }
-          ' "$SKILL_PATH/CHANGELOG.md")
+          ' "$SKILL_PATH/CHANGELOG.md" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
 
           if [ -z "$CHANGELOG_ENTRY" ]; then
             echo "No changelog entry found for version $VERSION"
