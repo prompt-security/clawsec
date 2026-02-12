@@ -181,10 +181,11 @@ jobs:
       - name: Generate test signing key for dry-run
         run: |
           set -euo pipefail
-          echo "Generating temporary test signing key for dry-run validation"
+          echo "Generating temporary Ed25519 test key for dry-run validation"
           umask 077
           mkdir -p /tmp/test-signing
-          openssl genpkey -algorithm RSA -out /tmp/test-signing/private.pem -pkeyopt rsa_keygen_bits:2048
+          # Use Ed25519 to match production signing (not RSA)
+          openssl genpkey -algorithm ED25519 -out /tmp/test-signing/private.pem
           openssl pkey -in /tmp/test-signing/private.pem -pubout -out /tmp/test-signing/public.pem
           echo "TEST_SIGNING_KEY_DIR=/tmp/test-signing" >> $GITHUB_ENV
 
