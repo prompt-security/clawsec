@@ -282,8 +282,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
       if command -v gh >/dev/null 2>&1; then
         if ! echo "$RELEASE_NOTES" | gh release create "$TAG" \
           --title "$SKILL_NAME v$VERSION" \
-          --notes-file - \
-          --target "$CURRENT_BRANCH"; then
+          --notes-file -; then
           echo "Warning: Failed to create GitHub release, but tag was created successfully" >&2
           echo "You can manually create the release at: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\([^.]*\).*/\1/')/releases/new" >&2
         else
@@ -318,6 +317,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
     echo ""
     echo "Note: GitHub release was created automatically with changelog notes."
   fi
+else
   # Feature branch: skip tagging, instruct user on next steps
   echo ""
   echo "Done! Version updated and committed (tag deferred)."
