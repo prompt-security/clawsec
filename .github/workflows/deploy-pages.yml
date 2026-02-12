@@ -133,8 +133,8 @@ jobs:
                 # Legacy releases without signatures are still mirrored for backward compatibility.
                 if [ -f "$TEMP_DOWNLOAD_DIR/checksums.sig" ] && [ -f "$TEMP_DOWNLOAD_DIR/signing-public.pem" ] && [ -f "$TEMP_DOWNLOAD_DIR/checksums.json" ]; then
                   openssl base64 -d -A -in "$TEMP_DOWNLOAD_DIR/checksums.sig" -out "$TEMP_DOWNLOAD_DIR/checksums.sig.bin"
-                  # Verify Ed25519 signature
-                  if ! openssl pkeyutl -verify -pubin -inkey "$TEMP_DOWNLOAD_DIR/signing-public.pem" -sigfile "$TEMP_DOWNLOAD_DIR/checksums.sig.bin" -in "$TEMP_DOWNLOAD_DIR/checksums.json"; then
+                  # Verify Ed25519 signature (requires -rawin)
+                  if ! openssl pkeyutl -verify -rawin -pubin -inkey "$TEMP_DOWNLOAD_DIR/signing-public.pem" -sigfile "$TEMP_DOWNLOAD_DIR/checksums.sig.bin" -in "$TEMP_DOWNLOAD_DIR/checksums.json"; then
                     echo "  Warning: Invalid checksums signature for $TAG; skipping skill"
                     rm -rf "$TEMP_DOWNLOAD_DIR"
                     continue

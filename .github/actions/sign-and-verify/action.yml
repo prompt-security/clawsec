@@ -78,7 +78,8 @@ runs:
         openssl pkey -in "${key_file}" "${passin_args[@]}" -pubout -out "${pub_file}"
 
         mkdir -p "$(dirname "${SIGNATURE_FILE}")"
-        openssl pkeyutl -sign -inkey "${key_file}" "${passin_args[@]}" -in "${INPUT_FILE}" \
+        # Sign with Ed25519 (requires -rawin flag for raw input)
+        openssl pkeyutl -sign -rawin -inkey "${key_file}" "${passin_args[@]}" -in "${INPUT_FILE}" \
           | openssl base64 -A > "${SIGNATURE_FILE}"
 
         openssl base64 -d -A -in "${SIGNATURE_FILE}" -out "${sig_bin}"
@@ -94,7 +95,8 @@ runs:
             echo "::error file=${verify_file}::Verification target does not exist."
             exit 1
           fi
-          openssl pkeyutl -verify -pubin -inkey "${pub_file}" -sigfile "${sig_bin}" -in "${verify_file}" >/dev/null
+          # Verify Ed25519 signature (requires -rawin flag for raw input)
+          openssl pkeyutl -verify -rawin -pubin -inkey "${pub_file}" -sigfile "${sig_bin}" -in "${verify_file}" >/dev/null
         done <<< "${verify_files}"
 
         if [ -n "${PUBLIC_KEY_OUTPUT}" ]; then

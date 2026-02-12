@@ -211,14 +211,14 @@ jobs:
             local pub_file="$TEST_SIGNING_KEY_DIR/public.pem"
             local tmp_sig_bin
 
-            # Sign feed.json with Ed25519/RSA (use pkeyutl for compatibility)
-            openssl pkeyutl -sign -inkey "$key_file" -in "$advisory_dir/feed.json" | \
+            # Sign feed.json with Ed25519 (requires -rawin flag)
+            openssl pkeyutl -sign -rawin -inkey "$key_file" -in "$advisory_dir/feed.json" | \
               openssl base64 -A > "$advisory_dir/feed.json.sig"
 
-            # Verify feed.json signature
+            # Verify Ed25519 feed.json signature (requires -rawin flag)
             tmp_sig_bin=$(mktemp)
             openssl base64 -d -A -in "$advisory_dir/feed.json.sig" -out "$tmp_sig_bin"
-            if ! openssl pkeyutl -verify -pubin -inkey "$pub_file" -sigfile "$tmp_sig_bin" -in "$advisory_dir/feed.json" >/dev/null 2>&1; then
+            if ! openssl pkeyutl -verify -rawin -pubin -inkey "$pub_file" -sigfile "$tmp_sig_bin" -in "$advisory_dir/feed.json" >/dev/null 2>&1; then
               echo "::error file=${skill_dir}/advisories/feed.json.sig::Feed signature verification failed after signing"
               rm -f "$tmp_sig_bin"
               return 1
@@ -252,14 +252,14 @@ jobs:
                 }
               }' > "$advisory_dir/checksums.json"
 
-            # Sign checksums.json with Ed25519/RSA (use pkeyutl for compatibility)
-            openssl pkeyutl -sign -inkey "$key_file" -in "$advisory_dir/checksums.json" | \
+            # Sign checksums.json with Ed25519 (requires -rawin flag)
+            openssl pkeyutl -sign -rawin -inkey "$key_file" -in "$advisory_dir/checksums.json" | \
               openssl base64 -A > "$advisory_dir/checksums.json.sig"
 
-            # Verify checksums.json signature
+            # Verify Ed25519 checksums.json signature (requires -rawin flag)
             tmp_sig_bin=$(mktemp)
             openssl base64 -d -A -in "$advisory_dir/checksums.json.sig" -out "$tmp_sig_bin"
-            if ! openssl pkeyutl -verify -pubin -inkey "$pub_file" -sigfile "$tmp_sig_bin" -in "$advisory_dir/checksums.json" >/dev/null 2>&1; then
+            if ! openssl pkeyutl -verify -rawin -pubin -inkey "$pub_file" -sigfile "$tmp_sig_bin" -in "$advisory_dir/checksums.json" >/dev/null 2>&1; then
               echo "::error file=${skill_dir}/advisories/checksums.json.sig::Checksums signature verification failed after signing"
               rm -f "$tmp_sig_bin"
               return 1
@@ -841,7 +841,7 @@ jobs:
 
             # 2. Verify the checksums manifest signature (Ed25519)
             openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
-            openssl pkeyutl -verify -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
+            openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
 
             # 3. Verify archive checksum from the signed manifest
             echo "$(jq -r '.archive.sha256' checksums.json)  ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip" | sha256sum -c
@@ -859,7 +859,7 @@ jobs:
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
             curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
             openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
-            openssl pkeyutl -verify -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
+            openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
             ```
 
             ### Files
