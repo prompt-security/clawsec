@@ -41,6 +41,9 @@ SKILL_NAME="${POSITIONAL_ARGS[0]}"
 VERSION="${POSITIONAL_ARGS[1]}"
 SKILL_PATH="skills/$SKILL_NAME"
 
+# Initialize variables
+RELEASE_NOTES=""
+
 # Ensure we're on a branch (not detached HEAD) so release flow works from feature branches
 CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
 if [ -z "$CURRENT_BRANCH" ]; then
@@ -257,6 +260,47 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
     exit 1
   fi
 
+  # Extract changelog entry for this version and create GitHub release
+  RELEASE_NOTES=""
+  if [ -f "$SKILL_PATH/CHANGELOG.md" ]; then
+    echo "Extracting changelog entry for version $VERSION..."
+
+    # Extract the changelog section for this version
+    # Pattern: ## [VERSION] - DATE ... until next ## [ or end of file
+    RELEASE_NOTES=$(awk -v version="$VERSION" '
+      BEGIN { in_section = 0; found = 0 }
+      /^## \['version'\]/ { in_section = 1; found = 1; next }
+      in_section && /^## \[/ && found { exit }
+      in_section { print }
+    ' "$SKILL_PATH/CHANGELOG.md" | sed '/^$/d' | sed '1{/^$/d;}')
+
+    if [ -n "$RELEASE_NOTES" ]; then
+      echo "Found changelog entry with $(echo "$RELEASE_NOTES" | wc -l) lines"
+
+      # Create GitHub release with changelog notes
+      echo "Creating GitHub release with changelog notes..."
+      if command -v gh >/dev/null 2>&1; then
+        if ! echo "$RELEASE_NOTES" | gh release create "$TAG" \
+          --title "$SKILL_NAME v$VERSION" \
+          --notes-file - \
+          --target "$CURRENT_BRANCH"; then
+          echo "Warning: Failed to create GitHub release, but tag was created successfully" >&2
+          echo "You can manually create the release at: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\([^.]*\).*/\1/')/releases/new" >&2
+        else
+          echo "✓ GitHub release created with changelog notes"
+        fi
+      else
+        echo "Warning: GitHub CLI (gh) not found. Skipping automatic release creation." >&2
+        echo "Install GitHub CLI and run manually:" >&2
+        echo "  gh release create '$TAG' --title '$SKILL_NAME v$VERSION' --notes-file <(echo '$RELEASE_NOTES')" >&2
+      fi
+    else
+      echo "Warning: No changelog entry found for version $VERSION" >&2
+    fi
+  else
+    echo "No CHANGELOG.md found in $SKILL_PATH - skipping release notes"
+  fi
+
   echo ""
   echo "Done! To release, push the tag:"
   if [[ "$MADE_COMMIT" == "true" ]]; then
@@ -270,7 +314,10 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   else
     echo "  git tag -d $TAG"
   fi
-else
+  if [ -n "$RELEASE_NOTES" ]; then
+    echo ""
+    echo "Note: GitHub release was created automatically with changelog notes."
+  fi
   # Feature branch: skip tagging, instruct user on next steps
   echo ""
   echo "Done! Version updated and committed (tag deferred)."
@@ -279,10 +326,14 @@ else
   echo "  1. Push your branch for CI validation:"
   echo "     git push origin $CURRENT_BRANCH"
   echo ""
-  echo "  2. After CI passes and PR is merged to main, create the tag:"
+  echo "  2. After CI passes and PR is merged to main, create the tag and release:"
   echo "     git checkout main && git pull"
   echo "     git tag -a '$TAG' $COMMIT_SHA -m '$SKILL_NAME version $VERSION'"
   echo "     git push origin $TAG"
+  if [ -f "$SKILL_PATH/CHANGELOG.md" ]; then
+    echo "     # Create GitHub release with changelog (requires GitHub CLI):"
+    echo "     gh release create '$TAG' --title '$SKILL_NAME v$VERSION' --generate-notes"
+  fi
   echo ""
   echo "Or to undo the version bump:"
   echo "  git reset --hard HEAD~1"
