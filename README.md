@@ -6,10 +6,6 @@
 
 <div align="center">
 
-<p><strong>We are featured on Product Hunt - upvote us and help us spread the word.</strong></p>
-
-<a href="https://www.producthunt.com/products/clawsec-by-prompt-security?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-clawsec-by-prompt-security-2" target="_blank" rel="noopener noreferrer"><img alt="ClawSec by Prompt Security - A Security Skill Suite for OpenClaw Agents | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1076044&amp;theme=light&amp;t=1770632815547"></a>
-
 ## Secure Your OpenClaw Bots with a Complete Security Skill Suite
 
 <h4>Brought to you by <a href="https://prompt.security">Prompt Security</a>, the Platform for AI Security</h4>
@@ -29,7 +25,7 @@
 [![CI](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
 [![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml)
-[![Skill Release](https://github.com/prompt-security/clawsec/actions/workflows/skill-release.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/skill-release.yml)
+
 
 </div>
 
