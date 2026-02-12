@@ -307,6 +307,32 @@ export function defaultChecksumsUrl(feedUrl) {
 }
 
 /**
+ * Safely extracts the basename from a URL or file path.
+ * @param {string} urlOrPath
+ * @param {string} fallback
+ * @returns {string}
+ */
+function safeBasename(urlOrPath, fallback) {
+  try {
+    // Try parsing as URL first
+    const parsed = new URL(urlOrPath);
+    const pathname = parsed.pathname;
+    const lastSlash = pathname.lastIndexOf("/");
+    if (lastSlash >= 0 && lastSlash < pathname.length - 1) {
+      return pathname.slice(lastSlash + 1);
+    }
+  } catch {
+    // Not a URL, try as path
+    const normalized = String(urlOrPath ?? "").trim();
+    const lastSlash = normalized.lastIndexOf("/");
+    if (lastSlash >= 0 && lastSlash < normalized.length - 1) {
+      return normalized.slice(lastSlash + 1);
+    }
+  }
+  return fallback;
+}
+
+/**
  * @param {Function} fetchFn
  * @param {string} targetUrl
  * @returns {Promise<string | null>}
@@ -453,8 +479,9 @@ export async function loadRemoteFeed(feedUrl, options = {}) {
         }
 
         const checksumsManifest = parseChecksumsManifest(checksumsRaw);
-        const checksumFeedEntry = options.checksumFeedEntry ?? "feed.json";
-        const checksumSignatureEntry = options.checksumSignatureEntry ?? "feed.json.sig";
+        // Derive checksum entry names from actual URLs (supports any filename, not just feed.json)
+        const checksumFeedEntry = options.checksumFeedEntry ?? safeBasename(feedUrl, "feed.json");
+        const checksumSignatureEntry = options.checksumSignatureEntry ?? safeBasename(signatureUrl, "feed.json.sig");
         verifyChecksums(checksumsManifest, {
           [checksumFeedEntry]: payloadRaw,
           [checksumSignatureEntry]: signatureRaw,

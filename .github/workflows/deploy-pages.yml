@@ -274,6 +274,15 @@ jobs:
           input_file: public/checksums.json
           signature_file: public/checksums.sig
 
+      - name: Copy public key to advisory directory
+        run: |
+          # Clients expect the public key at advisories/feed-signing-public.pem
+          mkdir -p public/advisories
+          cp public/signing-public.pem public/advisories/feed-signing-public.pem
+          echo "Public key available at:"
+          echo "  - public/signing-public.pem (root)"
+          echo "  - public/advisories/feed-signing-public.pem (advisory-specific)"
+
       - name: Show signed advisory artifacts
         run: |
           echo "Signed advisory artifacts:"
