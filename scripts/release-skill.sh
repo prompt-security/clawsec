@@ -291,7 +291,7 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
       else
         echo "Warning: GitHub CLI (gh) not found. Skipping automatic release creation." >&2
         echo "Install GitHub CLI and run manually:" >&2
-        echo "  gh release create '$TAG' --title '$SKILL_NAME v$VERSION' --notes-file <(echo '$RELEASE_NOTES')" >&2
+        echo "  gh release create '$TAG' --title '$SKILL_NAME v$VERSION' --notes-file <(echo \"$RELEASE_NOTES\")" >&2
       fi
     else
       echo "Warning: No changelog entry found for version $VERSION" >&2
