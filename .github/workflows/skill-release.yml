@@ -588,59 +588,21 @@ jobs:
         with:
           node-version: 20
 
-      - name: Sign embedded advisory artifacts
-        if: hashFiles('skills/${{ steps.parse.outputs.skill_name }}/advisories/feed.json') != ''
-        env:
-          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
-          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+      - name: Sign embedded advisory feed and verify
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: skills/${{ steps.parse.outputs.skill_name }}/advisories/feed.json
+          signature_file: skills/${{ steps.parse.outputs.skill_name }}/advisories/feed.json.sig
+          public_key_output: skills/${{ steps.parse.outputs.skill_name }}/advisories/feed-signing-public.pem
+
+      - name: Generate embedded advisory checksums manifest
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
         run: |
           set -euo pipefail
-
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-          ADVISORY_DIR="$SKILL_PATH/advisories"
-
-          if [ ! -d "$ADVISORY_DIR" ] || [ ! -f "$ADVISORY_DIR/feed.json" ]; then
-            echo "No advisories directory or feed.json found, skipping advisory signing"
-            exit 0
-          fi
-
-          echo "Signing embedded advisory artifacts for $SKILL_NAME"
-
-          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
-            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
-            exit 1
-          fi
-
-          # Setup temporary signing environment
-          umask 077
-          TMP_DIR="$(mktemp -d)"
-          trap 'rm -rf "$TMP_DIR"' EXIT
-
-          KEY_FILE="$TMP_DIR/private.pem"
-          PUB_FILE="$TMP_DIR/public.pem"
-
-          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
-
-          PASSIN_ARGS=()
-          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
-            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
-          fi
-
-          # Extract public key
-          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
-
-          # Sign feed.json with Ed25519 (use pkeyutl, not dgst)
-          echo "Signing $ADVISORY_DIR/feed.json"
-          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$ADVISORY_DIR/feed.json" | \
-            openssl base64 -A > "$ADVISORY_DIR/feed.json.sig"
-
-          # Verify Ed25519 feed signature
-          openssl base64 -d -A -in "$ADVISORY_DIR/feed.json.sig" -out "$TMP_DIR/feed.sig.bin"
-          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/feed.sig.bin" -in "$ADVISORY_DIR/feed.json"
-          echo "  ✓ Feed signature verified"
-
-          # Generate checksums.json for advisory artifacts
+          ADVISORY_DIR="${{ steps.parse.outputs.skill_path }}/advisories"
           FEED_SHA=$(sha256sum "$ADVISORY_DIR/feed.json" | awk '{print $1}')
           FEED_SIZE=$(stat -c%s "$ADVISORY_DIR/feed.json" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed.json")
           FEED_SIG_SHA=$(sha256sum "$ADVISORY_DIR/feed.json.sig" | awk '{print $1}')
@@ -679,20 +641,19 @@ jobs:
           echo "Generated $ADVISORY_DIR/checksums.json"
           jq . "$ADVISORY_DIR/checksums.json"
 
-          # Sign checksums.json with Ed25519 (use pkeyutl, not dgst)
-          echo "Signing $ADVISORY_DIR/checksums.json"
-          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$ADVISORY_DIR/checksums.json" | \
-            openssl base64 -A > "$ADVISORY_DIR/checksums.json.sig"
+      - name: Sign embedded advisory checksums and verify
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: skills/${{ steps.parse.outputs.skill_name }}/advisories/checksums.json
+          signature_file: skills/${{ steps.parse.outputs.skill_name }}/advisories/checksums.json.sig
 
-          # Verify Ed25519 checksums signature
-          openssl base64 -d -A -in "$ADVISORY_DIR/checksums.json.sig" -out "$TMP_DIR/checksums.sig.bin"
-          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/checksums.sig.bin" -in "$ADVISORY_DIR/checksums.json"
-          echo "  ✓ Checksums signature verified"
-
-          # Copy public key for distribution
-          cp "$PUB_FILE" "$ADVISORY_DIR/feed-signing-public.pem"
-
-          echo ""
+      - name: Show embedded advisory signing outputs
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
+        run: |
+          ADVISORY_DIR="${{ steps.parse.outputs.skill_path }}/advisories"
           echo "Successfully signed embedded advisory artifacts:"
           ls -la "$ADVISORY_DIR"
 
@@ -818,42 +779,16 @@ jobs:
           ls -la release-assets/
 
       - name: Sign checksums and verify
-        env:
-          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
-          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: release-assets/checksums.json
+          signature_file: release-assets/checksums.sig
+          public_key_output: release-assets/signing-public.pem
+
+      - name: Show signed release assets
         run: |
-          set -euo pipefail
-
-          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
-            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
-            exit 1
-          fi
-
-          umask 077
-          TMP_DIR="$(mktemp -d)"
-          trap 'rm -rf "$TMP_DIR"' EXIT
-
-          KEY_FILE="$TMP_DIR/private.pem"
-          PUB_FILE="$TMP_DIR/public.pem"
-
-          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
-
-          PASSIN_ARGS=()
-          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
-            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
-          fi
-
-          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
-
-          # Sign with Ed25519 (use pkeyutl, not dgst)
-          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "release-assets/checksums.json" | openssl base64 -A > "release-assets/checksums.sig"
-
-          # Verify Ed25519 signature
-          openssl base64 -d -A -in "release-assets/checksums.sig" -out "$TMP_DIR/checksums.sig.bin"
-          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/checksums.sig.bin" -in "release-assets/checksums.json"
-
-          cp "$PUB_FILE" "release-assets/signing-public.pem"
-
           echo "Signed and verified release-assets/checksums.json"
           ls -la release-assets/
 

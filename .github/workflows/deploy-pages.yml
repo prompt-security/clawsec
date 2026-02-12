@@ -27,6 +27,7 @@ jobs:
 
       - name: Auto-discover skills from releases
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
@@ -48,17 +49,17 @@ jobs:
           }
           export -f download_asset  # Export for use in subshells (while loop)
 
-          # Fetch all releases
-          RELEASES=$(curl -sSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          # Fetch all releases (paginated)
+          RELEASES=$(gh api --paginate \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/releases?per_page=100")
+            "/repos/${REPO}/releases?per_page=100" \
+            | jq -s 'add // []')
 
           # Start building skills index
           echo '{"version":"1.0.0","updated":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","skills":[' > public/skills/index.json
 
           FIRST_SKILL=true
-          PROCESSED_SKILLS=""
+          declare -A PROCESSED_SKILLS=()
 
           # Process each release (using process substitution to avoid subshell)
           while read -r release; do
@@ -70,7 +71,7 @@ jobs:
               VERSION="${BASH_REMATCH[2]}"
 
               # Skip if we already processed a newer version of this skill
-              if echo "$PROCESSED_SKILLS" | grep -q "^${SKILL_NAME}$"; then
+              if [[ -n "${PROCESSED_SKILLS[$SKILL_NAME]+x}" ]]; then
                 echo "Skipping older version: $TAG (already have newer)"
                 continue
               fi
@@ -186,7 +187,7 @@ jobs:
                 echo "$SKILL_DATA" >> public/skills/index.json
 
                 # Mark this skill as processed (track newest only)
-                PROCESSED_SKILLS="${PROCESSED_SKILLS}${SKILL_NAME}\n"
+                PROCESSED_SKILLS["$SKILL_NAME"]=1
               else
                 echo "  Warning: skill.json not found in release assets"
               fi
@@ -256,51 +257,25 @@ jobs:
           echo "Generated public/checksums.json"
           jq . public/checksums.json
 
-      - name: Sign feed/checksums and verify
-        env:
-          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
-          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+      - name: Sign advisory feed and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: public/advisories/feed.json
+          signature_file: public/advisories/feed.json.sig
+          public_key_output: public/signing-public.pem
+
+      - name: Sign checksums and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: public/checksums.json
+          signature_file: public/checksums.sig
+
+      - name: Show signed advisory artifacts
         run: |
-          set -euo pipefail
-
-          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
-            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
-            exit 1
-          fi
-
-          umask 077
-          TMP_DIR="$(mktemp -d)"
-          trap 'rm -rf "$TMP_DIR"' EXIT
-
-          KEY_FILE="$TMP_DIR/private.pem"
-          PUB_FILE="$TMP_DIR/public.pem"
-
-          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
-
-          PASSIN_ARGS=()
-          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
-            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
-          fi
-
-          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
-
-          sign_and_verify() {
-            local input_file="$1"
-            local output_sig="$2"
-            local tmp_sig="$TMP_DIR/$(basename "$output_sig").bin"
-
-            # Sign with Ed25519 (use pkeyutl, not dgst)
-            openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$input_file" | openssl base64 -A > "$output_sig"
-            openssl base64 -d -A -in "$output_sig" -out "$tmp_sig"
-            # Verify Ed25519 signature
-            openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$tmp_sig" -in "$input_file"
-          }
-
-          sign_and_verify "public/advisories/feed.json" "public/advisories/feed.json.sig"
-          sign_and_verify "public/checksums.json" "public/checksums.sig"
-
-          cp "$PUB_FILE" "public/signing-public.pem"
-
           echo "Signed advisory artifacts:"
           ls -la public/advisories/feed.json*
           ls -la public/checksums.json public/checksums.sig public/signing-public.pem
@@ -313,14 +288,16 @@ jobs:
 
       - name: Get latest clawsec-suite release URL
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          LATEST_TAG=$(curl -sSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/releases?per_page=100" | \
-            jq -r '[.[] | select(.tag_name | startswith("clawsec-suite-v"))] | first | .tag_name // empty')
+          LATEST_TAG=$(
+            gh api --paginate \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/releases?per_page=100" \
+              | jq -r -s 'add // [] | [.[] | select(.tag_name | startswith("clawsec-suite-v"))] | first | .tag_name // empty'
+          )
           
           if [ -n "$LATEST_TAG" ]; then
             echo "Found latest clawsec-suite tag: $LATEST_TAG"

@@ -82,6 +82,7 @@ jobs:
       - name: Fetch CVEs from NVD
         id: fetch
         run: |
+          set -euo pipefail
           mkdir -p tmp
           
           START_DATE="${{ steps.dates.outputs.start_date }}"
@@ -92,6 +93,8 @@ jobs:
           END_ENC=$(echo "$END_DATE" | sed 's/:/%3A/g')
           
           echo "=== Fetching CVEs from NVD ==="
+
+          FAILED_KEYWORDS=()
           
           # Fetch for each keyword
           for KEYWORD in $KEYWORDS; do
@@ -101,11 +104,22 @@ jobs:
             echo "URL: $URL"
             
             # Fetch with retry logic
+            keyword_ok=false
+            last_http_code=""
             for i in 1 2 3; do
-              HTTP_CODE=$(curl -s -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL")
+              HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL" || true)
+              if [ -z "$HTTP_CODE" ]; then
+                HTTP_CODE="000"
+              fi
+              last_http_code="$HTTP_CODE"
               if [ "$HTTP_CODE" = "200" ]; then
-                echo "Success for $KEYWORD"
-                break
+                if jq -e . "tmp/nvd_${KEYWORD}.json" >/dev/null 2>&1; then
+                  echo "Success for $KEYWORD"
+                  keyword_ok=true
+                  break
+                fi
+                echo "Invalid JSON for $KEYWORD, retry $i..."
+                sleep 5
               elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
                 echo "Rate limited, waiting 30s before retry $i..."
                 sleep 30
@@ -114,11 +128,21 @@ jobs:
                 sleep 5
               fi
             done
+
+            if [ "$keyword_ok" != "true" ]; then
+              echo "::error::Failed to fetch valid NVD response for keyword '$KEYWORD' (last HTTP code: ${last_http_code:-unknown})."
+              FAILED_KEYWORDS+=("$KEYWORD")
+            fi
             
             # NVD recommends 6 second delay between requests
             sleep 6
           done
           
+          if [ "${#FAILED_KEYWORDS[@]}" -gt 0 ]; then
+            echo "::error::NVD fetch failed for keyword(s): ${FAILED_KEYWORDS[*]}"
+            exit 1
+          fi
+
           echo "=== Fetch complete ==="
           ls -la tmp/
 
@@ -512,43 +536,19 @@ jobs:
 
       - name: Sign advisory feed and verify
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
-        env:
-          CLAWSEC_SIGNING_PRIVATE_KEY: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
-          CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
-        run: |
-          set -euo pipefail
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: ${{ env.FEED_PATH }}
+          signature_file: ${{ env.FEED_SIG_PATH }}
+          verify_files: |
+            ${{ env.FEED_PATH }}
+            ${{ env.SKILL_FEED_PATH }}
 
-          if [ -z "${CLAWSEC_SIGNING_PRIVATE_KEY:-}" ]; then
-            echo "::error::Missing required secret: CLAWSEC_SIGNING_PRIVATE_KEY"
-            exit 1
-          fi
-
-          umask 077
-          TMP_DIR="$(mktemp -d)"
-          trap 'rm -rf "$TMP_DIR"' EXIT
-
-          KEY_FILE="$TMP_DIR/private.pem"
-          PUB_FILE="$TMP_DIR/public.pem"
-
-          printf '%s' "$CLAWSEC_SIGNING_PRIVATE_KEY" > "$KEY_FILE"
-
-          PASSIN_ARGS=()
-          if [ -n "${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE:-}" ]; then
-            PASSIN_ARGS=(-passin "pass:${CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE}")
-          fi
-
-          openssl pkey -in "$KEY_FILE" "${PASSIN_ARGS[@]}" -pubout -out "$PUB_FILE"
-
-          # Sign with Ed25519 (use pkeyutl, not dgst)
-          openssl pkeyutl -sign -inkey "$KEY_FILE" "${PASSIN_ARGS[@]}" -in "$FEED_PATH" | openssl base64 -A > "$FEED_SIG_PATH"
-          cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
-
-          # Verify Ed25519 signatures
-          openssl base64 -d -A -in "$FEED_SIG_PATH" -out "$TMP_DIR/feed.sig.bin"
-          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/feed.sig.bin" -in "$FEED_PATH"
-          openssl pkeyutl -verify -pubin -inkey "$PUB_FILE" -sigfile "$TMP_DIR/feed.sig.bin" -in "$SKILL_FEED_PATH"
-
-          echo "Signed and verified advisory feed at: $FEED_SIG_PATH"
+      - name: Sync advisory signature to skill feed
+        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        run: cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
 
       - name: Clean workspace for PR
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
