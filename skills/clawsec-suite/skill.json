@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "MIT",
@@ -134,6 +134,41 @@
         "path": "scripts/generate_checksums_json.mjs",
         "required": false,
         "description": "Utility script for generating SHA-256 checksum manifests"
+      },
+      {
+        "path": "scripts/setup_audit_watchdog.mjs",
+        "required": true,
+        "description": "Installer script for integrated daily audit watchdog cron with email auto-discovery and required-email guard"
+      },
+      {
+        "path": "scripts/audit-watchdog/runner.sh",
+        "required": true,
+        "description": "Integrated watchdog runner for daily security audits and report delivery"
+      },
+      {
+        "path": "scripts/audit-watchdog/run_audit_and_format.sh",
+        "required": true,
+        "description": "Runs openclaw security audits and formats concise report output"
+      },
+      {
+        "path": "scripts/audit-watchdog/render_report.mjs",
+        "required": false,
+        "description": "Render concise security audit report from JSON findings"
+      },
+      {
+        "path": "scripts/audit-watchdog/sendmail_report.sh",
+        "required": false,
+        "description": "Sendmail-based report delivery helper"
+      },
+      {
+        "path": "scripts/audit-watchdog/send_smtp.mjs",
+        "required": false,
+        "description": "SMTP fallback report delivery helper"
+      },
+      {
+        "path": "scripts/audit-watchdog/codex_review.sh",
+        "required": false,
+        "description": "Optional codex-driven review helper"
       }
     ]
   },
@@ -159,6 +194,28 @@
       ],
       "standalone_available": true,
       "deprecation_plan": "standalone skill may be retired after suite migration is verified"
+    },
+    "openclaw-audit-watchdog": {
+      "source_skill": "openclaw-audit-watchdog",
+      "source_version": "0.0.4",
+      "paths": [
+        "scripts/setup_audit_watchdog.mjs",
+        "scripts/audit-watchdog/runner.sh",
+        "scripts/audit-watchdog/run_audit_and_format.sh",
+        "scripts/audit-watchdog/render_report.mjs",
+        "scripts/audit-watchdog/sendmail_report.sh",
+        "scripts/audit-watchdog/send_smtp.mjs",
+        "scripts/audit-watchdog/codex_review.sh"
+      ],
+      "capabilities": [
+        "daily openclaw security audit automation",
+        "healthcheck-complement read-only audit reporting",
+        "email + DM report delivery",
+        "email auto-discovery with required-email setup gating"
+      ],
+      "integrated_in_suite": true,
+      "standalone_available": true,
+      "deprecation_plan": "remove standalone listing after suite integration rollout is confirmed"
     }
   },
   "catalog": {
@@ -177,14 +234,15 @@
         ]
       },
       "openclaw-audit-watchdog": {
-        "description": "Automated daily audits with email reporting",
+        "description": "Integrated in clawsec-suite; automated daily audits with email/DM reporting",
         "default_install": true,
         "compatible": [
           "openclaw",
           "moltbot",
           "clawdbot"
         ],
-        "note": "Tailored for OpenClaw/MoltBot family"
+        "note": "Tailored for OpenClaw/MoltBot family",
+        "integrated_in_suite": true
       },
       "soul-guardian": {
         "description": "Drift detection and file integrity guard",
@@ -210,7 +268,7 @@
     }
   },
   "openclaw": {
-    "emoji": "📦",
+    "emoji": "\ud83d\udce6",
     "category": "security",
     "requires": {
       "bins": [
