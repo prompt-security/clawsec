@@ -64,6 +64,126 @@ Default schedule: **daily at 23:00 (11pm)** in the chosen timezone.
 Delivery:
 - DM to last active session
 
+## Usage Examples
+
+### Example 1: Quick Start (Environment Variables)
+
+For automated/MDM deployments, set environment variables before invoking:
+
+```bash
+export PROMPTSEC_DM_CHANNEL="telegram"
+export PROMPTSEC_DM_TO="@yourhandle"
+export PROMPTSEC_TZ="America/New_York"
+export PROMPTSEC_HOST_LABEL="prod-server-01"
+
+# Then invoke the skill
+/openclaw-audit-watchdog
+```
+
+The skill will automatically configure and create the cron job without prompts.
+
+### Example 2: Interactive Setup
+
+If environment variables aren't set, the skill will prompt minimally:
+
+```
+User: /openclaw-audit-watchdog
+
+Agent: Setting up daily security audit watchdog...
+       What channel should I use for delivery? (e.g., telegram, slack)
+User: telegram
+
+Agent: What's the recipient ID or handle?
+User: @myhandle
+
+Agent: Which timezone for the 23:00 daily run? (default: UTC)
+User: America/Los_Angeles
+
+Agent: ✓ Created cron job "Daily security audit (Prompt Security)"
+       Schedule: Daily at 23:00 America/Los_Angeles
+       Delivery: telegram → @myhandle
+```
+
+### Example 3: Updating Existing Job
+
+If a job already exists, the skill updates it instead of creating duplicates:
+
+```
+User: /openclaw-audit-watchdog
+
+Agent: Found existing "Daily security audit (Prompt Security)" job.
+       Current: Daily at 23:00 UTC → telegram:@oldhandle
+
+       Update delivery target? (current: telegram:@oldhandle)
+User: slack:#security-alerts
+
+Agent: ✓ Updated cron job
+       Schedule: Daily at 23:00 UTC
+       Delivery: slack:#security-alerts
+```
+
+### Example 4: What Gets Delivered
+
+Each day at the scheduled time, you'll receive a report like:
+
+```
+🔭 Daily Security Audit Report
+Host: prod-server-01
+Time: 2026-02-16 23:00:00 America/New_York
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Standard Audit: 12 checks passed, 2 warnings
+✓ Deep Audit: 8 probes passed, 1 critical
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL FINDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[CRIT-001] Unencrypted API Keys Detected
+→ Remediation: Move credentials to encrypted vault or use environment variables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WARNINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[WARN-003] Outdated Dependencies Found
+→ Remediation: Run `openclaw security audit --fix` to update
+
+[WARN-007] Weak Permission on Config File
+→ Remediation: chmod 600 ~/.openclaw/config.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Run `openclaw security audit --deep` for full details.
+```
+
+### Example 5: Custom Schedule
+
+Want a different schedule? Set it before invoking:
+
+```bash
+# Run every 6 hours instead of daily
+export PROMPTSEC_SCHEDULE="0 */6 * * *"
+/openclaw-audit-watchdog
+```
+
+### Example 6: Multiple Environments
+
+For managing multiple servers, use different host labels:
+
+```bash
+# On dev server
+export PROMPTSEC_HOST_LABEL="dev-01"
+export PROMPTSEC_DM_TO="@dev-team"
+/openclaw-audit-watchdog
+
+# On prod server
+export PROMPTSEC_HOST_LABEL="prod-01"
+export PROMPTSEC_DM_TO="@oncall"
+/openclaw-audit-watchdog
+```
+
+Each will send reports with clear host identification.
+
 ## Installation flow (interactive)
 
 Provisioning (MDM-friendly): prefer environment variables (no prompts).
