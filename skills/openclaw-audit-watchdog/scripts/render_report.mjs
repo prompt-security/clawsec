@@ -218,11 +218,23 @@ if (audit.findings) {
   audit.findings = activeFindings.filter((f) =>
     (audit.findings || []).some((orig) => orig === f || JSON.stringify(orig) === JSON.stringify(f))
   );
+  // Recalculate summary counts after filtering
+  audit.summary = {
+    critical: audit.findings.filter((f) => f?.severity === "critical").length,
+    warn: audit.findings.filter((f) => f?.severity === "warn").length,
+    info: audit.findings.filter((f) => f?.severity === "info").length,
+  };
 }
 if (deep.findings) {
   deep.findings = activeFindings.filter((f) =>
     (deep.findings || []).some((orig) => orig === f || JSON.stringify(orig) === JSON.stringify(f))
   );
+  // Recalculate summary counts after filtering
+  deep.summary = {
+    critical: deep.findings.filter((f) => f?.severity === "critical").length,
+    warn: deep.findings.filter((f) => f?.severity === "warn").length,
+    info: deep.findings.filter((f) => f?.severity === "info").length,
+  };
 }
 
 // Render report with suppressed findings
