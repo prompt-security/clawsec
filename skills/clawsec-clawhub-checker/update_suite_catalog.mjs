@@ -2,7 +2,6 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 
 async function updateSuiteCatalog() {
   const suiteDir = "/home/david/.openclaw-clean/workspace/clawsec-suite";

@@ -66,7 +66,7 @@ async function main() {
       if (buildAlertLine !== -1) {
         const lineStart = handlerContent.lastIndexOf("\n", buildAlertLine) + 1;
         const lineEnd = handlerContent.indexOf("\n", buildAlertLine);
-        const oldLine = handlerContent.slice(lineStart, lineEnd);
+        // oldLine variable removed as it's unused
         
         const newLine = `const alertMessage = buildAlertMessage(match, match.reputationWarning ? { score: match.reputationScore, warnings: match.reputationWarnings } : undefined);`;
         handlerContent = handlerContent.slice(0, lineStart) + newLine + handlerContent.slice(lineEnd);
