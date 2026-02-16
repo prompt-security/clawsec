@@ -59,16 +59,6 @@ function oneline(v) {
     .trim();
 }
 
-function escapeForShellEnvVar(v) {
-  return String(v ?? "")
-    .replace(/[\r\n]+/g, " ")
-    .replace(/\\/g, "\\\\")
-    .replace(/\$/g, "\\$")
-    .replace(/`/g, "\\`")
-    .replace(/"/g, '\\"')
-    .trim();
-}
-
 function looksLikeEmail(value) {
   return EMAIL_RE.test(String(value ?? "").trim());
 }
@@ -130,22 +120,21 @@ function discoverKnownEmail() {
 }
 
 function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir, emailTo }) {
-  const safeDir = escapeForShellEnvVar(installDir || "");
-  const escapedHostLabel = escapeForShellEnvVar(hostLabel);
-  const escapedEmail = escapeForShellEnvVar(emailTo);
-
+  const safeDir = oneline(installDir || "");
   return [
     "Run daily openclaw security audits and deliver report (DM + email).",
     "",
     `Delivery DM: ${oneline(dmChannel)}:${oneline(dmTo)}`,
     `Email: ${oneline(emailTo)} (sendmail/SMTP fallback)`,
+
     "",
     "Execute:",
-    `- Run via exec: cd \"${safeDir}\" && PROMPTSEC_HOST_LABEL=\"${escapedHostLabel}\" PROMPTSEC_EMAIL_TO=\"${escapedEmail}\" ./scripts/audit-watchdog/runner.sh`,
+    `- Run via exec: cd \"${safeDir}\" && PROMPTSEC_HOST_LABEL=\"${oneline(hostLabel)}\" PROMPTSEC_EMAIL_TO=\"${oneline(emailTo)}\" ./scripts/audit-watchdog/runner.sh`,
     "",
     "Output requirements:",
     "- Print the report to stdout (cron deliver will DM it).",
     `- Also email the same report to ${oneline(emailTo)}; if email fails, append a NOTE line to stdout.`,
+
     "- Do not apply fixes automatically.",
     "- Keep findings aligned with openclaw security audit / healthcheck workflows.",
   ].join("\n");
