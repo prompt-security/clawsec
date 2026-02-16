@@ -34,18 +34,25 @@ async function main() {
     
     // Check if already imported
     if (!handlerContent.includes("from \"./lib/reputation.mjs\"")) {
+      // WARNING: This setup script uses string manipulation to modify handler.ts
+      // This is fragile and may break if the handler structure changes
+      // Consider using AST-based transformation or manual integration for production use
+
       // Add import after other imports
       const importIndex = handlerContent.lastIndexOf("import");
+      if (importIndex === -1) {
+        throw new Error("Could not find import statements in handler.ts. Manual integration required.");
+      }
+
       const lineEndIndex = handlerContent.indexOf("\n", importIndex);
-      
       const newImport = `import { checkReputation } from "./lib/reputation.mjs";\n`;
       handlerContent = handlerContent.slice(0, lineEndIndex + 1) + newImport + handlerContent.slice(lineEndIndex + 1);
-      
+
       // Find where matches are processed and add reputation check
       const findMatchesLine = handlerContent.indexOf("const matches = findMatches(feed, installedSkills);");
       if (findMatchesLine !== -1) {
         const insertIndex = handlerContent.indexOf("\n", findMatchesLine) + 1;
-        
+
         const reputationCheckCode = `
         // ClawHub reputation check for matched skills
         for (const match of matches) {
@@ -57,21 +64,17 @@ async function main() {
           }
         }
         `;
-        
+
         handlerContent = handlerContent.slice(0, insertIndex) + reputationCheckCode + handlerContent.slice(insertIndex);
+      } else {
+        console.warn("⚠️  Warning: Could not find 'const matches = findMatches(feed, installedSkills);' in handler.ts");
+        console.warn("   Reputation checks will not be added to the hook. Manual integration may be required.");
       }
-      
-      // Update alert message building to include reputation warnings
-      const buildAlertLine = handlerContent.indexOf("const alertMessage = buildAlertMessage(match);");
-      if (buildAlertLine !== -1) {
-        const lineStart = handlerContent.lastIndexOf("\n", buildAlertLine) + 1;
-        const lineEnd = handlerContent.indexOf("\n", buildAlertLine);
-        // oldLine variable removed as it's unused
-        
-        const newLine = `const alertMessage = buildAlertMessage(match, match.reputationWarning ? { score: match.reputationScore, warnings: match.reputationWarnings } : undefined);`;
-        handlerContent = handlerContent.slice(0, lineStart) + newLine + handlerContent.slice(lineEnd);
-      }
-      
+
+      // Note: Reputation information is attached to each match object (reputationWarning, reputationScore, reputationWarnings)
+      // The advisory guardian hook can consume this data if needed. We don't modify buildAlertMessage calls
+      // since the function signature is buildAlertMessage(matches[], installRoot) and changing it would break compatibility.
+
       await fs.writeFile(hookHandlerPath, handlerContent);
       console.log(`✓ Updated hook handler with reputation checks`);
     } else {

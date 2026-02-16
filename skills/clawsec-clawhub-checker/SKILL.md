@@ -32,9 +32,15 @@ npx clawhub@latest install clawsec-suite
 
 # Then install the checker
 npx clawhub@latest install clawsec-clawhub-checker
+
+# Run the setup script to integrate with clawsec-suite
+node ~/.openclaw/skills/clawsec-clawhub-checker/scripts/setup_reputation_hook.mjs
+
+# Restart OpenClaw gateway for changes to take effect
+openclaw gateway restart
 ```
 
-The checker will automatically enhance the existing `guarded_skill_install.mjs` script and advisory guardian hook.
+After setup, the checker enhances the existing `guarded_skill_install.mjs` script and advisory guardian hook.
 
 ## How It Works
 
@@ -53,11 +59,10 @@ The enhanced flow:
 
 ### Reputation Signals Checked
 
-1. **VirusTotal Code Insight** - Malicious code patterns detection
+1. **VirusTotal Code Insight** - Malicious code patterns, external dependencies (Docker usage, network calls, eval usage, crypto keys)
 2. **Skill age & updates** - New skills vs established ones
 3. **Author reputation** - Other skills by same author
 4. **Download statistics** - Popularity signals
-5. **External dependencies** - Docker, network calls, eval usage
 
 ### Exit Codes
 

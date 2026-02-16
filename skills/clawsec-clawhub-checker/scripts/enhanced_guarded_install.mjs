@@ -31,15 +31,27 @@ function printUsage() {
 }
 
 function parseArgs(argv) {
+  // Parse and validate CLAWHUB_REPUTATION_THRESHOLD environment variable
+  let defaultThreshold = 70;
+  const envThreshold = process.env.CLAWHUB_REPUTATION_THRESHOLD;
+
+  if (envThreshold !== undefined && envThreshold !== "") {
+    const parsedEnv = parseInt(envThreshold, 10);
+    if (Number.isNaN(parsedEnv) || parsedEnv < 0 || parsedEnv > 100) {
+      throw new Error(
+        `Invalid CLAWHUB_REPUTATION_THRESHOLD environment variable: "${envThreshold}". Must be between 0 and 100.`
+      );
+    }
+    defaultThreshold = parsedEnv;
+  }
+
   const parsed = {
     skill: "",
     version: "",
     confirmAdvisory: false,
     confirmReputation: false,
     dryRun: false,
-    reputationThreshold: process.env.CLAWHUB_REPUTATION_THRESHOLD
-      ? parseInt(process.env.CLAWHUB_REPUTATION_THRESHOLD, 10)
-      : 70,
+    reputationThreshold: defaultThreshold,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -83,14 +95,37 @@ function parseArgs(argv) {
   if (!parsed.skill) {
     throw new Error("Missing required argument: --skill");
   }
-  if (!/^[a-z0-9-]+$/.test(parsed.skill)) {
-    throw new Error("Invalid --skill value. Use lowercase letters, digits, and hyphens only.");
+  // Must start with alphanumeric, then can contain hyphens (matches check_clawhub_reputation.mjs validation)
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(parsed.skill)) {
+    throw new Error("Invalid --skill value. Must start with a letter or digit, followed by lowercase letters, digits, and hyphens.");
   }
   if (parsed.reputationThreshold < 0 || parsed.reputationThreshold > 100 || Number.isNaN(parsed.reputationThreshold)) {
     throw new Error("Invalid --reputation-threshold value. Must be between 0 and 100.");
   }
 
   return parsed;
+}
+
+function buildOriginalArgs(argv) {
+  // Filter out reputation-specific arguments that the original script doesn't understand
+  const originalArgs = [];
+
+  for (let i = 0; i < argv.length; i++) {
+    const token = argv[i];
+
+    if (token === "--confirm-reputation" || token === "--reputation-threshold") {
+      // Skip reputation-specific flags
+      if (token === "--reputation-threshold" && i + 1 < argv.length) {
+        // Also skip the value associated with --reputation-threshold
+        i += 1;
+      }
+      continue;
+    }
+
+    originalArgs.push(token);
+  }
+
+  return originalArgs;
 }
 
 async function runOriginalGuardedInstall(args) {
@@ -104,17 +139,14 @@ async function runOriginalGuardedInstall(args) {
     throw new Error(`Original guarded_skill_install.mjs not found at ${originalScript}. Is clawsec-suite installed?`);
   }
 
-  const env = { ...process.env };
-  if (args.confirmAdvisory) {
-    env.CLAWSEC_ALLOW_UNSIGNED_FEED = "1"; // Pass through to original script
-  }
-
+  // Pass through environment without modification
+  // The original guarded_skill_install.mjs handles --confirm-advisory properly
   const child = spawnSync(
     "node",
     [originalScript, ...args.originalArgs],
     {
       stdio: "inherit",
-      env,
+      env: process.env,
       cwd: suiteDir,
     },
   );
@@ -127,20 +159,11 @@ async function runOriginalGuardedInstall(args) {
 
 async function main() {
   try {
-    const args = parseArgs(process.argv.slice(2));
-    
-    // Build args for original script (excluding reputation-specific args)
-    const originalArgs = [];
-    for (let i = 0; i < process.argv.slice(2).length; i++) {
-      const token = process.argv.slice(2)[i];
-      if (token === "--confirm-reputation" || token === "--reputation-threshold") {
-        i += token === "--reputation-threshold" ? 1 : 0;
-        continue;
-      }
-      originalArgs.push(token);
-    }
+    const cliArgs = process.argv.slice(2);
+    const args = parseArgs(cliArgs);
 
-    args.originalArgs = originalArgs;
+    // Build args for original script (excluding reputation-specific args)
+    args.originalArgs = buildOriginalArgs(cliArgs);
 
     // Step 1: Check reputation (unless already confirmed)
     if (!args.confirmReputation) {

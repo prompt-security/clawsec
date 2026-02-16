@@ -47,6 +47,11 @@
         "path": "README.md",
         "required": false,
         "description": "Additional documentation and development guide"
+      },
+      {
+        "path": "test/reputation_check.test.mjs",
+        "required": false,
+        "description": "Test suite for reputation checking functionality"
       }
     ]
   },

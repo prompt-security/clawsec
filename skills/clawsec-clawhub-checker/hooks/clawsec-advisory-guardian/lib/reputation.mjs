@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 
 /**
  * Check reputation for a skill
@@ -17,11 +19,12 @@ export async function checkReputation(skillName, version) {
     // Try to get skill slug from directory name or skill.json
     // For now, use skillName as slug (simplified)
     const skillSlug = skillName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    
+
     // Run the reputation check script
-    const checkScript = new URL(import.meta.url);
-    const scriptDir = checkScript.pathname.split('/').slice(0, -3).join('/'); // Go up from lib
-    const checkerDir = scriptDir.replace('/hooks/clawsec-advisory-guardian/lib', '');
+    // Current file is at: .../hooks/clawsec-advisory-guardian/lib/reputation.mjs
+    // We need to go up 3 levels to get to the skill root directory
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const checkerDir = path.resolve(__dirname, '../../..');
     
     const reputationCheck = spawnSync(
       "node",

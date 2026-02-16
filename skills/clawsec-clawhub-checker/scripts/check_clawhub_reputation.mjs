@@ -24,7 +24,10 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
     result.safe = false;
     return result;
   }
-  if (version && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?$/.test(version)) {
+  // Semver validation: supports major.minor.patch with optional pre-release and build metadata
+  // Examples: 1.0.0, 1.0.0-alpha.1, 1.0.0-beta+20130313144700
+  // More restrictive than full semver spec for security (prevents command injection)
+  if (version && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?(?:\+[a-zA-Z0-9.-]+)?$/.test(version)) {
     result.warnings.push(`Invalid version format: ${version}`);
     result.score = 0;
     result.safe = false;
@@ -114,12 +117,16 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
       }
     }
 
-    // Check 6: Try installation to see if clawhub flags it as suspicious
-    // Use input:"n\n" to decline the interactive prompt (avoids shell interpolation)
+    // Check 6: Try installation to detect VirusTotal Code Insight warnings
+    // Note: This approach has potential side effects:
+    // - May download/cache skill metadata before declining
+    // - Depends on clawhub's prompting behavior (sending "n\n" to decline)
+    // - If clawhub inspect provided security flags, we'd use that instead
+    // This is the only way to programmatically access VirusTotal warnings currently
     const installArgs = ["install", skillSlug];
     if (version) installArgs.push("--version", version);
     const installCheck = spawnSync("clawhub", installArgs, {
-      input: "n\n",
+      input: "n\n", // Automatically decline the installation prompt
       encoding: "utf-8",
     });
 
