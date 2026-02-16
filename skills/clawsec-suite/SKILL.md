@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.0.11
+version: 0.0.10
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -28,11 +28,9 @@ This means `clawsec-suite` can:
 - Setup scripts for hook and optional cron scheduling: `scripts/`
 - Guarded installer: `scripts/guarded_skill_install.mjs`
 - Dynamic catalog discovery for installable skills: `scripts/discover_skill_catalog.mjs`
-- Integrated OpenClaw audit watchdog scripts: `scripts/audit-watchdog/`
-- Watchdog cron bootstrap with email discovery/prompt guard: `scripts/setup_audit_watchdog.mjs`
 
 ### Installed separately (dynamic catalog)
-`clawsec-suite` no longer hard-codes add-on skill names in this document.
+`clawsec-suite` does not hard-code add-on skill names in this document.
 
 Discover the current catalog from the authoritative index (`https://clawsec.prompt.security/skills/index.json`) at runtime:
 
@@ -146,18 +144,6 @@ Optional: create/update a periodic cron nudge (default every `6h`) that triggers
 SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
 node "$SUITE_DIR/scripts/setup_advisory_cron.mjs"
 ```
-
-Optional: enable the integrated daily audit watchdog cron (complements `healthcheck` by running read-only audits and reporting findings):
-
-```bash
-SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
-node "$SUITE_DIR/scripts/setup_audit_watchdog.mjs"
-```
-
-Email behavior in watchdog setup:
-- If an email is already known (OpenClaw env/config/git identity), it is auto-populated.
-- If no email is known, setup prompts for one.
-- Cron job is not created/updated until a valid email is provided.
 
 What this adds:
 - scan on `agent:bootstrap` and `/new` (`command:new`),

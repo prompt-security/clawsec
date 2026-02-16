@@ -15,20 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `SKILL.md` to use dynamic catalog discovery commands instead of hard-coded optional-skill names.
 - Documented explicit fallback behavior to suite-local `skill.json` catalog metadata when remote index fetch fails.
 
-## [0.0.11] - 2026-02-15
-
-### Added
-- Integrated `openclaw-audit-watchdog` into `clawsec-suite` under `scripts/audit-watchdog/`.
-- Added `scripts/setup_audit_watchdog.mjs` to create/update daily audit cron directly from suite.
-
-### Changed
-- `clawsec-suite` now treats audit watchdog as an embedded component that complements `healthcheck` with read-only daily audit reporting.
-- Watchdog setup now uses suite-local install paths (no standalone path assumptions).
-
-### Security / UX
-- Watchdog setup attempts to auto-discover report email from OpenClaw-known context (env/config/git identity).
-- If email cannot be discovered, setup prompts the user and refuses to create/update cron until a valid email is provided.
-
 ## [0.0.10] - 2026-02-11
 
 ### Security
