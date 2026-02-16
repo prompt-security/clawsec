@@ -274,6 +274,62 @@ function parseChecksumsManifest(manifestRaw) {
 }
 
 /**
+ * @param {string} entryName
+ * @returns {string}
+ */
+function normalizeChecksumEntryName(entryName) {
+  return String(entryName ?? "")
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^(?:\.\/)+/, "")
+    .replace(/^\/+/, "");
+}
+
+/**
+ * @param {Record<string, string>} files
+ * @param {string} entryName
+ * @returns {{ key: string; digest: string } | null}
+ */
+function resolveChecksumManifestEntry(files, entryName) {
+  const normalizedEntry = normalizeChecksumEntryName(entryName);
+  if (!normalizedEntry) return null;
+
+  const directCandidates = [
+    normalizedEntry,
+    path.posix.basename(normalizedEntry),
+    `advisories/${path.posix.basename(normalizedEntry)}`,
+  ].filter((candidate, index, all) => candidate && all.indexOf(candidate) === index);
+
+  for (const candidate of directCandidates) {
+    if (Object.prototype.hasOwnProperty.call(files, candidate)) {
+      return { key: candidate, digest: files[candidate] };
+    }
+  }
+
+  const basename = path.posix.basename(normalizedEntry);
+  if (!basename) return null;
+
+  const basenameMatches = Object.entries(files).filter(([key]) => {
+    const normalizedKey = normalizeChecksumEntryName(key);
+    return path.posix.basename(normalizedKey) === basename;
+  });
+
+  if (basenameMatches.length > 1) {
+    throw new Error(
+      `Checksum manifest entry is ambiguous for ${entryName}; ` +
+        `multiple manifest keys share basename ${basename}`,
+    );
+  }
+
+  if (basenameMatches.length === 1) {
+    const [resolvedKey, digest] = basenameMatches[0];
+    return { key: resolvedKey, digest };
+  }
+
+  return null;
+}
+
+/**
  * @param {{ files: Record<string, string> }} manifest
  * @param {Record<string, string | Buffer>} expectedEntries
  */
@@ -281,14 +337,14 @@ function verifyChecksums(manifest, expectedEntries) {
   for (const [entryName, entryContent] of Object.entries(expectedEntries)) {
     if (!entryName) continue;
 
-    const expectedDigest = manifest.files[entryName];
-    if (!expectedDigest) {
+    const resolved = resolveChecksumManifestEntry(manifest.files, entryName);
+    if (!resolved) {
       throw new Error(`Checksum manifest missing required entry: ${entryName}`);
     }
 
     const actualDigest = sha256Hex(entryContent);
-    if (actualDigest !== expectedDigest) {
-      throw new Error(`Checksum mismatch for ${entryName}`);
+    if (actualDigest !== resolved.digest) {
+      throw new Error(`Checksum mismatch for ${entryName} (manifest key: ${resolved.key})`);
     }
   }
 }

@@ -52,8 +52,18 @@ function envOrEmpty(name) {
 function oneline(v) {
   return String(v ?? "")
     .replace(/[\r\n]+/g, " ")
+    .replace(/\\/g, "\\\\")
     .replace(/"/g, "\\\"")
+    .trim();
+}
 
+function escapeForShellEnvVar(v) {
+  return String(v ?? "")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\\/g, "\\\\")
+    .replace(/\$/g, "\\$")
+    .replace(/`/g, "\\`")
+    .replace(/"/g, "\\\"")
     .trim();
 }
 
@@ -66,7 +76,9 @@ function defaultInstallDir() {
 }
 
 function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir }) {
-  const safeDir = oneline(installDir || "");
+  const safeDir = escapeForShellEnvVar(installDir || "");
+  const escapedHostLabel = escapeForShellEnvVar(hostLabel);
+
   return [
     "Run daily openclaw security audits and deliver report (DM + email).",
     "",
@@ -74,7 +86,7 @@ function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir }) {
     `Email: ${COMPANY_EMAIL} (local sendmail)`,
     "",
     "Execute:",
-    `- Run via exec: cd "${safeDir}" && PROMPTSEC_HOST_LABEL="${oneline(hostLabel)}" ./scripts/runner.sh`,
+    `- Run via exec: cd "${safeDir}" && PROMPTSEC_HOST_LABEL="${escapedHostLabel}" ./scripts/runner.sh`,
     "",
     "Output requirements:",
     "- Print the report to stdout (cron deliver will DM it).",

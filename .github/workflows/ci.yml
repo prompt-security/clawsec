@@ -6,6 +6,8 @@ on:
   push:
     branches: [main]
 
+permissions: read-all
+
 jobs:
   lint-typescript:
     name: Lint TypeScript/React
@@ -32,14 +34,10 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
-          cache: 'pip'
-          cache-dependency-path: '.github/requirements-lint-python.txt'
-      - name: Install linters
-        run: python -m pip install -r .github/requirements-lint-python.txt
       - name: Ruff (lint + format check)
-        run: ruff check utils/ --output-format=github
+        run: pipx run --spec "ruff==0.6.9" ruff check utils/ --output-format=github
       - name: Bandit (security)
-        run: bandit -r utils/ -ll
+        run: pipx run --spec "bandit==1.7.9" bandit -r utils/ -ll
 
   lint-shell:
     name: Lint Shell Scripts
@@ -58,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Trivy FS Scan
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        uses: aquasecurity/trivy-action@c1824fd6edce30d7ab345a9989de00bbd46ef284 # 0.34.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -66,7 +64,7 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
       - name: Trivy Config Scan
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        uses: aquasecurity/trivy-action@c1824fd6edce30d7ab345a9989de00bbd46ef284 # 0.34.0
         with:
           scan-type: 'config'
           scan-ref: '.'

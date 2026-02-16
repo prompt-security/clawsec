@@ -5,6 +5,50 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2]
+
+### Added
+
+- Advisory suppression module (`hooks/clawsec-advisory-guardian/lib/suppression.mjs`).
+- `loadAdvisorySuppression()` -- loads suppression config with `enabledFor: ["advisory"]` sentinel gate.
+- `isAdvisorySuppressed()` -- matches `advisory.id === rule.checkId` + case-insensitive skill name.
+- Advisory guardian handler integration: partitions matches into active/suppressed after `findMatches()`.
+- Suppressed matches tracked in state file (prevents re-evaluation) but not alerted.
+- Soft notification message for suppressed matches count.
+- Advisory suppression tests (13 tests in `advisory_suppression.test.mjs`).
+- Documentation in SKILL.md for advisory suppression/allowlist mechanism.
+
+### Changed
+
+- Advisory guardian handler (`handler.ts`) now loads suppression config and filters matches before alerting.
+
+### Security
+
+- Advisory suppression gated by config file sentinel (`enabledFor: ["advisory"]`) -- no CLI flag needed but config must explicitly opt in.
+- Suppressed matches are still tracked in state to maintain audit trail.
+
+## [0.1.1] - 2026-02-16
+
+### Added
+- Added `scripts/discover_skill_catalog.mjs` to dynamically discover installable skills from `https://clawsec.prompt.security/skills/index.json`.
+- Added `test/skill_catalog_discovery.test.mjs` to validate remote-catalog loading and fallback behavior.
+- Added CI signing-key drift guard script: `scripts/ci/verify_signing_key_consistency.sh`.
+
+### Changed
+- Updated `SKILL.md` to use dynamic catalog discovery commands instead of hard-coded optional-skill names.
+- Updated advisory feed defaults to signed-host URL (`https://clawsec.prompt.security/advisories/feed.json`).
+- Improved checksum manifest key compatibility in feed verification logic (supports basename and `advisories/*` key formats).
+- Kept `openclaw-audit-watchdog` as a standalone skill (not embedded in `clawsec-suite`).
+
+### Security
+- **Signing key drift control**: CI now enforces that all public key references (inline SKILL.md PEM, canonical `.pem` files, workflow-generated keys) resolve to the same fingerprint. Prevents stale, fabricated, or rotated-but-not-propagated key material from reaching releases.
+  - Enforced in: `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml`
+  - Guard script: `scripts/ci/verify_signing_key_consistency.sh`
+
+### Fixed
+- **Fixed fabricated signing key in SKILL.md**: The manual installation script contained a hallucinated Ed25519 public key and fingerprint (`35866e1b...`) that never corresponded to the actual release signing key. Replaced with the real public key derived from the GitHub-secret-held private key. The bogus key was introduced in v0.0.10 (`Integration/signing work #20`) and went undetected because no consistency check existed at the time.
+- Corrected `checksums.sig` naming in release verification documentation.
+
 ## [0.0.10] - 2026-02-11
 
 ### Security

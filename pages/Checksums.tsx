@@ -101,7 +101,7 @@ export default function Checksums() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-clawd-700">
-                    {Object.entries(checksums.files).map(([filename, data]) => (
+                    {(Object.entries(checksums.files) as [string, FileChecksum][]).map(([filename, data]) => (
                       <tr key={filename} className="hover:bg-clawd-700/50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="font-mono text-sm text-clawd-accent">{filename}</div>

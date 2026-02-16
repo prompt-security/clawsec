@@ -15,10 +15,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+permissions: read-all
 
 concurrency:
   group: skill-release-${{ github.ref }}
@@ -35,6 +32,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
 
       - name: Validate version parity for bumped skills
         env:
@@ -502,6 +502,8 @@ jobs:
   release-tag:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       skill_name: ${{ steps.parse.outputs.skill_name }}
       version: ${{ steps.parse.outputs.version }}
@@ -525,6 +527,9 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
 
       - name: Validate skill exists
         run: |
@@ -782,6 +787,18 @@ jobs:
           signature_file: release-assets/checksums.sig
           public_key_output: release-assets/signing-public.pem
 
+      - name: Verify generated release signing key matches canonical key
+        run: |
+          set -euo pipefail
+          CANONICAL_FPR=$(openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          GENERATED_FPR=$(openssl pkey -pubin -in release-assets/signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          echo "Canonical key fingerprint: $CANONICAL_FPR"
+          echo "Generated key fingerprint: $GENERATED_FPR"
+          if [ "$CANONICAL_FPR" != "$GENERATED_FPR" ]; then
+            echo "::error::release-assets/signing-public.pem fingerprint mismatch vs clawsec-signing-public.pem"
+            exit 1
+          fi
+
       - name: Show signed release assets
         run: |
           echo "Signed and verified release-assets/checksums.json"
@@ -929,6 +946,8 @@ jobs:
     needs: release-tag
     runs-on: ubuntu-latest
     continue-on-error: true
+    permissions:
+      contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
@@ -950,7 +969,7 @@ jobs:
 
       - name: Install clawhub CLI
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
-        run: npm install -g clawhub
+        run: npm install -g clawhub@0.7.0
 
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1004,6 +1023,8 @@ jobs:
     # Usage: Go to Actions → Skill Release → Run workflow → Enter tag name
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
@@ -1059,7 +1080,7 @@ jobs:
           node-version: 20
 
       - name: Install clawhub CLI
-        run: npm install -g clawhub
+        run: npm install -g clawhub@0.7.0
 
       - name: Login to ClawHub
         run: |

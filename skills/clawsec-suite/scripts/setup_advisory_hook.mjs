@@ -37,6 +37,7 @@ function requireOpenClawCli() {
     throw new Error(
       "openclaw CLI is required. Install OpenClaw and ensure `openclaw` is available in PATH. " +
         `Original error: ${String(error)}`,
+      { cause: error },
     );
   }
 }

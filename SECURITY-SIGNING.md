@@ -24,7 +24,7 @@ As of branch `integration/signing-work`, advisory distribution is **unsigned**:
 - Feed consumers:
   - `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
   - `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
-  - both default to `https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json`
+  - both default to `https://clawsec.prompt.security/advisories/feed.json`
 
 This document defines the **target operating model** for signed artifacts while preserving compatibility during migration.
 
@@ -37,7 +37,7 @@ This document defines the **target operating model** for signed artifacts while 
 
 ### Release artifact channel (recommended)
 - `<release>/checksums.json`
-- `<release>/checksums.json.sig`
+- `<release>/checksums.sig`
 - `advisories/release-signing-public.pem` (or equivalent repo-pinned location)
 
 ## 4) Key roles and custody
@@ -138,7 +138,7 @@ Current release generator:
 
 Target update:
 - sign `checksums.json` before `softprops/action-gh-release`
-- attach `checksums.json.sig` to each release
+- attach `checksums.sig` to each release
 
 ## 8) Rotation policy and runbook
 

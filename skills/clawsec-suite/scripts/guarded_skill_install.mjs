@@ -14,7 +14,7 @@ import {
 } from "../hooks/clawsec-advisory-guardian/lib/feed.mjs";
 
 const DEFAULT_FEED_URL =
-  "https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json";
+  "https://clawsec.prompt.security/advisories/feed.json";
 const DEFAULT_SUITE_DIR = path.join(os.homedir(), ".openclaw", "skills", "clawsec-suite");
 const DEFAULT_LOCAL_FEED = path.join(DEFAULT_SUITE_DIR, "advisories", "feed.json");
 const DEFAULT_LOCAL_FEED_SIG = `${DEFAULT_LOCAL_FEED}.sig`;

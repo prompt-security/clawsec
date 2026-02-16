@@ -1,3 +1,7 @@
+// NOTE: @eslint/js is pinned to ~9.x because v10 introduces a peerOptional
+// dependency on eslint@^10, and the typescript-eslint / react plugin ecosystem
+// hasn't published eslint-10-compatible releases yet. Upgrade @eslint/js to ^10
+// once @typescript-eslint and eslint-plugin-react declare eslint@^10 support.
 import js from '@eslint/js';
 import typescript from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';

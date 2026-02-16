@@ -25,6 +25,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
+
       - name: Auto-discover skills from releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -273,6 +276,18 @@ jobs:
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
           input_file: public/checksums.json
           signature_file: public/checksums.sig
+
+      - name: Verify generated public signing key matches canonical key
+        run: |
+          set -euo pipefail
+          CANONICAL_FPR=$(openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          GENERATED_FPR=$(openssl pkey -pubin -in public/signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          echo "Canonical key fingerprint: $CANONICAL_FPR"
+          echo "Generated key fingerprint: $GENERATED_FPR"
+          if [ "$CANONICAL_FPR" != "$GENERATED_FPR" ]; then
+            echo "::error::public/signing-public.pem fingerprint mismatch vs clawsec-signing-public.pem"
+            exit 1
+          fi
 
       - name: Copy public key to advisory directory
         run: |

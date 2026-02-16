@@ -1,0 +1,16 @@
+{
+  "suppressions": [
+    {
+      "checkId": "skills.code_safety",
+      "skill": "clawsec-suite",
+      "reason": "First-party security tooling, reviewed 2026-02-13",
+      "suppressedAt": "2026-02-13"
+    },
+    {
+      "checkId": "skills.code_safety",
+      "skill": "openclaw-audit-watchdog",
+      "reason": "First-party security tooling, reviewed 2026-02-13",
+      "suppressedAt": "2026-02-13"
+    }
+  ]
+}

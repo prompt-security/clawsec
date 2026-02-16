@@ -1,2 +1,2 @@
-ruff==0.6.9
-bandit==1.7.9
+ruff==0.15.1
+bandit==1.9.3
