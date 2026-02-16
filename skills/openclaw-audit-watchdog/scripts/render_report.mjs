@@ -3,7 +3,7 @@
  * Render a human-readable security audit report from openclaw JSON.
  *
  * Usage:
- *   node render_report.mjs --audit audit.json --deep deep.json --label "host label" [--config config.json]
+ *   node render_report.mjs --audit audit.json --deep deep.json --label "host label" [--enable-suppressions] [--config config.json]
  */
 
 import fs from "node:fs";
@@ -194,6 +194,7 @@ function parseArgs(argv) {
     else if (a === "--deep") out.deep = argv[++i];
     else if (a === "--label") out.label = argv[++i];
     else if (a === "--config") out.config = argv[++i];
+    else if (a === "--enable-suppressions") out.enableSuppressions = true;
   }
   return out;
 }
@@ -201,8 +202,10 @@ function parseArgs(argv) {
 // Main execution
 const args = parseArgs(process.argv.slice(2));
 
-// Load suppression config (async)
-const suppressionConfig = await loadSuppressionConfig(args.config || null);
+// Load suppression config (requires explicit opt-in)
+const suppressionConfig = await loadSuppressionConfig(args.config || null, {
+  enabled: !!args.enableSuppressions,
+});
 const suppressions = suppressionConfig.suppressions || [];
 
 // Read audit results

@@ -11,9 +11,10 @@ show_help() {
 Usage: run_audit_and_format.sh [OPTIONS]
 
 Options:
-  --label <text>     Custom label for the report
-  --config <path>    Path to config file (e.g., allowlist.json)
-  --help             Show this help message
+  --label <text>              Custom label for the report
+  --config <path>             Path to config file (e.g., allowlist.json)
+  --enable-suppressions       Explicitly enable the suppression mechanism
+  --help                      Show this help message
 
 EOF
   exit 0
@@ -21,12 +22,15 @@ EOF
 
 LABEL=""
 CONFIG=""
+ENABLE_SUPPRESSIONS=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --label)
       LABEL="${2:-}"; shift 2 ;;
     --config)
       CONFIG="${2:-}"; shift 2 ;;
+    --enable-suppressions)
+      ENABLE_SUPPRESSIONS=1; shift ;;
     --help)
       show_help ;;
     *)
@@ -90,6 +94,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Build args for render_report
 RENDER_ARGS=(--audit "$AUDIT_JSON" --deep "$DEEP_JSON" --label "$LABEL")
+if [[ "$ENABLE_SUPPRESSIONS" -eq 1 ]]; then
+  RENDER_ARGS+=(--enable-suppressions)
+fi
 if [[ -n "$CONFIG" ]]; then
   RENDER_ARGS+=(--config "$CONFIG")
 fi

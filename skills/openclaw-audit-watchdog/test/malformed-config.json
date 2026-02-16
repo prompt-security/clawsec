@@ -1,0 +1,8 @@
+{
+  "suppressions": [
+    {
+      "checkId": "test.check",
+      "skill": "test-skill"
+    }
+  ]
+}

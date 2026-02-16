@@ -184,6 +184,79 @@ export PROMPTSEC_DM_TO="@oncall"
 
 Each will send reports with clear host identification.
 
+### Example 7: Suppressing Known Findings
+
+To suppress audit findings that have been reviewed and accepted, pass the `--enable-suppressions` flag and ensure the config file includes the `"enabledFor": ["audit"]` sentinel:
+
+```bash
+# Create or edit the suppression config
+cat > ~/.openclaw/security-audit.json <<'JSON'
+{
+  "enabledFor": ["audit"],
+  "suppressions": [
+    {
+      "checkId": "skills.code_safety",
+      "skill": "clawsec-suite",
+      "reason": "First-party security tooling — reviewed by security team",
+      "suppressedAt": "2026-02-15"
+    }
+  ]
+}
+JSON
+
+# Run with suppressions enabled
+/openclaw-audit-watchdog --enable-suppressions
+```
+
+Suppressed findings still appear in the report under an informational section but are excluded from critical/warning totals.
+
+## Suppression / Allowlist
+
+The audit pipeline supports an opt-in suppression mechanism for managing reviewed findings. Suppression uses defense-in-depth activation: two independent gates must both be satisfied.
+
+### Activation Requirements
+
+1. **CLI flag:** The `--enable-suppressions` flag must be passed at invocation.
+2. **Config sentinel:** The configuration file must include `"enabledFor"` with `"audit"` in the array.
+
+If either gate is absent, all findings are reported normally and the suppression list is ignored.
+
+### Config File Resolution (4-tier)
+
+1. Explicit `--config <path>` argument
+2. `OPENCLAW_AUDIT_CONFIG` environment variable
+3. `~/.openclaw/security-audit.json`
+4. `.clawsec/allowlist.json`
+
+### Config Format
+
+```json
+{
+  "enabledFor": ["audit"],
+  "suppressions": [
+    {
+      "checkId": "skills.code_safety",
+      "skill": "clawsec-suite",
+      "reason": "First-party security tooling — reviewed by security team",
+      "suppressedAt": "2026-02-15"
+    }
+  ]
+}
+```
+
+### Sentinel Semantics
+
+- `"enabledFor": ["audit"]` -- audit suppression active (requires `--enable-suppressions` flag too)
+- `"enabledFor": ["advisory"]` -- only advisory pipeline suppression (no effect on audit)
+- `"enabledFor": ["audit", "advisory"]` -- both pipelines honor suppressions
+- Missing or empty `enabledFor` -- no suppression active (safe default)
+
+### Matching Rules
+
+- **checkId:** exact match against the audit finding's check identifier (e.g., `skills.code_safety`)
+- **skill:** case-insensitive match against the skill name from the finding
+- Both fields must match for a finding to be suppressed
+
 ## Installation flow (interactive)
 
 Provisioning (MDM-friendly): prefer environment variables (no prompts).

@@ -6,6 +6,7 @@ import { defaultChecksumsUrl, loadLocalFeed, loadRemoteFeed } from "./lib/feed.m
 import type { HookEvent, FeedPayload, AdvisoryMatch } from "./lib/types.ts";
 import { loadState, persistState } from "./lib/state.ts";
 import { discoverInstalledSkills, findMatches, matchKey, buildAlertMessage } from "./lib/matching.ts";
+import { loadAdvisorySuppression, isAdvisorySuppressed } from "./lib/suppression.mjs";
 
 const DEFAULT_FEED_URL =
   "https://clawsec.prompt.security/advisories/feed.json";
@@ -171,11 +172,31 @@ const handler = async (event: HookEvent): Promise<void> => {
   state.known_advisories = uniqueStrings([...state.known_advisories, ...advisoryIds]);
 
   const installedSkills = await discoverInstalledSkills(installRoot);
-  const matches = findMatches(feed, installedSkills);
+  const allMatches = findMatches(feed, installedSkills);
 
-  if (matches.length === 0) {
+  if (allMatches.length === 0) {
     await persistState(stateFile, state);
     return;
+  }
+
+  // Load advisory suppression config (sentinel-gated: requires enabledFor: ["advisory"])
+  let suppressionConfig;
+  try {
+    suppressionConfig = await loadAdvisorySuppression();
+  } catch (err) {
+    console.warn(`[clawsec-advisory-guardian] failed to load suppression config: ${String(err)}`);
+    suppressionConfig = { suppressions: [], enabledFor: [], source: "none" };
+  }
+
+  // Partition matches into active and suppressed
+  const matches: AdvisoryMatch[] = [];
+  const suppressedMatches: AdvisoryMatch[] = [];
+  for (const match of allMatches) {
+    if (isAdvisorySuppressed(match, suppressionConfig.suppressions)) {
+      suppressedMatches.push(match);
+    } else {
+      matches.push(match);
+    }
   }
 
   const unseenMatches: AdvisoryMatch[] = [];
@@ -188,8 +209,22 @@ const handler = async (event: HookEvent): Promise<void> => {
     state.notified_matches[key] = nowIso;
   }
 
+  // Track suppressed matches in state (so they aren't re-evaluated) but don't alert
+  for (const match of suppressedMatches) {
+    const key = matchKey(match);
+    if (!state.notified_matches[key]) {
+      state.notified_matches[key] = nowIso;
+    }
+  }
+
   if (unseenMatches.length > 0 && Array.isArray(event.messages)) {
     event.messages.push(buildAlertMessage(unseenMatches, installRoot));
+  }
+
+  if (suppressedMatches.length > 0 && Array.isArray(event.messages)) {
+    event.messages.push(
+      `[clawsec-advisory-guardian] ${suppressedMatches.length} advisory match(es) suppressed by allowlist config.`,
+    );
   }
 
   await persistState(stateFile, state);

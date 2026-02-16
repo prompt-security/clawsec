@@ -84,12 +84,18 @@ function normalizeSuppressionConfig(payload, source) {
       const normalized = validateSuppression(rawSuppressions[i], i);
       suppressions.push(normalized);
     } catch (err) {
-      throw new Error(`Invalid suppression at index ${i} in ${source}: ${err.message}`);
+      throw new Error(`Invalid suppression at index ${i} in ${source}: ${err.message}`, { cause: err });
     }
   }
 
+  // Extract enabledFor sentinel (array of pipeline names this config activates for)
+  const enabledFor = Array.isArray(payload.enabledFor)
+    ? payload.enabledFor.filter((v) => typeof v === "string" && v.trim() !== "").map((v) => v.trim().toLowerCase())
+    : [];
+
   return {
     suppressions,
+    enabledFor,
     source,
   };
 }
@@ -105,29 +111,23 @@ async function loadConfigFromPath(configPath) {
       return null;
     }
     if (err.code === "EACCES") {
-      throw new Error(`Permission denied reading config file: ${configPath}`);
+      throw new Error(`Permission denied reading config file: ${configPath}`, { cause: err });
     }
     if (err instanceof SyntaxError) {
-      throw new Error(`Malformed JSON in config file ${configPath}: ${err.message}`);
+      throw new Error(`Malformed JSON in config file ${configPath}: ${err.message}`, { cause: err });
     }
     // Re-throw validation errors or other errors
     throw err;
   }
 }
 
+const EMPTY_RESULT = Object.freeze({ suppressions: [], source: "none" });
+
 /**
- * Load suppression configuration with multi-path fallback.
- *
- * Behavior:
- *   - Checks primary path: ~/.openclaw/security-audit.json (or OPENCLAW_AUDIT_CONFIG env var)
- *   - Falls back to: .clawsec/allowlist.json
- *   - Returns empty suppressions array if no config found
- *   - Throws on malformed JSON or validation errors
- *
- * @param {string} [customPath] - Optional custom config file path
- * @returns {Promise<{suppressions: Array, source: string}>}
+ * Resolve config from the 4-tier priority chain.
+ * Returns the loaded config or null if no config found.
  */
-export async function loadSuppressionConfig(customPath = null) {
+async function resolveConfig(customPath) {
   // Priority 1: Custom path provided as argument
   if (customPath) {
     const config = await loadConfigFromPath(customPath);
@@ -148,35 +148,70 @@ export async function loadSuppressionConfig(customPath = null) {
   }
 
   // Priority 3: Primary default path
-  const primaryPath = DEFAULT_PRIMARY_PATH;
-  const primaryConfig = await loadConfigFromPath(primaryPath);
-  if (primaryConfig) {
-    return primaryConfig;
-  }
+  const primaryConfig = await loadConfigFromPath(DEFAULT_PRIMARY_PATH);
+  if (primaryConfig) return primaryConfig;
 
   // Priority 4: Fallback path
-  const fallbackPath = DEFAULT_FALLBACK_PATH;
-  const fallbackConfig = await loadConfigFromPath(fallbackPath);
-  if (fallbackConfig) {
-    return fallbackConfig;
+  const fallbackConfig = await loadConfigFromPath(DEFAULT_FALLBACK_PATH);
+  if (fallbackConfig) return fallbackConfig;
+
+  return null;
+}
+
+/**
+ * Load suppression configuration with multi-path fallback and opt-in gating.
+ *
+ * Suppression requires explicit opt-in to prevent ambient activation:
+ *   1. The `enabled` flag must be true (set via --enable-suppressions CLI flag)
+ *   2. The config file must contain an `enabledFor` array including "audit"
+ *
+ * Without both gates, returns empty suppressions.
+ *
+ * @param {string} [customPath] - Optional custom config file path
+ * @param {object} [options]
+ * @param {boolean} [options.enabled=false] - Whether suppression is explicitly enabled
+ * @param {string} [options.pipeline="audit"] - Pipeline to check in enabledFor sentinel
+ * @returns {Promise<{suppressions: Array, source: string}>}
+ */
+export async function loadSuppressionConfig(customPath = null, { enabled = false, pipeline = "audit" } = {}) {
+  // Gate 1: suppression must be explicitly opted-in via CLI flag
+  if (!enabled) {
+    return EMPTY_RESULT;
   }
 
-  // No config found - return empty suppressions (graceful fallback)
-  return {
-    suppressions: [],
-    source: "none",
-  };
+  const config = await resolveConfig(customPath);
+  if (!config) {
+    return EMPTY_RESULT;
+  }
+
+  // Gate 2: config must declare this pipeline in enabledFor sentinel
+  if (!Array.isArray(config.enabledFor) || !config.enabledFor.includes(pipeline)) {
+    return EMPTY_RESULT;
+  }
+
+  process.stderr.write(
+    `WARNING: Suppression mechanism is enabled for "${pipeline}" pipeline via --enable-suppressions flag.\n`
+  );
+
+  return config;
 }
 
 // CLI usage when run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const customPath = process.argv[2];
+  const args = process.argv.slice(2);
+  const enableFlag = args.includes("--enable-suppressions");
+  const customPath = args.find((a) => !a.startsWith("--")) || null;
+
+  if (!enableFlag) {
+    process.stdout.write("Suppression is disabled. Pass --enable-suppressions to activate.\n");
+    process.exit(0);
+  }
 
   try {
-    const config = await loadSuppressionConfig(customPath || null);
+    const config = await loadSuppressionConfig(customPath, { enabled: true });
 
     if (config.suppressions.length === 0) {
-      process.stdout.write("No suppression config found - graceful fallback to empty suppressions\n");
+      process.stdout.write("No active suppressions (config missing, no enabledFor sentinel, or empty)\n");
       process.stdout.write(JSON.stringify(config, null, 2) + "\n");
       process.exit(0);
     }

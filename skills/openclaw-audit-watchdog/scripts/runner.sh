@@ -10,9 +10,23 @@ set -euo pipefail
 COMPANY_EMAIL="${PROMPTSEC_EMAIL_TO:-target@example.com}"
 HOST_LABEL="${PROMPTSEC_HOST_LABEL:-}"
 DO_PULL="${PROMPTSEC_GIT_PULL:-0}"
+ENABLE_SUPPRESSIONS=0
+AUDIT_CONFIG=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Parse CLI arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --enable-suppressions)
+      ENABLE_SUPPRESSIONS=1; shift ;;
+    --config)
+      AUDIT_CONFIG="${2:-}"; shift 2 ;;
+    *)
+      shift ;;
+  esac
+done
 
 if [[ "$DO_PULL" == "1" ]]; then
   if command -v git >/dev/null 2>&1 && [[ -d "$ROOT_DIR/.git" ]]; then
@@ -23,6 +37,12 @@ fi
 args=( )
 if [[ -n "$HOST_LABEL" ]]; then
   args+=(--label "$HOST_LABEL")
+fi
+if [[ "$ENABLE_SUPPRESSIONS" -eq 1 ]]; then
+  args+=(--enable-suppressions)
+fi
+if [[ -n "$AUDIT_CONFIG" ]]; then
+  args+=(--config "$AUDIT_CONFIG")
 fi
 REPORT="$($SCRIPT_DIR/run_audit_and_format.sh "${args[@]}")"
 

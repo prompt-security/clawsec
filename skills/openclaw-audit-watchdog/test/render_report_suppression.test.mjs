@@ -71,9 +71,10 @@ function createAuditJson(findings) {
   });
 }
 
-function createConfigJson(suppressions) {
+function createConfigJson(suppressions, enabledFor = ["audit"]) {
   return JSON.stringify({
-    suppressions: suppressions,
+    enabledFor,
+    suppressions,
   });
 }
 
@@ -137,6 +138,7 @@ async function testSuppressedFindingsDisplayed() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -199,6 +201,7 @@ async function testActiveFindingsDisplayed() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -268,6 +271,7 @@ async function testSummaryExcludesSuppressed() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -361,6 +365,7 @@ async function testPartialMatchCheckIdOnly() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -417,6 +422,7 @@ async function testPartialMatchSkillOnly() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -491,6 +497,7 @@ async function testMultipleSuppressions() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -549,6 +556,7 @@ async function testSkillNameExtractionFromPath() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -604,6 +612,7 @@ async function testSkillNameExtractionFromTitle() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -650,6 +659,7 @@ async function testEmptySuppressions() {
       auditFile,
       "--deep",
       deepFile,
+      "--enable-suppressions",
       "--config",
       configFile,
     ]);
@@ -663,6 +673,63 @@ async function testEmptySuppressions() {
       pass(testName);
     } else {
       fail(testName, `Empty suppressions should not suppress findings: ${result.stdout}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Test: Config without --enable-suppressions flag does NOT suppress
+// -----------------------------------------------------------------------------
+async function testConfigWithoutEnableFlagDoesNotSuppress() {
+  const testName = "render_report: config without --enable-suppressions flag does not suppress";
+  try {
+    const auditFile = path.join(tempDir, "audit.json");
+    const deepFile = path.join(tempDir, "deep.json");
+    const configFile = path.join(tempDir, "config.json");
+
+    const findings = [
+      {
+        severity: "critical",
+        checkId: "skills.code_safety",
+        skill: "clawsec-suite",
+        title: "dangerous-exec detected",
+      },
+    ];
+
+    const suppressions = [
+      {
+        checkId: "skills.code_safety",
+        skill: "clawsec-suite",
+        reason: "First-party security tooling",
+        suppressedAt: "2026-02-13",
+      },
+    ];
+
+    await fs.writeFile(auditFile, createAuditJson(findings));
+    await fs.writeFile(deepFile, createAuditJson([]));
+    await fs.writeFile(configFile, createConfigJson(suppressions));
+
+    // Pass --config but NOT --enable-suppressions
+    const result = await runRenderReport([
+      "--audit",
+      auditFile,
+      "--deep",
+      deepFile,
+      "--config",
+      configFile,
+    ]);
+
+    // Findings should NOT be suppressed without the explicit opt-in flag
+    if (
+      result.stdout.includes("Summary: 1 critical") &&
+      result.stdout.includes("Findings (critical/warn):") &&
+      !result.stdout.includes("INFO-SUPPRESSED:")
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, `Config alone should not suppress without --enable-suppressions: ${result.stdout}`);
     }
   } catch (error) {
     fail(testName, error);
@@ -686,6 +753,7 @@ async function runAllTests() {
     await testSkillNameExtractionFromPath();
     await testSkillNameExtractionFromTitle();
     await testEmptySuppressions();
+    await testConfigWithoutEnableFlagDoesNotSuppress();
   } finally {
     await cleanupTestDir();
   }

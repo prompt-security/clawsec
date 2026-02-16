@@ -257,6 +257,95 @@ If an advisory indicates a malicious or removal-recommended skill and that skill
 
 The suite hook and heartbeat guidance are intentionally non-destructive by default.
 
+## Advisory Suppression / Allowlist
+
+The advisory guardian pipeline supports opt-in suppression for advisories that have been reviewed and accepted by your security team. This is useful for first-party tooling or advisories that do not apply to your deployment.
+
+### Activation
+
+Advisory suppression requires a single gate: the configuration file must contain `"enabledFor"` with `"advisory"` in the array. No CLI flag is needed -- the sentinel in the config file IS the opt-in gate.
+
+If the `enabledFor` array is missing, empty, or does not include `"advisory"`, all advisories are reported normally.
+
+### Config File Resolution (4-tier)
+
+The advisory guardian resolves the suppression config using the same priority order as the audit pipeline:
+
+1. Explicit `--config <path>` argument
+2. `OPENCLAW_AUDIT_CONFIG` environment variable
+3. `~/.openclaw/security-audit.json`
+4. `.clawsec/allowlist.json`
+
+### Config Format
+
+```json
+{
+  "enabledFor": ["advisory"],
+  "suppressions": [
+    {
+      "checkId": "CVE-2026-25593",
+      "skill": "clawsec-suite",
+      "reason": "First-party security tooling — reviewed by security team",
+      "suppressedAt": "2026-02-15"
+    },
+    {
+      "checkId": "CLAW-2026-0001",
+      "skill": "example-skill",
+      "reason": "Advisory does not apply to our deployment configuration",
+      "suppressedAt": "2026-02-16"
+    }
+  ]
+}
+```
+
+### Sentinel Semantics
+
+- `"enabledFor": ["advisory"]` -- only advisory suppression active
+- `"enabledFor": ["audit"]` -- only audit suppression active (no effect on advisory pipeline)
+- `"enabledFor": ["audit", "advisory"]` -- both pipelines honor suppressions
+- Missing or empty `enabledFor` -- no suppression active (safe default)
+
+### Matching Rules
+
+- **checkId:** exact match against the advisory ID (e.g., `CVE-2026-25593` or `CLAW-2026-0001`)
+- **skill:** case-insensitive match against the affected skill name from the advisory
+- Both fields must match for an advisory to be suppressed
+
+### Required Fields per Suppression Entry
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `checkId` | Advisory ID to suppress | `CVE-2026-25593` |
+| `skill` | Affected skill name | `clawsec-suite` |
+| `reason` | Justification for audit trail (required) | `First-party tooling, reviewed by security team` |
+| `suppressedAt` | ISO 8601 date (YYYY-MM-DD) | `2026-02-15` |
+
+### Shared Config with Audit Pipeline
+
+The advisory and audit pipelines share the same config file. Use the `enabledFor` array to control which pipelines honor the suppression list:
+
+```json
+{
+  "enabledFor": ["audit", "advisory"],
+  "suppressions": [
+    {
+      "checkId": "skills.code_safety",
+      "skill": "clawsec-suite",
+      "reason": "First-party tooling — audit finding accepted",
+      "suppressedAt": "2026-02-15"
+    },
+    {
+      "checkId": "CVE-2026-25593",
+      "skill": "clawsec-suite",
+      "reason": "First-party tooling — advisory reviewed",
+      "suppressedAt": "2026-02-15"
+    }
+  ]
+}
+```
+
+Audit entries (with check identifiers like `skills.code_safety`) are only matched by the audit pipeline. Advisory entries (with advisory IDs like `CVE-2026-25593` or `CLAW-2026-0001`) are only matched by the advisory pipeline. Each pipeline filters for its own relevant entries.
+
 ## Optional Skill Installation
 
 Discover currently available installable skills dynamically, then install the ones you want:
