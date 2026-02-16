@@ -5,7 +5,27 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2]
+
+### Added
+
+- Advisory suppression module (`hooks/clawsec-advisory-guardian/lib/suppression.mjs`).
+- `loadAdvisorySuppression()` -- loads suppression config with `enabledFor: ["advisory"]` sentinel gate.
+- `isAdvisorySuppressed()` -- matches `advisory.id === rule.checkId` + case-insensitive skill name.
+- Advisory guardian handler integration: partitions matches into active/suppressed after `findMatches()`.
+- Suppressed matches tracked in state file (prevents re-evaluation) but not alerted.
+- Soft notification message for suppressed matches count.
+- Advisory suppression tests (13 tests in `advisory_suppression.test.mjs`).
+- Documentation in SKILL.md for advisory suppression/allowlist mechanism.
+
+### Changed
+
+- Advisory guardian handler (`handler.ts`) now loads suppression config and filters matches before alerting.
+
+### Security
+
+- Advisory suppression gated by config file sentinel (`enabledFor: ["advisory"]`) -- no CLI flag needed but config must explicitly opt in.
+- Suppressed matches are still tracked in state to maintain audit trail.
 
 ## [0.1.1] - 2026-02-16
 
