@@ -174,11 +174,18 @@ function mergeWithFallbackMetadata(remoteSkills, fallbackSkills) {
 }
 
 async function loadRemoteCatalog(indexUrl, timeoutMs) {
-  const controller = new AbortController();
+  if (typeof globalThis.fetch !== "function") {
+    throw new Error("fetch is unavailable in this runtime");
+  }
+  if (typeof globalThis.AbortController !== "function") {
+    throw new Error("AbortController is unavailable in this runtime");
+  }
+
+  const controller = new globalThis.AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(indexUrl, {
+    const response = await globalThis.fetch(indexUrl, {
       method: "GET",
       headers: { Accept: "application/json" },
       signal: controller.signal,
