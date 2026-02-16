@@ -5,6 +5,16 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Added `scripts/discover_skill_catalog.mjs` to dynamically discover installable skills from `https://clawsec.prompt.security/skills/index.json`.
+- Added `test/skill_catalog_discovery.test.mjs` to validate remote-catalog loading and fallback behavior.
+
+### Changed
+- Updated `SKILL.md` to use dynamic catalog discovery commands instead of hard-coded optional-skill names.
+- Documented explicit fallback behavior to suite-local `skill.json` catalog metadata when remote index fetch fails.
+
 ## [0.0.11] - 2026-02-15
 
 ### Added

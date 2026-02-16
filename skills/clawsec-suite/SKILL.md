@@ -27,12 +27,23 @@ This means `clawsec-suite` can:
 - OpenClaw advisory guardian hook package: `hooks/clawsec-advisory-guardian/`
 - Setup scripts for hook and optional cron scheduling: `scripts/`
 - Guarded installer: `scripts/guarded_skill_install.mjs`
+- Dynamic catalog discovery for installable skills: `scripts/discover_skill_catalog.mjs`
 - Integrated OpenClaw audit watchdog scripts: `scripts/audit-watchdog/`
 - Watchdog cron bootstrap with email discovery/prompt guard: `scripts/setup_audit_watchdog.mjs`
 
-### installed separately
-- `soul-guardian`
-- `clawtributor` (explicit opt-in)
+### Installed separately (dynamic catalog)
+`clawsec-suite` no longer hard-codes add-on skill names in this document.
+
+Discover the current catalog from the authoritative index (`https://clawsec.prompt.security/skills/index.json`) at runtime:
+
+```bash
+SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs"
+```
+
+Fallback behavior:
+- If the remote catalog index is reachable and valid, the suite uses it.
+- If the remote index is unavailable or malformed, the script falls back to suite-local catalog metadata in `skill.json`.
 
 ## Installation
 
@@ -53,16 +64,14 @@ DEST="$INSTALL_ROOT/clawsec-suite"
 BASE="https://github.com/prompt-security/clawsec/releases/download/clawsec-suite-v${VERSION}"
 
 TEMP_DIR="$(mktemp -d)"
-DOWNLOAD_DIR="$TEMP_DIR/downloads"
 trap 'rm -rf "$TEMP_DIR"' EXIT
-mkdir -p "$DOWNLOAD_DIR"
 
 # Pinned release-signing public key (verify fingerprint out-of-band on first use)
-# Fingerprint (SHA-256 of SPKI DER): 35866e1b1479a043ae816899562ac877e879320c3c5660be1e79f06241ca0854
-RELEASE_PUBKEY_SHA256="35866e1b1479a043ae816899562ac877e879320c3c5660be1e79f06241ca0854"
+# Fingerprint (SHA-256 of SPKI DER): 711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8
+RELEASE_PUBKEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"
 cat > "$TEMP_DIR/release-signing-public.pem" <<'PEM'
 -----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAtaRGONGp0Syl9EBS17hEYgGTwUtfZgigklS6vAe5MlQ=
+MCowBQYDK2VwAyEAS7nijfMcUoOBCj4yOXJX+GYGv2pFl2Yaha1P4v5Cm6A=
 -----END PUBLIC KEY-----
 PEM
 
@@ -72,70 +81,48 @@ if [ "$ACTUAL_KEY_SHA256" != "$RELEASE_PUBKEY_SHA256" ]; then
   exit 1
 fi
 
-# 1) Download checksums manifest + detached signature
-curl -fsSL "$BASE/checksums.json" -o "$TEMP_DIR/checksums.json"
-curl -fsSL "$BASE/checksums.json.sig" -o "$TEMP_DIR/checksums.json.sig"
+ZIP_NAME="clawsec-suite-v${VERSION}.zip"
 
-# 2) Verify checksums manifest signature before trusting any file URLs or hashes
-openssl base64 -d -A -in "$TEMP_DIR/checksums.json.sig" -out "$TEMP_DIR/checksums.json.sig.bin"
+# 1) Download release archive + signed checksums manifest + signing public key
+curl -fsSL "$BASE/$ZIP_NAME" -o "$TEMP_DIR/$ZIP_NAME"
+curl -fsSL "$BASE/checksums.json" -o "$TEMP_DIR/checksums.json"
+curl -fsSL "$BASE/checksums.sig" -o "$TEMP_DIR/checksums.sig"
+
+# 2) Verify checksums manifest signature before trusting any hashes
+openssl base64 -d -A -in "$TEMP_DIR/checksums.sig" -out "$TEMP_DIR/checksums.sig.bin"
 if ! openssl pkeyutl -verify \
   -pubin \
   -inkey "$TEMP_DIR/release-signing-public.pem" \
-  -sigfile "$TEMP_DIR/checksums.json.sig.bin" \
+  -sigfile "$TEMP_DIR/checksums.sig.bin" \
   -rawin \
   -in "$TEMP_DIR/checksums.json" >/dev/null 2>&1; then
   echo "ERROR: checksums.json signature verification failed" >&2
   exit 1
 fi
 
-if ! jq -e '.skill and .version and .files' "$TEMP_DIR/checksums.json" >/dev/null 2>&1; then
-  echo "ERROR: Invalid checksums.json format" >&2
+EXPECTED_ZIP_SHA="$(jq -r '.archive.sha256 // empty' "$TEMP_DIR/checksums.json")"
+if [ -z "$EXPECTED_ZIP_SHA" ]; then
+  echo "ERROR: checksums.json missing archive.sha256" >&2
   exit 1
 fi
 
-echo "Checksums manifest signature verified."
+if command -v shasum >/dev/null 2>&1; then
+  ACTUAL_ZIP_SHA="$(shasum -a 256 "$TEMP_DIR/$ZIP_NAME" | awk '{print $1}')"
+else
+  ACTUAL_ZIP_SHA="$(sha256sum "$TEMP_DIR/$ZIP_NAME" | awk '{print $1}')"
+fi
 
-# 3) Download every file listed in checksums and verify immediately
-DOWNLOAD_FAILED=0
-for file in $(jq -r '.files | keys[]' "$TEMP_DIR/checksums.json"); do
-  FILE_URL="$(jq -r --arg f "$file" '.files[$f].url' "$TEMP_DIR/checksums.json")"
-  EXPECTED="$(jq -r --arg f "$file" '.files[$f].sha256' "$TEMP_DIR/checksums.json")"
-
-  if ! curl -fsSL "$FILE_URL" -o "$DOWNLOAD_DIR/$file"; then
-    echo "ERROR: Download failed for $file" >&2
-    DOWNLOAD_FAILED=1
-    continue
-  fi
-
-  if command -v shasum >/dev/null 2>&1; then
-    ACTUAL="$(shasum -a 256 "$DOWNLOAD_DIR/$file" | awk '{print $1}')"
-  else
-    ACTUAL="$(sha256sum "$DOWNLOAD_DIR/$file" | awk '{print $1}')"
-  fi
-
-  if [ "$EXPECTED" != "$ACTUAL" ]; then
-    echo "ERROR: Checksum mismatch for $file" >&2
-    DOWNLOAD_FAILED=1
-  else
-    echo "Verified: $file"
-  fi
-done
-
-if [ "$DOWNLOAD_FAILED" -eq 1 ]; then
-  echo "ERROR: One or more files failed verification" >&2
+if [ "$EXPECTED_ZIP_SHA" != "$ACTUAL_ZIP_SHA" ]; then
+  echo "ERROR: Archive checksum mismatch for $ZIP_NAME" >&2
   exit 1
 fi
 
-# 4) Install files using paths from checksums.json
-while IFS= read -r file; do
-  [ -z "$file" ] && continue
-  REL_PATH="$(jq -r --arg f "$file" '.files[$f].path // $f' "$TEMP_DIR/checksums.json")"
-  SRC_PATH="$DOWNLOAD_DIR/$file"
-  DST_PATH="$DEST/$REL_PATH"
+echo "Checksums manifest signature and archive hash verified."
 
-  mkdir -p "$(dirname "$DST_PATH")"
-  cp "$SRC_PATH" "$DST_PATH"
-done < <(jq -r '.files | keys[]' "$TEMP_DIR/checksums.json")
+# 3) Install verified archive
+mkdir -p "$INSTALL_ROOT"
+rm -rf "$DEST"
+unzip -q "$TEMP_DIR/$ZIP_NAME" -d "$INSTALL_ROOT"
 
 chmod 600 "$DEST/skill.json"
 find "$DEST" -type f ! -name "skill.json" -exec chmod 644 {} \;
@@ -207,7 +194,7 @@ This enforces:
 
 The embedded feed logic uses these defaults:
 
-- Remote feed URL: `https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json`
+- Remote feed URL: `https://clawsec.prompt.security/advisories/feed.json`
 - Remote feed signature URL: `${CLAWSEC_FEED_URL}.sig` (override with `CLAWSEC_FEED_SIG_URL`)
 - Remote checksums manifest URL: sibling `checksums.json` (override with `CLAWSEC_FEED_CHECKSUMS_URL`)
 - Local seed fallback: `~/.openclaw/skills/clawsec-suite/advisories/feed.json`
@@ -222,7 +209,7 @@ The embedded feed logic uses these defaults:
 ### Quick feed check
 
 ```bash
-FEED_URL="${CLAWSEC_FEED_URL:-https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json}"
+FEED_URL="${CLAWSEC_FEED_URL:-https://clawsec.prompt.security/advisories/feed.json}"
 STATE_FILE="${CLAWSEC_SUITE_STATE_FILE:-$HOME/.openclaw/clawsec-suite-feed-state.json}"
 
 TMP="$(mktemp -d)"
@@ -286,13 +273,20 @@ The suite hook and heartbeat guidance are intentionally non-destructive by defau
 
 ## Optional Skill Installation
 
-Install additional protections as needed:
+Discover currently available installable skills dynamically, then install the ones you want:
 
 ```bash
-# audit watchdog is integrated in clawsec-suite
-npx clawhub@latest install soul-guardian
-# opt-in only:
-npx clawhub@latest install clawtributor
+SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs"
+
+# then install any discovered skill by name
+npx clawhub@latest install <skill-name>
+```
+
+Machine-readable output is also available for automation:
+
+```bash
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs" --json
 ```
 
 ## Security Notes

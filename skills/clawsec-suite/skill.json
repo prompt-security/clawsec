@@ -121,6 +121,11 @@
         "description": "Two-step confirmation installer with signature verification that blocks risky skill installs"
       },
       {
+        "path": "scripts/discover_skill_catalog.mjs",
+        "required": true,
+        "description": "Dynamic skill-catalog discovery with remote index fetch and suite-local fallback metadata"
+      },
+      {
         "path": "scripts/sign_detached_ed25519.mjs",
         "required": false,
         "description": "Utility script for generating Ed25519 detached signatures"
