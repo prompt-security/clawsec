@@ -7,13 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-02-16
+
 ### Added
 - Added `scripts/discover_skill_catalog.mjs` to dynamically discover installable skills from `https://clawsec.prompt.security/skills/index.json`.
 - Added `test/skill_catalog_discovery.test.mjs` to validate remote-catalog loading and fallback behavior.
+- Added CI signing-key drift guard script: `scripts/ci/verify_signing_key_consistency.sh`.
 
 ### Changed
 - Updated `SKILL.md` to use dynamic catalog discovery commands instead of hard-coded optional-skill names.
-- Documented explicit fallback behavior to suite-local `skill.json` catalog metadata when remote index fetch fails.
+- Updated advisory feed defaults to signed-host URL (`https://clawsec.prompt.security/advisories/feed.json`).
+- Improved checksum manifest key compatibility in feed verification logic (supports basename and `advisories/*` key formats).
+- Kept `openclaw-audit-watchdog` as a standalone skill (not embedded in `clawsec-suite`).
+
+### Security
+- Enforced signing key consistency checks in CI workflows:
+  - `.github/workflows/skill-release.yml`
+  - `.github/workflows/deploy-pages.yml`
+- Added workflow checks that fail when generated public key fingerprints diverge from canonical repo signing key material.
+
+### Fixed
+- Corrected release verification documentation mismatches (`checksums.sig` naming and pinned release key fingerprint).
 
 ## [0.0.10] - 2026-02-11
 
