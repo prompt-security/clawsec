@@ -87,4 +87,11 @@ else
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-node "$SCRIPT_DIR/render_report.mjs" --audit "$AUDIT_JSON" --deep "$DEEP_JSON" --label "$LABEL"
+
+# Build args for render_report
+RENDER_ARGS=(--audit "$AUDIT_JSON" --deep "$DEEP_JSON" --label "$LABEL")
+if [[ -n "$CONFIG" ]]; then
+  RENDER_ARGS+=(--config "$CONFIG")
+fi
+
+node "$SCRIPT_DIR/render_report.mjs" "${RENDER_ARGS[@]}"

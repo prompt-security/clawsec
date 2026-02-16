@@ -110,18 +110,21 @@ function filterFindings(findings, suppressions) {
 
 function lineForFinding(f) {
   const id = f?.checkId ?? "(no-checkId)";
+  const skillName = extractSkillName(f);
+  const skillLabel = skillName ? `[${skillName}] ` : "";
   const title = f?.title ?? "(no-title)";
   const fix = (f?.remediation ?? "").trim();
   const fixLine = fix ? `Fix: ${fix}` : "";
-  return `- ${id} ${title}${fixLine ? `\n  ${fixLine}` : ""}`;
+  return `- ${id} ${skillLabel}${title}${fixLine ? `\n  ${fixLine}` : ""}`;
 }
 
 function lineForSuppressedFinding(f) {
   const id = f?.checkId ?? "(no-checkId)";
+  const skillName = extractSkillName(f) ?? "(unknown-skill)";
   const title = f?.title ?? "(no-title)";
   const reason = f?.suppressionReason ?? "(no reason)";
   const date = f?.suppressedAt ?? "(no date)";
-  return `- ${id} ${title}\n  Suppressed: ${reason} (${date})`;
+  return `- ${id} [${skillName}] ${title}\n  Suppressed: ${reason} (${date})`;
 }
 
 function render({ audit, deep, label, suppressedFindings = [] }) {
