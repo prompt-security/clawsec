@@ -3,10 +3,11 @@
  * Render a human-readable security audit report from openclaw JSON.
  *
  * Usage:
- *   node render_report.mjs --audit audit.json --deep deep.json --label "host label"
+ *   node render_report.mjs --audit audit.json --deep deep.json --label "host label" [--enable-suppressions] [--config config.json]
  */
 
 import fs from "node:fs";
+import { loadSuppressionConfig } from "./load_suppression_config.mjs";
 
 function readJsonSafe(p, label) {
   if (!p) return { findings: [], summary: {}, error: `${label} missing` };
@@ -29,15 +30,104 @@ function pickFindings(report) {
   };
 }
 
+/**
+ * Extract skill name from a finding object.
+ * Tries multiple fields in priority order.
+ *
+ * @param {object} finding - The finding object
+ * @returns {string|null} - The skill name or null if not found
+ */
+function extractSkillName(finding) {
+  if (!finding) return null;
+
+  // Try common fields where skill name might be stored
+  if (finding.skill) return String(finding.skill).trim();
+  if (finding.skillName) return String(finding.skillName).trim();
+  if (finding.target) return String(finding.target).trim();
+
+  // Attempt to extract from path (e.g., "skills/my-skill/...")
+  if (finding.path && typeof finding.path === "string") {
+    const pathMatch = finding.path.match(/skills\/([^/]+)/);
+    if (pathMatch) return pathMatch[1];
+  }
+
+  // Attempt to extract from title (e.g., "[my-skill] some issue")
+  if (finding.title && typeof finding.title === "string") {
+    const titleMatch = finding.title.match(/^\[([^\]]+)\]/);
+    if (titleMatch) return titleMatch[1];
+  }
+
+  return null;
+}
+
+/**
+ * Filter findings into active and suppressed based on suppression config.
+ * Matches require BOTH checkId AND skill name to match (exact match).
+ *
+ * @param {Array} findings - Array of finding objects
+ * @param {Array} suppressions - Array of suppression rules
+ * @returns {{active: Array, suppressed: Array}}
+ */
+function filterFindings(findings, suppressions) {
+  if (!Array.isArray(findings)) {
+    return { active: [], suppressed: [] };
+  }
+
+  if (!Array.isArray(suppressions) || suppressions.length === 0) {
+    return { active: findings, suppressed: [] };
+  }
+
+  const active = [];
+  const suppressed = [];
+
+  for (const finding of findings) {
+    const checkId = finding?.checkId ?? "";
+    const skillName = extractSkillName(finding);
+
+    // Check if this finding matches any suppression rule
+    const isSuppressed = suppressions.some((rule) => {
+      // BOTH checkId AND skill must match (exact match, case-sensitive)
+      return rule.checkId === checkId && rule.skill === skillName;
+    });
+
+    if (isSuppressed) {
+      // Find the matching rule to attach suppression metadata
+      const matchingRule = suppressions.find(
+        (rule) => rule.checkId === checkId && rule.skill === skillName
+      );
+      suppressed.push({
+        ...finding,
+        suppressionReason: matchingRule?.reason,
+        suppressedAt: matchingRule?.suppressedAt,
+      });
+    } else {
+      active.push(finding);
+    }
+  }
+
+  return { active, suppressed };
+}
+
 function lineForFinding(f) {
   const id = f?.checkId ?? "(no-checkId)";
+  const skillName = extractSkillName(f);
+  const skillLabel = skillName ? `[${skillName}] ` : "";
   const title = f?.title ?? "(no-title)";
   const fix = (f?.remediation ?? "").trim();
   const fixLine = fix ? `Fix: ${fix}` : "";
-  return `- ${id} ${title}${fixLine ? `\n  ${fixLine}` : ""}`;
+  return `- ${id} ${skillLabel}${title}${fixLine ? `\n  ${fixLine}` : ""}`;
 }
 
-function render({ audit, deep, label }) {
+function lineForSuppressedFinding(f) {
+  const id = f?.checkId ?? "(no-checkId)";
+  const skillName = extractSkillName(f) ?? "(unknown-skill)";
+  const title = f?.title ?? "(no-title)";
+  const reason = f?.suppressionReason ?? "(no reason)";
+  const date = f?.suppressedAt ?? "(no date)";
+  return `- ${id} [${skillName}] ${title}\n  Suppressed: ${reason} (${date})`;
+}
+
+function render({ audit, deep, label, suppressedFindings = [] }) {
   const now = new Date().toISOString();
   const a = pickFindings(audit);
   const d = pickFindings(deep);
@@ -84,6 +174,15 @@ function render({ audit, deep, label }) {
     for (const e of errors) lines.push(`- ${e}`);
   }
 
+  // Show suppressed findings
+  if (suppressedFindings.length) {
+    lines.push("");
+    lines.push("INFO-SUPPRESSED:");
+    for (const f of suppressedFindings) {
+      lines.push(lineForSuppressedFinding(f));
+    }
+  }
+
   return lines.join("\n");
 }
 
@@ -94,12 +193,56 @@ function parseArgs(argv) {
     if (a === "--audit") out.audit = argv[++i];
     else if (a === "--deep") out.deep = argv[++i];
     else if (a === "--label") out.label = argv[++i];
+    else if (a === "--config") out.config = argv[++i];
+    else if (a === "--enable-suppressions") out.enableSuppressions = true;
   }
   return out;
 }
 
+// Main execution
 const args = parseArgs(process.argv.slice(2));
+
+// Load suppression config (requires explicit opt-in)
+const suppressionConfig = await loadSuppressionConfig(args.config || null, {
+  enabled: !!args.enableSuppressions,
+});
+const suppressions = suppressionConfig.suppressions || [];
+
+// Read audit results
 const audit = readJsonSafe(args.audit, "audit");
 const deep = readJsonSafe(args.deep, "deep");
-const report = render({ audit, deep, label: args.label });
+
+// Apply suppression filtering to findings
+const allFindings = [...(audit.findings || []), ...(deep.findings || [])];
+const { active: activeFindings, suppressed: suppressedFindings } = filterFindings(
+  allFindings,
+  suppressions
+);
+
+// Replace findings in audit/deep with filtered active findings
+if (audit.findings) {
+  audit.findings = activeFindings.filter((f) =>
+    (audit.findings || []).some((orig) => orig === f)
+  );
+  // Recalculate summary counts after filtering
+  audit.summary = {
+    critical: audit.findings.filter((f) => f?.severity === "critical").length,
+    warn: audit.findings.filter((f) => f?.severity === "warn").length,
+    info: audit.findings.filter((f) => f?.severity === "info").length,
+  };
+}
+if (deep.findings) {
+  deep.findings = activeFindings.filter((f) =>
+    (deep.findings || []).some((orig) => orig === f)
+  );
+  // Recalculate summary counts after filtering
+  deep.summary = {
+    critical: deep.findings.filter((f) => f?.severity === "critical").length,
+    warn: deep.findings.filter((f) => f?.severity === "warn").length,
+    info: deep.findings.filter((f) => f?.severity === "info").length,
+  };
+}
+
+// Render report with suppressed findings
+const report = render({ audit, deep, label: args.label, suppressedFindings });
 process.stdout.write(report + "\n");

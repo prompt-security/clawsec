@@ -52,6 +52,7 @@ function envOrEmpty(name) {
 function oneline(v) {
   return String(v ?? "")
     .replace(/[\r\n]+/g, " ")
+    .replace(/\\/g, "\\\\")
     .replace(/"/g, "\\\"")
     .trim();
 }
