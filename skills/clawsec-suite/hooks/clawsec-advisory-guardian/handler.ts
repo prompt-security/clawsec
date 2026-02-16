@@ -8,7 +8,7 @@ import { loadState, persistState } from "./lib/state.ts";
 import { discoverInstalledSkills, findMatches, matchKey, buildAlertMessage } from "./lib/matching.ts";
 
 const DEFAULT_FEED_URL =
-  "https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json";
+  "https://clawsec.prompt.security/advisories/feed.json";
 const DEFAULT_SCAN_INTERVAL_SECONDS = 300;
 let unsignedModeWarningShown = false;
 

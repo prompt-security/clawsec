@@ -204,7 +204,7 @@ The embedded feed logic uses these defaults:
 - State file: `~/.openclaw/clawsec-suite-feed-state.json`
 - Hook rate-limit env (OpenClaw hook): `CLAWSEC_HOOK_INTERVAL_SECONDS` (default `300`)
 
-**Fail-closed verification:** Both signature and checksum manifest verification are required by default. Set `CLAWSEC_ALLOW_UNSIGNED_FEED=1` only as a temporary migration bypass when adopting this version before signed feed artifacts are available upstream.
+**Fail-closed verification:** Feed signatures are required by default. Checksum manifests are verified when companion checksum artifacts are available. Set `CLAWSEC_ALLOW_UNSIGNED_FEED=1` only as a temporary migration bypass when adopting this version before signed feed artifacts are available upstream.
 
 ### Quick feed check
 

@@ -284,6 +284,57 @@ async function testLoadLocalFeed_ValidSignedFeed() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: loadLocalFeed - supports advisories/* checksum keys
+// -----------------------------------------------------------------------------
+async function testLoadLocalFeed_AdvisoriesPrefixedChecksumKeys() {
+  const testName = "loadLocalFeed: advisories/* checksum keys are accepted";
+  try {
+    const { publicKeyPem, privateKeyPem } = generateEd25519KeyPair();
+    const feedContent = createValidFeed();
+    const feedSignature = signPayload(feedContent, privateKeyPem);
+
+    const advisoriesDir = path.join(tempDir, "advisories");
+    await fs.mkdir(advisoriesDir, { recursive: true });
+
+    const checksumManifest = createChecksumManifest({
+      "advisories/feed.json": feedContent,
+      "advisories/feed.json.sig": feedSignature + "\n",
+      "advisories/feed-signing-public.pem": publicKeyPem,
+    });
+    const checksumSignature = signPayload(checksumManifest, privateKeyPem);
+
+    const feedPath = path.join(advisoriesDir, "feed.json");
+    const sigPath = path.join(advisoriesDir, "feed.json.sig");
+    const checksumPath = path.join(advisoriesDir, "checksums.json");
+    const checksumSigPath = path.join(advisoriesDir, "checksums.json.sig");
+    const keyPath = path.join(advisoriesDir, "feed-signing-public.pem");
+
+    await fs.writeFile(feedPath, feedContent);
+    await fs.writeFile(sigPath, feedSignature + "\n");
+    await fs.writeFile(checksumPath, checksumManifest);
+    await fs.writeFile(checksumSigPath, checksumSignature + "\n");
+    await fs.writeFile(keyPath, publicKeyPem);
+
+    const feed = await loadLocalFeed(feedPath, {
+      signaturePath: sigPath,
+      checksumsPath: checksumPath,
+      checksumsSignaturePath: checksumSigPath,
+      publicKeyPem,
+      verifyChecksumManifest: true,
+      checksumPublicKeyEntry: path.basename(keyPath),
+    });
+
+    if (feed && feed.version === "1.0.0" && feed.advisories.length === 1) {
+      pass(testName);
+    } else {
+      fail(testName, "Feed did not load with advisories/* checksum keys");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Test: loadLocalFeed - tampered feed fails (fail-closed)
 // -----------------------------------------------------------------------------
 async function testLoadLocalFeed_TamperedFeedFails() {
@@ -542,6 +593,7 @@ async function runTests() {
 
     // Local feed loading tests
     await testLoadLocalFeed_ValidSignedFeed();
+    await testLoadLocalFeed_AdvisoriesPrefixedChecksumKeys();
     await testLoadLocalFeed_TamperedFeedFails();
     await testLoadLocalFeed_MissingSignatureFails();
     await testLoadLocalFeed_AllowUnsignedBypasses();

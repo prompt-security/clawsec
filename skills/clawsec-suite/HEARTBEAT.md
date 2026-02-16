@@ -16,7 +16,7 @@ Run this periodically (cron/systemd/CI/agent scheduler). It assumes POSIX shell,
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.openclaw/skills}"
 SUITE_DIR="$INSTALL_ROOT/clawsec-suite"
 CHECKSUMS_URL="${CHECKSUMS_URL:-https://clawsec.prompt.security/releases/latest/download/checksums.json}"
-FEED_URL="${CLAWSEC_FEED_URL:-https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json}"
+FEED_URL="${CLAWSEC_FEED_URL:-https://clawsec.prompt.security/advisories/feed.json}"
 STATE_FILE="${CLAWSEC_SUITE_STATE_FILE:-$HOME/.openclaw/clawsec-suite-feed-state.json}"
 MIN_FEED_INTERVAL_SECONDS="${MIN_FEED_INTERVAL_SECONDS:-300}"
 ```
