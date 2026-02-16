@@ -47,7 +47,7 @@ function extractSkillName(finding) {
 
   // Attempt to extract from path (e.g., "skills/my-skill/...")
   if (finding.path && typeof finding.path === "string") {
-    const pathMatch = finding.path.match(/skills\/([^\/]+)/);
+    const pathMatch = finding.path.match(/skills\/([^/]+)/);
     if (pathMatch) return pathMatch[1];
   }
 

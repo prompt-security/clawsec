@@ -17,10 +17,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { fileURLToPath } from "node:url";
 import { loadSuppressionConfig } from "../scripts/load_suppression_config.mjs";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let passCount = 0;
 let failCount = 0;
@@ -46,7 +43,7 @@ async function withTempFile(content) {
     cleanup: async () => {
       try {
         await fs.rm(tmpDir, { recursive: true, force: true });
-      } catch (err) {
+      } catch {
         // Ignore cleanup errors
       }
     },
@@ -256,14 +253,13 @@ async function testFileNotFoundGracefulFallback() {
   try {
     await withEnv("OPENCLAW_AUDIT_CONFIG", undefined, async () => {
       const nonExistentPath1 = path.join(os.homedir(), ".openclaw", "non-existent-12345.json");
-      const nonExistentPath2 = ".clawsec/non-existent-12345.json";
 
-      // Ensure neither path exists
+      // Ensure path does not exist
       try {
         await fs.access(nonExistentPath1);
         fail(testName, "Test precondition failed: primary path should not exist");
         return;
-      } catch (err) {
+      } catch {
         // Expected - file should not exist
       }
 
