@@ -206,6 +206,17 @@
           "clawdbot",
           "other"
         ]
+      },
+      "clawsec-clawhub-checker": {
+        "description": "ClawHub reputation checker - enhances guarded installer with VirusTotal scores",
+        "default_install": false,
+        "compatible": [
+          "openclaw",
+          "moltbot",
+          "clawdbot",
+          "other"
+        ],
+        "note": "Requires clawsec-suite as base"
       }
     }
   },

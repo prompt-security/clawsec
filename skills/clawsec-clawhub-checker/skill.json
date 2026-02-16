@@ -1,0 +1,81 @@
+{
+  "name": "clawsec-clawhub-checker",
+  "version": "0.0.1",
+  "description": "ClawHub reputation checker for ClawSec suite. Enhances guarded skill installer with VirusTotal Code Insight reputation scores and additional safety checks.",
+  "author": "david",
+  "license": "MIT",
+  "homepage": "https://clawsec.prompt.security/",
+  "keywords": [
+    "security",
+    "reputation",
+    "clawhub",
+    "virustotal",
+    "skills",
+    "installer",
+    "verification",
+    "defense-in-depth",
+    "openclaw"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Skill documentation and usage guide"
+      },
+      {
+        "path": "scripts/enhanced_guarded_install.mjs",
+        "required": true,
+        "description": "Enhanced guarded installer with reputation checks"
+      },
+      {
+        "path": "scripts/check_clawhub_reputation.mjs",
+        "required": true,
+        "description": "ClawHub reputation checking logic"
+      },
+      {
+        "path": "scripts/setup_reputation_hook.mjs",
+        "required": true,
+        "description": "Setup script to enhance existing advisory guardian hook"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/reputation.mjs",
+        "required": true,
+        "description": "Reputation checking module for advisory guardian hook"
+      }
+    ]
+  },
+  "dependencies": {
+    "clawsec-suite": ">=0.0.10"
+  },
+  "integration": {
+    "clawsec-suite": {
+      "enhances": [
+        "guarded_skill_install.mjs",
+        "clawsec-advisory-guardian hook"
+      ],
+      "adds_exit_codes": {
+        "43": "Reputation warning - requires --confirm-reputation"
+      },
+      "adds_arguments": [
+        "--confirm-reputation",
+        "--reputation-threshold"
+      ]
+    }
+  },
+  "openclaw": {
+    "emoji": "🛡️",
+    "category": "security",
+    "requires": {
+      "bins": ["clawhub", "curl", "jq"]
+    },
+    "triggers": [
+      "clawhub reputation",
+      "skill reputation check",
+      "virustotal skill check",
+      "safe skill install",
+      "check skill safety",
+      "skill security score"
+    ]
+  }
+}
