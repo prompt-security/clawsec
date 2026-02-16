@@ -116,6 +116,14 @@ function lineForFinding(f) {
   return `- ${id} ${title}${fixLine ? `\n  ${fixLine}` : ""}`;
 }
 
+function lineForSuppressedFinding(f) {
+  const id = f?.checkId ?? "(no-checkId)";
+  const title = f?.title ?? "(no-title)";
+  const reason = f?.suppressionReason ?? "(no reason)";
+  const date = f?.suppressedAt ?? "(no date)";
+  return `- ${id} ${title}\n  Suppressed: ${reason} (${date})`;
+}
+
 function render({ audit, deep, label, suppressedFindings = [] }) {
   const now = new Date().toISOString();
   const a = pickFindings(audit);
@@ -161,6 +169,15 @@ function render({ audit, deep, label, suppressedFindings = [] }) {
     lines.push("");
     lines.push("Errors:");
     for (const e of errors) lines.push(`- ${e}`);
+  }
+
+  // Show suppressed findings
+  if (suppressedFindings.length) {
+    lines.push("");
+    lines.push("INFO-SUPPRESSED:");
+    for (const f of suppressedFindings) {
+      lines.push(lineForSuppressedFinding(f));
+    }
   }
 
   return lines.join("\n");
