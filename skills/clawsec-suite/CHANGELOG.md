@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-02-16
+## [0.1.1] - 2026-02-16
 
 ### Added
 - Added `scripts/discover_skill_catalog.mjs` to dynamically discover installable skills from `https://clawsec.prompt.security/skills/index.json`.
@@ -21,13 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kept `openclaw-audit-watchdog` as a standalone skill (not embedded in `clawsec-suite`).
 
 ### Security
-- Enforced signing key consistency checks in CI workflows:
-  - `.github/workflows/skill-release.yml`
-  - `.github/workflows/deploy-pages.yml`
-- Added workflow checks that fail when generated public key fingerprints diverge from canonical repo signing key material.
+- **Signing key drift control**: CI now enforces that all public key references (inline SKILL.md PEM, canonical `.pem` files, workflow-generated keys) resolve to the same fingerprint. Prevents stale, fabricated, or rotated-but-not-propagated key material from reaching releases.
+  - Enforced in: `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml`
+  - Guard script: `scripts/ci/verify_signing_key_consistency.sh`
 
 ### Fixed
-- Corrected release verification documentation mismatches (`checksums.sig` naming and pinned release key fingerprint).
+- **Fixed fabricated signing key in SKILL.md**: The manual installation script contained a hallucinated Ed25519 public key and fingerprint (`35866e1b...`) that never corresponded to the actual release signing key. Replaced with the real public key derived from the GitHub-secret-held private key. The bogus key was introduced in v0.0.10 (`Integration/signing work #20`) and went undetected because no consistency check existed at the time.
+- Corrected `checksums.sig` naming in release verification documentation.
 
 ## [0.0.10] - 2026-02-11
 
