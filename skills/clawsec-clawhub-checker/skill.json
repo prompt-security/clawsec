@@ -77,7 +77,11 @@
     "emoji": "🛡️",
     "category": "security",
     "requires": {
-      "bins": ["clawhub", "curl", "jq"]
+      "bins": [
+        "clawhub",
+        "curl",
+        "jq"
+      ]
     },
     "triggers": [
       "clawhub reputation",
