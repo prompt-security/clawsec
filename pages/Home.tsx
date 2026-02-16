@@ -220,24 +220,6 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      <section className="text-center mb-12">
-        <p className="text-sm text-gray-400 mb-3">
-          We are featured on Product Hunt - upvote us and help us spread the word.
-        </p>
-        <a
-          href="https://www.producthunt.com/products/clawsec-by-prompt-security?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-clawsec-by-prompt-security-2"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block"
-        >
-          <img
-            alt="ClawSec by Prompt Security - A Security Skill Suite for OpenClaw Agents | Product Hunt"
-            width="250"
-            height="54"
-            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1076044&theme=light&t=1770632815547"
-          />
-        </a>
-      </section>
 
       <Footer />
     </div>

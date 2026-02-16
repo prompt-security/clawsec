@@ -22,7 +22,9 @@ concurrency:
 
 env:
   FEED_PATH: advisories/feed.json
+  FEED_SIG_PATH: advisories/feed.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
+  SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
   KEYWORDS: "OpenClaw clawdbot Moltbot"
   GITHUB_REF_PATTERN: "github.com/openclaw/openclaw"
 
@@ -31,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 1
 
@@ -80,6 +82,7 @@ jobs:
       - name: Fetch CVEs from NVD
         id: fetch
         run: |
+          set -euo pipefail
           mkdir -p tmp
           
           START_DATE="${{ steps.dates.outputs.start_date }}"
@@ -90,6 +93,8 @@ jobs:
           END_ENC=$(echo "$END_DATE" | sed 's/:/%3A/g')
           
           echo "=== Fetching CVEs from NVD ==="
+
+          FAILED_KEYWORDS=()
           
           # Fetch for each keyword
           for KEYWORD in $KEYWORDS; do
@@ -99,11 +104,22 @@ jobs:
             echo "URL: $URL"
             
             # Fetch with retry logic
+            keyword_ok=false
+            last_http_code=""
             for i in 1 2 3; do
-              HTTP_CODE=$(curl -s -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL")
+              HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL" || true)
+              if [ -z "$HTTP_CODE" ]; then
+                HTTP_CODE="000"
+              fi
+              last_http_code="$HTTP_CODE"
               if [ "$HTTP_CODE" = "200" ]; then
-                echo "Success for $KEYWORD"
-                break
+                if jq -e . "tmp/nvd_${KEYWORD}.json" >/dev/null 2>&1; then
+                  echo "Success for $KEYWORD"
+                  keyword_ok=true
+                  break
+                fi
+                echo "Invalid JSON for $KEYWORD, retry $i..."
+                sleep 5
               elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
                 echo "Rate limited, waiting 30s before retry $i..."
                 sleep 30
@@ -112,11 +128,21 @@ jobs:
                 sleep 5
               fi
             done
+
+            if [ "$keyword_ok" != "true" ]; then
+              echo "::error::Failed to fetch valid NVD response for keyword '$KEYWORD' (last HTTP code: ${last_http_code:-unknown})."
+              FAILED_KEYWORDS+=("$KEYWORD")
+            fi
             
             # NVD recommends 6 second delay between requests
             sleep 6
           done
           
+          if [ "${#FAILED_KEYWORDS[@]}" -gt 0 ]; then
+            echo "::error::NVD fetch failed for keyword(s): ${FAILED_KEYWORDS[*]}"
+            exit 1
+          fi
+
           echo "=== Fetch complete ==="
           ls -la tmp/
 
@@ -508,6 +534,22 @@ jobs:
             exit 1
           fi
 
+      - name: Sign advisory feed and verify
+        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: ${{ env.FEED_PATH }}
+          signature_file: ${{ env.FEED_SIG_PATH }}
+          verify_files: |
+            ${{ env.FEED_PATH }}
+            ${{ env.SKILL_FEED_PATH }}
+
+      - name: Sync advisory signature to skill feed
+        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        run: cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
+
       - name: Clean workspace for PR
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
         run: |
@@ -518,7 +560,7 @@ jobs:
       - name: Create Pull Request
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
         id: create-pr
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: automated/nvd-cve-update-${{ github.run_id }}
@@ -543,7 +585,9 @@ jobs:
             Poll window: ${{ steps.dates.outputs.start_date }} to ${{ steps.dates.outputs.end_date }}
           add-paths: |
             ${{ env.FEED_PATH }}
+            ${{ env.FEED_SIG_PATH }}
             ${{ env.SKILL_FEED_PATH }}
+            ${{ env.SKILL_FEED_SIG_PATH }}
 
       - name: Summary
         run: |

@@ -3,8 +3,8 @@ name: Deploy to GitHub Pages
 on:
   workflow_run:
     workflows: ["CI", "Skill Release"]
-    branches: [main]
     types: [completed]
+    # Note: No branch restriction - must trigger on both main branch CI runs AND tag-based Skill Releases
   workflow_dispatch:
 
 permissions:
@@ -23,10 +23,14 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
 
       - name: Auto-discover skills from releases
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
@@ -48,17 +52,17 @@ jobs:
           }
           export -f download_asset  # Export for use in subshells (while loop)
 
-          # Fetch all releases
-          RELEASES=$(curl -sSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          # Fetch all releases (paginated)
+          RELEASES=$(gh api --paginate \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/releases?per_page=100")
+            "/repos/${REPO}/releases?per_page=100" \
+            | jq -s 'add // []')
 
           # Start building skills index
           echo '{"version":"1.0.0","updated":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","skills":[' > public/skills/index.json
 
           FIRST_SKILL=true
-          PROCESSED_SKILLS=""
+          declare -A PROCESSED_SKILLS=()
 
           # Process each release (using process substitution to avoid subshell)
           while read -r release; do
@@ -70,7 +74,7 @@ jobs:
               VERSION="${BASH_REMATCH[2]}"
 
               # Skip if we already processed a newer version of this skill
-              if echo "$PROCESSED_SKILLS" | grep -q "^${SKILL_NAME}$"; then
+              if [[ -n "${PROCESSED_SKILLS[$SKILL_NAME]+x}" ]]; then
                 echo "Skipping older version: $TAG (already have newer)"
                 continue
               fi
@@ -99,13 +103,16 @@ jobs:
                   continue
                 fi
 
-                # Mirror all release assets under a GitHub-compatible path so users can
-                # swap the host (github.com → clawsec.prompt.security) if GitHub is blocked.
-                MIRROR_DIR="public/releases/download/${TAG}"
-                mkdir -p "$MIRROR_DIR"
-                mv "$SKILL_JSON_TMP" "$MIRROR_DIR/skill.json"
+                # Security: Download to temp directory first, verify signatures, then mirror to final location.
+                # This ensures unverified releases never appear in public/releases or the skills catalog.
 
-                # Download all remaining assets for this release (retain asset names)
+                # Use temp directory for downloads before verification
+                TEMP_DOWNLOAD_DIR=$(mktemp -d)
+
+                # Move skill.json to temp dir first
+                mv "$SKILL_JSON_TMP" "$TEMP_DOWNLOAD_DIR/skill.json"
+
+                # Download all remaining assets to temp dir
                 while read -r asset; do
                   ASSET_ID=$(echo "$asset" | jq -r '.id')
                   ASSET_NAME=$(echo "$asset" | jq -r '.name')
@@ -121,16 +128,41 @@ jobs:
                     continue
                   fi
 
-                  download_asset "$ASSET_ID" "$MIRROR_DIR/$ASSET_NAME"
-                  echo "  Mirrored: $ASSET_NAME"
+                  download_asset "$ASSET_ID" "$TEMP_DOWNLOAD_DIR/$ASSET_NAME"
+                  echo "  Downloaded to temp: $ASSET_NAME"
                 done < <(echo "$release" | jq -c '.assets[]')
+
+                # Verify signed checksums when signature artifacts are present.
+                # Legacy releases without signatures are still mirrored for backward compatibility.
+                if [ -f "$TEMP_DOWNLOAD_DIR/checksums.sig" ] && [ -f "$TEMP_DOWNLOAD_DIR/signing-public.pem" ] && [ -f "$TEMP_DOWNLOAD_DIR/checksums.json" ]; then
+                  openssl base64 -d -A -in "$TEMP_DOWNLOAD_DIR/checksums.sig" -out "$TEMP_DOWNLOAD_DIR/checksums.sig.bin"
+                  # Verify Ed25519 signature (requires -rawin)
+                  if ! openssl pkeyutl -verify -rawin -pubin -inkey "$TEMP_DOWNLOAD_DIR/signing-public.pem" -sigfile "$TEMP_DOWNLOAD_DIR/checksums.sig.bin" -in "$TEMP_DOWNLOAD_DIR/checksums.json"; then
+                    echo "  Warning: Invalid checksums signature for $TAG; skipping skill"
+                    rm -rf "$TEMP_DOWNLOAD_DIR"
+                    continue
+                  fi
+                  rm -f "$TEMP_DOWNLOAD_DIR/checksums.sig.bin"
+                  echo "  Verified checksums signature"
+                elif [ -f "$TEMP_DOWNLOAD_DIR/checksums.json" ]; then
+                  echo "  Warning: Unsigned legacy checksums for $TAG (missing checksums.sig/signing-public.pem)"
+                fi
+
+                # Verification passed or skipped (legacy) - mirror to final location
+                MIRROR_DIR="public/releases/download/${TAG}"
+                mkdir -p "$MIRROR_DIR"
+                cp -r "$TEMP_DOWNLOAD_DIR"/* "$MIRROR_DIR"/
+                echo "  Mirrored to: $MIRROR_DIR"
+
+                # Clean up temp directory
+                rm -rf "$TEMP_DOWNLOAD_DIR"
 
                 # Copy the subset needed for the site catalog (skill pages)
                 mkdir -p "public/skills/${SKILL_NAME}"
                 cp "$MIRROR_DIR/skill.json" "public/skills/${SKILL_NAME}/skill.json"
                 echo "  Added to catalog: skill.json"
 
-                for file in checksums.json README.md SKILL.md; do
+                for file in checksums.json checksums.sig signing-public.pem README.md SKILL.md; do
                   if [ -f "$MIRROR_DIR/$file" ]; then
                     cp "$MIRROR_DIR/$file" "public/skills/${SKILL_NAME}/$file"
                     echo "  Added to catalog: $file"
@@ -158,7 +190,7 @@ jobs:
                 echo "$SKILL_DATA" >> public/skills/index.json
 
                 # Mark this skill as processed (track newest only)
-                PROCESSED_SKILLS="${PROCESSED_SKILLS}${SKILL_NAME}\n"
+                PROCESSED_SKILLS["$SKILL_NAME"]=1
               else
                 echo "  Warning: skill.json not found in release assets"
               fi
@@ -179,35 +211,117 @@ jobs:
           echo "=== Skills Directory ==="
           ls -la public/skills/
 
-      - name: Create root checksums placeholder
-        run: |
-          # Create empty checksums.json placeholder for root level
-          echo '{"version":"1.0.0","files":{}}' > public/checksums.json
-          echo "Created checksums.json placeholder"
-
       - name: Copy advisory feed to public
         run: |
+          set -euo pipefail
           mkdir -p public/advisories
           cp advisories/feed.json public/advisories/feed.json
           echo "Copied advisory feed to public/advisories/"
           cat public/advisories/feed.json | jq '.advisories | length' | xargs -I {} echo "Feed contains {} advisories"
 
+      - name: Generate advisory checksums manifest
+        run: |
+          set -euo pipefail
+
+          FEED_FILE="public/advisories/feed.json"
+          FEED_SHA=$(sha256sum "$FEED_FILE" | awk '{print $1}')
+          FEED_SIZE=$(stat -c%s "$FEED_FILE" 2>/dev/null || stat -f%z "$FEED_FILE")
+
+          # Generate checksums manifest conforming to parseChecksumsManifest expectations:
+          # - schema_version: "1" (manifest format version)
+          # - algorithm: "sha256" (hash algorithm)
+          # - version: "1.1.0" (feed content version, for informational purposes)
+          # - generated_at, repository: metadata
+          # - files: map of path -> {sha256, size, path, url}
+          jq -n \
+            --arg schema_version "1" \
+            --arg algorithm "sha256" \
+            --arg version "1.1.0" \
+            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repo "${{ github.repository }}" \
+            --arg sha "$FEED_SHA" \
+            --argjson size "$FEED_SIZE" \
+            '{
+              schema_version: $schema_version,
+              algorithm: $algorithm,
+              version: $version,
+              generated_at: $generated,
+              repository: $repo,
+              files: {
+                "advisories/feed.json": {
+                  sha256: $sha,
+                  size: $size,
+                  path: "advisories/feed.json",
+                  url: "https://clawsec.prompt.security/advisories/feed.json"
+                }
+              }
+            }' > public/checksums.json
+
+          echo "Generated public/checksums.json"
+          jq . public/checksums.json
+
+      - name: Sign advisory feed and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: public/advisories/feed.json
+          signature_file: public/advisories/feed.json.sig
+          public_key_output: public/signing-public.pem
+
+      - name: Sign checksums and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: public/checksums.json
+          signature_file: public/checksums.sig
+
+      - name: Verify generated public signing key matches canonical key
+        run: |
+          set -euo pipefail
+          CANONICAL_FPR=$(openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          GENERATED_FPR=$(openssl pkey -pubin -in public/signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          echo "Canonical key fingerprint: $CANONICAL_FPR"
+          echo "Generated key fingerprint: $GENERATED_FPR"
+          if [ "$CANONICAL_FPR" != "$GENERATED_FPR" ]; then
+            echo "::error::public/signing-public.pem fingerprint mismatch vs clawsec-signing-public.pem"
+            exit 1
+          fi
+
+      - name: Copy public key to advisory directory
+        run: |
+          # Clients expect the public key at advisories/feed-signing-public.pem
+          mkdir -p public/advisories
+          cp public/signing-public.pem public/advisories/feed-signing-public.pem
+          echo "Public key available at:"
+          echo "  - public/signing-public.pem (root)"
+          echo "  - public/advisories/feed-signing-public.pem (advisory-specific)"
+
+      - name: Show signed advisory artifacts
+        run: |
+          echo "Signed advisory artifacts:"
+          ls -la public/advisories/feed.json*
+          ls -la public/checksums.json public/checksums.sig public/signing-public.pem
+
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Get latest clawsec-suite release URL
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          LATEST_TAG=$(curl -sSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${REPO}/releases?per_page=100" | \
-            jq -r '[.[] | select(.tag_name | startswith("clawsec-suite-v"))] | first | .tag_name // empty')
+          LATEST_TAG=$(
+            gh api --paginate \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${REPO}/releases?per_page=100" \
+              | jq -r -s 'add // [] | [.[] | select(.tag_name | startswith("clawsec-suite-v"))] | first | .tag_name // empty'
+          )
           
           if [ -n "$LATEST_TAG" ]; then
             echo "Found latest clawsec-suite tag: $LATEST_TAG"
@@ -229,11 +343,25 @@ jobs:
               echo "Warning: Suite release assets not mirrored (missing: $MIRROR_TAG_DIR)"
             fi
 
-            # Mirror advisories feed at the path referenced by suite docs/heartbeat
+            # Mirror advisories feed + signatures at the path referenced by suite docs/heartbeat
             if [ -f "public/advisories/feed.json" ]; then
               mkdir -p "$MIRROR_LATEST_DIR/advisories"
               cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/advisories/feed.json"
               cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/feed.json"
+            fi
+            if [ -f "public/advisories/feed.json.sig" ]; then
+              mkdir -p "$MIRROR_LATEST_DIR/advisories"
+              cp "public/advisories/feed.json.sig" "$MIRROR_LATEST_DIR/advisories/feed.json.sig"
+              cp "public/advisories/feed.json.sig" "$MIRROR_LATEST_DIR/feed.json.sig"
+            fi
+            if [ -f "public/checksums.json" ]; then
+              cp "public/checksums.json" "$MIRROR_LATEST_DIR/checksums.json"
+            fi
+            if [ -f "public/checksums.sig" ]; then
+              cp "public/checksums.sig" "$MIRROR_LATEST_DIR/checksums.sig"
+            fi
+            if [ -f "public/signing-public.pem" ]; then
+              cp "public/signing-public.pem" "$MIRROR_LATEST_DIR/signing-public.pem"
             fi
           else
             echo "No clawsec-suite release found, using fallback"
@@ -251,7 +379,9 @@ jobs:
       - name: Copy skills data to dist
         run: |
           cp -r public/skills dist/skills 2>/dev/null || echo "No skills directory"
-          cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No legacy checksums"
+          cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No checksums manifest"
+          cp public/checksums.sig dist/checksums.sig 2>/dev/null || echo "No checksums signature"
+          cp public/signing-public.pem dist/signing-public.pem 2>/dev/null || echo "No signing public key"
           cp -r public/advisories dist/advisories 2>/dev/null || echo "No advisories directory"
 
           echo "=== Dist contents ==="
@@ -263,10 +393,10 @@ jobs:
         run: touch dist/.nojekyll
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
           path: ./dist
 
@@ -280,4 +410,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

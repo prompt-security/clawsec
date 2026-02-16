@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X, Terminal, Layers, Rss, Home } from 'lucide-react';
+import { Menu, X, Terminal, Layers, Rss, Home, Github } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,13 +58,24 @@ export const Header: React.FC = () => {
             <img src="/img/favicon.ico" alt="" className="w-5 h-5 rounded-sm" />
             ClawSec
           </NavLink>
-          <button
-            className="text-gray-300 hover:text-white"
-            onClick={() => setIsOpen(!isOpen)}
-            aria-label="Toggle navigation"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://github.com/prompt-security/clawsec"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-clawd-accent hover:text-clawd-accentHover transition-colors"
+              aria-label="Open GitHub repository"
+            >
+              <Github size={21} />
+            </a>
+            <button
+              className="text-gray-300 hover:text-white"
+              onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle navigation"
+            >
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
         {isOpen && (
           <div className="bg-[#26115d]/95 border-t border-[#3a1f7a] shadow-lg">

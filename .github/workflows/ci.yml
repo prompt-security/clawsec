@@ -11,8 +11,8 @@ jobs:
     name: Lint TypeScript/React
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -28,12 +28,14 @@ jobs:
     name: Lint Python
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: '.github/requirements-lint-python.txt'
       - name: Install linters
-        run: pip install ruff bandit
+        run: python -m pip install -r .github/requirements-lint-python.txt
       - name: Ruff (lint + format check)
         run: ruff check utils/ --output-format=github
       - name: Bandit (security)
@@ -43,9 +45,9 @@ jobs:
     name: Lint Shell Scripts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
         with:
           scandir: './scripts'
           severity: warning
@@ -54,9 +56,9 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Trivy FS Scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -64,7 +66,7 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
       - name: Trivy Config Scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           scan-type: 'config'
           scan-ref: '.'
@@ -75,8 +77,8 @@ jobs:
     name: Dependency Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -85,3 +87,16 @@ jobs:
         run: npm audit --audit-level=high --registry=https://registry.npmjs.org
       - name: Check for outdated deps
         run: npm outdated || true
+
+  clawsec-suite-tests:
+    name: ClawSec Suite Verification Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+      - name: Feed Verification Tests
+        run: node skills/clawsec-suite/test/feed_verification.test.mjs
+      - name: Guarded Install Tests
+        run: node skills/clawsec-suite/test/guarded_install.test.mjs

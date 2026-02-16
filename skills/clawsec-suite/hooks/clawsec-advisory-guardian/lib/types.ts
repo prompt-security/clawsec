@@ -17,6 +17,7 @@ export type Advisory = {
 };
 
 export type FeedPayload = {
+  version: string;
   updated?: string;
   advisories: Advisory[];
 };

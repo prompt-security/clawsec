@@ -6,10 +6,6 @@
 
 <div align="center">
 
-<p><strong>We are featured on Product Hunt - upvote us and help us spread the word.</strong></p>
-
-<a href="https://www.producthunt.com/products/clawsec-by-prompt-security?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-clawsec-by-prompt-security-2" target="_blank" rel="noopener noreferrer"><img alt="ClawSec by Prompt Security - A Security Skill Suite for OpenClaw Agents | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1076044&amp;theme=light&amp;t=1770632815547"></a>
-
 ## Secure Your OpenClaw Bots with a Complete Security Skill Suite
 
 <h4>Brought to you by <a href="https://prompt.security">Prompt Security</a>, the Platform for AI Security</h4>
@@ -29,7 +25,7 @@
 [![CI](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
 [![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml)
-[![Skill Release](https://github.com/prompt-security/clawsec/actions/workflows/skill-release.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/skill-release.yml)
+
 
 </div>
 
@@ -82,7 +78,7 @@ The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and 
 | Skill | Description | Installation | Compatibility |
 |-------|-------------|--------------|---------------|
 | 📡 **clawsec-feed** | Security advisory feed monitoring with live CVE updates | ✅ Included by default | All agents |
-| 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ✅ Included by default | OpenClaw/MoltBot/ClawdBot |
+| 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ⚙️ Optional (install separately) | OpenClaw/MoltBot/ClawdBot |
 | 👻 **soul-guardian** | Drift detection and file integrity guard with auto-restore | ⚙️ Optional | All agents |
 | 🤝 **clawtributor** | Community incident reporting | ❌ Optional (Explicit request) | All agents |
 
@@ -173,10 +169,33 @@ ClawSec uses automated pipelines for continuous security updates and skill distr
 When a skill is tagged (e.g., `soul-guardian-v1.0.0`), the pipeline:
 
 1. **Validates** - Checks `skill.json` version matches tag
-2. **Generates Checksums** - Creates `checksums.json` with SHA256 hashes for all SBOM files
-3. **Releases** - Publishes to GitHub Releases with all artifacts
-4. **Supersedes Old Releases** - Marks older versions (same major) as pre-releases
-5. **Triggers Pages Update** - Refreshes the skills catalog on the website
+2. **Enforces key consistency** - Verifies pinned release key references are consistent across repo PEMs and `skills/clawsec-suite/SKILL.md`
+3. **Generates Checksums** - Creates `checksums.json` with SHA256 hashes for all SBOM files
+4. **Signs + verifies** - Signs `checksums.json` and validates the generated `signing-public.pem` fingerprint against canonical repo key material
+5. **Releases** - Publishes to GitHub Releases with all artifacts
+6. **Supersedes Old Releases** - Marks older versions (same major) as pre-releases
+7. **Triggers Pages Update** - Refreshes the skills catalog on the website
+
+### Signing Key Consistency Guardrails
+
+To prevent supply-chain drift, CI now fails fast when signing key references diverge.
+
+Guardrail script:
+- `scripts/ci/verify_signing_key_consistency.sh`
+
+What it checks:
+- `skills/clawsec-suite/SKILL.md` inline public key fingerprint matches `RELEASE_PUBKEY_SHA256`
+- Canonical PEM files all match the same fingerprint:
+  - `clawsec-signing-public.pem`
+  - `advisories/feed-signing-public.pem`
+  - `skills/clawsec-suite/advisories/feed-signing-public.pem`
+- Generated public key in workflows matches canonical key:
+  - `release-assets/signing-public.pem` (release workflow)
+  - `public/signing-public.pem` (pages workflow)
+
+Where enforced:
+- `.github/workflows/skill-release.yml`
+- `.github/workflows/deploy-pages.yml`
 
 ### Release Versioning & Superseding
 
@@ -201,6 +220,12 @@ Each skill release includes:
 - `skill.json` - Skill metadata
 - `SKILL.md` - Main skill documentation
 - Additional files from SBOM (scripts, configs, etc.)
+
+### Signing Operations Documentation
+
+For feed/release signing rollout and operations guidance:
+- [`SECURITY-SIGNING.md`](SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
+- [`MIGRATION-SIGNED-FEED.md`](MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
 
 ---
 

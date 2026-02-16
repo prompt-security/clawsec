@@ -1,0 +1,110 @@
+name: Sign and Verify File
+description: Sign a file with the CI private key and verify the signature against one or more files.
+
+inputs:
+  private_key:
+    description: PEM-encoded private key contents.
+    required: true
+  private_key_passphrase:
+    description: Optional passphrase for encrypted private keys.
+    required: false
+    default: ""
+  input_file:
+    description: File to sign.
+    required: true
+  signature_file:
+    description: Output path for base64 signature.
+    required: true
+  verify_files:
+    description: Newline-separated list of files to verify with the generated signature. Defaults to input_file.
+    required: false
+    default: ""
+  public_key_output:
+    description: Optional output path for the derived public key.
+    required: false
+    default: ""
+
+outputs:
+  signature_file:
+    description: Signature file path.
+    value: ${{ steps.sign.outputs.signature_file }}
+  public_key_file:
+    description: Public key file path when public_key_output is set.
+    value: ${{ steps.sign.outputs.public_key_file }}
+
+runs:
+  using: composite
+  steps:
+    - id: sign
+      shell: bash
+      env:
+        PRIVATE_KEY: ${{ inputs.private_key }}
+        PRIVATE_KEY_PASSPHRASE: ${{ inputs.private_key_passphrase }}
+        INPUT_FILE: ${{ inputs.input_file }}
+        SIGNATURE_FILE: ${{ inputs.signature_file }}
+        VERIFY_FILES_RAW: ${{ inputs.verify_files }}
+        PUBLIC_KEY_OUTPUT: ${{ inputs.public_key_output }}
+      run: |
+        set -euo pipefail
+
+        if [ -z "${PRIVATE_KEY:-}" ]; then
+          echo "::error::Missing required private key input."
+          exit 1
+        fi
+
+        if [ ! -f "${INPUT_FILE}" ]; then
+          echo "::error file=${INPUT_FILE}::Input file not found for signing."
+          exit 1
+        fi
+
+        umask 077
+        tmp_dir="$(mktemp -d)"
+        cleanup() {
+          rm -rf "${tmp_dir}"
+        }
+        trap cleanup EXIT
+
+        key_file="${tmp_dir}/private.pem"
+        pub_file="${tmp_dir}/public.pem"
+        sig_bin="${tmp_dir}/signature.bin"
+
+        printf '%s' "${PRIVATE_KEY}" > "${key_file}"
+
+        passin_args=()
+        if [ -n "${PRIVATE_KEY_PASSPHRASE:-}" ]; then
+          passin_args=(-passin "pass:${PRIVATE_KEY_PASSPHRASE}")
+        fi
+
+        openssl pkey -in "${key_file}" "${passin_args[@]}" -pubout -out "${pub_file}"
+
+        mkdir -p "$(dirname "${SIGNATURE_FILE}")"
+        # Sign with Ed25519 (requires -rawin flag for raw input)
+        openssl pkeyutl -sign -rawin -inkey "${key_file}" "${passin_args[@]}" -in "${INPUT_FILE}" \
+          | openssl base64 -A > "${SIGNATURE_FILE}"
+
+        openssl base64 -d -A -in "${SIGNATURE_FILE}" -out "${sig_bin}"
+
+        verify_files="${VERIFY_FILES_RAW}"
+        if [ -z "${verify_files}" ]; then
+          verify_files="${INPUT_FILE}"
+        fi
+
+        while IFS= read -r verify_file; do
+          [ -z "${verify_file}" ] && continue
+          if [ ! -f "${verify_file}" ]; then
+            echo "::error file=${verify_file}::Verification target does not exist."
+            exit 1
+          fi
+          # Verify Ed25519 signature (requires -rawin flag for raw input)
+          openssl pkeyutl -verify -rawin -pubin -inkey "${pub_file}" -sigfile "${sig_bin}" -in "${verify_file}" >/dev/null
+        done <<< "${verify_files}"
+
+        if [ -n "${PUBLIC_KEY_OUTPUT}" ]; then
+          mkdir -p "$(dirname "${PUBLIC_KEY_OUTPUT}")"
+          cp "${pub_file}" "${PUBLIC_KEY_OUTPUT}"
+          echo "public_key_file=${PUBLIC_KEY_OUTPUT}" >> "${GITHUB_OUTPUT}"
+        else
+          echo "public_key_file=" >> "${GITHUB_OUTPUT}"
+        fi
+
+        echo "signature_file=${SIGNATURE_FILE}" >> "${GITHUB_OUTPUT}"
