@@ -15,10 +15,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+permissions: read-all
 
 concurrency:
   group: skill-release-${{ github.ref }}
@@ -505,6 +502,8 @@ jobs:
   release-tag:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       skill_name: ${{ steps.parse.outputs.skill_name }}
       version: ${{ steps.parse.outputs.version }}
@@ -947,6 +946,8 @@ jobs:
     needs: release-tag
     runs-on: ubuntu-latest
     continue-on-error: true
+    permissions:
+      contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
@@ -968,7 +969,7 @@ jobs:
 
       - name: Install clawhub CLI
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
-        run: npm install -g clawhub
+        run: npm install -g clawhub@0.7.0
 
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1022,6 +1023,8 @@ jobs:
     # Usage: Go to Actions → Skill Release → Run workflow → Enter tag name
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
@@ -1077,7 +1080,7 @@ jobs:
           node-version: 20
 
       - name: Install clawhub CLI
-        run: npm install -g clawhub
+        run: npm install -g clawhub@0.7.0
 
       - name: Login to ClawHub
         run: |
