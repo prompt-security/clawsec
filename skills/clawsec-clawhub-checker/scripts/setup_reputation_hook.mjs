@@ -11,6 +11,7 @@ async function main() {
   const suiteDir = path.join(os.homedir(), ".openclaw", "skills", "clawsec-suite");
   const checkerDir = path.join(os.homedir(), ".openclaw", "skills", "clawsec-clawhub-checker");
   const hookLibDir = path.join(suiteDir, "hooks", "clawsec-advisory-guardian", "lib");
+  const suiteScriptsDir = path.join(suiteDir, "scripts");
   
   try {
     // Check if clawsec-suite is installed
@@ -31,13 +32,15 @@ async function main() {
     // Update hook handler to import reputation module
     const hookHandlerPath = path.join(suiteDir, "hooks", "clawsec-advisory-guardian", "handler.ts");
     let handlerContent = await fs.readFile(hookHandlerPath, "utf8");
-    
-    // Check if already imported
-    if (!handlerContent.includes("from \"./lib/reputation.mjs\"")) {
-      // WARNING: This setup script uses string manipulation to modify handler.ts
-      // This is fragile and may break if the handler structure changes
-      // Consider using AST-based transformation or manual integration for production use
 
+    // WARNING: This setup script uses string manipulation to modify handler.ts
+    // This is fragile and may break if the handler structure changes
+    // Consider using AST-based transformation or manual integration for production use
+    let handlerChanged = false;
+    const importLine = "import { checkReputation } from \"./lib/reputation.mjs\";";
+    const reputationMarker = "// ClawHub reputation check for matched skills";
+
+    if (!handlerContent.includes(importLine)) {
       // Add import after other imports
       const importIndex = handlerContent.lastIndexOf("import");
       if (importIndex === -1) {
@@ -45,48 +48,62 @@ async function main() {
       }
 
       const lineEndIndex = handlerContent.indexOf("\n", importIndex);
-      const newImport = `import { checkReputation } from "./lib/reputation.mjs";\n`;
-      handlerContent = handlerContent.slice(0, lineEndIndex + 1) + newImport + handlerContent.slice(lineEndIndex + 1);
+      handlerContent = handlerContent.slice(0, lineEndIndex + 1) + `${importLine}\n` + handlerContent.slice(lineEndIndex + 1);
+      handlerChanged = true;
+    } else {
+      console.log("✓ Hook handler already imports reputation module");
+    }
 
-      // Find where matches are processed and add reputation check
-      const findMatchesLine = handlerContent.indexOf("const matches = findMatches(feed, installedSkills);");
-      if (findMatchesLine !== -1) {
-        const insertIndex = handlerContent.indexOf("\n", findMatchesLine) + 1;
+    if (!handlerContent.includes(reputationMarker)) {
+      const findMatchesAnchors = [
+        { line: "const allMatches = findMatches(feed, installedSkills);", variable: "allMatches" },
+        { line: "const matches = findMatches(feed, installedSkills);", variable: "matches" },
+      ];
+      const matchedAnchor = findMatchesAnchors.find((entry) => handlerContent.includes(entry.line));
 
-        const reputationCheckCode = `
-        // ClawHub reputation check for matched skills
-        for (const match of matches) {
-          const repResult = await checkReputation(match.skill.name, match.skill.version);
-          if (!repResult.safe) {
-            match.reputationWarning = true;
-            match.reputationScore = repResult.score;
-            match.reputationWarnings = repResult.warnings;
-          }
-        }
-        `;
-
-        handlerContent = handlerContent.slice(0, insertIndex) + reputationCheckCode + handlerContent.slice(insertIndex);
-      } else {
-        console.warn("⚠️  Warning: Could not find 'const matches = findMatches(feed, installedSkills);' in handler.ts");
-        console.warn("   Reputation checks will not be added to the hook. Manual integration may be required.");
+      if (!matchedAnchor) {
+        throw new Error(
+          "Could not find findMatches assignment in handler.ts. Refusing partial setup. Manual integration required."
+        );
       }
 
-      // Note: Reputation information is attached to each match object (reputationWarning, reputationScore, reputationWarnings)
-      // The advisory guardian hook can consume this data if needed. We don't modify buildAlertMessage calls
-      // since the function signature is buildAlertMessage(matches[], installRoot) and changing it would break compatibility.
-
-      await fs.writeFile(hookHandlerPath, handlerContent);
-      console.log(`✓ Updated hook handler with reputation checks`);
+      const anchorIndex = handlerContent.indexOf(matchedAnchor.line);
+      const insertIndex = handlerContent.indexOf("\n", anchorIndex) + 1;
+      const reputationCheckCode = `
+  ${reputationMarker}
+  for (const match of ${matchedAnchor.variable}) {
+    const repResult = await checkReputation(match.skill.name, match.skill.version);
+    if (!repResult.safe) {
+      match.reputationWarning = true;
+      match.reputationScore = repResult.score;
+      match.reputationWarnings = repResult.warnings;
+    }
+  }
+`;
+      handlerContent = handlerContent.slice(0, insertIndex) + reputationCheckCode + handlerContent.slice(insertIndex);
+      handlerChanged = true;
     } else {
-      console.log(`✓ Hook handler already has reputation checks`);
+      console.log("✓ Hook handler already has reputation scan block");
+    }
+
+    if (handlerChanged) {
+      await fs.writeFile(hookHandlerPath, handlerContent);
+      console.log("✓ Updated hook handler with reputation checks");
+    } else {
+      console.log("✓ Hook handler already has required reputation integration");
     }
     
-    // Create symlink or copy enhanced installer
+    // Copy enhanced installer and reputation checker scripts
     const enhancedInstallerSrc = path.join(checkerDir, "scripts", "enhanced_guarded_install.mjs");
     const enhancedInstallerDst = path.join(suiteDir, "scripts", "enhanced_guarded_install.mjs");
+    const reputationCheckSrc = path.join(checkerDir, "scripts", "check_clawhub_reputation.mjs");
+    const reputationCheckDst = path.join(suiteScriptsDir, "check_clawhub_reputation.mjs");
     
     await fs.copyFile(enhancedInstallerSrc, enhancedInstallerDst);
     console.log(`✓ Installed enhanced guarded installer at ${enhancedInstallerDst}`);
+
+    await fs.copyFile(reputationCheckSrc, reputationCheckDst);
+    console.log(`✓ Installed reputation check script at ${reputationCheckDst}`);
     
     // Create wrapper script that uses enhanced installer by default
     const wrapperScript = `#!/usr/bin/env node
@@ -119,8 +136,9 @@ process.exit(result.status ?? 1);
     console.log("\nThe ClawHub reputation checker has been integrated with clawsec-suite.");
     console.log("\nWhat changed:");
     console.log("1. Enhanced guarded installer with reputation checks installed");
-    console.log("2. Advisory guardian hook updated to include reputation warnings");
-    console.log("3. Wrapper script created for backward compatibility");
+    console.log("2. Reputation check helper script installed");
+    console.log("3. Advisory guardian hook updated to include reputation warnings");
+    console.log("4. Wrapper script created for backward compatibility");
     console.log("\nUsage:");
     console.log("  node scripts/enhanced_guarded_install.mjs --skill <name> [--version <ver>]");
     console.log("  node scripts/guarded_skill_install_wrapper.mjs --skill <name> [--version <ver>]");
