@@ -141,7 +141,7 @@ function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir, emailTo }) 
     `Email: ${oneline(emailTo)} (sendmail/SMTP fallback)`,
     "",
     "Execute:",
-    `- Run via exec: cd \"${safeDir}\" && PROMPTSEC_HOST_LABEL=\"${escapedHostLabel}\" PROMPTSEC_EMAIL_TO=\"${escapedEmail}\" ./scripts/audit-watchdog/runner.sh`,
+    `- Run via exec: cd "${safeDir}" && PROMPTSEC_HOST_LABEL="${escapedHostLabel}" PROMPTSEC_EMAIL_TO="${escapedEmail}" ./scripts/audit-watchdog/runner.sh`,
     "",
     "Output requirements:",
     "- Print the report to stdout (cron deliver will DM it).",
