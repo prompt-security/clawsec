@@ -36,6 +36,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
+
       - name: Validate version parity for bumped skills
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -526,6 +529,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
+
       - name: Validate skill exists
         run: |
           SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
@@ -781,6 +787,18 @@ jobs:
           input_file: release-assets/checksums.json
           signature_file: release-assets/checksums.sig
           public_key_output: release-assets/signing-public.pem
+
+      - name: Verify generated release signing key matches canonical key
+        run: |
+          set -euo pipefail
+          CANONICAL_FPR=$(openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          GENERATED_FPR=$(openssl pkey -pubin -in release-assets/signing-public.pem -outform DER | sha256sum | awk '{print $1}')
+          echo "Canonical key fingerprint: $CANONICAL_FPR"
+          echo "Generated key fingerprint: $GENERATED_FPR"
+          if [ "$CANONICAL_FPR" != "$GENERATED_FPR" ]; then
+            echo "::error::release-assets/signing-public.pem fingerprint mismatch vs clawsec-signing-public.pem"
+            exit 1
+          fi
 
       - name: Show signed release assets
         run: |
