@@ -209,14 +209,6 @@ const handler = async (event: HookEvent): Promise<void> => {
     state.notified_matches[key] = nowIso;
   }
 
-  // Track suppressed matches in state (so they aren't re-evaluated) but don't alert
-  for (const match of suppressedMatches) {
-    const key = matchKey(match);
-    if (!state.notified_matches[key]) {
-      state.notified_matches[key] = nowIso;
-    }
-  }
-
   if (unseenMatches.length > 0 && Array.isArray(event.messages)) {
     event.messages.push(buildAlertMessage(unseenMatches, installRoot));
   }
