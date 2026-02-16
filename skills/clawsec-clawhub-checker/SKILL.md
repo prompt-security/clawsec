@@ -40,15 +40,21 @@ node ~/.openclaw/skills/clawsec-clawhub-checker/scripts/setup_reputation_hook.mj
 openclaw gateway restart
 ```
 
-After setup, the checker enhances the existing `guarded_skill_install.mjs` script and advisory guardian hook.
+After setup, the checker adds `enhanced_guarded_install.mjs` and
+`guarded_skill_install_wrapper.mjs` under `clawsec-suite/scripts` and updates the advisory
+guardian hook. The original `guarded_skill_install.mjs` is not replaced.
 
 ## How It Works
 
 ### Enhanced Guarded Installer
 
-When you run:
+After setup, run the wrapper (drop-in path) or the enhanced script directly:
 ```bash
-node scripts/guarded_skill_install.mjs --skill some-skill --version 1.0.0
+# Recommended drop-in wrapper
+node scripts/guarded_skill_install_wrapper.mjs --skill some-skill --version 1.0.0
+
+# Or call the enhanced script directly
+node scripts/enhanced_guarded_install.mjs --skill some-skill --version 1.0.0
 ```
 
 The enhanced flow:
@@ -89,7 +95,7 @@ The checker enhances but doesn't replace existing security:
 
 ```bash
 # Try to install a skill
-node scripts/guarded_skill_install.mjs --skill suspicious-skill --version 1.0.0
+node scripts/guarded_skill_install_wrapper.mjs --skill suspicious-skill --version 1.0.0
 
 # Output might show:
 # WARNING: Skill "suspicious-skill" has low reputation score (45/100)
@@ -98,10 +104,10 @@ node scripts/guarded_skill_install.mjs --skill suspicious-skill --version 1.0.0
 # - Skill is less than 7 days old
 # 
 # To install despite reputation warning, run:
-# node scripts/guarded_skill_install.mjs --skill suspicious-skill --version 1.0.0 --confirm-reputation
+# node scripts/guarded_skill_install_wrapper.mjs --skill suspicious-skill --version 1.0.0 --confirm-reputation
 
 # Install with confirmation
-node scripts/guarded_skill_install.mjs --skill suspicious-skill --version 1.0.0 --confirm-reputation
+node scripts/guarded_skill_install_wrapper.mjs --skill suspicious-skill --version 1.0.0 --confirm-reputation
 ```
 
 ## Safety Notes

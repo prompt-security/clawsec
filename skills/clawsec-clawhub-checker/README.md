@@ -37,19 +37,29 @@ node scripts/setup_reputation_hook.mjs
 openclaw gateway restart
 ```
 
+Setup installs these scripts into `clawsec-suite/scripts`:
+- `enhanced_guarded_install.mjs`
+- `guarded_skill_install_wrapper.mjs` (drop-in wrapper)
+- `check_clawhub_reputation.mjs`
+
+The original `guarded_skill_install.mjs` remains unchanged.
+
 ## Usage
 
 ### Enhanced Guarded Installer
 
 ```bash
-# Basic usage (includes reputation checks)
+# Basic usage via wrapper (includes reputation checks)
+node scripts/guarded_skill_install_wrapper.mjs --skill some-skill --version 1.0.0
+
+# Direct usage (enhanced script)
 node scripts/enhanced_guarded_install.mjs --skill some-skill --version 1.0.0
 
 # With reputation confirmation override
-node scripts/enhanced_guarded_install.mjs --skill suspicious-skill --version 1.0.0 --confirm-reputation
+node scripts/guarded_skill_install_wrapper.mjs --skill suspicious-skill --version 1.0.0 --confirm-reputation
 
 # Adjust reputation threshold (default: 70)
-node scripts/enhanced_guarded_install.mjs --skill some-skill --reputation-threshold 80
+node scripts/guarded_skill_install_wrapper.mjs --skill some-skill --reputation-threshold 80
 ```
 
 ### Reputation Check Only
@@ -84,6 +94,7 @@ Environment variables:
 ## Integration Points
 
 1. **Enhanced `guarded_skill_install.mjs`** - Wraps original with reputation checks
+   via `guarded_skill_install_wrapper.mjs` and `enhanced_guarded_install.mjs`
 2. **Updated advisory guardian hook** - Adds reputation warnings to alerts
 3. **Catalog entry in clawsec-suite** - Listed as available enhancement
 
