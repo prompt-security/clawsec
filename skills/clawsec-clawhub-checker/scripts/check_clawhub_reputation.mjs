@@ -17,6 +17,20 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
     virustotal: [],
   };
 
+  // Input validation — reject anything that isn't a safe slug or semver
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(skillSlug)) {
+    result.warnings.push(`Invalid skill slug: ${skillSlug}`);
+    result.score = 0;
+    result.safe = false;
+    return result;
+  }
+  if (version && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.]+)?$/.test(version)) {
+    result.warnings.push(`Invalid version format: ${version}`);
+    result.score = 0;
+    result.safe = false;
+    return result;
+  }
+
   try {
     // Check 1: Try to inspect the skill via clawhub
     const inspectResult = spawnSync(
@@ -101,14 +115,15 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
     }
 
     // Check 6: Try installation to see if clawhub flags it as suspicious
-    // Use --force to bypass interactive prompt in non-interactive mode
-    const installCheck = spawnSync(
-      "bash",
-      ["-c", `echo "n" | clawhub install ${skillSlug}${version ? ` --version ${version}` : ''} 2>&1`],
-      { encoding: "utf-8" }
-    );
+    // Use input:"n\n" to decline the interactive prompt (avoids shell interpolation)
+    const installArgs = ["install", skillSlug];
+    if (version) installArgs.push("--version", version);
+    const installCheck = spawnSync("clawhub", installArgs, {
+      input: "n\n",
+      encoding: "utf-8",
+    });
 
-    const output = installCheck.stdout || installCheck.stderr || "";
+    const output = (installCheck.stdout || "") + (installCheck.stderr || "");
     if (output.includes("suspicious") || output.includes("VirusTotal") || output.includes("flagged")) {
       result.virustotal.push("Flagged by ClawHub's VirusTotal Code Insight");
       result.score -= 40; // More severe penalty for VirusTotal flag

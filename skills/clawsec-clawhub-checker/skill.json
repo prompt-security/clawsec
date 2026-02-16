@@ -2,7 +2,7 @@
   "name": "clawsec-clawhub-checker",
   "version": "0.0.1",
   "description": "ClawHub reputation checker for ClawSec suite. Enhances guarded skill installer with VirusTotal Code Insight reputation scores and additional safety checks.",
-  "author": "david",
+  "author": "abutbul",
   "license": "MIT",
   "homepage": "https://clawsec.prompt.security/",
   "keywords": [
@@ -42,6 +42,11 @@
         "path": "hooks/clawsec-advisory-guardian/lib/reputation.mjs",
         "required": true,
         "description": "Reputation checking module for advisory guardian hook"
+      },
+      {
+        "path": "README.md",
+        "required": false,
+        "description": "Additional documentation and development guide"
       }
     ]
   },
