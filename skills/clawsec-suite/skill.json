@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.0.10",
+  "version": "0.1.2",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "MIT",
@@ -121,6 +121,11 @@
         "description": "Two-step confirmation installer with signature verification that blocks risky skill installs"
       },
       {
+        "path": "scripts/discover_skill_catalog.mjs",
+        "required": true,
+        "description": "Dynamic skill-catalog discovery with remote index fetch and suite-local fallback metadata"
+      },
+      {
         "path": "scripts/sign_detached_ed25519.mjs",
         "required": false,
         "description": "Utility script for generating Ed25519 detached signatures"
@@ -206,17 +211,6 @@
           "clawdbot",
           "other"
         ]
-      },
-      "clawsec-clawhub-checker": {
-        "description": "ClawHub reputation checker - enhances guarded installer with VirusTotal scores",
-        "default_install": false,
-        "compatible": [
-          "openclaw",
-          "moltbot",
-          "clawdbot",
-          "other"
-        ],
-        "note": "Requires clawsec-suite as base"
       }
     }
   },
