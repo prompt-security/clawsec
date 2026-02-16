@@ -222,7 +222,7 @@ const { active: activeFindings, suppressed: suppressedFindings } = filterFinding
 // Replace findings in audit/deep with filtered active findings
 if (audit.findings) {
   audit.findings = activeFindings.filter((f) =>
-    (audit.findings || []).some((orig) => orig === f || JSON.stringify(orig) === JSON.stringify(f))
+    (audit.findings || []).some((orig) => orig === f)
   );
   // Recalculate summary counts after filtering
   audit.summary = {
@@ -233,7 +233,7 @@ if (audit.findings) {
 }
 if (deep.findings) {
   deep.findings = activeFindings.filter((f) =>
-    (deep.findings || []).some((orig) => orig === f || JSON.stringify(orig) === JSON.stringify(f))
+    (deep.findings || []).some((orig) => orig === f)
   );
   // Recalculate summary counts after filtering
   deep.summary = {
