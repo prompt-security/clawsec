@@ -99,6 +99,11 @@ function parseArgs(argv) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(parsed.skill)) {
     throw new Error("Invalid --skill value. Must start with a letter or digit, followed by lowercase letters, digits, and hyphens.");
   }
+  if (parsed.version && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?(?:\+[a-zA-Z0-9.-]+)?$/.test(parsed.version)) {
+    throw new Error(
+      "Invalid --version value. Must be semantic version format (e.g., 1.2.3, 1.2.3-beta.1, 1.2.3+build.45)."
+    );
+  }
   if (parsed.reputationThreshold < 0 || parsed.reputationThreshold > 100 || Number.isNaN(parsed.reputationThreshold)) {
     throw new Error("Invalid --reputation-threshold value. Must be between 0 and 100.");
   }

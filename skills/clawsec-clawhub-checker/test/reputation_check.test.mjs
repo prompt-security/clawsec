@@ -209,6 +209,61 @@ async function testPreReleaseVersionAccepted() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: CLI entrypoint guard works when script path is relative
+// -----------------------------------------------------------------------------
+async function testRelativePathCliEntrypointWorks() {
+  const testName = "reputation_check: CLI entrypoint works with relative script path";
+  try {
+    const relativeCheckerScript = path.relative(process.cwd(), CHECKER_SCRIPT);
+    const result = await runScript(relativeCheckerScript, ['bad slug', '', '70']);
+
+    let parsed;
+    try {
+      parsed = JSON.parse(result.stdout);
+    } catch {
+      fail(testName, `Could not parse output with relative script path: ${result.stdout}`);
+      return;
+    }
+
+    if (
+      result.code === 43 &&
+      parsed.safe === false &&
+      parsed.warnings.some((w) => w.includes("Invalid skill slug"))
+    ) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected exit 43 with invalid slug warning via relative path, got code ${result.code}: ${JSON.stringify(parsed)}`
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Test: Invalid threshold format is rejected in CLI mode
+// -----------------------------------------------------------------------------
+async function testInvalidThresholdRejected() {
+  const testName = "reputation_check: invalid threshold is rejected";
+  try {
+    const result = await runScript(CHECKER_SCRIPT, ['test-skill', '1.0.0', 'abc']);
+
+    if (result.code === 1 && result.stderr.includes("Invalid threshold")) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected exit 1 with invalid threshold message, got code ${result.code}: ${result.stderr}`
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Test: Enhanced installer rejects invalid skill name
 // -----------------------------------------------------------------------------
 async function testEnhancedInstallerRejectsInvalidSkill() {
@@ -322,6 +377,29 @@ async function testFormatReputationWarningNull() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: Enhanced installer validates --version even with --confirm-reputation
+// -----------------------------------------------------------------------------
+async function testEnhancedInstallerRejectsInvalidVersion() {
+  const testName = "enhanced_install: rejects invalid version format even with --confirm-reputation";
+  try {
+    const result = await runScript(ENHANCED_INSTALL_SCRIPT, [
+      '--skill', 'test-skill', '--version', '1.0.0;rm -rf /', '--confirm-reputation'
+    ]);
+
+    if (result.code === 1 && result.stderr.includes("Invalid --version value")) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected exit 1 with invalid version message, got code ${result.code}: ${result.stderr}`
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Main test runner
 // -----------------------------------------------------------------------------
 async function runTests() {
@@ -333,8 +411,11 @@ async function runTests() {
   await testUppercaseSlugRejected();
   await testEmptySlugShowsUsage();
   await testPreReleaseVersionAccepted();
+  await testRelativePathCliEntrypointWorks();
+  await testInvalidThresholdRejected();
   await testEnhancedInstallerRejectsInvalidSkill();
   await testEnhancedInstallerRequiresSkill();
+  await testEnhancedInstallerRejectsInvalidVersion();
   await testEnhancedInstallerRejectsInvalidThreshold();
   await testFormatReputationWarning();
   await testFormatReputationWarningNull();

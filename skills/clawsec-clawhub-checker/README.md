@@ -89,7 +89,6 @@ node scripts/check_clawhub_reputation.mjs some-skill 1.0.0 70
 
 Environment variables:
 - `CLAWHUB_REPUTATION_THRESHOLD` - Minimum score (0-100, default: 70)
-- `CLAWHUB_ALLOW_SUSPICIOUS` - Skip reputation checks (not recommended)
 
 ## Integration Points
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 /**
  * Check ClawHub reputation for a skill
@@ -182,7 +184,11 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
 }
 
 // CLI interface for direct usage
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isCliEntrypoint =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (isCliEntrypoint) {
   async function main() {
     const args = process.argv.slice(2);
     if (args.length < 1) {
@@ -192,7 +198,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     
     const skillSlug = args[0];
     const version = args[1] || "";
-    const threshold = args[2] ? parseInt(args[2], 10) : 70;
+    let threshold = 70;
+    if (args[2] !== undefined) {
+      const parsedThreshold = parseInt(args[2], 10);
+      if (!Number.isInteger(parsedThreshold) || parsedThreshold < 0 || parsedThreshold > 100) {
+        console.error(
+          `Invalid threshold: "${args[2]}". Threshold must be an integer between 0 and 100.`
+        );
+        process.exit(1);
+      }
+      threshold = parsedThreshold;
+    }
     
     const result = await checkClawhubReputation(skillSlug, version, threshold);
     

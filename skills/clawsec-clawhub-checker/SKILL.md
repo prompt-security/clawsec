@@ -81,8 +81,6 @@ The enhanced flow:
 
 Environment variables:
 - `CLAWHUB_REPUTATION_THRESHOLD` - Minimum reputation score (0-100, default: 70)
-- `CLAWHUB_ALLOW_SUSPICIOUS` - Allow installation of suspicious skills without confirmation (default: false)
-- `CLAWHUB_VIRUSTOTAL_API_KEY` - Optional: Your own VirusTotal API key for deeper scans
 
 ## Integration with Existing Suite
 
