@@ -1,8 +1,116 @@
 {
   "version": "0.0.3",
-  "updated": "2026-02-20T06:16:59Z",
+  "updated": "2026-02-22T10:57:32Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-27576",
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the ACP bridge accepts very la...",
+      "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the ACP bridge accepts very large prompt text blocks and can assemble oversized prompt payloads before forwarding them to chat.send. Because ACP runs over local stdio, this mainly affects local ACP clients (for example IDE integrations) that send unusually large inputs. This issue has been fixed in version 2026.2.19.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-21T10:16:13.437",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/63e39d7f57ac4ad4a5e38d17e7394ae7c4dd0b9c",
+        "https://github.com/openclaw/openclaw/commit/8ae2d5110f6ceadef73822aa3db194fb60d2ba68",
+        "https://github.com/openclaw/openclaw/commit/ebcf19746f5c500a41817e03abecadea8655654a"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27576"
+    },
+    {
+      "id": "CVE-2026-27488",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, Cron webhook delivery in src/g...",
+      "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, Cron webhook delivery in src/gateway/server-cron.ts uses fetch() directly, so webhook targets can reach private/metadata/internal endpoints without SSRF policy checks. This issue was fixed in version 2026.2.19.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-21T10:16:13.267",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/99db4d13e5c139883ef0def9ff963e9273179655",
+        "https://github.com/openclaw/openclaw/releases/tag/v2026.2.19",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w45g-5746-x9fp"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27488"
+    },
+    {
+      "id": "CVE-2026-27487",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below, when using macOS, the Claude C...",
+      "description": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below, when using macOS, the Claude CLI keychain credential refresh path constructed a shell command to write the updated JSON blob into Keychain via security add-generic-password -w .... Because OAuth tokens are user-controlled data, this created an OS command injection risk. This issue has been fixed in version 2026.2.14.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-21T10:16:13.100",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/66d7178f2d6f9d60abad35797f97f3e61389b70c",
+        "https://github.com/openclaw/openclaw/commit/9dce3d8bf83f13c067bc3c32291643d2f1f10a06",
+        "https://github.com/openclaw/openclaw/commit/b908388245764fb3586859f44d1dff5372b19caf"
+      ],
+      "cvss_score": 7.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27487"
+    },
+    {
+      "id": "CVE-2026-27486",
+      "severity": "medium",
+      "type": "unknown_cwe_283",
+      "nvd_category_id": "CWE-283",
+      "title": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below of the OpenClaw CLI, the proces...",
+      "description": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below of the OpenClaw CLI, the process cleanup uses system-wide process enumeration and pattern matching to terminate processes without verifying if they are owned by the current OpenClaw process. On shared hosts, unrelated processes can be terminated if they match the pattern. The CLI runner cleanup helpers can kill processes matched by command-line patterns without validating process ownership. This issue has been fixed in version 2026.2.14.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-21T10:16:12.903",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/6084d13b956119e3cf95daaf9a1cae1670ea3557",
+        "https://github.com/openclaw/openclaw/commit/eb60e2e1b213740c3c587a7ba4dbf10da620ca66",
+        "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486"
+    },
+    {
+      "id": "CVE-2026-27485",
+      "severity": "medium",
+      "type": "unknown_cwe_61",
+      "nvd_category_id": "CWE-61",
+      "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, skills/skill-creator/scripts/p...",
+      "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, skills/skill-creator/scripts/package_skill.py (a local helper script used when authors package skills) previously followed symlinks while building .skill archives. If an author runs this script on a crafted local skill directory containing symlinks to files outside the skill root, the resulting archive can include unintended file contents. If exploited, this vulnerability can lead to potential unintentional disclosure of local files from the packaging machine into a generated .skill artifact, but requires local execution of the packaging script on attacker-controlled skill contents. This issue has been fixed in version 2026.2.18.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-21T10:16:12.723",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/c275932aa4230fb7a8212fe1b9d2a18424874b3f",
+        "https://github.com/openclaw/openclaw/commit/ee1d6427b544ccadd73e02b1630ea5c29ba9a9f0",
+        "https://github.com/openclaw/openclaw/pull/20796"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27485"
+    },
+    {
+      "id": "CVE-2026-27484",
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the Discord moderation action ...",
+      "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the Discord moderation action handling (timeout, kick, ban) uses sender identity from request parameters in tool-driven flows, instead of trusted runtime sender context. In setups where Discord moderation actions are enabled and the bot has the necessary guild permissions, a non-admin user can request moderation actions by spoofing sender identity fields. This issue has been fixed in version 2026.2.18.",
+      "affected": [],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-21T10:16:12.557",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/775816035ecc6bb243843f8000c9a58ff609e32d",
+        "https://github.com/openclaw/openclaw/releases/tag/v2026.2.19",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wh94-p5m6-mr7j"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27484"
+    },
     {
       "id": "CVE-2026-27009",
       "severity": "medium",
@@ -36,12 +144,12 @@
         "https://github.com/openclaw/openclaw/commit/b6305e97256d67e439719faacf5af3de9727d6e1",
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.15"
       ],
-      "cvss_score": null,
+      "cvss_score": 6.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27008"
     },
     {
       "id": "CVE-2026-27007",
-      "severity": "medium",
+      "severity": "low",
       "type": "unknown_cwe_1254",
       "nvd_category_id": "CWE-1254",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, `normalizeForHash` in `src/agents/s...",
@@ -54,7 +162,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.15",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-xxvh-5hwj-42pp"
       ],
-      "cvss_score": null,
+      "cvss_score": 3.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27007"
     },
     {
@@ -71,7 +179,7 @@
         "https://github.com/openclaw/openclaw/commit/c6c53437f7da033b94a01d492e904974e7bda74c",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-6hf3-mhgc-cm65"
       ],
-      "cvss_score": null,
+      "cvss_score": 5.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27004"
     },
     {
@@ -88,12 +196,12 @@
         "https://github.com/openclaw/openclaw/commit/cf69907015b659e5025efb735ee31bd05c4ee3d5",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-chf7-jq6g-qrwv"
       ],
-      "cvss_score": null,
+      "cvss_score": 5.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27003"
     },
     {
       "id": "CVE-2026-27002",
-      "severity": "medium",
+      "severity": "critical",
       "type": "execution_with_unnecessary_privileges",
       "nvd_category_id": "CWE-250",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a configuration injection issue in ...",
@@ -106,12 +214,12 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.15",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-w235-x559-36mg"
       ],
-      "cvss_score": null,
+      "cvss_score": 9.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27002"
     },
     {
       "id": "CVE-2026-27001",
-      "severity": "medium",
+      "severity": "high",
       "type": "command_injection",
       "nvd_category_id": "CWE-77",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, OpenClaw embedded the current worki...",
@@ -124,7 +232,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.15",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-2qj5-gwg2-xwc4"
       ],
-      "cvss_score": null,
+      "cvss_score": 7.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27001"
     },
     {
@@ -160,7 +268,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-cv7m-c9jx-vg7q"
       ],
-      "cvss_score": null,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26329"
     },
     {
@@ -255,7 +363,7 @@
     },
     {
       "id": "CVE-2026-26323",
-      "severity": "medium",
+      "severity": "high",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw is a personal AI assistant. Versions 2026.1.8 through 2026.2.13 have a command injection in...",
@@ -268,7 +376,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-m7x8-2w3w-pr42"
       ],
-      "cvss_score": null,
+      "cvss_score": 8.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26323"
     },
     {
@@ -322,7 +430,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-7q2j-c4q5-rm27"
       ],
-      "cvss_score": null,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26320"
     },
     {
