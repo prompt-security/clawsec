@@ -30,6 +30,7 @@
     "vite": "^7.3.1"
   },
   "overrides": {
+    "ajv": "6.14.0",
     "balanced-match": "4.0.3",
     "brace-expansion": "5.0.2",
     "minimatch": "10.2.1"
