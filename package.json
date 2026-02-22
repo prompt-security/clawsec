@@ -28,5 +28,10 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "typescript": "~5.8.2",
     "vite": "^7.3.1"
+  },
+  "overrides": {
+    "balanced-match": "4.0.3",
+    "brace-expansion": "5.0.2",
+    "minimatch": "10.2.1"
   }
 }
