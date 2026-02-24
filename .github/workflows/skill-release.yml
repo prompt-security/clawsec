@@ -293,6 +293,20 @@ jobs:
             ' "$md_file"
           }
 
+          get_md_version_from_git() {
+            local sha="$1"
+            local path="$2"
+            local tmp_file
+            tmp_file="$(mktemp)"
+
+            if git cat-file -e "${sha}:${path}" 2>/dev/null; then
+              git show "${sha}:${path}" > "$tmp_file"
+              get_md_version "$tmp_file"
+            fi
+
+            rm -f "$tmp_file"
+          }
+
           touched_skills_file="$(mktemp)"
           git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/skill.json' 'skills/*/SKILL.md' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
@@ -320,6 +334,29 @@ jobs:
             head_md_version=""
             if [ -f "${md_path}" ]; then
               head_md_version="$(get_md_version "${md_path}")"
+            fi
+
+            base_json_version=""
+            if git cat-file -e "${BASE_SHA}:${json_path}" 2>/dev/null; then
+              base_json_version="$(git show "${BASE_SHA}:${json_path}" | jq -r '.version // empty' 2>/dev/null || true)"
+            fi
+
+            base_md_version="$(get_md_version_from_git "${BASE_SHA}" "${md_path}")"
+
+            json_version_changed=false
+            md_version_changed=false
+
+            if [ "${head_json_version}" != "${base_json_version}" ]; then
+              json_version_changed=true
+            fi
+
+            if [ "${head_md_version}" != "${base_md_version}" ]; then
+              md_version_changed=true
+            fi
+
+            if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
+              echo "No version bump detected for ${skill_dir}; skipping dry-run."
+              continue
             fi
 
             if [ -z "${head_json_version}" ] || [ -z "${head_md_version}" ] || [ "${head_json_version}" != "${head_md_version}" ]; then
@@ -493,7 +530,7 @@ jobs:
           fi
 
           if [ "${dry_run_count}" -eq 0 ]; then
-            echo "No changed skills found for dry-run."
+            echo "No version bumps detected in changed skill metadata files."
             exit 0
           fi
 

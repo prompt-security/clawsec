@@ -23,7 +23,7 @@
         "description": "Main audit skill documentation"
       },
       {
-        "path": "heartbeat.md",
+        "path": "HEARTBEAT.md",
         "required": true,
         "description": "Health check and verification protocol"
       }
