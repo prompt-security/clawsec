@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "ClawHub reputation checker for ClawSec suite. Enhances guarded skill installer with VirusTotal Code Insight reputation scores and additional safety checks.",
   "author": "abutbul",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security/",
   "keywords": [
     "security",

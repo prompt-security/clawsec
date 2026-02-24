@@ -62,4 +62,4 @@ HIGH - GA-2026-016: Vulnerable skill "data-helper"
 
 ## License
 
-MIT License - [Prompt Security](https://prompt.security)
+GNU AGPL v3.0 or later - [Prompt Security](https://prompt.security)

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.",
   "author": "prompt-security",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security",
   "keywords": ["release", "versioning", "deployment", "automation", "ci-cd", "skills"],
 

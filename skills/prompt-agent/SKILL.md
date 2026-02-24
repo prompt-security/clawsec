@@ -538,6 +538,6 @@ fi
 
 ## License
 
-MIT License - See repository for details.
+GNU AGPL v3.0 or later - See repository for details.
 
 Built with 🛡️ by the [Prompt Security](https://prompt.security) team and the agent community.

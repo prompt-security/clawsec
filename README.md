@@ -352,7 +352,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#submitting-security-advisories) for detail
 
 ## 📄 License
 
-- Source code: MIT License - See [LICENSE](LICENSE) for details.
+- Source code: GNU AGPL v3.0 or later - See [LICENSE](LICENSE) for details.
 - Fonts in `font/`: Licensed separately - See [`font/README.md`](font/README.md).
 
 ---

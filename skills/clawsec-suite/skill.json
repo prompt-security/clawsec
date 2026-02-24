@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security/",
   "keywords": [
     "security",

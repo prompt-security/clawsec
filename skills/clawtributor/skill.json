@@ -3,7 +3,7 @@
   "version": "0.0.3",
   "description": "Community incident reporting for AI agents. Contribute to collective security by reporting threats.",
   "author": "prompt-security",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security",
   "keywords": [
     "security",

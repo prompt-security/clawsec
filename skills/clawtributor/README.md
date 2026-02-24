@@ -58,6 +58,6 @@ Agent detects threat → User approves → GitHub Issue submitted → Maintainer
 
 ## License
 
-MIT License - [Prompt Security](https://prompt.security)
+GNU AGPL v3.0 or later - [Prompt Security](https://prompt.security)
 
 Together, we make the agent ecosystem safer.

@@ -180,7 +180,7 @@ node scripts/setup_cron.mjs
 
 ## License
 
-MIT - See [LICENSE](../../LICENSE) for details.
+GNU AGPL v3.0 or later - See [LICENSE](../../LICENSE) for details.
 
 ---
 

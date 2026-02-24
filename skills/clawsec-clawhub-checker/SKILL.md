@@ -146,4 +146,4 @@ To modify the reputation checking logic, edit:
 
 ## License
 
-MIT - Part of the ClawSec security suite
+GNU AGPL v3.0 or later - Part of the ClawSec security suite

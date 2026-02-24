@@ -116,7 +116,7 @@ Create `skill.json` with the following structure:
   "version": "0.0.1",
   "description": "Brief description of what your skill does",
   "author": "your-github-username",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://github.com/prompt-security/clawsec",
   "keywords": ["security", "relevant", "tags"],
 
@@ -206,7 +206,7 @@ Add any additional files your skill needs (configs, templates, scripts), and **e
 | `version` | string | Semantic version (0.0.1) |
 | `description` | string | Brief description (max 200 chars) |
 | `author` | string | Your GitHub username or organization |
-| `license` | string | License type (prefer MIT) |
+| `license` | string | License type (prefer AGPL-3.0-or-later) |
 | `homepage` | string | Repository URL |
 | `keywords` | array | Searchable tags |
 | `sbom` | object | Software Bill of Materials |
@@ -488,7 +488,7 @@ cat > skills/simple-scanner/skill.json << 'EOF'
   "version": "0.0.1",
   "description": "Basic security scanner for AI agents",
   "author": "contributor-name",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "homepage": "https://github.com/prompt-security/clawsec",
   "keywords": ["security", "scanner", "basic"],
   "sbom": {

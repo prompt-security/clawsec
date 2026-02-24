@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Security audit enforcement for AI agents. Automated security scans, health verification, and soul.md hardening.",
   "author": "prompt-security",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "internal": true,
   "homepage": "https://clawsec.prompt.security",
   "keywords": [

@@ -160,6 +160,6 @@ After release, confirm:
 
 ## License
 
-MIT License - See repository for details.
+GNU AGPL v3.0 or later - See repository for details.
 
 Built by the [Prompt Security](https://prompt.security) team.

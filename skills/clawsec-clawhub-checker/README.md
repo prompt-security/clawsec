@@ -130,4 +130,4 @@ node scripts/setup_reputation_hook.mjs
 
 ## License
 
-MIT - Part of the ClawSec security suite
+GNU AGPL v3.0 or later - Part of the ClawSec security suite
