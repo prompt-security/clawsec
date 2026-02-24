@@ -20,20 +20,10 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = path.resolve(__dirname, "..", "scripts", "render_report.mjs");
-
-// Find node executable (may not be in PATH in restricted environments)
-let NODE_BIN = "node";
-try {
-  NODE_BIN = execSync("which node 2>/dev/null || echo /opt/homebrew/bin/node", {
-    encoding: "utf8",
-  }).trim();
-} catch {
-  NODE_BIN = "/opt/homebrew/bin/node";
-}
+const NODE_BIN = process.execPath;
 
 let tempDir;
 let passCount = 0;

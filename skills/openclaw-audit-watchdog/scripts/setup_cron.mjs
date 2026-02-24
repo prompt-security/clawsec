@@ -10,6 +10,7 @@
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
@@ -20,6 +21,8 @@ const DEFAULT_TZ = "UTC";
 const DEFAULT_EXPR = "0 23 * * *"; // 23:00 daily
 
 const SCRIPT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const UNEXPANDED_HOME_TOKEN_PATTERN =
+  /(?:^|[\\/])(?:\\?\$HOME|\\?\$\{HOME\}|\\?\$USERPROFILE|\\?\$\{USERPROFILE\}|%HOME%|%USERPROFILE%|\$env:HOME|\$env:USERPROFILE)(?:$|[\\/])/i;
 
 function sh(cmd, args, { input } = {}) {
   const res = spawnSync(cmd, args, {
@@ -49,6 +52,51 @@ function envOrEmpty(name) {
   return typeof v === "string" ? v.trim() : "";
 }
 
+function detectHomeDirectory() {
+  const home = envOrEmpty("HOME");
+  if (home) return home;
+  const userProfile = envOrEmpty("USERPROFILE");
+  if (userProfile) return userProfile;
+  const homeDrive = envOrEmpty("HOMEDRIVE");
+  const homePath = envOrEmpty("HOMEPATH");
+  if (homeDrive && homePath) return `${homeDrive}${homePath}`;
+  return os.homedir();
+}
+
+function resolveUserPath(inputPath, label) {
+  const raw = String(inputPath ?? "").trim();
+  if (!raw) return raw;
+
+  const homeDir = detectHomeDirectory();
+  let expanded = raw;
+
+  if (expanded === "~") {
+    expanded = homeDir;
+  } else if (expanded.startsWith("~/") || expanded.startsWith("~\\")) {
+    expanded = path.join(homeDir, expanded.slice(2));
+  }
+
+  expanded = expanded
+    .replace(/(?<!\\)\$\{HOME\}/g, homeDir)
+    .replace(/(?<!\\)\$HOME(?=$|[\\/])/g, homeDir)
+    .replace(/(?<!\\)\$\{USERPROFILE\}/gi, homeDir)
+    .replace(/(?<!\\)\$USERPROFILE(?=$|[\\/])/gi, homeDir)
+    .replace(/%HOME%/gi, homeDir)
+    .replace(/%USERPROFILE%/gi, homeDir)
+    .replace(/(?<!\\)\$env:HOME/gi, homeDir)
+    .replace(/(?<!\\)\$env:USERPROFILE/gi, homeDir);
+
+  const normalized = path.normalize(expanded);
+  if (UNEXPANDED_HOME_TOKEN_PATTERN.test(normalized)) {
+    throw new Error(
+      `Unexpanded home token detected in ${label}: ${raw}. ` +
+        "Use an absolute path or an unquoted home-path expression.",
+    );
+  }
+
+  return normalized;
+}
+
 function oneline(v) {
   return String(v ?? "")
     .replace(/[\r\n]+/g, " ")
@@ -69,10 +117,10 @@ function escapeForShellEnvVar(v) {
 
 function defaultInstallDir() {
   const env = envOrEmpty("PROMPTSEC_INSTALL_DIR");
-  if (env) return env;
-  const home = envOrEmpty("HOME");
+  if (env) return resolveUserPath(env, "PROMPTSEC_INSTALL_DIR");
+  const home = detectHomeDirectory();
   if (home) return path.join(home, ".config", "security-checkup");
-  return SCRIPT_ROOT;
+  return resolveUserPath(SCRIPT_ROOT, "script root");
 }
 
 function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir }) {
@@ -127,9 +175,10 @@ async function run() {
     : hostLabelEnv;
 
   const installDirDefault = defaultInstallDir();
-  const installDir = interactive
+  const installDirInput = interactive
     ? await prompt("Install dir containing scripts/runner.sh", { defaultValue: installDirDefault })
     : installDirDefault;
+  const installDir = resolveUserPath(installDirInput, "install dir containing scripts/runner.sh");
 
   if (!dmChannel || !dmTo) {
     throw new Error("Missing DM target. Set PROMPTSEC_DM_CHANNEL and PROMPTSEC_DM_TO (or run interactively). ");

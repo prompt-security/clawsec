@@ -45,6 +45,14 @@ Fallback behavior:
 
 ## Installation
 
+### Cross-shell path note
+
+- In `bash`/`zsh`, keep path variables expandable (for example, `INSTALL_ROOT="$HOME/.openclaw/skills"`).
+- Do not single-quote home-variable paths (avoid `'$HOME/.openclaw/skills'`).
+- In PowerShell, set an explicit path:
+  - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+- If a path is passed with unresolved tokens (like `\$HOME/...`), suite scripts now fail fast with a clear error.
+
 ### Option A: Via clawhub (recommended)
 
 ```bash

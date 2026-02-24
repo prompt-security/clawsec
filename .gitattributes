@@ -1,0 +1,24 @@
+* text=auto
+
+# Keep executable/script sources LF across platforms.
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.py text eol=lf
+
+# Keep config/docs deterministic in CI and local tooling.
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.pem text eol=lf
+
+# Binary assets.
+*.png binary
+*.ico binary
+*.ttf binary

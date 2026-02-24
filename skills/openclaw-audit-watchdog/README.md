@@ -39,6 +39,15 @@ export PROMPTSEC_HOST_LABEL="prod-agent-1"
 | `PROMPTSEC_GIT_PULL` | Pull latest before audit (0/1) | `0` |
 | `OPENCLAW_AUDIT_CONFIG` | Path to suppression config file | Auto-detected |
 
+### Path Expansion and Quoting
+
+- `PROMPTSEC_INSTALL_DIR` and `OPENCLAW_AUDIT_CONFIG` support `~`, `$HOME`, `${HOME}`, `%USERPROFILE%`, and `$env:USERPROFILE`.
+- In `bash`/`zsh`, use double quotes for expandable paths:
+  - `export PROMPTSEC_INSTALL_DIR="$HOME/.config/security-checkup"`
+- Avoid single-quoted literals such as `'$HOME/.config/security-checkup'`.
+- In PowerShell:
+  - `$env:PROMPTSEC_INSTALL_DIR = Join-Path $HOME ".config/security-checkup"`
+
 ## Suppression / Allowlist
 
 Manage false-positive findings with the built-in suppression mechanism. Suppressed findings remain visible in reports but are demoted to informational status and do not count toward critical/warning totals.

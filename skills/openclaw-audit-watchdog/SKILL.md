@@ -271,6 +271,12 @@ Optional env:
 - `PROMPTSEC_INSTALL_DIR` (stable path used by cron payload to `cd` before running runner; default: `~/.config/security-checkup`)
 - `PROMPTSEC_GIT_PULL=1` (runner will `git pull --ff-only` if installed from git)
 
+Path expansion rules (important):
+- In `bash`/`zsh`, use `PROMPTSEC_INSTALL_DIR="$HOME/.config/security-checkup"` (or absolute path).
+- Do not pass a single-quoted literal like `'$HOME/.config/security-checkup'`.
+- On PowerShell, prefer: `$env:PROMPTSEC_INSTALL_DIR = Join-Path $HOME ".config/security-checkup"`.
+- If path resolution fails, setup now exits with a clear error instead of creating a literal `$HOME` directory segment.
+
 Interactive install is last resort if env vars or defaults are not set.
 
 even in that case keep prompts minimalistic the watchdog tool is pretty straight up configured out of the box.

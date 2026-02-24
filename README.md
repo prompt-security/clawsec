@@ -72,6 +72,24 @@ Copy this instruction to your AI agent:
 
 > Read https://clawsec.prompt.security/releases/latest/download/SKILL.md and follow the instructions to install the protection skill suite.
 
+### Shell and OS Notes
+
+ClawSec scripts are split between:
+- Cross-platform Node/Python tooling (`npm run build`, hook/setup `.mjs`, `utils/*.py`)
+- POSIX shell workflows (`*.sh`, most manual install snippets)
+
+For Linux/macOS (`bash`/`zsh`):
+- Use unquoted or double-quoted home vars: `export INSTALL_ROOT="$HOME/.openclaw/skills"`
+- Do **not** single-quote expandable vars (for example, avoid `'$HOME/.openclaw/skills'`)
+
+For Windows (PowerShell):
+- Prefer explicit path building:
+  - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+  - `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
+- POSIX `.sh` scripts require WSL or Git Bash.
+
+Troubleshooting: if you see directories such as `~/.openclaw/workspace/$HOME/...`, a home variable was passed literally. Re-run using an absolute path or an unquoted home expression.
+
 ---
 
 ## 📱 NanoClaw Platform Support

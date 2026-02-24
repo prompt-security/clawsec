@@ -325,6 +325,65 @@ async function testLoadNoConfigReturnsEmpty() {
   }
 }
 
+async function testEnvPathHomeExpansion() {
+  const testName = "loadAdvisorySuppression: OPENCLAW_AUDIT_CONFIG expands $HOME";
+  try {
+    const configFile = path.join(tempDir, "env-home.json");
+    await fs.writeFile(configFile, JSON.stringify({
+      enabledFor: ["advisory"],
+      suppressions: [{
+        checkId: "CVE-2026-25593",
+        skill: "clawsec-suite",
+        reason: "Env home expansion",
+        suppressedAt: "2026-02-15",
+      }],
+    }));
+
+    const savedConfig = process.env.OPENCLAW_AUDIT_CONFIG;
+    const savedHome = process.env.HOME;
+    process.env.HOME = tempDir;
+    process.env.OPENCLAW_AUDIT_CONFIG = "$HOME/env-home.json";
+    try {
+      const config = await loadAdvisorySuppression();
+      if (config.suppressions.length === 1 && config.source === configFile) {
+        pass(testName);
+      } else {
+        fail(testName, `Expected env-expanded config, got: ${JSON.stringify(config)}`);
+      }
+    } finally {
+      if (savedConfig !== undefined) process.env.OPENCLAW_AUDIT_CONFIG = savedConfig;
+      else delete process.env.OPENCLAW_AUDIT_CONFIG;
+      if (savedHome !== undefined) process.env.HOME = savedHome;
+      else delete process.env.HOME;
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testEscapedHomeTokenRejected() {
+  const testName = "loadAdvisorySuppression: escaped home token is rejected";
+  try {
+    const savedEnv = process.env.OPENCLAW_AUDIT_CONFIG;
+    process.env.OPENCLAW_AUDIT_CONFIG = "\\$HOME/not-real.json";
+    try {
+      await loadAdvisorySuppression();
+      fail(testName, "Expected error for escaped token");
+    } catch (error) {
+      if (String(error).includes("Unexpanded home token")) {
+        pass(testName);
+      } else {
+        fail(testName, `Unexpected error: ${error}`);
+      }
+    } finally {
+      if (savedEnv !== undefined) process.env.OPENCLAW_AUDIT_CONFIG = savedEnv;
+      else delete process.env.OPENCLAW_AUDIT_CONFIG;
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main test runner
 // ---------------------------------------------------------------------------
@@ -350,6 +409,8 @@ async function runAllTests() {
     await testLoadWithBothSentinels();
     await testLoadNonexistentExplicitPath();
     await testLoadNoConfigReturnsEmpty();
+    await testEnvPathHomeExpansion();
+    await testEscapedHomeTokenRejected();
   } finally {
     await cleanupTestDir();
   }

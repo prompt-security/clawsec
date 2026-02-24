@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { isObject, normalizeSkillName } from "./utils.mjs";
+import { isObject, normalizeSkillName, resolveUserPath } from "./utils.mjs";
 
 const DEFAULT_PRIMARY_PATH = path.join(os.homedir(), ".openclaw", "security-audit.json");
 const DEFAULT_FALLBACK_PATH = ".clawsec/allowlist.json";
@@ -94,8 +94,9 @@ async function loadConfigFromPath(configPath) {
 export async function loadAdvisorySuppression(configPath) {
   // Priority 1: Explicit path
   if (configPath) {
-    const config = await loadConfigFromPath(configPath);
-    if (!config) throw new Error(`Advisory suppression config not found: ${configPath}`);
+    const resolved = resolveUserPath(configPath, { label: "advisory suppression config path" });
+    const config = await loadConfigFromPath(resolved);
+    if (!config) throw new Error(`Advisory suppression config not found: ${resolved}`);
     if (!config.enabledFor.includes("advisory")) return { ...EMPTY_CONFIG };
     return config;
   }
@@ -103,7 +104,8 @@ export async function loadAdvisorySuppression(configPath) {
   // Priority 2: Environment variable
   const envPath = process.env.OPENCLAW_AUDIT_CONFIG;
   if (typeof envPath === "string" && envPath.trim()) {
-    const config = await loadConfigFromPath(envPath.trim());
+    const resolved = resolveUserPath(envPath.trim(), { label: "OPENCLAW_AUDIT_CONFIG" });
+    const config = await loadConfigFromPath(resolved);
     if (config && config.enabledFor.includes("advisory")) return config;
     return { ...EMPTY_CONFIG };
   }

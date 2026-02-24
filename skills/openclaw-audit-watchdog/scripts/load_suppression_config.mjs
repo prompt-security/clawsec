@@ -6,6 +6,55 @@ import os from "node:os";
 
 const DEFAULT_PRIMARY_PATH = path.join(os.homedir(), ".openclaw", "security-audit.json");
 const DEFAULT_FALLBACK_PATH = ".clawsec/allowlist.json";
+const UNEXPANDED_HOME_TOKEN_PATTERN =
+  /(?:^|[\\/])(?:\\?\$HOME|\\?\$\{HOME\}|\\?\$USERPROFILE|\\?\$\{USERPROFILE\}|%HOME%|%USERPROFILE%|\$env:HOME|\$env:USERPROFILE)(?:$|[\\/])/i;
+
+function detectHomeDirectory(env = process.env) {
+  if (typeof env.HOME === "string" && env.HOME.trim()) return env.HOME.trim();
+  if (typeof env.USERPROFILE === "string" && env.USERPROFILE.trim()) return env.USERPROFILE.trim();
+  if (
+    typeof env.HOMEDRIVE === "string" &&
+    env.HOMEDRIVE.trim() &&
+    typeof env.HOMEPATH === "string" &&
+    env.HOMEPATH.trim()
+  ) {
+    return `${env.HOMEDRIVE.trim()}${env.HOMEPATH.trim()}`;
+  }
+  return os.homedir();
+}
+
+function resolveUserPath(inputPath, label) {
+  const raw = String(inputPath ?? "").trim();
+  if (!raw) return raw;
+
+  const homeDir = detectHomeDirectory(process.env);
+  let expanded = raw;
+
+  if (expanded === "~") {
+    expanded = homeDir;
+  } else if (expanded.startsWith("~/") || expanded.startsWith("~\\")) {
+    expanded = path.join(homeDir, expanded.slice(2));
+  }
+
+  expanded = expanded
+    .replace(/(?<!\\)\$\{HOME\}/g, homeDir)
+    .replace(/(?<!\\)\$HOME(?=$|[\\/])/g, homeDir)
+    .replace(/(?<!\\)\$\{USERPROFILE\}/gi, homeDir)
+    .replace(/(?<!\\)\$USERPROFILE(?=$|[\\/])/gi, homeDir)
+    .replace(/%HOME%/gi, homeDir)
+    .replace(/%USERPROFILE%/gi, homeDir)
+    .replace(/(?<!\\)\$env:HOME/gi, homeDir)
+    .replace(/(?<!\\)\$env:USERPROFILE/gi, homeDir);
+
+  const normalized = path.normalize(expanded);
+  if (UNEXPANDED_HOME_TOKEN_PATTERN.test(normalized)) {
+    throw new Error(
+      `Unexpanded home token detected in ${label}: ${raw}. ` +
+        "Use an absolute path or an unquoted home-path expression.",
+    );
+  }
+  return normalized;
+}
 
 function isObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -130,9 +179,10 @@ const EMPTY_RESULT = Object.freeze({ suppressions: [], source: "none" });
 async function resolveConfig(customPath) {
   // Priority 1: Custom path provided as argument
   if (customPath) {
-    const config = await loadConfigFromPath(customPath);
+    const resolved = resolveUserPath(customPath, "custom suppression config path");
+    const config = await loadConfigFromPath(resolved);
     if (!config) {
-      throw new Error(`Custom config file not found: ${customPath}`);
+      throw new Error(`Custom config file not found: ${resolved}`);
     }
     return config;
   }
@@ -140,9 +190,10 @@ async function resolveConfig(customPath) {
   // Priority 2: Environment variable
   const envPath = process.env.OPENCLAW_AUDIT_CONFIG;
   if (envPath) {
-    const config = await loadConfigFromPath(envPath);
+    const resolved = resolveUserPath(envPath, "OPENCLAW_AUDIT_CONFIG");
+    const config = await loadConfigFromPath(resolved);
     if (!config) {
-      throw new Error(`Config file from OPENCLAW_AUDIT_CONFIG not found: ${envPath}`);
+      throw new Error(`Config file from OPENCLAW_AUDIT_CONFIG not found: ${resolved}`);
     }
     return config;
   }
