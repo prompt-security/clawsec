@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-02-22T10:57:32Z",
+  "updated": "2026-02-24T06:20:16Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -18,12 +18,12 @@
         "https://github.com/openclaw/openclaw/commit/8ae2d5110f6ceadef73822aa3db194fb60d2ba68",
         "https://github.com/openclaw/openclaw/commit/ebcf19746f5c500a41817e03abecadea8655654a"
       ],
-      "cvss_score": null,
+      "cvss_score": 4.0,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27576"
     },
     {
       "id": "CVE-2026-27488",
-      "severity": "medium",
+      "severity": "high",
       "type": "server_side_request_forgery",
       "nvd_category_id": "CWE-918",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, Cron webhook delivery in src/g...",
@@ -36,7 +36,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.19",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-w45g-5746-x9fp"
       ],
-      "cvss_score": null,
+      "cvss_score": 7.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27488"
     },
     {
@@ -90,7 +90,7 @@
         "https://github.com/openclaw/openclaw/commit/ee1d6427b544ccadd73e02b1630ea5c29ba9a9f0",
         "https://github.com/openclaw/openclaw/pull/20796"
       ],
-      "cvss_score": null,
+      "cvss_score": 4.4,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27485"
     },
     {
@@ -108,7 +108,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.19",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-wh94-p5m6-mr7j"
       ],
-      "cvss_score": null,
+      "cvss_score": 4.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27484"
     },
     {
@@ -304,7 +304,7 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-pv58-549p-qh99"
       ],
-      "cvss_score": null,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26327"
     },
     {
@@ -322,7 +322,7 @@
         "https://github.com/openclaw/openclaw/commit/ebc68861a61067fc37f9298bded3eec9de0ba783",
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
       ],
-      "cvss_score": null,
+      "cvss_score": 4.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26326"
     },
     {
