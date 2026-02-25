@@ -1,6 +1,6 @@
 ---
 name: openclaw-audit-watchdog
-version: 0.1.0
+version: 0.1.1
 description: Automated daily security audits for OpenClaw agents with email reporting. Runs deep audits and sends formatted reports.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🔭","category":"security"}}
