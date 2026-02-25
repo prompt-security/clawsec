@@ -51,9 +51,21 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 
 ---
 
-## 📚 Documentation Source of Truth
+## 🎬 Product Demos
 
-For all wiki content, edit files under `wiki/` in this repository. The GitHub Wiki (`<repo>.wiki.git`) is synced from `wiki/` by `.github/workflows/wiki-sync.yml` when `wiki/**` changes on `main`.
+GitHub strips inline `<video>` tags in repository READMEs. The previews below are lightweight animated GIFs (no audio). Click any preview to open the full MP4 with audio.
+
+### Install Demo (`clawsec-suite`)
+
+[![Install demo animated preview](public/video/install-demo-preview.gif)](public/video/install-demo.mp4)
+
+Direct link: [install-demo.mp4](public/video/install-demo.mp4)
+
+### Drift Detection Demo (`soul-guardian`)
+
+[![Drift detection animated preview](public/video/soul-guardian-demo-preview.gif)](public/video/soul-guardian-demo.mp4)
+
+Direct link: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
 
 ---
 
@@ -95,22 +107,6 @@ For Windows (PowerShell):
 - POSIX `.sh` scripts require WSL or Git Bash.
 
 Troubleshooting: if you see directories such as `~/.openclaw/workspace/$HOME/...`, a home variable was passed literally. Re-run using an absolute path or an unquoted home expression.
-
-### Product Demos
-
-GitHub strips inline `<video>` tags in repository READMEs. The previews below are lightweight animated GIFs (no audio). Click any preview to open the full MP4 with audio.
-
-#### Install Demo (`clawsec-suite`)
-
-[![Install demo animated preview](public/video/install-demo-preview.gif)](public/video/install-demo.mp4)
-
-Direct link: [install-demo.mp4](public/video/install-demo.mp4)
-
-#### Drift Detection Demo (`soul-guardian`)
-
-[![Drift detection animated preview](public/video/soul-guardian-demo-preview.gif)](public/video/soul-guardian-demo.mp4)
-
-Direct link: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
 
 ---
 
@@ -440,6 +436,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#submitting-security-advisories) for detail
 3. Add `SKILL.md` with agent-readable instructions
 4. Validate with `python utils/validate_skill.py skills/your-skill`
 5. Submit a PR for review
+
+## 📚 Documentation Source of Truth
+
+For all wiki content, edit files under `wiki/` in this repository. The GitHub Wiki (`<repo>.wiki.git`) is synced from `wiki/` by `.github/workflows/wiki-sync.yml` when `wiki/**` changes on `main`.
 
 ---
 
