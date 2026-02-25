@@ -879,10 +879,10 @@ jobs:
 
       - name: Require automation token for release publishing
         env:
-          AUTOMATION_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          AUTOMATION_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
         run: |
           if [ -z "$AUTOMATION_TOKEN" ]; then
-            echo "::error::Set CLAWSEC_AUTOMATION_TOKEN (or SCORECARD_TOKEN fallback) with repo write permissions."
+            echo "::error::Set POLL_NVD_CVES_PAT with repo write permissions."
             exit 1
           fi
 
@@ -945,7 +945,7 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
 
       - name: Delete superseded releases
         run: |
@@ -982,7 +982,7 @@ jobs:
 
           echo "Superseded release cleanup complete"
         env:
-          GITHUB_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
 
   publish-clawhub:
     # Separate job for ClawHub publishing - runs after GitHub release

@@ -657,10 +657,10 @@ jobs:
       - name: Require automation token for PR operations
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
         env:
-          AUTOMATION_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          AUTOMATION_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
         run: |
           if [ -z "$AUTOMATION_TOKEN" ]; then
-            echo "::error::Set CLAWSEC_AUTOMATION_TOKEN (or SCORECARD_TOKEN fallback) with repo/workflow write permissions."
+            echo "::error::Set POLL_NVD_CVES_PAT with repo/workflow write permissions."
             exit 1
           fi
 
@@ -669,7 +669,7 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          token: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          token: ${{ secrets.POLL_NVD_CVES_PAT }}
           branch: automated/nvd-cve-update-${{ github.run_id }}
           delete-branch: true
           title: "chore: CVE advisories - ${{ steps.transform.outputs.new_count }} new, ${{ steps.updates.outputs.update_count }} updated"
@@ -699,7 +699,7 @@ jobs:
       - name: Run CodeQL on generated PR branch
         if: steps.create-pr.outputs.pull-request-number != ''
         env:
-          GH_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          GH_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
         run: |
           set -euo pipefail
 

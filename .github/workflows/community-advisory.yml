@@ -242,10 +242,10 @@ jobs:
 
       - name: Require automation token for write operations
         env:
-          AUTOMATION_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          AUTOMATION_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
         run: |
           if [ -z "$AUTOMATION_TOKEN" ]; then
-            echo "::error::Set CLAWSEC_AUTOMATION_TOKEN (or SCORECARD_TOKEN fallback) with repo write permissions."
+            echo "::error::Set POLL_NVD_CVES_PAT with repo write permissions."
             exit 1
           fi
 
@@ -254,7 +254,7 @@ jobs:
         id: create-pr
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          token: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          token: ${{ secrets.POLL_NVD_CVES_PAT }}
           branch: automated/community-advisory-${{ github.event.issue.number }}
           delete-branch: true
           title: "chore: add community advisory ${{ steps.parse.outputs.advisory_id }}"
@@ -283,7 +283,7 @@ jobs:
         if: steps.parse.outputs.already_exists != 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
-          github-token: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          github-token: ${{ secrets.POLL_NVD_CVES_PAT }}
           script: |
             const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
             const pullRequestUrl = '${{ steps.create-pr.outputs.pull-request-url }}';
@@ -309,7 +309,7 @@ jobs:
         if: steps.parse.outputs.already_exists == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
-          github-token: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          github-token: ${{ secrets.POLL_NVD_CVES_PAT }}
           script: |
             const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
             await github.rest.issues.createComment({

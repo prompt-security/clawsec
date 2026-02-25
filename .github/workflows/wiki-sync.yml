@@ -22,7 +22,7 @@ jobs:
 
       - name: Sync wiki folder to repository wiki
         env:
-          AUTOMATION_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+          AUTOMATION_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
         run: |
           set -euo pipefail
 
@@ -32,7 +32,7 @@ jobs:
           fi
 
           if [ -z "$AUTOMATION_TOKEN" ]; then
-            echo "::error::Set CLAWSEC_AUTOMATION_TOKEN (or SCORECARD_TOKEN fallback) with repo write permissions."
+            echo "::error::Set POLL_NVD_CVES_PAT with repo write permissions."
             exit 1
           fi
 
