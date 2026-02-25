@@ -44,21 +44,29 @@ jobs:
           fi
           cp wiki/INDEX.md wiki/Home.md
 
-          # PAT auth for Git over HTTPS expects the token owner's login as username.
-          # Resolve it dynamically so the same flow works for PAT-based automation tokens.
-          TOKEN_USER="$(curl -fsSL -H "Authorization: Bearer ${AUTOMATION_TOKEN}" -H "Accept: application/vnd.github+json" https://api.github.com/user | jq -r '.login // empty' || true)"
-          if [ -z "$TOKEN_USER" ] || [ "$TOKEN_USER" = "null" ]; then
-            echo "::error::Unable to resolve token owner for POLL_NVD_CVES_PAT. Ensure it is a valid PAT with repo access."
+          REPO_API_JSON="$(mktemp)"
+          REPO_API_STATUS="$(curl -sS -o "$REPO_API_JSON" -w "%{http_code}" -H "Authorization: Bearer ${AUTOMATION_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}")"
+          if [ "$REPO_API_STATUS" = "401" ]; then
+            echo "::error::POLL_NVD_CVES_PAT is invalid/expired, or not SSO-authorized for this org."
+            exit 1
+          fi
+          if [ "$REPO_API_STATUS" = "404" ]; then
+            echo "::error::POLL_NVD_CVES_PAT cannot access ${{ github.repository }}."
+            exit 1
+          fi
+          if [ "$REPO_API_STATUS" != "200" ]; then
+            REPO_API_MESSAGE="$(jq -r '.message // empty' "$REPO_API_JSON" || true)"
+            echo "::error::Unexpected GitHub API response (${REPO_API_STATUS}) while validating token. ${REPO_API_MESSAGE}"
             exit 1
           fi
 
-          REPO_PUSH_PERMISSION="$(curl -fsSL -H "Authorization: Bearer ${AUTOMATION_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}" | jq -r '.permissions.push // false' || true)"
+          REPO_PUSH_PERMISSION="$(jq -r '.permissions.push // false' "$REPO_API_JSON" || true)"
           if [ "$REPO_PUSH_PERMISSION" != "true" ]; then
             echo "::error::POLL_NVD_CVES_PAT cannot push to ${{ github.repository }}. Grant Contents: write (fine-grained PAT) or repo scope (classic PAT), and ensure org approval/SSO authorization if required."
             exit 1
           fi
 
-          WIKI_REMOTE="https://${TOKEN_USER}:${AUTOMATION_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+          WIKI_REMOTE="https://x-access-token:${AUTOMATION_TOKEN}@github.com/${{ github.repository }}.wiki.git"
           if ! git ls-remote "$WIKI_REMOTE" >/dev/null 2>&1; then
             echo "::warning::Wiki remote unavailable (repository wiki may be disabled). Skipping sync."
             exit 0
