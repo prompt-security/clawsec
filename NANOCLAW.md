@@ -37,14 +37,64 @@ Advisories now support optional `platforms` field:
 - `["openclaw", "nanoclaw"]` - Affects both platforms
 - (empty/missing) - Applies to all platforms (backward compatible)
 
-## How NanoClaw Uses ClawSec
+## ClawSec NanoClaw Skill
 
-NanoClaw can consume the advisory feed at:
+ClawSec provides a complete security skill for NanoClaw deployments:
+
+**Location**: `skills/clawsec-nanoclaw/`
+
+### Features
+
+- **4 MCP Tools** for agents to check vulnerabilities:
+  - `clawsec_check_advisories` - Scan installed skills
+  - `clawsec_check_skill_safety` - Pre-installation safety checks
+  - `clawsec_list_advisories` - Browse advisory feed
+  - `clawsec_verify_signature` - Verify Ed25519 signatures
+
+- **Advisory Cache Service**: Automatic feed fetching every 6 hours
+- **Signature Verification**: Ed25519-signed feeds ensure integrity
+- **Platform Filtering**: Shows only relevant advisories for NanoClaw
+- **IPC Communication**: Container-safe host communication
+
+### Installation
+
+1. Copy the skill to your NanoClaw deployment:
+   ```bash
+   cp -r skills/clawsec-nanoclaw /path/to/nanoclaw/skills/
+   ```
+
+2. Follow the detailed guide at `skills/clawsec-nanoclaw/INSTALL.md`
+
+### Quick Integration
+
+The skill integrates into three places:
+
+**1. MCP Tools** (container):
+```typescript
+// container/agent-runner/src/ipc-mcp-stdio.ts
+import { clawsecTools } from '../../../skills/clawsec-nanoclaw/mcp-tools/advisory-tools.js';
+```
+
+**2. IPC Handlers** (host):
+```typescript
+// host/ipc-handler.ts
+import { registerClawSecHandlers } from '../skills/clawsec-nanoclaw/host-services/ipc-handlers.js';
+```
+
+**3. Cache Service** (host):
+```typescript
+// host/index.ts
+import { startAdvisoryCache } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
+```
+
+### Advisory Feed
+
+NanoClaw consumes the same feed as OpenClaw:
 ```
 https://clawsec.prompt.security/advisories/feed.json
 ```
 
-The feed is Ed25519 signed for integrity verification.
+The feed is Ed25519 signed and automatically fetched by the cache service.
 
 ## Team Credits
 
@@ -61,16 +111,36 @@ This integration was developed by a team of 8 specialized agents coordinated to 
 
 Total contribution: 3000+ lines of code and comprehensive design documents.
 
+## What's Included
+
+The `clawsec-nanoclaw` skill provides:
+
+- **1,730 lines** of production-ready TypeScript code
+- **MCP Tools** (350 lines): Agent-facing vulnerability checking
+- **Advisory Cache** (492 lines): Automatic feed fetching and caching
+- **Signature Verification** (387 lines): Ed25519 signature validation
+- **Advisory Matching** (289 lines): Skill-to-vulnerability correlation
+- **IPC Handlers** (212 lines): Container-to-host communication
+- **Complete Documentation**: Installation guide, usage examples, troubleshooting
+
 ## Future Enhancements
 
-Planned features for deeper NanoClaw integration:
-- MCP tools for advisory checking in containers
-- File integrity monitoring (soul-guardian adaptation)
-- Automated skill safety gates
-- WhatsApp-native alert formatting
+Planned features for future releases:
+- File integrity monitoring (soul-guardian adaptation for containers)
+- Real-time advisory alerts via WebSocket
+- WhatsApp-native security alert formatting
+- Behavioral analysis and anomaly detection
+- Custom/private advisory feed support
 
-## More Information
+## Documentation
 
-- [ClawSec Main README](README.md)
-- [Security & Signing](SECURITY-SIGNING.md)
+- [Skill Documentation](skills/clawsec-nanoclaw/SKILL.md) - Features and architecture
+- [Installation Guide](skills/clawsec-nanoclaw/INSTALL.md) - Detailed setup instructions
+- [ClawSec Main README](README.md) - Overall ClawSec documentation
+- [Security & Signing](SECURITY-SIGNING.md) - Signature verification details
+
+## Support
+
+- **Issues**: https://github.com/prompt-security/clawsec/issues
+- **Security**: security@prompt.security
 - NanoClaw Repository: (link TBD)
