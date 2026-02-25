@@ -98,17 +98,21 @@ Troubleshooting: if you see directories such as `~/.openclaw/workspace/$HOME/...
 
 ### Product Demos
 
+GitHub strips inline `<video>` tags in repository READMEs. Click the preview images to open each MP4 on GitHub.
+
 #### Install Demo (`clawsec-suite`)
 
-<video controls width="360" src="https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/install-demo.mp4"></video>
+[![Install demo preview](public/video/install-demo-poster.jpg)](public/video/install-demo.mp4)
 
-Direct link: [install-demo.mp4](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/install-demo.mp4)
+Direct link: [install-demo.mp4](public/video/install-demo.mp4)
+Raw link: [install-demo.mp4 (raw)](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/install-demo.mp4)
 
 #### Drift Detection Demo (`soul-guardian`)
 
-<video controls width="960" src="https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/soul-guardian-demo.mp4"></video>
+[![Drift detection demo preview](public/video/soul-guardian-demo-poster.jpg)](public/video/soul-guardian-demo.mp4)
 
-Direct link: [soul-guardian-demo.mp4](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/soul-guardian-demo.mp4)
+Direct link: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
+Raw link: [soul-guardian-demo.mp4 (raw)](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/soul-guardian-demo.mp4)
 
 ---
 
