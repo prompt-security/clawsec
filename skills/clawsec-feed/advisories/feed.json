@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-02-24T06:20:16Z",
+  "updated": "2026-02-25T11:37:22Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -72,7 +72,7 @@
         "https://github.com/openclaw/openclaw/commit/eb60e2e1b213740c3c587a7ba4dbf10da620ca66",
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
       ],
-      "cvss_score": null,
+      "cvss_score": 5.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486"
     },
     {
