@@ -337,6 +337,7 @@ jobs:
                 | ($targets | map(select(startswith("openclaw@"))) | length > 0) as $has_openclaw
                 | ($targets | map(select(startswith("nanoclaw@"))) | length > 0) as $has_nanoclaw
                 | if $has_openclaw and $has_nanoclaw then ["openclaw", "nanoclaw"]
+                  elif $has_openclaw then ["openclaw"]
                   elif $has_nanoclaw then ["nanoclaw"]
                   else ["openclaw", "nanoclaw"]
                   end
@@ -546,6 +547,7 @@ jobs:
                 | ($targets | map(select(startswith("openclaw@"))) | length > 0) as $has_openclaw
                 | ($targets | map(select(startswith("nanoclaw@"))) | length > 0) as $has_nanoclaw
                 | if $has_openclaw and $has_nanoclaw then ["openclaw", "nanoclaw"]
+                  elif $has_openclaw then ["openclaw"]
                   elif $has_nanoclaw then ["nanoclaw"]
                   else ["openclaw", "nanoclaw"]
                   end
