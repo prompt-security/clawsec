@@ -4,6 +4,27 @@ import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
 import type { SkillMetadata, SkillsIndex } from '../types';
 
+const SKILLS_INDEX_PATH = '/skills/index.json';
+
+const isProbablyHtmlDocument = (text: string): boolean => {
+  const start = text.trimStart().slice(0, 200).toLowerCase();
+  return start.startsWith('<!doctype html') || start.startsWith('<html');
+};
+
+const parseSkillsIndex = (raw: string): SkillsIndex | null => {
+  try {
+    const parsed = JSON.parse(raw) as Partial<SkillsIndex> | null;
+    if (!parsed || !Array.isArray(parsed.skills)) return null;
+    return {
+      version: typeof parsed.version === 'string' ? parsed.version : '1.0.0',
+      updated: typeof parsed.updated === 'string' ? parsed.updated : '',
+      skills: parsed.skills as SkillMetadata[],
+    };
+  } catch {
+    return null;
+  }
+};
+
 export const SkillsCatalog: React.FC = () => {
   const [skills, setSkills] = useState<SkillMetadata[]>([]);
   const [filteredSkills, setFilteredSkills] = useState<SkillMetadata[]>([]);
@@ -15,15 +36,41 @@ export const SkillsCatalog: React.FC = () => {
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const response = await fetch('./skills/index.json');
+        const response = await fetch(SKILLS_INDEX_PATH, {
+          headers: { Accept: 'application/json' },
+        });
+
+        // Missing index file is a valid "empty catalog" state.
+        if (response.status === 404) {
+          setSkills([]);
+          setFilteredSkills([]);
+          return;
+        }
+
         if (!response.ok) {
           throw new Error('Failed to fetch skills index');
         }
-        const data: SkillsIndex = await response.json();
-        setSkills(data.skills || []);
-        setFilteredSkills(data.skills || []);
+
+        const contentType = response.headers.get('content-type') ?? '';
+        const raw = await response.text();
+
+        // Some SPA setups return index.html with 200 for missing JSON files.
+        if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(raw)) {
+          setSkills([]);
+          setFilteredSkills([]);
+          return;
+        }
+
+        const data = parseSkillsIndex(raw);
+        if (!data) {
+          throw new Error('Invalid skills index format');
+        }
+
+        setSkills(data.skills);
+        setFilteredSkills(data.skills);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load skills');
+        console.error('Failed to load skills index:', err);
+        setError('Failed to load skills catalog');
       } finally {
         setLoading(false);
       }

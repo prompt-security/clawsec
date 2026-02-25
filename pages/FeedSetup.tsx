@@ -76,7 +76,7 @@ export const FeedSetup: React.FC = () => {
         <h1 className="text-3xl md:text-4xl text-white">Security Hardening Feed</h1>
         <p className="text-gray-400 max-w-2xl mx-auto">
           A continuous stream of security advisories from NVD CVE data and staff-approved community reports. 
-          This feed is automatically updated with OpenClaw-related vulnerabilities and verified security incidents.
+          This feed is automatically updated with OpenClaw and NanoClaw-related vulnerabilities and verified security incidents.
         </p>
         {lastUpdated && (
           <p className="text-xs text-gray-500">

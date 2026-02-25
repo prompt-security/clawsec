@@ -175,7 +175,7 @@ jobs:
           echo "Total unique CVEs from NVD: $TOTAL"
           
           # Post-filter: keep only CVEs where description contains keywords OR references contain github pattern
-          KEYWORDS_PATTERN="OpenClaw|clawdbot|Moltbot|openclaw"
+          KEYWORDS_PATTERN="OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys"
           GITHUB_PATTERN="${GITHUB_REF_PATTERN}"
           
           jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_PATTERN" '
@@ -297,6 +297,36 @@ jobs:
                   end
               );
 
+            def cpe_criteria:
+              (
+                [.cve.configurations[]? | .. | objects | .criteria? | strings | select(startswith("cpe:2.3:"))]
+                | unique
+              );
+
+            def inferred_targets:
+              (
+                (
+                  [
+                    (.cve.descriptions[]? | select(.lang == "en") | .value),
+                    (.cve.references[]?.url // empty)
+                  ]
+                  | map(strings | ascii_downcase)
+                  | join(" ")
+                ) as $blob
+                | (
+                    (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
+                    + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
+                  )
+              );
+
+            def normalized_affected:
+              (
+                (cpe_criteria + inferred_targets)
+                | unique
+                | .[0:5]
+                | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
+              );
+
             [.[] | {
               id: .cve.id,
               severity: (get_cvss_score | map_severity),
@@ -305,6 +335,7 @@ jobs:
               cvss_score: get_cvss_score,
               description: (.cve.descriptions[] | select(.lang == "en") | .value),
               title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
+              affected: normalized_affected,
               references: [.cve.references[]?.url // empty] | unique | .[0:3]
             }]
           ' tmp/filtered_cves.json > tmp/nvd_current_state.json
@@ -325,6 +356,7 @@ jobs:
                    ($existing_entry.type != $nvd_entry.type) or
                    ($existing_entry.nvd_category_id != $nvd_entry.nvd_category_id) or
                    ($existing_entry.cvss_score != $nvd_entry.cvss_score) or
+                   ($existing_entry.affected != $nvd_entry.affected) or
                    ($existing_entry.description != $nvd_entry.description) then
                   {
                     id: $nvd_entry.id,
@@ -334,6 +366,7 @@ jobs:
                       + (if $existing_entry.type != $nvd_entry.type then ["type: \($existing_entry.type // "null") → \($nvd_entry.type // "null")"] else [] end)
                       + (if $existing_entry.nvd_category_id != $nvd_entry.nvd_category_id then ["nvd_category_id: \($existing_entry.nvd_category_id // "null") → \($nvd_entry.nvd_category_id // "null")"] else [] end)
                       + (if $existing_entry.cvss_score != $nvd_entry.cvss_score then ["cvss_score: \($existing_entry.cvss_score // "null") → \($nvd_entry.cvss_score // "null")"] else [] end)
+                      + (if $existing_entry.affected != $nvd_entry.affected then ["affected targets updated"] else [] end)
                       + (if $existing_entry.description != $nvd_entry.description then ["description updated"] else [] end)
                     ),
                     updated_fields: {
@@ -341,6 +374,7 @@ jobs:
                       type: $nvd_entry.type,
                       nvd_category_id: $nvd_entry.nvd_category_id,
                       cvss_score: $nvd_entry.cvss_score,
+                      affected: $nvd_entry.affected,
                       description: $nvd_entry.description,
                       title: $nvd_entry.title,
                       references: $nvd_entry.references
@@ -453,6 +487,36 @@ jobs:
                   else (cwe_name_map($id) // ("unknown_cwe_" + $id))
                   end
               );
+
+            def cpe_criteria:
+              (
+                [.cve.configurations[]? | .. | objects | .criteria? | strings | select(startswith("cpe:2.3:"))]
+                | unique
+              );
+
+            def inferred_targets:
+              (
+                (
+                  [
+                    (.cve.descriptions[]? | select(.lang == "en") | .value),
+                    (.cve.references[]?.url // empty)
+                  ]
+                  | map(strings | ascii_downcase)
+                  | join(" ")
+                ) as $blob
+                | (
+                    (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
+                    + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
+                  )
+              );
+
+            def normalized_affected:
+              (
+                (cpe_criteria + inferred_targets)
+                | unique
+                | .[0:5]
+                | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
+              );
             
             [.[] | 
               select(.cve.id as $id | $existing | index($id) | not) |
@@ -463,7 +527,7 @@ jobs:
                 nvd_category_id: nvd_category_raw,
                 title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
                 description: (.cve.descriptions[] | select(.lang == "en") | .value),
-                affected: [.cve.configurations[]?.nodes[]?.cpeMatch[]?.criteria // empty] | unique | .[0:5],
+                affected: normalized_affected,
                 action: "Review and update affected components. See NVD for remediation details.",
                 published: .cve.published,
                 references: [.cve.references[]?.url // empty] | unique | .[0:3],

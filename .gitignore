@@ -39,3 +39,4 @@ __pycache__/
 *.njsproj
 *.sln
 *.sw?
+clawsec-signing-private.pem

@@ -16,8 +16,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FEED_PATH="$PROJECT_ROOT/advisories/feed.json"
 SKILL_FEED_PATH="$PROJECT_ROOT/skills/clawsec-feed/advisories/feed.json"
 PUBLIC_FEED_PATH="$PROJECT_ROOT/public/advisories/feed.json"
-KEYWORDS="OpenClaw clawdbot Moltbot"
-GITHUB_REF_PATTERN="github.com/openclaw/openclaw"
+KEYWORDS="OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
+GITHUB_REF_PATTERN="github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
 
 # Parse args
 DAYS_BACK=120
@@ -128,7 +128,7 @@ TOTAL=$(jq 'length' "$TEMP_DIR/unique_cves.json")
 echo "Total unique CVEs from NVD: $TOTAL"
 
 # Post-filter: keep only CVEs matching our criteria
-KEYWORDS_PATTERN="OpenClaw|clawdbot|Moltbot|openclaw"
+KEYWORDS_PATTERN="OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys"
 
 jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_REF_PATTERN" '
   [.[] | select(
@@ -236,6 +236,36 @@ jq --argjson existing "$EXISTING_JSON" '
         else (cwe_name_map($id) // ("unknown_cwe_" + $id))
         end
     );
+
+  def cpe_criteria:
+    (
+      [.cve.configurations[]? | .. | objects | .criteria? | strings | select(startswith("cpe:2.3:"))]
+      | unique
+    );
+
+  def inferred_targets:
+    (
+      (
+        [
+          (.cve.descriptions[]? | select(.lang == "en") | .value),
+          (.cve.references[]?.url // empty)
+        ]
+        | map(strings | ascii_downcase)
+        | join(" ")
+      ) as $blob
+      | (
+          (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
+          + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
+        )
+    );
+
+  def normalized_affected:
+    (
+      (cpe_criteria + inferred_targets)
+      | unique
+      | .[0:5]
+      | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
+    );
   
   [.[] | 
     select(.cve.id as $id | $existing | index($id) | not) |
@@ -246,7 +276,7 @@ jq --argjson existing "$EXISTING_JSON" '
       nvd_category_id: nvd_category_raw,
       title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
       description: (.cve.descriptions[] | select(.lang == "en") | .value),
-      affected: [.cve.configurations[]?.nodes[]?.cpeMatch[]?.criteria // empty] | unique | .[0:5],
+      affected: normalized_affected,
       action: "Review and update affected components. See NVD for remediation details.",
       published: .cve.published,
       references: [.cve.references[]?.url // empty] | unique | .[0:3],
@@ -298,7 +328,7 @@ else
   jq -n --argjson advisories "$(cat "$TEMP_DIR/new_advisories.json")" --arg now "$NOW" '{
     version: "1.0.0",
     updated: $now,
-    description: "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD.",
+    description: "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw and NanoClaw-related CVEs from NVD.",
     advisories: ($advisories | sort_by(.published) | reverse)
   }' > "$TEMP_DIR/updated_feed.json"
 fi

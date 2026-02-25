@@ -12,6 +12,11 @@ const stripFrontmatter = (content: string): string => {
   return content.replace(frontmatterRegex, '');
 };
 
+const isProbablyHtmlDocument = (text: string): boolean => {
+  const start = text.trimStart().slice(0, 200).toLowerCase();
+  return start.startsWith('<!doctype html') || start.startsWith('<html');
+};
+
 export const SkillDetail: React.FC = () => {
   const { skillId } = useParams<{ skillId: string }>();
   const [skillData, setSkillData] = useState<SkillJson | null>(null);
@@ -29,19 +34,44 @@ export const SkillDetail: React.FC = () => {
         setDoc(null);
 
         // Fetch skill.json
-        const skillResponse = await fetch(`./skills/${skillId}/skill.json`);
+        const skillResponse = await fetch(`/skills/${skillId}/skill.json`, {
+          headers: { Accept: 'application/json' }
+        });
         if (!skillResponse.ok) {
           throw new Error('Skill not found');
         }
-        const skill = await skillResponse.json();
+
+        const skillContentType = skillResponse.headers.get('content-type') ?? '';
+        const skillRaw = await skillResponse.text();
+        if (skillContentType.includes('text/html') || isProbablyHtmlDocument(skillRaw)) {
+          throw new Error('Skill not found');
+        }
+
+        let skill: SkillJson;
+        try {
+          skill = JSON.parse(skillRaw) as SkillJson;
+        } catch {
+          throw new Error('Invalid skill metadata');
+        }
+
         setSkillData(skill);
 
         // Fetch checksums.json
         try {
-          const checksumsResponse = await fetch(`./skills/${skillId}/checksums.json`);
+          const checksumsResponse = await fetch(`/skills/${skillId}/checksums.json`, {
+            headers: { Accept: 'application/json' }
+          });
           if (checksumsResponse.ok) {
-            const checksumsData = await checksumsResponse.json();
-            setChecksums(checksumsData);
+            const checksumsContentType = checksumsResponse.headers.get('content-type') ?? '';
+            const checksumsRaw = await checksumsResponse.text();
+            if (!checksumsContentType.includes('text/html') && !isProbablyHtmlDocument(checksumsRaw)) {
+              try {
+                const checksumsData = JSON.parse(checksumsRaw) as SkillChecksums;
+                setChecksums(checksumsData);
+              } catch {
+                // Checksums malformed, ignore.
+              }
+            }
           }
         } catch {
           // Checksums not available
@@ -51,18 +81,8 @@ export const SkillDetail: React.FC = () => {
         // Note: Dev servers may fall back to serving index.html with 200 for missing files;
         // guard against accidentally rendering HTML as docs.
         try {
-          const isProbablyHtmlDocument = (text: string) => {
-            const start = text.trimStart().slice(0, 200).toLowerCase();
-            return start.startsWith('<!doctype html') || start.startsWith('<html');
-          };
-
-          const stripYamlFrontmatter = (text: string) => {
-            const match = text.match(/^---\\s*\\n[\\s\\S]*?\\n---\\s*\\n/);
-            return match ? text.slice(match[0].length) : text;
-          };
-
           const fetchDocFile = async (filename: string) => {
-            const response = await fetch(`./skills/${skillId}/${filename}`, {
+            const response = await fetch(`/skills/${skillId}/${filename}`, {
               headers: { Accept: 'text/plain' }
             });
             if (!response.ok) return null;
@@ -73,7 +93,7 @@ export const SkillDetail: React.FC = () => {
             if (contentType.includes('text/html') || isProbablyHtmlDocument(rawText)) return null;
 
             const text =
-              filename === 'SKILL.md' ? stripYamlFrontmatter(rawText).trim() : rawText.trim();
+              filename === 'SKILL.md' ? stripFrontmatter(rawText).trim() : rawText.trim();
 
             return text.length > 0 ? text : null;
           };

@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { User, Bot, Copy, Check } from 'lucide-react';
+import { User, Bot, Copy, Check, Lock } from 'lucide-react';
 import { Footer } from '../components/Footer';
 
 const FILE_NAMES = ['SOUL.md', 'AGENTS.md', 'USER.md', 'TOOLS.md', 'IDENTITY.md', 'HEARTBEAT.md', 'MEMORY.md'];
+const PLATFORM_NAMES = ['OpenClaw', 'NanoClaw'];
+const FILE_LOCK_REVEAL_DELAY_MS = 1600;
 
 export const Home: React.FC = () => {
   const [isAgent, setIsAgent] = useState(true);
   const [copiedCurl, setCopiedCurl] = useState(false);
   const [copiedHuman, setCopiedHuman] = useState(false);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [currentPlatformIndex, setCurrentPlatformIndex] = useState(0);
 
   const curlCommand = `npx clawhub@latest install clawsec-suite`;
 
@@ -18,6 +21,27 @@ export const Home: React.FC = () => {
       setCurrentFileIndex((prev) => (prev + 1) % FILE_NAMES.length);
     }, 2500); // 2.5 seconds
     return () => clearInterval(interval);
+  }, []);
+
+  // Rotate platform names every 4-6 seconds
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    const scheduleNextRotation = () => {
+      const delay = 4000 + Math.floor(Math.random() * 2001);
+      timeoutId = window.setTimeout(() => {
+        setCurrentPlatformIndex((prev) => (prev + 1) % PLATFORM_NAMES.length);
+        scheduleNextRotation();
+      }, delay);
+    };
+
+    scheduleNextRotation();
+
+    return () => {
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const humanInstruction = `Please install clawsec-suite from clawhubnpx clawhub@latest install clawsec-suite`;
@@ -44,24 +68,20 @@ export const Home: React.FC = () => {
       {/* Hero Section */}
       <section className="text-center space-y-6 max-w-3xl mx-auto mb-12 md:mb-16">
         <h2 className="text-3xl md:text-4xl tracking-tight text-white">
-          Secure your <span className="text-clawd-accent">OpenClaw</span> agents
-        </h2>
-        <p className="text-lg md:text-xl text-gray-400 leading-relaxed">
-          A complete security skill suite for OpenClaw's family of agents. Protect your{' '}
+          Secure your{' '}
           <code
-            key={currentFileIndex}
-            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative text-base"
+            key={currentPlatformIndex}
+            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative"
             style={{
-              width: '165px',
+              minWidth: '9ch',
               textAlign: 'center',
-              verticalAlign: 'baseline',
               backgroundColor: 'rgb(30 27 75 / 1)',
               animation: 'bgFade 0.4s ease-out 1.2s 1 forwards'
             }}
           >
-            {FILE_NAMES[currentFileIndex].split('').map((char, index) => (
+            {PLATFORM_NAMES[currentPlatformIndex].split('').map((char, index) => (
               <span
-                key={`${currentFileIndex}-${index}`}
+                key={`platform-${currentPlatformIndex}-${index}`}
                 className="inline-block"
                 style={{
                   animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 forwards`,
@@ -73,6 +93,47 @@ export const Home: React.FC = () => {
                 {char}
               </span>
             ))}
+          </code>{' '}
+          agents
+        </h2>
+        <p className="text-lg md:text-xl text-gray-400 leading-relaxed">
+          A complete security skill suite for OpenClaw and NanoClaw agents. Protect your{' '}
+          <code
+            key={currentFileIndex}
+            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative text-base"
+            style={{
+              width: '188px',
+              textAlign: 'center',
+              verticalAlign: 'baseline',
+              backgroundColor: 'rgb(30 27 75 / 1)',
+              animation: 'bgFade 0.4s ease-out 1.2s 1 forwards'
+            }}
+          >
+            <span className="inline-block w-full pr-5">
+              {FILE_NAMES[currentFileIndex].split('').map((char, index) => (
+                <span
+                  key={`${currentFileIndex}-${index}`}
+                  className="inline-block"
+                  style={{
+                    animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 forwards`,
+                    transformStyle: 'preserve-3d',
+                    perspective: '400px',
+                    opacity: 0
+                  }}
+                >
+                  {char}
+                </span>
+              ))}
+            </span>
+            <Lock
+              size={14}
+              className="text-clawd-accent absolute right-2 top-1/2 -translate-y-1/2"
+              style={{
+                opacity: 0,
+                animation: `lockReveal ${FILE_LOCK_REVEAL_DELAY_MS}ms steps(1, end) 1 forwards`
+              }}
+              aria-hidden="true"
+            />
           </code>
           {' '}with drift detection, live security recommendations, automated audits, and skill integrity verification. All from one installable suite.
         </p>
@@ -100,6 +161,14 @@ export const Home: React.FC = () => {
             }
             100% {
               background-color: rgb(191 107 42 / 0.15);
+            }
+          }
+          @keyframes lockReveal {
+            0% {
+              opacity: 0;
+            }
+            100% {
+              opacity: 0.85;
             }
           }
           @keyframes mascotHover {
