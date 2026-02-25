@@ -44,7 +44,21 @@ jobs:
           fi
           cp wiki/INDEX.md wiki/Home.md
 
-          WIKI_REMOTE="https://x-access-token:${AUTOMATION_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+          # PAT auth for Git over HTTPS expects the token owner's login as username.
+          # Resolve it dynamically so the same flow works for PAT-based automation tokens.
+          TOKEN_USER="$(curl -fsSL -H "Authorization: Bearer ${AUTOMATION_TOKEN}" -H "Accept: application/vnd.github+json" https://api.github.com/user | jq -r '.login // empty' || true)"
+          if [ -z "$TOKEN_USER" ] || [ "$TOKEN_USER" = "null" ]; then
+            echo "::error::Unable to resolve token owner for POLL_NVD_CVES_PAT. Ensure it is a valid PAT with repo access."
+            exit 1
+          fi
+
+          REPO_PUSH_PERMISSION="$(curl -fsSL -H "Authorization: Bearer ${AUTOMATION_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}" | jq -r '.permissions.push // false' || true)"
+          if [ "$REPO_PUSH_PERMISSION" != "true" ]; then
+            echo "::error::POLL_NVD_CVES_PAT cannot push to ${{ github.repository }}. Grant Contents: write (fine-grained PAT) or repo scope (classic PAT), and ensure org approval/SSO authorization if required."
+            exit 1
+          fi
+
+          WIKI_REMOTE="https://${TOKEN_USER}:${AUTOMATION_TOKEN}@github.com/${{ github.repository }}.wiki.git"
           if ! git ls-remote "$WIKI_REMOTE" >/dev/null 2>&1; then
             echo "::warning::Wiki remote unavailable (repository wiki may be disabled). Skipping sync."
             exit 0
@@ -73,4 +87,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "docs(wiki): sync from ${GITHUB_SHA}"
-          git push origin HEAD:"$WIKI_BRANCH"
+          # Clone may sanitize credentials from origin URL; push with explicit auth URL.
+          git push "$WIKI_REMOTE" HEAD:"$WIKI_BRANCH"
