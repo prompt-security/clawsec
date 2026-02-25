@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-02-24T06:20:16Z",
+  "updated": "2026-02-25T12:39:42Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -10,7 +10,10 @@
       "nvd_category_id": "CWE-400",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the ACP bridge accepts very la...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the ACP bridge accepts very large prompt text blocks and can assemble oversized prompt payloads before forwarding them to chat.send. Because ACP runs over local stdio, this mainly affects local ACP clients (for example IDE integrations) that send unusually large inputs. This issue has been fixed in version 2026.2.19.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:13.437",
       "references": [
@@ -28,7 +31,10 @@
       "nvd_category_id": "CWE-918",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, Cron webhook delivery in src/g...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, Cron webhook delivery in src/gateway/server-cron.ts uses fetch() directly, so webhook targets can reach private/metadata/internal endpoints without SSRF policy checks. This issue was fixed in version 2026.2.19.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:13.267",
       "references": [
@@ -46,7 +52,11 @@
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below, when using macOS, the Claude C...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below, when using macOS, the Claude CLI keychain credential refresh path constructed a shell command to write the updated JSON blob into Keychain via security add-generic-password -w .... Because OAuth tokens are user-controlled data, this created an OS command injection risk. This issue has been fixed in version 2026.2.14.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:13.100",
       "references": [
@@ -64,7 +74,10 @@
       "nvd_category_id": "CWE-283",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below of the OpenClaw CLI, the proces...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.2.13 and below of the OpenClaw CLI, the process cleanup uses system-wide process enumeration and pattern matching to terminate processes without verifying if they are owned by the current OpenClaw process. On shared hosts, unrelated processes can be terminated if they match the pattern. The CLI runner cleanup helpers can kill processes matched by command-line patterns without validating process ownership. This issue has been fixed in version 2026.2.14.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:12.903",
       "references": [
@@ -72,7 +85,7 @@
         "https://github.com/openclaw/openclaw/commit/eb60e2e1b213740c3c587a7ba4dbf10da620ca66",
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
       ],
-      "cvss_score": null,
+      "cvss_score": 5.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486"
     },
     {
@@ -82,7 +95,10 @@
       "nvd_category_id": "CWE-61",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, skills/skill-creator/scripts/p...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, skills/skill-creator/scripts/package_skill.py (a local helper script used when authors package skills) previously followed symlinks while building .skill archives. If an author runs this script on a crafted local skill directory containing symlinks to files outside the skill root, the resulting archive can include unintended file contents. If exploited, this vulnerability can lead to potential unintentional disclosure of local files from the packaging machine into a generated .skill artifact, but requires local execution of the packaging script on attacker-controlled skill contents. This issue has been fixed in version 2026.2.18.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:12.723",
       "references": [
@@ -100,7 +116,10 @@
       "nvd_category_id": "CWE-862",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the Discord moderation action ...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.2.17 and below, the Discord moderation action handling (timeout, kick, ban) uses sender identity from request parameters in tool-driven flows, instead of trusted runtime sender context. In setups where Discord moderation actions are enabled and the bot has the necessary guild permissions, a non-admin user can request moderation actions by spoofing sender identity fields. This issue has been fixed in version 2026.2.18.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:12.557",
       "references": [
@@ -118,7 +137,10 @@
       "nvd_category_id": "CWE-79",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a atored XSS issue in the OpenClaw ...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a atored XSS issue in the OpenClaw Control UI when rendering assistant identity (name/avatar) into an inline `<script>` tag without script-context-safe escaping. A crafted value containing `</script>` could break out of the script tag and execute attacker-controlled JavaScript in the Control UI origin. Version 2026.2.15 removed inline script injection and serve bootstrap config from a JSON endpoint and added a restrictive Content Security Policy for the Control UI (`script-src 'self'`, no inline scripts).",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.620",
       "references": [
@@ -136,7 +158,10 @@
       "nvd_category_id": "CWE-73",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a bug in `download` skill installat...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a bug in `download` skill installation allowed `targetDir` values from skill frontmatter to resolve outside the per-skill tools directory if not strictly validated. In the admin-only `skills.install` flow, this could write files outside the intended install sandbox. Version 2026.2.15 contains a fix for the issue.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.460",
       "references": [
@@ -154,7 +179,10 @@
       "nvd_category_id": "CWE-1254",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, `normalizeForHash` in `src/agents/s...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, `normalizeForHash` in `src/agents/sandbox/config-hash.ts` recursively sorted arrays that contained only primitive values. This made order-sensitive sandbox configuration arrays hash to the same value even when order changed. In OpenClaw sandbox flows, this hash is used to decide whether existing sandbox containers should be recreated. As a result, order-only config changes (for example Docker `dns` and `binds` array order) could be treated as unchanged and stale containers could be reused. This is a configuration integrity issue affecting sandbox recreation behavior. Starting in version 2026.2.15, array ordering is preserved during hash normalization; only object key ordering remains normalized for deterministic hashing.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.303",
       "references": [
@@ -172,7 +200,10 @@
       "nvd_category_id": "CWE-209",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, in some shared-agent deployments, O...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, in some shared-agent deployments, OpenClaw session tools (`sessions_list`, `sessions_history`, `sessions_send`) allowed broader session targeting than some operators intended. This is primarily a configuration/visibility-scoping issue in multi-user environments where peers are not equally trusted. In Telegram webhook mode, monitor startup also did not fall back to per-account `webhookSecret` when only the account-level secret was configured. In shared-agent, multi-user, less-trusted environments: session-tool access could expose transcript content across peer sessions. In single-agent or trusted environments, practical impact is limited. In Telegram webhook mode, account-level secret wiring could be missed unless an explicit monitor webhook secret override was provided. Version 2026.2.15 fixes the issue.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.140",
       "references": [
@@ -189,7 +220,10 @@
       "nvd_category_id": "CWE-522",
       "title": "OpenClaw is a personal AI assistant. Telegram bot tokens can appear in error messages and stack trac...",
       "description": "OpenClaw is a personal AI assistant. Telegram bot tokens can appear in error messages and stack traces (for example, when request URLs include `https://api.telegram.org/bot<token>/...`). Prior to version 2026.2.15, OpenClaw logged these strings without redaction, which could leak the bot token into logs, crash reports, CI output, or support bundles. Disclosure of a Telegram bot token allows an attacker to impersonate the bot and take over Bot API access. Users should upgrade to version 2026.2.15 to obtain a fix and rotate the Telegram bot token if it may have been exposed.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.983",
       "references": [
@@ -206,7 +240,10 @@
       "nvd_category_id": "CWE-250",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a configuration injection issue in ...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, a configuration injection issue in the Docker tool sandbox could allow dangerous Docker options (bind mounts, host networking, unconfined profiles) to be applied, enabling container escape or host data access. OpenClaw 2026.2.15 blocks dangerous sandbox Docker settings and includes runtime enforcement when building `docker create` args; config-schema validation for `network=host`, `seccompProfile=unconfined`, `apparmorProfile=unconfined`; and security audit findings to surface dangerous sandbox docker config. As a workaround, do not configure `agents.*.sandbox.docker.binds` to mount system directories or Docker socket paths, keep `agents.*.sandbox.docker.network` at `none` (default) or `bridge`, and do not use `unconfined` for seccomp/AppArmor profiles.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.827",
       "references": [
@@ -224,7 +261,10 @@
       "nvd_category_id": "CWE-77",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, OpenClaw embedded the current worki...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.15, OpenClaw embedded the current working directory (workspace path) into the agent system prompt without sanitization. If an attacker can cause OpenClaw to run inside a directory whose name contains control/format characters (for example newlines or Unicode bidi/zero-width markers), those characters could break the prompt structure and inject attacker-controlled instructions. Starting in version 2026.2.15, the workspace path is sanitized before it is embedded into any LLM prompt output, stripping Unicode control/format characters and explicit line/paragraph separators. Workspace path resolution also applies the same sanitization as defense-in-depth.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.653",
       "references": [
@@ -242,7 +282,10 @@
       "nvd_category_id": "CWE-22",
       "title": "OpenClaw is a personal AI assistant. In versions 2026.1.12 through 2026.2.12, OpenClaw browser downl...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.1.12 through 2026.2.12, OpenClaw browser download helpers accepted an unsanitized output path. When invoked via the browser control gateway routes, this allowed path traversal to write downloads outside the intended OpenClaw temp downloads directory. This issue is not exposed via the AI agent tool schema (no `download` action). Exploitation requires authenticated CLI access or an authenticated gateway RPC token. Version 2026.2.13 fixes the issue.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.500",
       "references": [
@@ -260,7 +303,10 @@
       "nvd_category_id": "CWE-22",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, authenticated attackers can read ar...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, authenticated attackers can read arbitrary files from the Gateway host by supplying absolute paths or path traversal sequences to the browser tool's `upload` action. The server passed these paths to Playwright's `setInputFiles()` APIs without restricting them to a safe root. An attacker must reach the Gateway HTTP surface (or otherwise invoke the same browser control hook endpoints); present valid Gateway auth (bearer token / password), as required by the Gateway configuration (In common default setups, the Gateway binds to loopback and the onboarding wizard generates a gateway token even for loopback); and have the `browser` tool permitted by tool policy for the target session/context (and have browser support enabled). If an operator exposes the Gateway beyond loopback (LAN/tailnet/custom bind, reverse proxy, tunnels, etc.), the impact increases accordingly. Starting in version 2026.2.14, the upload paths are now confined to OpenClaw's temp uploads root (`DEFAULT_UPLOAD_DIR`) and traversal/escape paths are rejected.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:15.687",
       "references": [
@@ -278,7 +324,9 @@
       "nvd_category_id": "CWE-284",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, under iMessage `groupPolicy=allowli...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, under iMessage `groupPolicy=allowlist`, group authorization could be satisfied by sender identities coming from the DM pairing store, broadening DM trust into group contexts. Version 2026.2.14 fixes the issue.",
-      "affected": [],
+      "affected": [
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:15.523",
       "references": [
@@ -296,7 +344,10 @@
       "nvd_category_id": "CWE-345",
       "title": "OpenClaw is a personal AI assistant. Discovery beacons (Bonjour/mDNS and DNS-SD) include TXT records...",
       "description": "OpenClaw is a personal AI assistant. Discovery beacons (Bonjour/mDNS and DNS-SD) include TXT records such as `lanHost`, `tailnetDns`, `gatewayPort`, and `gatewayTlsSha256`. TXT records are unauthenticated. Prior to version 2026.2.14, some clients treated TXT values as authoritative routing/pinning inputs. iOS and macOS used TXT-provided host hints (`lanHost`/`tailnetDns`) and ports (`gatewayPort`) to build the connection URL. iOS and Android allowed the discovery-provided TLS fingerprint (`gatewayTlsSha256`) to override a previously stored TLS pin. On a shared/untrusted LAN, an attacker could advertise a rogue `_openclaw-gw._tcp` service. This could cause a client to connect to an attacker-controlled endpoint and/or accept an attacker certificate, potentially exfiltrating Gateway credentials (`auth.token` / `auth.password`) during connection. As of time of publication, the iOS and Android apps are alpha/not broadly shipped (no public App Store / Play Store release). Practical impact is primarily limited to developers/testers running those builds, plus any other shipped clients relying on discovery on a shared/untrusted LAN. Version 2026.2.14 fixes the issue. Clients now prefer the resolved service endpoint (SRV + A/AAAA) over TXT-provided routing hints. Discovery-provided fingerprints no longer override stored TLS pins. In iOS/Android, first-time TLS pins require explicit user confirmation (fingerprint shown; no silent TOFU) and discovery-based direct connects are TLS-only. In Android, hostname verification is no longer globally disabled (only bypassed when pinning).",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:26.100",
       "references": [
@@ -314,7 +365,10 @@
       "nvd_category_id": "CWE-200",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, `skills.status` could disclose secr...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, `skills.status` could disclose secrets to `operator.read` clients by returning raw resolved config values in `configChecks` for skill `requires.config` paths. Version 2026.2.14 stops including raw resolved config values in requirement checks (return only `{ path, satisfied }`) and narrows the Discord skill requirement to the token key. In addition to upgrading, users should rotate any Discord tokens that may have been exposed to read-scoped clients.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.950",
       "references": [
@@ -332,7 +386,10 @@
       "nvd_category_id": "CWE-284",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, a mismatch between `rawCommand` and...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, a mismatch between `rawCommand` and `command[]` in the node host `system.run` handler could cause allowlist/approval evaluation to be performed on one command while executing a different argv. This only impacts deployments that use the node host / companion node execution path (`system.run` on a node), enable allowlist-based exec policy (`security=allowlist`) with approval prompting driven by allowlist misses (for example `ask=on-miss`), allow an attacker to invoke `system.run`. Default/non-node configurations are not affected. Version 2026.2.14 enforces `rawCommand`/`command[]` consistency (gateway fail-fast + node host validation).",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.800",
       "references": [
@@ -350,7 +407,10 @@
       "nvd_category_id": "CWE-918",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, OpenClaw's SSRF protection could be...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, OpenClaw's SSRF protection could be bypassed using full-form IPv4-mapped IPv6 literals such as `0:0:0:0:0:ffff:7f00:1` (which is `127.0.0.1`). This could allow requests that should be blocked (loopback / private network / link-local metadata) to pass the SSRF guard. Version 2026.2.14 patches the issue.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.653",
       "references": [
@@ -368,7 +428,10 @@
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw is a personal AI assistant. Versions 2026.1.8 through 2026.2.13 have a command injection in...",
       "description": "OpenClaw is a personal AI assistant. Versions 2026.1.8 through 2026.2.13 have a command injection in the maintainer/dev script `scripts/update-clawtributors.ts`. The issue affects contributors/maintainers (or CI) who run `bun scripts/update-clawtributors.ts` in a source checkout that contains a malicious commit author email (e.g. crafted `@users[.]noreply[.]github[.]com` values). Normal CLI usage is not affected (`npm i -g openclaw`): this script is not part of the shipped CLI and is not executed during routine operation. The script derived a GitHub login from `git log` author metadata and interpolated it into a shell command (via `execSync`). A malicious commit record could inject shell metacharacters and execute arbitrary commands when the script is run. Version 2026.2.14 contains a patch.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.500",
       "references": [
@@ -386,7 +449,10 @@
       "nvd_category_id": "CWE-918",
       "title": "OpenClaw is a personal AI assistant. Prior to OpenClaw version 2026.2.14, the Gateway tool accepted ...",
       "description": "OpenClaw is a personal AI assistant. Prior to OpenClaw version 2026.2.14, the Gateway tool accepted a tool-supplied `gatewayUrl` without sufficient restrictions, which could cause the OpenClaw host to attempt outbound WebSocket connections to user-specified targets. This requires the ability to invoke tools that accept `gatewayUrl` overrides (directly or indirectly). In typical setups this is limited to authenticated operators, trusted automation, or environments where tool calls are exposed to non-operators. In other words, this is not a drive-by issue for arbitrary internet users unless a deployment explicitly allows untrusted users to trigger these tool calls. Some tool call paths allowed `gatewayUrl` overrides to flow into the Gateway WebSocket client without validation or allowlisting. This meant the host could be instructed to attempt connections to non-gateway endpoints (for example, localhost services, private network addresses, or cloud metadata IPs). In the common case, this results in an outbound connection attempt from the OpenClaw host (and corresponding errors/timeouts). In environments where the tool caller can observe the results, this can also be used for limited network reachability probing. If the target speaks WebSocket and is reachable, further interaction may be possible. Starting in version 2026.2.14, tool-supplied `gatewayUrl` overrides are restricted to loopback (on the configured gateway port) or the configured `gateway.remote.url`. Disallowed protocols, credentials, query/hash, and non-root paths are rejected.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.340",
       "references": [
@@ -404,7 +470,10 @@
       "nvd_category_id": "CWE-22",
       "title": "OpenClaw is a personal AI assistant. Prior to OpenClaw version 2026.2.14, the Feishu extension previ...",
       "description": "OpenClaw is a personal AI assistant. Prior to OpenClaw version 2026.2.14, the Feishu extension previously allowed `sendMediaFeishu` to treat attacker-controlled `mediaUrl` values as local filesystem paths and read them directly. If an attacker can influence tool calls (directly or via prompt injection), they may be able to exfiltrate local files by supplying paths such as `/etc/passwd` as `mediaUrl`. Upgrade to OpenClaw `2026.2.14` or newer to receive a fix. The fix removes direct local file reads from this path and routes media loading through hardened helpers that enforce local-root restrictions.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.180",
       "references": [
@@ -422,7 +491,11 @@
       "nvd_category_id": "CWE-451",
       "title": "OpenClaw is a personal AI assistant. OpenClaw macOS desktop client registers the `openclaw://` URL s...",
       "description": "OpenClaw is a personal AI assistant. OpenClaw macOS desktop client registers the `openclaw://` URL scheme. For `openclaw://agent` deep links without an unattended `key`, the app shows a confirmation dialog that previously displayed only the first 240 characters of the message, but executed the full message after the user clicked \"Run.\" At the time of writing, the OpenClaw macOS desktop client is still in beta. In versions 2026.2.6 through 2026.2.13, an attacker could pad the message with whitespace to push a malicious payload outside the visible preview, increasing the chance a user approves a different message than the one that is actually executed. If a user runs the deep link, the agent may perform actions that can lead to arbitrary command execution depending on the user's configured tool approvals/allowlists. This is a social-engineering mediated vulnerability: the confirmation prompt could be made to misrepresent the executed message. The issue is fixed in 2026.2.14. Other mitigations include not approve unexpected \"Run OpenClaw agent?\" prompts triggered while browsing untrusted sites and usingunattended deep links only with a valid `key` for trusted personal automations.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.017",
       "references": [
@@ -440,7 +513,10 @@
       "nvd_category_id": "CWE-306",
       "title": "OpenClaw is a personal AI assistant. Versions 2026.2.13 and below allow the optional @openclaw/voice...",
       "description": "OpenClaw is a personal AI assistant. Versions 2026.2.13 and below allow the optional @openclaw/voice-call plugin Telnyx webhook handler to accept unsigned inbound webhook requests when telnyx.publicKey is not configured, enabling unauthenticated callers to forge Telnyx events. Telnyx webhooks are expected to be authenticated via Ed25519 signature verification. In affected versions, TelnyxProvider.verifyWebhook() could effectively fail open when no Telnyx public key was configured, allowing arbitrary HTTP POST requests to the voice-call webhook endpoint to be treated as legitimate Telnyx events. This only impacts deployments where the Voice Call plugin is installed, enabled, and the webhook endpoint is reachable from the attacker (for example, publicly exposed via a tunnel/proxy). The issue has been fixed in version 2026.2.14.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:24.857",
       "references": [
@@ -458,7 +534,9 @@
       "nvd_category_id": "CWE-352",
       "title": "OpenClaw is a personal AI assistant. Prior to 2026.2.14, browser-facing localhost mutation routes ac...",
       "description": "OpenClaw is a personal AI assistant. Prior to 2026.2.14, browser-facing localhost mutation routes accepted cross-origin browser requests without explicit Origin/Referer validation. Loopback binding reduces remote exposure but does not prevent browser-initiated requests from malicious origins. A malicious website can trigger unauthorized state changes against a victim's local OpenClaw browser control plane (for example opening tabs, starting/stopping the browser, mutating storage/cookies) if the browser control service is reachable on loopback in the victim's browser context. Starting in version 2026.2.14, mutating HTTP methods (POST/PUT/PATCH/DELETE) are rejected when the request indicates a non-loopback Origin/Referer (or `Sec-Fetch-Site: cross-site`). Other mitigations include enabling browser control auth (token/password) and avoid running with auth disabled.",
-      "affected": [],
+      "affected": [
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T22:16:47.270",
       "references": [
@@ -476,7 +554,10 @@
       "nvd_category_id": "CWE-863",
       "title": "OpenClaw is a personal AI assistant. Prior to 2026.2.13, the optional BlueBubbles iMessage channel p...",
       "description": "OpenClaw is a personal AI assistant. Prior to 2026.2.13, the optional BlueBubbles iMessage channel plugin could accept webhook requests as authenticated based only on the TCP peer address being loopback (`127.0.0.1`, `::1`, `::ffff:127.0.0.1`) even when the configured webhook secret was missing or incorrect. This does not affect the default iMessage integration unless BlueBubbles is installed and enabled. Version 2026.2.13 contains a patch. Other mitigations include setting a non-empty BlueBubbles webhook password and avoiding deployments where a public-facing reverse proxy forwards to a loopback-bound Gateway without strong upstream authentication.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T22:16:47.110",
       "references": [
@@ -495,7 +576,8 @@
       "title": "OpenClaw is a personal AI assistant. In versions 2026.1.30 and below, if channels.telegram.webhookSe...",
       "description": "OpenClaw is a personal AI assistant. In versions 2026.1.30 and below, if channels.telegram.webhookSecret is not set when in Telegram webhook mode, OpenClaw may accept webhook HTTP requests without verifying Telegram’s secret token header. In deployments where the webhook endpoint is reachable by an attacker, this can allow forged Telegram updates (for example spoofing message.from.id). If an attacker can reach the webhook endpoint, they may be able to send forged updates that are processed as if they came from Telegram. Depending on enabled commands/tools and configuration, this could lead to unintended bot actions. Note: Telegram webhook mode is not enabled by default. It is enabled only when `channels.telegram.webhookUrl` is configured. This issue has been fixed in version 2026.2.1.",
       "affected": [
-        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
       ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T07:17:45.847",
@@ -515,7 +597,8 @@
       "title": "OpenClaw (formerly Clawdbot) is a personal AI assistant users run on their own devices. In versions ...",
       "description": "OpenClaw (formerly Clawdbot) is a personal AI assistant users run on their own devices. In versions 2026.2.2 and below, when the Slack integration is enabled, channel metadata (topic/description) can be incorporated into the model's system prompt. Prompt injection is a documented risk for LLM-driven systems. This issue increases the injection surface by allowing untrusted Slack channel metadata to be treated as higher-trust system input. This issue has been fixed in version 2026.2.3.",
       "affected": [
-        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*"
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
       ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T07:17:44.957",
@@ -534,7 +617,10 @@
       "nvd_category_id": "CWE-306",
       "title": "OpenClaw is a personal AI assistant. Prior to 2026.1.20, an unauthenticated local client could use t...",
       "description": "OpenClaw is a personal AI assistant. Prior to 2026.1.20, an unauthenticated local client could use the Gateway WebSocket API to write config via config.apply and set unsafe cliPath values that were later used for command discovery, enabling command injection as the gateway user. This vulnerability is fixed in 2026.1.20.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-06T21:16:17.790",
       "references": [
@@ -550,7 +636,10 @@
       "nvd_category_id": "CWE-200",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.1.30, the isValidMedia() function in src/...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.1.30, the isValidMedia() function in src/media/parse.ts allows arbitrary file paths including absolute paths, home directory paths, and directory traversal sequences. An agent can read any file on the system by outputting MEDIA:/path/to/file, exfiltrating sensitive data to the user/channel. This issue has been patched in version 2026.1.30.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-04T20:16:07.287",
       "references": [
@@ -566,7 +655,11 @@
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.1.29, there is an OS command injection vu...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.1.29, there is an OS command injection vulnerability via the Project Root Path in sshNodeCommand. The sshNodeCommand function constructed a shell script without properly escaping the user-supplied project path in an error message. When the cd command failed, the unescaped path was interpolated directly into an echo statement, allowing arbitrary command execution on the remote SSH host. The parseSSHTarget function did not validate that SSH target strings could not begin with a dash. An attacker-supplied target like -oProxyCommand=... would be interpreted as an SSH configuration flag rather than a hostname, allowing arbitrary command execution on the local machine. This issue has been patched in version 2026.1.29.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-04T20:16:06.577",
       "references": [
@@ -582,7 +675,10 @@
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw (formerly  Clawdbot) is a personal AI assistant you run on your own devices. Prior to 2026....",
       "description": "OpenClaw (formerly  Clawdbot) is a personal AI assistant you run on your own devices. Prior to 2026.1.29, a command injection vulnerability existed in OpenClaw’s Docker sandbox execution mechanism due to unsafe handling of the PATH environment variable when constructing shell commands. An authenticated user able to control environment variables could influence command execution within the container context. This vulnerability is fixed in 2026.1.29.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-02T23:16:08.593",
       "references": [
@@ -600,7 +696,10 @@
       "nvd_category_id": "CWE-669",
       "title": "OpenClaw (aka clawdbot or Moltbot) before 2026.1.29 obtains a gatewayUrl value from a query string a...",
       "description": "OpenClaw (aka clawdbot or Moltbot) before 2026.1.29 obtains a gatewayUrl value from a query string and automatically makes a WebSocket connection without prompting, sending a token value.",
-      "affected": [],
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-01T23:15:49.717",
       "references": [
