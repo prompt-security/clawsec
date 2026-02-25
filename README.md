@@ -51,6 +51,12 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 
 ---
 
+## 📚 Documentation Source of Truth
+
+For all wiki content, edit files under `wiki/` in this repository. The GitHub Wiki (`<repo>.wiki.git`) is synced from `wiki/` by `.github/workflows/wiki-sync.yml` when `wiki/**` changes on `main`.
+
+---
+
 ## 🚀 Quick Start
 
 ### For AI Agents
@@ -89,6 +95,20 @@ For Windows (PowerShell):
 - POSIX `.sh` scripts require WSL or Git Bash.
 
 Troubleshooting: if you see directories such as `~/.openclaw/workspace/$HOME/...`, a home variable was passed literally. Re-run using an absolute path or an unquoted home expression.
+
+### Product Demos
+
+#### Install Demo (`clawsec-suite`)
+
+<video controls width="360" src="https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/install-demo.mp4"></video>
+
+Direct link: [install-demo.mp4](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/install-demo.mp4)
+
+#### Drift Detection Demo (`soul-guardian`)
+
+<video controls width="960" src="https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/soul-guardian-demo.mp4"></video>
+
+Direct link: [soul-guardian-demo.mp4](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/soul-guardian-demo.mp4)
 
 ---
 

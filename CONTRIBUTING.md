@@ -2,8 +2,13 @@
 
 Thank you for your interest in contributing security skills to the ClawSec ecosystem! This guide will walk you through creating, testing, and submitting new skills.
 
+## Wiki Documentation Source of Truth
+
+For contributor-facing wiki docs, treat `wiki/` in this repository as the single source of truth. Do not edit the GitHub Wiki directly; `.github/workflows/wiki-sync.yml` publishes `wiki/` to `<repo>.wiki.git` when `wiki/**` changes on `main`.
+
 ## Table of Contents
 
+- [Wiki Documentation Source of Truth](#wiki-documentation-source-of-truth)
 - [Getting Started](#getting-started)
 - [Skill Structure](#skill-structure)
 - [Creating a New Skill](#creating-a-new-skill)

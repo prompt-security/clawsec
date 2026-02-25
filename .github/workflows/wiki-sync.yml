@@ -1,0 +1,64 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wiki/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Sync wiki folder to repository wiki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -d wiki ]; then
+            echo "::error::wiki/ directory not found"
+            exit 1
+          fi
+
+          WIKI_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+          if ! git ls-remote "$WIKI_REMOTE" >/dev/null 2>&1; then
+            echo "::warning::Wiki remote unavailable (repository wiki may be disabled). Skipping sync."
+            exit 0
+          fi
+
+          WIKI_TMP="$(mktemp -d)"
+          trap 'rm -rf "$WIKI_TMP"' EXIT
+
+          git clone --depth 1 "$WIKI_REMOTE" "$WIKI_TMP"
+          rsync -a --delete --exclude '.git/' wiki/ "$WIKI_TMP/"
+
+          cd "$WIKI_TMP"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No wiki changes to sync."
+            exit 0
+          fi
+
+          WIKI_HEAD_REF="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+          if [ -n "$WIKI_HEAD_REF" ]; then
+            WIKI_BRANCH="${WIKI_HEAD_REF#origin/}"
+          else
+            WIKI_BRANCH="master"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs(wiki): sync from ${GITHUB_SHA}"
+          git push origin HEAD:"$WIKI_BRANCH"
