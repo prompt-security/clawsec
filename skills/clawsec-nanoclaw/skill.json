@@ -1,6 +1,6 @@
 {
   "name": "clawsec-nanoclaw",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "ClawSec security suite for NanoClaw - Advisory feed monitoring, MCP tools for vulnerability checking, and Ed25519 signature verification for containerized WhatsApp bot agents",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -66,6 +66,46 @@
         "path": "advisories/feed-signing-public.pem",
         "required": true,
         "description": "Pinned Ed25519 public key for feed signature verification"
+      },
+      {
+        "path": "mcp-tools/signature-verification.ts",
+        "required": true,
+        "description": "Phase 1: MCP tool for skill package signature verification"
+      },
+      {
+        "path": "host-services/skill-signature-handler.ts",
+        "required": true,
+        "description": "Phase 1: Host-side signature verification service"
+      },
+      {
+        "path": "docs/SKILL_SIGNING.md",
+        "required": true,
+        "description": "Phase 1: Documentation for skill signing and verification"
+      },
+      {
+        "path": "mcp-tools/integrity-tools.ts",
+        "required": true,
+        "description": "Phase 2: MCP tools for file integrity monitoring"
+      },
+      {
+        "path": "host-services/integrity-handler.ts",
+        "required": true,
+        "description": "Phase 2: Host-side integrity monitoring service"
+      },
+      {
+        "path": "guardian/integrity-monitor.ts",
+        "required": true,
+        "description": "Phase 2: Core file integrity monitoring engine"
+      },
+      {
+        "path": "guardian/policy.json",
+        "required": true,
+        "description": "Phase 2: NanoClaw-specific file protection policy"
+      },
+      {
+        "path": "docs/INTEGRITY.md",
+        "required": true,
+        "description": "Phase 2: Documentation for file integrity monitoring"
       }
     ]
   },
