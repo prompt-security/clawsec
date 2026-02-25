@@ -105,14 +105,12 @@ GitHub strips inline `<video>` tags in repository READMEs. Click the preview ima
 [![Install demo preview](public/video/install-demo-poster.jpg)](public/video/install-demo.mp4)
 
 Direct link: [install-demo.mp4](public/video/install-demo.mp4)
-Raw link: [install-demo.mp4 (raw)](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/install-demo.mp4)
 
 #### Drift Detection Demo (`soul-guardian`)
 
 [![Drift detection demo preview](public/video/soul-guardian-demo-poster.jpg)](public/video/soul-guardian-demo.mp4)
 
 Direct link: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
-Raw link: [soul-guardian-demo.mp4 (raw)](https://raw.githubusercontent.com/prompt-security/clawsec/main/public/video/soul-guardian-demo.mp4)
 
 ---
 
