@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardian", "lib");
-const { findMatches } = await import(`${LIB_PATH}/matching.ts`);
+const { advisoryAppliesToOpenclaw } = await import(`${LIB_PATH}/advisory_scope.mjs`);
 
 let passCount = 0;
 let failCount = 0;
@@ -30,85 +30,54 @@ function fail(name, error) {
   console.error(`  ${String(error)}`);
 }
 
-function extractIds(matches) {
-  return matches
-    .map((entry) => String(entry?.advisory?.id ?? ""))
-    .filter(Boolean)
-    .sort();
-}
-
 function testFindMatchesFiltersByApplicationScope() {
-  const testName = "findMatches: only openclaw + legacy advisories are considered";
+  const testName = "advisoryAppliesToOpenclaw: openclaw + legacy advisories are considered";
 
-  const feed = {
-    version: "1",
-    advisories: [
-      {
-        id: "ADV-OPENCLAW-001",
-        severity: "high",
-        application: "openclaw",
-        affected: ["clawsec-suite@*"],
-      },
-      {
-        id: "ADV-NANOCLAW-001",
-        severity: "high",
-        application: "nanoclaw",
-        affected: ["clawsec-suite@*"],
-      },
-      {
-        id: "ADV-LEGACY-001",
-        severity: "medium",
-        affected: ["clawsec-suite@*"],
-      },
-    ],
-  };
-
-  const installedSkills = [
-    { name: "clawsec-suite", dirName: "clawsec-suite", version: "0.1.3" },
+  const inputs = [
+    { id: "ADV-OPENCLAW-001", application: "openclaw", expect: true },
+    { id: "ADV-NANOCLAW-001", application: "nanoclaw", expect: false },
+    { id: "ADV-LEGACY-001", expect: true },
   ];
 
-  const matches = findMatches(feed, installedSkills);
-  const ids = extractIds(matches);
+  for (const input of inputs) {
+    const result = advisoryAppliesToOpenclaw({ application: input.application });
+    if (result !== input.expect) {
+      fail(testName, `Unexpected result for ${input.id}: expected ${input.expect}, got ${result}`);
+      return;
+    }
+  }
 
-  const expected = ["ADV-LEGACY-001", "ADV-OPENCLAW-001"];
-  const ok = JSON.stringify(ids) === JSON.stringify(expected);
-  if (!ok) {
-    fail(testName, `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(ids)}`);
+  pass(testName);
+}
+
+function testApplicationAllAccepted() {
+  const testName = "advisoryAppliesToOpenclaw: application=all is considered";
+  const result = advisoryAppliesToOpenclaw({ application: "all" });
+  if (!result) {
+    fail(testName, "Expected true for application=all");
+    return;
+  }
+  pass(testName);
+}
+
+function testFindMatchesAcceptsApplicationArray() {
+  const testName = "advisoryAppliesToOpenclaw: application array containing openclaw is considered";
+  const result = advisoryAppliesToOpenclaw({ application: ["nanoclaw", "openclaw"] });
+  if (!result) {
+    fail(testName, "Expected true for application array containing openclaw");
     return;
   }
 
   pass(testName);
 }
 
-function testFindMatchesAcceptsApplicationArray() {
-  const testName = "findMatches: advisory with application array containing openclaw is considered";
-
-  const feed = {
-    version: "1",
-    advisories: [
-      {
-        id: "ADV-MULTI-001",
-        severity: "critical",
-        application: ["nanoclaw", "openclaw"],
-        affected: ["clawsec-suite@*"],
-      },
-    ],
-  };
-
-  const installedSkills = [
-    { name: "clawsec-suite", dirName: "clawsec-suite", version: "0.1.3" },
-  ];
-
-  const matches = findMatches(feed, installedSkills);
-  const ids = extractIds(matches);
-
-  const expected = ["ADV-MULTI-001"];
-  const ok = JSON.stringify(ids) === JSON.stringify(expected);
-  if (!ok) {
-    fail(testName, `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(ids)}`);
+function testInvalidApplicationValueFallsBackCompat() {
+  const testName = "advisoryAppliesToOpenclaw: invalid application values keep legacy compatibility";
+  const result = advisoryAppliesToOpenclaw({ application: { invalid: true } });
+  if (!result) {
+    fail(testName, "Expected true for non-string application to preserve backward compatibility");
     return;
   }
-
   pass(testName);
 }
 
@@ -116,7 +85,9 @@ function runTests() {
   console.log("=== ClawSec Advisory Application Scope Tests ===\n");
 
   testFindMatchesFiltersByApplicationScope();
+  testApplicationAllAccepted();
   testFindMatchesAcceptsApplicationArray();
+  testInvalidApplicationValueFallsBackCompat();
 
   console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
   if (failCount > 0) {
