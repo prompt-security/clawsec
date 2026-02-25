@@ -304,16 +304,19 @@ jobs:
                 | unique
               );
 
+            def context_blob:
+              (
+                [
+                  (.cve.descriptions[]? | select(.lang == "en") | .value),
+                  (.cve.references[]?.url // empty)
+                ]
+                | map(strings | ascii_downcase)
+                | join(" ")
+              );
+
             def inferred_targets:
               (
-                (
-                  [
-                    (.cve.descriptions[]? | select(.lang == "en") | .value),
-                    (.cve.references[]?.url // empty)
-                  ]
-                  | map(strings | ascii_downcase)
-                  | join(" ")
-                ) as $blob
+                context_blob as $blob
                 | (
                     (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
                     + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
@@ -328,6 +331,17 @@ jobs:
                 | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
               );
 
+            def normalized_platforms:
+              (
+                inferred_targets as $targets
+                | ($targets | map(select(startswith("openclaw@"))) | length > 0) as $has_openclaw
+                | ($targets | map(select(startswith("nanoclaw@"))) | length > 0) as $has_nanoclaw
+                | if $has_openclaw and $has_nanoclaw then ["openclaw", "nanoclaw"]
+                  elif $has_nanoclaw then ["nanoclaw"]
+                  else ["openclaw", "nanoclaw"]
+                  end
+              );
+
             [.[] | {
               id: .cve.id,
               severity: (get_cvss_score | map_severity),
@@ -337,6 +351,7 @@ jobs:
               description: (.cve.descriptions[] | select(.lang == "en") | .value),
               title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
               affected: normalized_affected,
+              platforms: normalized_platforms,
               references: [.cve.references[]?.url // empty] | unique | .[0:3]
             }]
           ' tmp/filtered_cves.json > tmp/nvd_current_state.json
@@ -358,6 +373,7 @@ jobs:
                    ($existing_entry.nvd_category_id != $nvd_entry.nvd_category_id) or
                    ($existing_entry.cvss_score != $nvd_entry.cvss_score) or
                    ($existing_entry.affected != $nvd_entry.affected) or
+                   ($existing_entry.platforms != $nvd_entry.platforms) or
                    ($existing_entry.description != $nvd_entry.description) then
                   {
                     id: $nvd_entry.id,
@@ -368,6 +384,7 @@ jobs:
                       + (if $existing_entry.nvd_category_id != $nvd_entry.nvd_category_id then ["nvd_category_id: \($existing_entry.nvd_category_id // "null") → \($nvd_entry.nvd_category_id // "null")"] else [] end)
                       + (if $existing_entry.cvss_score != $nvd_entry.cvss_score then ["cvss_score: \($existing_entry.cvss_score // "null") → \($nvd_entry.cvss_score // "null")"] else [] end)
                       + (if $existing_entry.affected != $nvd_entry.affected then ["affected targets updated"] else [] end)
+                      + (if $existing_entry.platforms != $nvd_entry.platforms then ["platforms updated"] else [] end)
                       + (if $existing_entry.description != $nvd_entry.description then ["description updated"] else [] end)
                     ),
                     updated_fields: {
@@ -376,6 +393,7 @@ jobs:
                       nvd_category_id: $nvd_entry.nvd_category_id,
                       cvss_score: $nvd_entry.cvss_score,
                       affected: $nvd_entry.affected,
+                      platforms: $nvd_entry.platforms,
                       description: $nvd_entry.description,
                       title: $nvd_entry.title,
                       references: $nvd_entry.references
@@ -495,16 +513,19 @@ jobs:
                 | unique
               );
 
+            def context_blob:
+              (
+                [
+                  (.cve.descriptions[]? | select(.lang == "en") | .value),
+                  (.cve.references[]?.url // empty)
+                ]
+                | map(strings | ascii_downcase)
+                | join(" ")
+              );
+
             def inferred_targets:
               (
-                (
-                  [
-                    (.cve.descriptions[]? | select(.lang == "en") | .value),
-                    (.cve.references[]?.url // empty)
-                  ]
-                  | map(strings | ascii_downcase)
-                  | join(" ")
-                ) as $blob
+                context_blob as $blob
                 | (
                     (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
                     + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
@@ -518,6 +539,17 @@ jobs:
                 | .[0:5]
                 | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
               );
+
+            def normalized_platforms:
+              (
+                inferred_targets as $targets
+                | ($targets | map(select(startswith("openclaw@"))) | length > 0) as $has_openclaw
+                | ($targets | map(select(startswith("nanoclaw@"))) | length > 0) as $has_nanoclaw
+                | if $has_openclaw and $has_nanoclaw then ["openclaw", "nanoclaw"]
+                  elif $has_nanoclaw then ["nanoclaw"]
+                  else ["openclaw", "nanoclaw"]
+                  end
+              );
             
             [.[] | 
               select(.cve.id as $id | $existing | index($id) | not) |
@@ -529,6 +561,7 @@ jobs:
                 title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
                 description: (.cve.descriptions[] | select(.lang == "en") | .value),
                 affected: normalized_affected,
+                platforms: normalized_platforms,
                 action: "Review and update affected components. See NVD for remediation details.",
                 published: .cve.published,
                 references: [.cve.references[]?.url // empty] | unique | .[0:3],
