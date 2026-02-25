@@ -7,8 +7,7 @@ on:
       - 'wiki/**'
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: read-all
 
 concurrency:
   group: wiki-sync
@@ -23,12 +22,17 @@ jobs:
 
       - name: Sync wiki folder to repository wiki
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTOMATION_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
         run: |
           set -euo pipefail
 
           if [ ! -d wiki ]; then
             echo "::error::wiki/ directory not found"
+            exit 1
+          fi
+
+          if [ -z "$AUTOMATION_TOKEN" ]; then
+            echo "::error::Set CLAWSEC_AUTOMATION_TOKEN (or SCORECARD_TOKEN fallback) with repo write permissions."
             exit 1
           fi
 
@@ -40,7 +44,7 @@ jobs:
           fi
           cp wiki/INDEX.md wiki/Home.md
 
-          WIKI_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
+          WIKI_REMOTE="https://x-access-token:${AUTOMATION_TOKEN}@github.com/${{ github.repository }}.wiki.git"
           if ! git ls-remote "$WIKI_REMOTE" >/dev/null 2>&1; then
             echo "::warning::Wiki remote unavailable (repository wiki may be disabled). Skipping sync."
             exit 0

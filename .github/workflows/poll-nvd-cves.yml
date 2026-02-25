@@ -29,10 +29,6 @@ env:
 jobs:
   poll-and-update:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: write
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -658,12 +654,22 @@ jobs:
           git checkout -- .github/ 2>/dev/null || true
           git clean -fd .github/ 2>/dev/null || true
 
+      - name: Require automation token for PR operations
+        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        env:
+          AUTOMATION_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
+        run: |
+          if [ -z "$AUTOMATION_TOKEN" ]; then
+            echo "::error::Set CLAWSEC_AUTOMATION_TOKEN (or SCORECARD_TOKEN fallback) with repo/workflow write permissions."
+            exit 1
+          fi
+
       - name: Create Pull Request
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
         id: create-pr
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
           branch: automated/nvd-cve-update-${{ github.run_id }}
           delete-branch: true
           title: "chore: CVE advisories - ${{ steps.transform.outputs.new_count }} new, ${{ steps.updates.outputs.update_count }} updated"
@@ -693,7 +699,7 @@ jobs:
       - name: Run CodeQL on generated PR branch
         if: steps.create-pr.outputs.pull-request-number != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.CLAWSEC_AUTOMATION_TOKEN || secrets.SCORECARD_TOKEN }}
         run: |
           set -euo pipefail
 
