@@ -142,7 +142,7 @@ Planned features for future releases:
 - [Skill Documentation](skills/clawsec-nanoclaw/SKILL.md) - Features and architecture
 - [Installation Guide](skills/clawsec-nanoclaw/INSTALL.md) - Detailed setup instructions
 - [ClawSec Main README](README.md) - Overall ClawSec documentation
-- [Security & Signing](SECURITY-SIGNING.md) - Signature verification details
+- [Security & Signing](../../docs/SECURITY-SIGNING.md) - Signature verification details
 
 ## Support
 

@@ -295,8 +295,8 @@ Each skill release includes:
 ### Signing Operations Documentation
 
 For feed/release signing rollout and operations guidance:
-- [`SECURITY-SIGNING.md`](SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
-- [`MIGRATION-SIGNED-FEED.md`](MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
+- [`docs/SECURITY-SIGNING.md`](docs/SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
+- [`docs/MIGRATION-SIGNED-FEED.md`](docs/MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
 
 ---
 
