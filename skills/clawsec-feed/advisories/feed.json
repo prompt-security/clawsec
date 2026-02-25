@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-02-25T12:39:42Z",
+  "updated": "2026-02-25T16:48:57Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -22,7 +22,10 @@
         "https://github.com/openclaw/openclaw/commit/ebcf19746f5c500a41817e03abecadea8655654a"
       ],
       "cvss_score": 4.0,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27576"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27576",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27488",
@@ -43,7 +46,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-w45g-5746-x9fp"
       ],
       "cvss_score": 7.3,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27488"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27488",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27487",
@@ -65,7 +71,10 @@
         "https://github.com/openclaw/openclaw/commit/b908388245764fb3586859f44d1dff5372b19caf"
       ],
       "cvss_score": 7.6,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27487"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27487",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27486",
@@ -86,7 +95,10 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
       ],
       "cvss_score": 5.3,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27485",
@@ -107,7 +119,10 @@
         "https://github.com/openclaw/openclaw/pull/20796"
       ],
       "cvss_score": 4.4,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27485"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27485",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27484",
@@ -128,7 +143,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-wh94-p5m6-mr7j"
       ],
       "cvss_score": 4.3,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27484"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27484",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27009",
@@ -149,7 +167,10 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.15"
       ],
       "cvss_score": 5.8,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27009"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27009",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27008",
@@ -170,7 +191,10 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.15"
       ],
       "cvss_score": 6.7,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27008"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27008",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27007",
@@ -191,7 +215,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-xxvh-5hwj-42pp"
       ],
       "cvss_score": 3.3,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27007"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27007",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27004",
@@ -211,7 +238,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-6hf3-mhgc-cm65"
       ],
       "cvss_score": 5.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27004"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27004",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27003",
@@ -231,7 +261,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-chf7-jq6g-qrwv"
       ],
       "cvss_score": 5.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27003"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27003",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27002",
@@ -252,7 +285,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-w235-x559-36mg"
       ],
       "cvss_score": 9.8,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27002"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27002",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-27001",
@@ -273,7 +309,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-2qj5-gwg2-xwc4"
       ],
       "cvss_score": 7.8,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27001"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27001",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26972",
@@ -294,7 +333,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-xwjm-j929-xq7c"
       ],
       "cvss_score": 6.7,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26972"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26972",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26329",
@@ -315,7 +357,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-cv7m-c9jx-vg7q"
       ],
       "cvss_score": 6.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26329"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26329",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26328",
@@ -335,7 +380,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-g34w-4xqq-h79m"
       ],
       "cvss_score": 6.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26328"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26328",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26327",
@@ -356,7 +404,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-pv58-549p-qh99"
       ],
       "cvss_score": 6.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26327"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26327",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26326",
@@ -377,7 +428,10 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
       ],
       "cvss_score": 4.3,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26326"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26326",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26325",
@@ -398,7 +452,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-h3f9-mjwj-w476"
       ],
       "cvss_score": 7.2,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26325"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26325",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26324",
@@ -419,7 +476,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-jrvc-8ff5-2f9f"
       ],
       "cvss_score": 7.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26324"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26324",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26323",
@@ -440,7 +500,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-m7x8-2w3w-pr42"
       ],
       "cvss_score": 8.8,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26323"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26323",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26322",
@@ -461,7 +524,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-g6q9-8fvw-f7rf"
       ],
       "cvss_score": 7.6,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26322"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26322",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26321",
@@ -482,7 +548,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-8jpq-5h99-ff5r"
       ],
       "cvss_score": 7.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26321"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26321",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26320",
@@ -504,7 +573,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-7q2j-c4q5-rm27"
       ],
       "cvss_score": 6.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26320"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26320",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26319",
@@ -525,7 +597,10 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.14"
       ],
       "cvss_score": 7.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26319"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26319",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26317",
@@ -545,7 +620,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-3fqr-4cg8-h96q"
       ],
       "cvss_score": 7.1,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26317"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26317",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-26316",
@@ -566,7 +644,10 @@
         "https://github.com/openclaw/openclaw/releases/tag/v2026.2.13"
       ],
       "cvss_score": 7.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26316"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26316",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-25474",
@@ -587,7 +668,10 @@
         "https://github.com/openclaw/openclaw/commit/633fe8b9c17f02fcc68ecdb5ec212a5ace932f09"
       ],
       "cvss_score": 7.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25474"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25474",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-24764",
@@ -608,7 +692,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-782p-5fr5-7fj8"
       ],
       "cvss_score": 3.7,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24764"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24764",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-25593",
@@ -627,7 +714,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-g55j-c2v4-pjcg"
       ],
       "cvss_score": 8.4,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25593"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25593",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-25475",
@@ -646,7 +736,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-r8g4-86fx-92mq"
       ],
       "cvss_score": 6.5,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25475"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25475",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-25157",
@@ -666,7 +759,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-q284-4pvr-m585"
       ],
       "cvss_score": 7.7,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25157"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25157",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-24763",
@@ -687,7 +783,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-mc68-q9jw-2h3v"
       ],
       "cvss_score": 8.8,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24763"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24763",
+      "platforms": [
+        "openclaw"
+      ]
     },
     {
       "id": "CVE-2026-25253",
@@ -708,7 +807,10 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-g8p2-7wf7-98mq"
       ],
       "cvss_score": 8.8,
-      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25253"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25253",
+      "platforms": [
+        "openclaw"
+      ]
     }
   ]
 }
