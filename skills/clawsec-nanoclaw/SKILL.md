@@ -1,407 +1,188 @@
+---
+name: clawsec-nanoclaw
+description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
+---
+
 # ClawSec for NanoClaw
 
-Security advisory monitoring and vulnerability checking for NanoClaw WhatsApp bot deployments.
+Security advisory monitoring that protects your WhatsApp bot from known vulnerabilities in skills and dependencies.
 
-## What is ClawSec for NanoClaw?
+## Overview
 
-ClawSec for NanoClaw brings enterprise-grade security monitoring to containerized WhatsApp bot agents. It provides:
+ClawSec provides MCP tools that check installed skills against a curated feed of security advisories. It prevents installation of vulnerable skills and alerts you to issues in existing ones.
 
-- **Advisory Feed Monitoring**: Automatic tracking of security vulnerabilities from ClawSec's curated feed
-- **MCP Tools**: Native tools that agents can use to check for vulnerabilities
-- **Pre-Installation Checks**: Scan skills for known security issues before installation
-- **Signature Verification**: Ed25519-signed feeds ensure advisory integrity
-- **Platform Targeting**: Advisories can be NanoClaw-specific or cross-platform with OpenClaw
+**Core principle:** Check before you install. Monitor what's running.
 
-## Why NanoClaw Needs This
+## When to Use
 
-NanoClaw agents run in containers with different security requirements than OpenClaw:
+Use ClawSec tools when:
+- Installing a new skill (check safety first)
+- User asks "are my skills secure?"
+- Investigating suspicious behavior
+- Regular security audits
+- After receiving security notifications
 
-- **Containerized Environment**: Can't use OpenClaw's hook system
-- **MCP Protocol**: Agents interact via Message Control Protocol, not bash hooks
-- **Multi-Platform Skills**: Skills may work on both NanoClaw and OpenClaw
-- **Remote Deployment**: Often deployed in cloud environments with different threat models
+Do NOT use for:
+- Code review (use other tools)
+- Performance issues (different concern)
+- General debugging
 
-ClawSec for NanoClaw provides security monitoring adapted to this architecture.
+## MCP Tools Available
 
-## Features
-
-### 1. MCP Tools for Agents
-
-Four native tools that agents can invoke:
-
-#### `clawsec_check_advisories`
-Scans installed skills for known vulnerabilities.
-
-**Parameters:**
-- `skillsRoot` (optional): Path to skills directory (default: `/workspace/project/skills`)
-
-**Returns:**
-- List of advisories affecting installed skills
-- Severity levels (critical, high, medium, low)
-- Recommended actions
-
-**Example:**
-```typescript
-const result = await tools.clawsec_check_advisories({
-  skillsRoot: '/workspace/project/skills'
-});
-// { matches: [...], totalAdvisories: 5, criticalCount: 1 }
-```
-
-#### `clawsec_check_skill_safety`
-Pre-installation safety check for a specific skill.
-
-**Parameters:**
-- `skillName`: Name of skill to check
-- `version` (optional): Specific version to check
-
-**Returns:**
-- Safety status (safe/unsafe)
-- Matching advisories if unsafe
-- Recommended actions
-
-**Example:**
-```typescript
-const safety = await tools.clawsec_check_skill_safety({
-  skillName: 'dangerous-skill',
-  version: '1.0.0'
-});
-// { safe: false, advisories: [...], severity: 'critical' }
-```
-
-#### `clawsec_list_advisories`
-Lists all advisories in the feed, optionally filtered.
-
-**Parameters:**
-- `platform` (optional): Filter by platform (nanoclaw/openclaw)
-- `severity` (optional): Filter by severity level
-- `type` (optional): Filter by advisory type
-
-**Returns:**
-- Array of advisories matching filters
-- Full advisory details
-
-**Example:**
-```typescript
-const advisories = await tools.clawsec_list_advisories({
-  platform: 'nanoclaw',
-  severity: 'critical'
-});
-// [{ id: 'CVE-2026-1234', ... }]
-```
-
-#### `clawsec_verify_signature`
-Verifies Ed25519 signature of advisory feed.
-
-**Parameters:**
-- `feedPath`: Path to feed JSON file
-- `signaturePath`: Path to detached signature file
-- `publicKeyPath`: Path to public key PEM file
-
-**Returns:**
-- Verification status (valid/invalid)
-- Error details if invalid
-
-**Example:**
-```typescript
-const verified = await tools.clawsec_verify_signature({
-  feedPath: '/tmp/feed.json',
-  signaturePath: '/tmp/feed.json.sig',
-  publicKeyPath: '/workspace/project/skills/clawsec-nanoclaw/advisories/feed-signing-public.pem'
-});
-// { valid: true }
-```
-
-### 2. Automatic Advisory Feed Updates
-
-The host service automatically:
-- Fetches advisories from `https://clawsec.prompt.security/advisories/feed.json` every 6 hours
-- Verifies Ed25519 signatures before accepting updates
-- Caches advisories for fast agent access
-- Logs all update attempts and verification results
-
-### 3. Platform-Specific Advisory Filtering
-
-Advisories can target specific platforms:
-
-```json
-{
-  "id": "CVE-2026-1234",
-  "platforms": ["nanoclaw"],
-  "severity": "critical",
-  "affected": ["skill-name@1.0.0"],
-  "action": "Update to version 1.0.1"
-}
-```
-
-The MCP tools automatically filter:
-- `platforms: ["nanoclaw"]` - Shows only to NanoClaw
-- `platforms: ["openclaw"]` - Hidden from NanoClaw
-- `platforms: ["openclaw", "nanoclaw"]` - Shows to both
-- No `platforms` field - Shows to all (default)
-
-### 4. IPC-Based Host Communication
-
-Since agents run in containers, ClawSec uses IPC for operations requiring host access:
-- Signature verification (requires native crypto libraries)
-- Advisory cache management
-- Skill directory scanning
-
-This keeps containers lightweight while enabling full security capabilities.
-
-## Installation
-
-See [INSTALL.md](./INSTALL.md) for detailed setup instructions.
-
-**Quick Summary:**
-1. Copy skill directory to NanoClaw
-2. Integrate MCP tools into `ipc-mcp-stdio.ts`
-3. Integrate IPC handlers into `host/ipc-handler.ts`
-4. Start advisory cache service in host process
-5. Restart NanoClaw
-
-## Usage
-
-### Agent Natural Language Commands
-
-Once installed, agents can respond to:
-
-```
-Check my installed skills for security issues
-Is it safe to install skill-name?
-Show me all critical security advisories
-Verify the advisory feed signature
-```
-
-### Programmatic Usage
+### Pre-Installation Check
 
 ```typescript
-// In agent code
-const { tools } = require('./mcp-tools');
-
-// Check all skills
-const vulns = await tools.clawsec_check_advisories({
-  skillsRoot: '/workspace/project/skills'
-});
-
-if (vulns.criticalCount > 0) {
-  console.log('CRITICAL VULNERABILITIES FOUND!');
-  vulns.matches.forEach(match => {
-    console.log(`- ${match.advisory.id}: ${match.advisory.action}`);
-  });
-}
-
-// Pre-installation check
+// Before installing any skill
 const safety = await tools.clawsec_check_skill_safety({
   skillName: 'new-skill',
-  version: '2.0.0'
+  version: '1.0.0'  // optional
 });
 
 if (!safety.safe) {
-  throw new Error(`Skill has known vulnerabilities: ${safety.advisories.map(a => a.id).join(', ')}`);
+  // Show user the risks before proceeding
+  console.warn(`Security issues: ${safety.advisories.map(a => a.id)}`);
 }
 ```
 
-## Architecture
+### Security Audit
 
-### Components
+```typescript
+// Check all installed skills
+const result = await tools.clawsec_check_advisories({
+  skillsRoot: '/workspace/project/skills'  // optional
+});
 
-```
-┌─────────────────────────────────────────────────┐
-│  Container: NanoClaw Agent                      │
-│  ┌────────────────────────────────────────────┐ │
-│  │ MCP Tools (advisory-tools.ts)              │ │
-│  │ - clawsec_check_advisories                 │ │
-│  │ - clawsec_check_skill_safety               │ │
-│  │ - clawsec_list_advisories                  │ │
-│  │ - clawsec_verify_signature                 │ │
-│  └──────────────┬─────────────────────────────┘ │
-│                 │ IPC Requests                   │
-└─────────────────┼─────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────┐
-│  Host: NanoClaw Host Process                    │
-│  ┌────────────────────────────────────────────┐ │
-│  │ IPC Handlers (ipc-handlers.ts)             │ │
-│  │ - Advisory cache reads                     │ │
-│  │ - Signature verification                   │ │
-│  │ - Skill scanning                           │ │
-│  └──────────────┬─────────────────────────────┘ │
-│                 │                                │
-│  ┌────────────────────────────────────────────┐ │
-│  │ Advisory Cache Service                     │ │
-│  │ (advisory-cache.ts)                        │ │
-│  │ - Periodic feed fetching (6h)              │ │
-│  │ - Ed25519 signature verification           │ │
-│  │ - Cache management                         │ │
-│  └──────────────┬─────────────────────────────┘ │
-│                 │ HTTPS                          │
-└─────────────────┼─────────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────┐
-│  https://clawsec.prompt.security/              │
-│  - advisories/feed.json                         │
-│  - advisories/feed.json.sig                     │
-└─────────────────────────────────────────────────┘
-```
-
-### Data Flow
-
-1. **Initial Fetch**: Host service fetches advisory feed on startup
-2. **Verification**: Ed25519 signature verified before accepting
-3. **Caching**: Verified feed cached to `/workspace/project/data/clawsec-advisory-cache.json`
-4. **Agent Request**: Agent invokes MCP tool (e.g., `clawsec_check_advisories`)
-5. **IPC**: MCP tool writes IPC request to filesystem
-6. **Host Processing**: Host IPC handler processes request
-7. **Cache Read**: Handler reads advisory cache
-8. **Matching**: Compares installed skills against advisories
-9. **Response**: Results returned to agent via IPC
-10. **Periodic Update**: Cache refreshes every 6 hours
-
-## Security
-
-### Threat Model
-
-ClawSec for NanoClaw protects against:
-
-- **Vulnerable Skills**: Known security issues in installed skills
-- **Malicious Skills**: Skills with documented malicious behavior
-- **Feed Tampering**: Man-in-the-middle attacks on advisory feed
-- **Feed Replay**: Serving outdated feeds with known vulnerabilities removed
-- **Dependency Vulnerabilities**: Issues in skill dependencies (e.g., baileys)
-
-### Signature Verification
-
-All advisory feeds are Ed25519 signed:
-
-```
-feed.json          # Advisory data
-feed.json.sig      # Detached Ed25519 signature
-```
-
-The public key is pinned in the skill:
-```
-advisories/feed-signing-public.pem
-```
-
-**Verification Process:**
-1. Fetch feed and signature from HTTPS URL
-2. Verify signature using pinned public key
-3. Reject feed if signature invalid
-4. Accept feed only if signature valid and recent
-
-### Cache Integrity
-
-The cache file includes:
-```json
-{
-  "feed": [...],
-  "signature": "base64_encoded_signature",
-  "publicKey": "pinned_public_key",
-  "lastFetch": "2026-02-25T12:00:00Z",
-  "verified": true
+if (result.criticalCount > 0) {
+  // Alert user immediately
+  console.error('CRITICAL vulnerabilities found!');
 }
 ```
 
-Never accept advisories from unverified cache.
+### Browse Advisories
 
-## Performance
+```typescript
+// List advisories with filters
+const advisories = await tools.clawsec_list_advisories({
+  platform: 'nanoclaw',    // optional: nanoclaw, openclaw, or both
+  severity: 'critical'     // optional: critical, high, medium, low
+});
+```
 
-### Cache Strategy
+## Quick Reference
 
-- **Fetch Interval**: 6 hours (configurable)
-- **Cache Location**: `/workspace/project/data/clawsec-advisory-cache.json`
-- **Cache Size**: Typically <100KB
-- **Lookup Time**: <1ms (in-memory after load)
+| Task | Tool | Key Parameter |
+|------|------|---------------|
+| Pre-install check | `clawsec_check_skill_safety` | `skillName` |
+| Audit all skills | `clawsec_check_advisories` | `skillsRoot` (optional) |
+| Browse feed | `clawsec_list_advisories` | `severity`, `platform` (optional) |
+| Verify feed integrity | `clawsec_verify_signature` | `feedPath`, `signaturePath` |
 
-### Agent Impact
+## Common Patterns
 
-- **Tool Response Time**: <10ms (reads local cache)
-- **Container Size**: +150KB (TypeScript code)
-- **Memory Usage**: <5MB (for advisory cache)
+### Pattern 1: Safe Skill Installation
 
-## Compatibility
+```typescript
+// ALWAYS check before installing
+const safety = await tools.clawsec_check_skill_safety({
+  skillName: userRequestedSkill
+});
 
-### NanoClaw Versions
+if (safety.safe) {
+  // Proceed with installation
+  await installSkill(userRequestedSkill);
+} else {
+  // Show user the risks and get confirmation
+  await showSecurityWarning(safety.advisories);
+  if (await getUserConfirmation()) {
+    await installSkill(userRequestedSkill);
+  }
+}
+```
 
-- **Minimum**: 0.1.0
-- **Tested**: 0.1.x
-- **Recommended**: Latest stable
+### Pattern 2: Periodic Security Check
 
-### Node.js
+```typescript
+// Add to scheduled tasks
+schedule_task({
+  prompt: "Check for security advisories using clawsec_check_advisories and alert if any critical issues found",
+  schedule_type: "cron",
+  schedule_value: "0 9 * * *"  // Daily at 9am
+});
+```
 
-- **Minimum**: 18.0.0
-- **Recommended**: 20.x or later
+### Pattern 3: User Security Query
 
-### Cross-Platform Skills
+```
+User: "Are my skills secure?"
 
-Skills that work on both NanoClaw and OpenClaw benefit from unified security monitoring:
+You: I'll check installed skills for known vulnerabilities.
+[Use clawsec_check_advisories]
 
-- OpenClaw: Uses hook-based advisory guardian
-- NanoClaw: Uses MCP tool-based advisory checking
-- Same advisory feed serves both platforms
-- Platform-specific advisories when needed
+Response:
+✅ No critical issues found.
+- 2 low-severity advisories (not urgent)
+- All skills up to date
+```
 
-## Comparison with OpenClaw ClawSec
+## Common Mistakes
 
-| Feature | OpenClaw | NanoClaw |
-|---------|----------|----------|
-| Architecture | Hook-based | MCP tool-based |
-| Agent Access | Hook invocations | MCP tools |
-| Host Communication | Direct | IPC |
-| Signature Verification | OpenSSL CLI | Native Node.js crypto |
-| Advisory Cache | File-based | File-based |
-| Automatic Updates | Cron | Host service |
-| Platform | Local | Containerized |
+### ❌ Installing without checking
+```typescript
+// DON'T
+await installSkill('untrusted-skill');
+```
 
-## Limitations
+```typescript
+// DO
+const safety = await tools.clawsec_check_skill_safety({
+  skillName: 'untrusted-skill'
+});
+if (safety.safe) await installSkill('untrusted-skill');
+```
 
-- **Network Required**: Advisory fetching requires internet access
-- **Host Trust**: Agents must trust host for signature verification
-- **Container Boundary**: Some operations require IPC to host
-- **Skill Discovery**: Requires scanning skill directory (can be slow)
+### ❌ Ignoring platform filters
+```typescript
+// DON'T: Check OpenClaw advisories on NanoClaw
+const advisories = await tools.clawsec_list_advisories({
+  platform: 'openclaw'  // Wrong platform!
+});
+```
 
-## Future Enhancements
+```typescript
+// DO: Use correct platform or let it auto-filter
+const advisories = await tools.clawsec_list_advisories({
+  platform: 'nanoclaw'  // Correct
+});
+```
 
-Planned features for future releases:
+### ❌ Skipping critical severity
+```typescript
+// DON'T: Only check low severity
+if (result.lowCount > 0) alert();
+```
 
-1. **Real-Time Alerts**: WebSocket connection for instant advisory notifications
-2. **Skill Sandboxing**: Integration with container security policies
-3. **Behavioral Analysis**: ML-based detection of malicious skill behavior
-4. **WhatsApp Alerts**: Direct security notifications via WhatsApp
-5. **Custom Feeds**: Support for organization-specific advisory feeds
-6. **Skill Pinning**: Lock skills to specific versions after verification
-7. **Compliance Reports**: Generate security compliance reports for audits
+```typescript
+// DO: Prioritize critical and high
+if (result.criticalCount > 0 || result.highCount > 0) {
+  // Alert immediately
+}
+```
 
-## Team Credits
+## Implementation Details
 
-Designed and implemented by an 8-agent collaborative team:
+**Feed Source**: https://clawsec.prompt.security/advisories/feed.json
 
-- **pioneer-repo-scout**: ClawSec architecture analysis
-- **pioneer-nanoclaw-scout**: NanoClaw architecture analysis
-- **architect**: Integration design and coordination
-- **advisory-specialist**: Advisory feed integration
-- **integrity-specialist**: File integrity design
-- **installer-specialist**: Signature verification implementation
-- **tester**: Test infrastructure and validation
-- **documenter**: Documentation
+**Update Frequency**: Every 6 hours (automatic)
 
-Total contribution: 3000+ lines of design + implementation code.
+**Signature Verification**: Ed25519 signed feeds
 
-## License
+**Cache Location**: `/workspace/project/data/clawsec-cache.json`
 
-AGPL-3.0-or-later
+See [INSTALL.md](./INSTALL.md) for setup and [docs/](./docs/) for advanced usage.
 
-Same license as ClawSec core.
+## Real-World Impact
 
-## Support
-
-- **Documentation**: https://clawsec.prompt.security/
-- **Issues**: https://github.com/prompt-security/clawsec/issues
-- **Security Reports**: security@prompt.security (PGP key available)
-
----
-
-**Ready to secure your NanoClaw deployment?** See [INSTALL.md](./INSTALL.md) to get started.
+- Prevents installation of skills with known RCE vulnerabilities
+- Alerts to supply chain attacks in dependencies
+- Provides actionable remediation steps
+- Zero false positives (curated feed only)
