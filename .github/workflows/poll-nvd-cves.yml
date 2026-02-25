@@ -30,6 +30,7 @@ jobs:
   poll-and-update:
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -653,6 +654,44 @@ jobs:
             ${{ env.FEED_SIG_PATH }}
             ${{ env.SKILL_FEED_PATH }}
             ${{ env.SKILL_FEED_SIG_PATH }}
+
+      - name: Run CodeQL on generated PR branch
+        if: steps.create-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          BRANCH="${{ steps.create-pr.outputs.pull-request-branch }}"
+          if [ -z "$BRANCH" ]; then
+            echo "::error::Missing pull-request-branch output from create-pull-request"
+            exit 1
+          fi
+
+          echo "Dispatching CodeQL for branch: $BRANCH"
+          gh workflow run codeql.yml --ref "$BRANCH"
+
+          RUN_ID=""
+          for _ in $(seq 1 30); do
+            RUN_ID=$(gh run list \
+              --workflow "CodeQL" \
+              --branch "$BRANCH" \
+              --event workflow_dispatch \
+              --json databaseId,createdAt \
+              --jq 'sort_by(.createdAt) | last | .databaseId // empty')
+            if [ -n "$RUN_ID" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::Unable to locate dispatched CodeQL run for branch $BRANCH"
+            exit 1
+          fi
+
+          echo "Waiting for CodeQL run id: $RUN_ID"
+          gh run watch "$RUN_ID" --exit-status
 
       - name: Summary
         run: |

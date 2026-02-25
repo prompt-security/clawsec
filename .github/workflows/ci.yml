@@ -109,6 +109,10 @@ jobs:
         run: node skills/clawsec-suite/test/advisory_suppression.test.mjs
       - name: Path Resolution Tests
         run: node skills/clawsec-suite/test/path_resolution.test.mjs
+      - name: Fuzz Property Tests
+        run: node skills/clawsec-suite/test/fuzz_properties.test.mjs
+      - name: Semver/Scope/Suppression Fuzz Tests
+        run: node skills/clawsec-suite/test/fuzz_semver_scope_suppression.test.mjs
       - name: Advisory Application Scope Tests
         run: node skills/clawsec-suite/test/advisory_application_scope.test.mjs
 
@@ -122,5 +126,7 @@ jobs:
           node-version: '20'
       - name: Suppression Config Tests
         run: node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
+      - name: Suppression Config Fuzz Tests
+        run: node skills/openclaw-audit-watchdog/test/suppression_config_fuzz.test.mjs
       - name: Render Report Suppression Tests
         run: node skills/openclaw-audit-watchdog/test/render_report_suppression.test.mjs
