@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardian", "lib");
-const { resolveUserPath } = await import(`${LIB_PATH}/utils.mjs`);
+const { resolveUserPath, resolveConfiguredPath } = await import(`${LIB_PATH}/utils.mjs`);
 
 let passCount = 0;
 let failCount = 0;
@@ -102,6 +102,51 @@ async function testEscapedTokenFails() {
   }
 }
 
+async function testConfiguredPathFallbackOnInvalidExplicit() {
+  const testName = "resolveConfiguredPath: falls back when explicit env value is invalid";
+  try {
+    let fallbackReason = "";
+    const resolved = resolveConfiguredPath("\\$HOME/skills", "/tmp/clawsec-default", {
+      label: "CLAWSEC_LOCAL_FEED_SIG",
+      onInvalid: (error, rawValue) => {
+        fallbackReason = `${rawValue} :: ${String(error)}`;
+      },
+    });
+    const expected = path.normalize("/tmp/clawsec-default");
+    if (
+      resolved === expected &&
+      fallbackReason.includes("\\$HOME/skills") &&
+      fallbackReason.includes("Unexpanded home token")
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected fallback ${expected}, got ${resolved} (${fallbackReason})`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testConfiguredPathUsesValidExplicit() {
+  const testName = "resolveConfiguredPath: keeps valid explicit value";
+  try {
+    const resolved = resolveConfiguredPath("$HOME/skills", "/tmp/clawsec-default", {
+      label: "CLAWSEC_INSTALL_ROOT",
+      onInvalid: () => {
+        throw new Error("onInvalid should not run for a valid explicit path");
+      },
+    });
+    const expected = path.normalize(`${process.env.HOME || ""}/skills`);
+    if (resolved === expected) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected ${expected}, got ${resolved}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
 async function runTests() {
   console.log("=== ClawSec Path Resolution Tests ===\n");
 
@@ -109,6 +154,8 @@ async function runTests() {
   await testHomeVariableExpansion();
   await testUserProfileExpansion();
   await testEscapedTokenFails();
+  await testConfiguredPathFallbackOnInvalidExplicit();
+  await testConfiguredPathUsesValidExplicit();
 
   console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
   if (failCount > 0) {

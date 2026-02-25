@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { uniqueStrings, resolveUserPath } from "./lib/utils.mjs";
+import { uniqueStrings, resolveConfiguredPath } from "./lib/utils.mjs";
 import { defaultChecksumsUrl, loadLocalFeed, loadRemoteFeed } from "./lib/feed.mjs";
 import type { HookEvent, FeedPayload, AdvisoryMatch } from "./lib/types.ts";
 import { loadState, persistState } from "./lib/state.ts";
@@ -49,8 +49,14 @@ function configuredPath(
   fallback: string,
   label: string,
 ): string {
-  const candidate = typeof explicit === "string" && explicit.trim() ? explicit.trim() : fallback;
-  return resolveUserPath(candidate, { label });
+  return resolveConfiguredPath(explicit, fallback, {
+    label,
+    onInvalid: (error, rawValue) => {
+      console.warn(
+        `[clawsec-advisory-guardian] invalid ${label} path "${rawValue}", using default "${fallback}": ${String(error)}`,
+      );
+    },
+  });
 }
 
 async function loadFeed(options: {
@@ -94,59 +100,46 @@ async function loadFeed(options: {
 const handler = async (event: HookEvent): Promise<void> => {
   if (!shouldHandleEvent(event)) return;
 
-  let installRoot: string;
-  let suiteDir: string;
-  let localFeedPath: string;
-  let localFeedSignaturePath: string;
-  let localFeedChecksumsPath: string;
-  let localFeedChecksumsSignaturePath: string;
-  let feedPublicKeyPath: string;
-  let stateFile: string;
-  try {
-    installRoot = configuredPath(
-      process.env.CLAWSEC_INSTALL_ROOT || process.env.INSTALL_ROOT,
-      path.join(os.homedir(), ".openclaw", "skills"),
-      "CLAWSEC_INSTALL_ROOT",
-    );
-    suiteDir = configuredPath(
-      process.env.CLAWSEC_SUITE_DIR,
-      path.join(installRoot, "clawsec-suite"),
-      "CLAWSEC_SUITE_DIR",
-    );
-    localFeedPath = configuredPath(
-      process.env.CLAWSEC_LOCAL_FEED,
-      path.join(suiteDir, "advisories", "feed.json"),
-      "CLAWSEC_LOCAL_FEED",
-    );
-    localFeedSignaturePath = configuredPath(
-      process.env.CLAWSEC_LOCAL_FEED_SIG,
-      `${localFeedPath}.sig`,
-      "CLAWSEC_LOCAL_FEED_SIG",
-    );
-    localFeedChecksumsPath = configuredPath(
-      process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS,
-      path.join(path.dirname(localFeedPath), "checksums.json"),
-      "CLAWSEC_LOCAL_FEED_CHECKSUMS",
-    );
-    localFeedChecksumsSignaturePath = configuredPath(
-      process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG,
-      `${localFeedChecksumsPath}.sig`,
-      "CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG",
-    );
-    feedPublicKeyPath = configuredPath(
-      process.env.CLAWSEC_FEED_PUBLIC_KEY,
-      path.join(suiteDir, "advisories", "feed-signing-public.pem"),
-      "CLAWSEC_FEED_PUBLIC_KEY",
-    );
-    stateFile = configuredPath(
-      process.env.CLAWSEC_SUITE_STATE_FILE,
-      path.join(os.homedir(), ".openclaw", "clawsec-suite-feed-state.json"),
-      "CLAWSEC_SUITE_STATE_FILE",
-    );
-  } catch (error) {
-    console.warn(`[clawsec-advisory-guardian] invalid path configuration: ${String(error)}`);
-    return;
-  }
+  const installRoot = configuredPath(
+    process.env.CLAWSEC_INSTALL_ROOT || process.env.INSTALL_ROOT,
+    path.join(os.homedir(), ".openclaw", "skills"),
+    "CLAWSEC_INSTALL_ROOT",
+  );
+  const suiteDir = configuredPath(
+    process.env.CLAWSEC_SUITE_DIR,
+    path.join(installRoot, "clawsec-suite"),
+    "CLAWSEC_SUITE_DIR",
+  );
+  const localFeedPath = configuredPath(
+    process.env.CLAWSEC_LOCAL_FEED,
+    path.join(suiteDir, "advisories", "feed.json"),
+    "CLAWSEC_LOCAL_FEED",
+  );
+  const localFeedSignaturePath = configuredPath(
+    process.env.CLAWSEC_LOCAL_FEED_SIG,
+    `${localFeedPath}.sig`,
+    "CLAWSEC_LOCAL_FEED_SIG",
+  );
+  const localFeedChecksumsPath = configuredPath(
+    process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS,
+    path.join(path.dirname(localFeedPath), "checksums.json"),
+    "CLAWSEC_LOCAL_FEED_CHECKSUMS",
+  );
+  const localFeedChecksumsSignaturePath = configuredPath(
+    process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG,
+    `${localFeedChecksumsPath}.sig`,
+    "CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG",
+  );
+  const feedPublicKeyPath = configuredPath(
+    process.env.CLAWSEC_FEED_PUBLIC_KEY,
+    path.join(suiteDir, "advisories", "feed-signing-public.pem"),
+    "CLAWSEC_FEED_PUBLIC_KEY",
+  );
+  const stateFile = configuredPath(
+    process.env.CLAWSEC_SUITE_STATE_FILE,
+    path.join(os.homedir(), ".openclaw", "clawsec-suite-feed-state.json"),
+    "CLAWSEC_SUITE_STATE_FILE",
+  );
   const feedUrl = process.env.CLAWSEC_FEED_URL || DEFAULT_FEED_URL;
   const feedSignatureUrl = process.env.CLAWSEC_FEED_SIG_URL || `${feedUrl}.sig`;
   const feedChecksumsUrl = process.env.CLAWSEC_FEED_CHECKSUMS_URL || defaultChecksumsUrl(feedUrl);

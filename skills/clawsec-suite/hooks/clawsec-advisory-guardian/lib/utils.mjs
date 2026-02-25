@@ -105,3 +105,31 @@ export function resolveUserPath(inputPath, { label = "path" } = {}) {
 
   return normalized;
 }
+
+/**
+ * Resolve an optional explicit path; if invalid, fall back to a default path.
+ *
+ * @param {string | undefined} explicitPath
+ * @param {string} fallbackPath
+ * @param {{label?: string, onInvalid?: (error: unknown, rawValue: string) => void}} [options]
+ * @returns {string}
+ */
+export function resolveConfiguredPath(
+  explicitPath,
+  fallbackPath,
+  { label = "path", onInvalid } = {},
+) {
+  const explicit = typeof explicitPath === "string" ? explicitPath.trim() : "";
+  if (!explicit) {
+    return resolveUserPath(fallbackPath, { label });
+  }
+
+  try {
+    return resolveUserPath(explicit, { label });
+  } catch (error) {
+    if (typeof onInvalid === "function") {
+      onInvalid(error, explicit);
+    }
+    return resolveUserPath(fallbackPath, { label });
+  }
+}
