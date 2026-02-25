@@ -33,10 +33,12 @@ jobs:
           fi
 
           # GitHub Wiki root (/wiki) renders Home.md, not INDEX.md.
-          # Keep Home.md aligned with INDEX.md so the default wiki URL opens the index.
-          if [ -f wiki/INDEX.md ]; then
-            cp wiki/INDEX.md wiki/Home.md
+          # INDEX.md is the canonical source; generate Home.md from it.
+          if [ ! -f wiki/INDEX.md ]; then
+            echo "::error::wiki/INDEX.md not found. It is required to generate wiki/Home.md."
+            exit 1
           fi
+          cp wiki/INDEX.md wiki/Home.md
 
           WIKI_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
           if ! git ls-remote "$WIKI_REMOTE" >/dev/null 2>&1; then
