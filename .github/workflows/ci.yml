@@ -109,6 +109,8 @@ jobs:
         run: node skills/clawsec-suite/test/advisory_suppression.test.mjs
       - name: Path Resolution Tests
         run: node skills/clawsec-suite/test/path_resolution.test.mjs
+      - name: Advisory Application Scope Tests
+        run: node skills/clawsec-suite/test/advisory_application_scope.test.mjs
 
   openclaw-audit-watchdog-tests:
     name: OpenClaw Audit Watchdog Tests

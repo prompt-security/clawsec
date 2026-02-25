@@ -5,6 +5,8 @@ import { versionMatches } from "./version.mjs";
 import { parseAffectedSpecifier } from "./feed.mjs";
 import type { Advisory, FeedPayload, InstalledSkill, AdvisoryMatch } from "./types.ts";
 
+const ADVISORY_APPLICATION_OPENCLAW = "openclaw";
+
 export async function discoverInstalledSkills(installRoot: string): Promise<InstalledSkill[]> {
   let entries: import("node:fs").Dirent[];
   try {
@@ -64,10 +66,42 @@ export function advisoryMatchesSkill(advisory: Advisory, skill: InstalledSkill):
   return uniqueStrings(matches);
 }
 
+function normalizeApplicationValue(value: unknown): string[] {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized ? [normalized] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .filter((entry) => typeof entry === "string")
+      .map((entry) => entry.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+export function advisoryAppliesToOpenclaw(advisory: Advisory): boolean {
+  // Backward compatibility: old advisories without application scope remain eligible.
+  if (advisory.application === undefined || advisory.application === null) {
+    return true;
+  }
+
+  const applications = normalizeApplicationValue(advisory.application);
+  if (applications.length === 0) {
+    return true;
+  }
+
+  return applications.includes(ADVISORY_APPLICATION_OPENCLAW) || applications.includes("all");
+}
+
 export function findMatches(feed: FeedPayload, installedSkills: InstalledSkill[]): AdvisoryMatch[] {
   const matches: AdvisoryMatch[] = [];
 
   for (const advisory of feed.advisories) {
+    if (!advisoryAppliesToOpenclaw(advisory)) continue;
+
     const affected = Array.isArray(advisory.affected) ? advisory.affected : [];
     if (affected.length === 0) continue;
 

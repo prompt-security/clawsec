@@ -156,6 +156,7 @@ node "$SUITE_DIR/scripts/setup_advisory_cron.mjs"
 What this adds:
 - scan on `agent:bootstrap` and `/new` (`command:new`),
 - compare advisory `affected` entries against installed skills,
+- consider advisories with `application: "openclaw"` (and legacy entries without `application` for backward compatibility),
 - notify when new matches appear,
 - and ask for explicit user approval before any removal flow.
 

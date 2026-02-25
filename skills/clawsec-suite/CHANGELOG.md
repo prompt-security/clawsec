@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Advisory guardian hook now resolves configured path environment variables through a shared portability helper.
 - Guarded install flow now resolves feed/signature/checksum/public-key path overrides through the same shared path helper for consistent behavior across shells/OSes.
+- Advisory matching now explicitly scopes to `application: "openclaw"` when present; legacy advisories without `application` remain eligible for backward compatibility.
 
 ### Fixed
 
