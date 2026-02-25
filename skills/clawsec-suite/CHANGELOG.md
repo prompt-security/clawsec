@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Contributor credit: portability and path-hardening improvements in this release were contributed by [@aldodelgado](https://github.com/aldodelgado) in PR #62.
 - Cross-shell path resolution support for home-directory tokens in suite path configuration (`~`, `$HOME`, `${HOME}`, `%USERPROFILE%`, `$env:HOME`).
 - Dedicated path-resolution regression coverage (`test/path_resolution.test.mjs`) including fallback behavior for invalid explicit path values.
 - Additional advisory/installer tests validating home-token expansion and escaped-token rejection.

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Contributor credit: portability and path-hardening improvements in this release were contributed by [@aldodelgado](https://github.com/aldodelgado) in PR #62.
 - Cross-shell home-path expansion support in watchdog path inputs (`~`, `$HOME`, `${HOME}`, `%USERPROFILE%`, `$env:HOME`).
 - Regression coverage for suppression-config home-token expansion and escaped-token rejection (`test/suppression_config.test.mjs`).
 
