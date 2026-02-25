@@ -32,6 +32,12 @@ jobs:
             exit 1
           fi
 
+          # GitHub Wiki root (/wiki) renders Home.md, not INDEX.md.
+          # Keep Home.md aligned with INDEX.md so the default wiki URL opens the index.
+          if [ -f wiki/INDEX.md ]; then
+            cp wiki/INDEX.md wiki/Home.md
+          fi
+
           WIKI_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git"
           if ! git ls-remote "$WIKI_REMOTE" >/dev/null 2>&1; then
             echo "::warning::Wiki remote unavailable (repository wiki may be disabled). Skipping sync."
