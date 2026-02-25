@@ -74,9 +74,14 @@ const advisories = await tools.clawsec_list_advisories({
 | Task | Tool | Key Parameter |
 |------|------|---------------|
 | Pre-install check | `clawsec_check_skill_safety` | `skillName` |
-| Audit all skills | `clawsec_check_advisories` | `skillsRoot` (optional) |
-| Browse feed | `clawsec_list_advisories` | `severity`, `platform` (optional) |
-| Verify feed integrity | `clawsec_verify_signature` | `feedPath`, `signaturePath` |
+| Audit all skills | `clawsec_check_advisories` | `installRoot` (optional) |
+| Browse feed | `clawsec_list_advisories` | `severity`, `type` (optional) |
+| Verify package signature | `clawsec_verify_skill_package` | `packagePath` |
+| Refresh advisory cache | `clawsec_refresh_cache` | (none) |
+| Check file integrity | `clawsec_check_integrity` | `mode`, `autoRestore` (optional) |
+| Approve file change | `clawsec_approve_change` | `path` |
+| View baseline status | `clawsec_integrity_status` | `path` (optional) |
+| Verify audit log | `clawsec_verify_audit` | (none) |
 
 ## Common Patterns
 

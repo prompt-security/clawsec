@@ -120,9 +120,14 @@
   "nanoclaw": {
     "mcp_tools": [
       "clawsec_check_advisories",
-      "clawsec_verify_signature",
       "clawsec_check_skill_safety",
-      "clawsec_list_advisories"
+      "clawsec_list_advisories",
+      "clawsec_refresh_cache",
+      "clawsec_verify_skill_package",
+      "clawsec_check_integrity",
+      "clawsec_approve_change",
+      "clawsec_integrity_status",
+      "clawsec_verify_audit"
     ],
     "requires": {
       "node": ">=18.0.0",

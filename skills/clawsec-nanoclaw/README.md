@@ -45,11 +45,16 @@ ClawSec provides a complete security skill for NanoClaw deployments:
 
 ### Features
 
-- **4 MCP Tools** for agents to check vulnerabilities:
-  - `clawsec_check_advisories` - Scan installed skills
+- **9 MCP Tools** for agents to manage security:
+  - `clawsec_check_advisories` - Scan installed skills for vulnerabilities
   - `clawsec_check_skill_safety` - Pre-installation safety checks
-  - `clawsec_list_advisories` - Browse advisory feed
-  - `clawsec_verify_signature` - Verify Ed25519 signatures
+  - `clawsec_list_advisories` - Browse advisory feed with filtering
+  - `clawsec_refresh_cache` - Request immediate advisory cache refresh
+  - `clawsec_verify_skill_package` - Verify Ed25519 signatures on skill packages
+  - `clawsec_check_integrity` - Check protected files for unauthorized changes
+  - `clawsec_approve_change` - Approve intentional file modifications
+  - `clawsec_integrity_status` - View file baseline status
+  - `clawsec_verify_audit` - Verify audit log hash chain
 
 - **Advisory Cache Service**: Automatic feed fetching every 6 hours
 - **Signature Verification**: Ed25519-signed feeds ensure integrity

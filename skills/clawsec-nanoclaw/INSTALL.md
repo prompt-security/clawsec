@@ -34,39 +34,24 @@ Add the ClawSec MCP tools to your NanoClaw container agent runner.
 **File**: `container/agent-runner/src/ipc-mcp-stdio.ts`
 
 ```typescript
-// Add this import at the top
-import { clawsecTools } from '../../../skills/clawsec-nanoclaw/mcp-tools/advisory-tools.js';
+// Add these imports at the top to register all ClawSec MCP tools:
 
-// Add to your MCP tools registration
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      // ... your existing tools ...
-      ...clawsecTools.map(tool => ({
-        name: tool.name,
-        description: tool.description,
-        inputSchema: tool.input_schema,
-      })),
-    ],
-  };
-});
+// Advisory tools: clawsec_check_advisories, clawsec_check_skill_safety,
+//                 clawsec_list_advisories, clawsec_refresh_cache
+import '../../../skills/clawsec-nanoclaw/mcp-tools/advisory-tools.js';
 
-// Add to your tool call handler
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+// Signature verification: clawsec_verify_skill_package
+import '../../../skills/clawsec-nanoclaw/mcp-tools/signature-verification.js';
 
-  // ... your existing tool handlers ...
-
-  // ClawSec tools
-  const clawsecTool = clawsecTools.find(t => t.name === name);
-  if (clawsecTool) {
-    const result = await clawsecTool.handler(args);
-    return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-  }
-
-  throw new Error(`Unknown tool: ${name}`);
-});
+// Integrity monitoring: clawsec_check_integrity, clawsec_approve_change,
+//                       clawsec_integrity_status, clawsec_verify_audit
+import '../../../skills/clawsec-nanoclaw/mcp-tools/integrity-tools.js';
 ```
+
+Each file calls `server.tool()` directly to register its tools. The `server`,
+`writeIpcFile`, `TASKS_DIR`, and `groupFolder` variables must be available in
+the scope where these files are imported (they are declared as ambient globals
+in each tool file).
 
 ### 3. Integrate IPC Handlers
 
@@ -132,10 +117,21 @@ Test that ClawSec is working:
 ### 1. Check MCP Tools Available
 
 From within a NanoClaw agent session, the following tools should be available:
+
+**Advisory Tools** (mcp-tools/advisory-tools.ts):
 - `clawsec_check_advisories` - Scan installed skills for vulnerabilities
-- `clawsec_verify_signature` - Verify Ed25519 signatures
 - `clawsec_check_skill_safety` - Pre-installation safety check
-- `clawsec_list_advisories` - List all advisories
+- `clawsec_list_advisories` - List all advisories with filtering
+- `clawsec_refresh_cache` - Request immediate advisory cache refresh
+
+**Signature Verification** (mcp-tools/signature-verification.ts):
+- `clawsec_verify_skill_package` - Verify Ed25519 signature on skill packages
+
+**Integrity Monitoring** (mcp-tools/integrity-tools.ts):
+- `clawsec_check_integrity` - Check protected files for unauthorized changes
+- `clawsec_approve_change` - Approve intentional file modification as new baseline
+- `clawsec_integrity_status` - View current baseline status
+- `clawsec_verify_audit` - Verify audit log hash chain integrity
 
 ### 2. Test Advisory Checking
 
