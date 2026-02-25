@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.2
+version: 0.1.3
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -44,6 +44,14 @@ Fallback behavior:
 - If the remote index is unavailable or malformed, the script falls back to suite-local catalog metadata in `skill.json`.
 
 ## Installation
+
+### Cross-shell path note
+
+- In `bash`/`zsh`, keep path variables expandable (for example, `INSTALL_ROOT="$HOME/.openclaw/skills"`).
+- Do not single-quote home-variable paths (avoid `'$HOME/.openclaw/skills'`).
+- In PowerShell, set an explicit path:
+  - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+- If a path is passed with unresolved tokens (like `\$HOME/...`), suite scripts now fail fast with a clear error.
 
 ### Option A: Via clawhub (recommended)
 
@@ -148,6 +156,7 @@ node "$SUITE_DIR/scripts/setup_advisory_cron.mjs"
 What this adds:
 - scan on `agent:bootstrap` and `/new` (`command:new`),
 - compare advisory `affected` entries against installed skills,
+- consider advisories with `application: "openclaw"` (and legacy entries without `application` for backward compatibility),
 - notify when new matches appear,
 - and ask for explicit user approval before any removal flow.
 

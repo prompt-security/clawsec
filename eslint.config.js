@@ -28,6 +28,7 @@ export default [
         navigator: 'readonly',
         fetch: 'readonly',
         setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         clearInterval: 'readonly',
         setInterval: 'readonly',
         URL: 'readonly',
@@ -35,10 +36,13 @@ export default [
         HTMLElement: 'readonly',
         MouseEvent: 'readonly',
         KeyboardEvent: 'readonly',
-        // Node.js globals (for Vite config, build scripts)
+        // Node.js globals (for Vite config, build scripts, and skill modules)
         process: 'readonly',
         __dirname: 'readonly',
-        __filename: 'readonly'
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        AbortController: 'readonly',
+        RequestInit: 'readonly'
       }
     },
     plugins: {

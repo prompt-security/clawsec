@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "description": "NanoClaw file integrity monitoring policy",
+  "nanoclaw_version": "0.1.0",
+  "targets": [
+    {
+      "path": "/workspace/project/data/registered_groups.json",
+      "mode": "restore",
+      "priority": "critical",
+      "description": "Group registration config - prevents unauthorized group access"
+    },
+    {
+      "path": "/workspace/group/CLAUDE.md",
+      "mode": "restore",
+      "priority": "high",
+      "description": "Group-specific agent instructions"
+    },
+    {
+      "path": "/workspace/project/groups/global/CLAUDE.md",
+      "mode": "restore",
+      "priority": "high",
+      "description": "Global agent instructions shared across all groups"
+    },
+    {
+      "pattern": "/workspace/project/container/**/*.ts",
+      "mode": "alert",
+      "priority": "medium",
+      "description": "Container runtime code - alert on changes for awareness"
+    },
+    {
+      "pattern": "/workspace/project/host/**/*.ts",
+      "mode": "alert",
+      "priority": "medium",
+      "description": "Host process code - alert on changes for awareness"
+    },
+    {
+      "pattern": "/workspace/ipc/**/*",
+      "mode": "ignore",
+      "priority": "low",
+      "description": "IPC files change constantly - ignore"
+    },
+    {
+      "pattern": "/workspace/group/conversations/**/*",
+      "mode": "ignore",
+      "priority": "low",
+      "description": "Chat history - expected to change frequently"
+    }
+  ],
+  "notes": [
+    "Mode 'restore': Auto-restore file to approved baseline on drift + alert user",
+    "Mode 'alert': Alert user about drift but do not auto-restore",
+    "Mode 'ignore': No monitoring, file changes are expected",
+    "Patterns use glob syntax with ** for recursive matching"
+  ]
+}

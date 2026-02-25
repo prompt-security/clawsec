@@ -23,8 +23,8 @@ env:
   FEED_SIG_PATH: advisories/feed.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
   SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
-  KEYWORDS: "OpenClaw clawdbot Moltbot"
-  GITHUB_REF_PATTERN: "github.com/openclaw/openclaw"
+  KEYWORDS: "OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
+  GITHUB_REF_PATTERN: "github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
 
 jobs:
   poll-and-update:

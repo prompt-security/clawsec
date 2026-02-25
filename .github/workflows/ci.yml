@@ -10,8 +10,15 @@ permissions: read-all
 
 jobs:
   lint-typescript:
-    name: Lint TypeScript/React
-    runs-on: ubuntu-latest
+    name: Lint TypeScript/React (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
@@ -98,3 +105,22 @@ jobs:
         run: node skills/clawsec-suite/test/feed_verification.test.mjs
       - name: Guarded Install Tests
         run: node skills/clawsec-suite/test/guarded_install.test.mjs
+      - name: Advisory Suppression Tests
+        run: node skills/clawsec-suite/test/advisory_suppression.test.mjs
+      - name: Path Resolution Tests
+        run: node skills/clawsec-suite/test/path_resolution.test.mjs
+      - name: Advisory Application Scope Tests
+        run: node skills/clawsec-suite/test/advisory_application_scope.test.mjs
+
+  openclaw-audit-watchdog-tests:
+    name: OpenClaw Audit Watchdog Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+      - name: Suppression Config Tests
+        run: node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
+      - name: Render Report Suppression Tests
+        run: node skills/openclaw-audit-watchdog/test/render_report_suppression.test.mjs

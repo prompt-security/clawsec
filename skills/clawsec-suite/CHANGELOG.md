@@ -5,6 +5,29 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3]
+
+### Added
+
+- Contributor credit: portability and path-hardening improvements in this release were contributed by [@aldodelgado](https://github.com/aldodelgado) in PR #62.
+- Cross-shell path resolution support for home-directory tokens in suite path configuration (`~`, `$HOME`, `${HOME}`, `%USERPROFILE%`, `$env:HOME`).
+- Dedicated path-resolution regression coverage (`test/path_resolution.test.mjs`) including fallback behavior for invalid explicit path values.
+- Additional advisory/installer tests validating home-token expansion and escaped-token rejection.
+
+### Changed
+
+- Advisory guardian hook now resolves configured path environment variables through a shared portability helper.
+- Guarded install flow now resolves feed/signature/checksum/public-key path overrides through the same shared path helper for consistent behavior across shells/OSes.
+- Advisory matching now explicitly scopes to `application: "openclaw"` when present; legacy advisories without `application` remain eligible for backward compatibility.
+
+### Fixed
+
+- Prevented advisory-check bypass when a single explicit path env var is malformed: invalid explicit values now fall back to safe defaults instead of aborting the entire hook run.
+
+### Security
+
+- Escaped/unexpanded home-token inputs in path config are explicitly rejected while preserving secure defaults.
+
 ## [0.1.2]
 
 ### Added

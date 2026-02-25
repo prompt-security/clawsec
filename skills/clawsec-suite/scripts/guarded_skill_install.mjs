@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { normalizeSkillName, uniqueStrings } from "../hooks/clawsec-advisory-guardian/lib/utils.mjs";
+import { normalizeSkillName, uniqueStrings, resolveUserPath } from "../hooks/clawsec-advisory-guardian/lib/utils.mjs";
 import { versionMatches } from "../hooks/clawsec-advisory-guardian/lib/version.mjs";
 import {
   defaultChecksumsUrl,
@@ -22,6 +22,12 @@ const DEFAULT_LOCAL_FEED_CHECKSUMS = path.join(DEFAULT_SUITE_DIR, "advisories", 
 const DEFAULT_LOCAL_FEED_CHECKSUMS_SIG = `${DEFAULT_LOCAL_FEED_CHECKSUMS}.sig`;
 const DEFAULT_FEED_PUBLIC_KEY = path.join(DEFAULT_SUITE_DIR, "advisories", "feed-signing-public.pem");
 const EXIT_CONFIRM_REQUIRED = 42;
+
+function envPathOrDefault(name, fallback, label) {
+  const envValue = process.env[name];
+  const candidate = typeof envValue === "string" && envValue.trim() ? envValue.trim() : fallback;
+  return resolveUserPath(candidate, { label });
+}
 
 function printUsage() {
   process.stderr.write(
@@ -118,11 +124,19 @@ async function loadFeed() {
   const feedSignatureUrl = process.env.CLAWSEC_FEED_SIG_URL || `${feedUrl}.sig`;
   const feedChecksumsUrl = process.env.CLAWSEC_FEED_CHECKSUMS_URL || defaultChecksumsUrl(feedUrl);
   const feedChecksumsSignatureUrl = process.env.CLAWSEC_FEED_CHECKSUMS_SIG_URL || `${feedChecksumsUrl}.sig`;
-  const localFeedPath = process.env.CLAWSEC_LOCAL_FEED || DEFAULT_LOCAL_FEED;
-  const localFeedSigPath = process.env.CLAWSEC_LOCAL_FEED_SIG || DEFAULT_LOCAL_FEED_SIG;
-  const localFeedChecksumsPath = process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS || DEFAULT_LOCAL_FEED_CHECKSUMS;
-  const localFeedChecksumsSigPath = process.env.CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG || DEFAULT_LOCAL_FEED_CHECKSUMS_SIG;
-  const feedPublicKeyPath = process.env.CLAWSEC_FEED_PUBLIC_KEY || DEFAULT_FEED_PUBLIC_KEY;
+  const localFeedPath = envPathOrDefault("CLAWSEC_LOCAL_FEED", DEFAULT_LOCAL_FEED, "CLAWSEC_LOCAL_FEED");
+  const localFeedSigPath = envPathOrDefault("CLAWSEC_LOCAL_FEED_SIG", DEFAULT_LOCAL_FEED_SIG, "CLAWSEC_LOCAL_FEED_SIG");
+  const localFeedChecksumsPath = envPathOrDefault(
+    "CLAWSEC_LOCAL_FEED_CHECKSUMS",
+    DEFAULT_LOCAL_FEED_CHECKSUMS,
+    "CLAWSEC_LOCAL_FEED_CHECKSUMS",
+  );
+  const localFeedChecksumsSigPath = envPathOrDefault(
+    "CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG",
+    DEFAULT_LOCAL_FEED_CHECKSUMS_SIG,
+    "CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG",
+  );
+  const feedPublicKeyPath = envPathOrDefault("CLAWSEC_FEED_PUBLIC_KEY", DEFAULT_FEED_PUBLIC_KEY, "CLAWSEC_FEED_PUBLIC_KEY");
   const allowUnsigned = process.env.CLAWSEC_ALLOW_UNSIGNED_FEED === "1";
   const verifyChecksumManifest = process.env.CLAWSEC_VERIFY_CHECKSUM_MANIFEST !== "0";
 

@@ -1,0 +1,142 @@
+{
+  "name": "clawsec-nanoclaw",
+  "version": "0.0.1",
+  "description": "ClawSec security suite for NanoClaw - Advisory feed monitoring, MCP tools for vulnerability checking, and Ed25519 signature verification for containerized WhatsApp bot agents",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "keywords": [
+    "security",
+    "nanoclaw",
+    "whatsapp-bot",
+    "mcp-tools",
+    "advisory",
+    "feed",
+    "threat-intel",
+    "containers",
+    "signature-verification",
+    "vulnerability-scanning",
+    "agents",
+    "ai"
+  ],
+  "platform": "nanoclaw",
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "NanoClaw skill documentation"
+      },
+      {
+        "path": "INSTALL.md",
+        "required": true,
+        "description": "Installation guide for NanoClaw deployments"
+      },
+      {
+        "path": "mcp-tools/advisory-tools.ts",
+        "required": true,
+        "description": "MCP tools for advisory checking in container context"
+      },
+      {
+        "path": "host-services/advisory-cache.ts",
+        "required": true,
+        "description": "Host-side advisory cache manager with periodic feed fetching"
+      },
+      {
+        "path": "host-services/ipc-handlers.ts",
+        "required": true,
+        "description": "IPC handlers for MCP tool requests"
+      },
+      {
+        "path": "lib/signatures.ts",
+        "required": true,
+        "description": "Ed25519 signature verification utilities"
+      },
+      {
+        "path": "lib/advisories.ts",
+        "required": true,
+        "description": "Advisory matching and vulnerability detection"
+      },
+      {
+        "path": "lib/types.ts",
+        "required": true,
+        "description": "TypeScript type definitions"
+      },
+      {
+        "path": "advisories/feed-signing-public.pem",
+        "required": true,
+        "description": "Pinned Ed25519 public key for feed signature verification"
+      },
+      {
+        "path": "mcp-tools/signature-verification.ts",
+        "required": true,
+        "description": "Phase 1: MCP tool for skill package signature verification"
+      },
+      {
+        "path": "host-services/skill-signature-handler.ts",
+        "required": true,
+        "description": "Phase 1: Host-side signature verification service"
+      },
+      {
+        "path": "docs/SKILL_SIGNING.md",
+        "required": true,
+        "description": "Phase 1: Documentation for skill signing and verification"
+      },
+      {
+        "path": "mcp-tools/integrity-tools.ts",
+        "required": true,
+        "description": "Phase 2: MCP tools for file integrity monitoring"
+      },
+      {
+        "path": "host-services/integrity-handler.ts",
+        "required": true,
+        "description": "Phase 2: Host-side integrity monitoring service"
+      },
+      {
+        "path": "guardian/integrity-monitor.ts",
+        "required": true,
+        "description": "Phase 2: Core file integrity monitoring engine"
+      },
+      {
+        "path": "guardian/policy.json",
+        "required": true,
+        "description": "Phase 2: NanoClaw-specific file protection policy"
+      },
+      {
+        "path": "docs/INTEGRITY.md",
+        "required": true,
+        "description": "Phase 2: Documentation for file integrity monitoring"
+      }
+    ]
+  },
+  "capabilities": [
+    "Advisory feed monitoring from clawsec.prompt.security",
+    "MCP tools for agent-initiated vulnerability scans",
+    "Pre-installation skill safety checks",
+    "Ed25519 signature verification for advisory feeds",
+    "Platform-specific advisory filtering (nanoclaw vs openclaw)",
+    "Containerized agent support with IPC communication"
+  ],
+  "nanoclaw": {
+    "mcp_tools": [
+      "clawsec_check_advisories",
+      "clawsec_check_skill_safety",
+      "clawsec_list_advisories",
+      "clawsec_refresh_cache",
+      "clawsec_verify_skill_package",
+      "clawsec_check_integrity",
+      "clawsec_approve_change",
+      "clawsec_integrity_status",
+      "clawsec_verify_audit"
+    ],
+    "requires": {
+      "node": ">=18.0.0",
+      "nanoclaw": ">=0.1.0"
+    },
+    "integration": {
+      "mcp_tools_file": "container/agent-runner/src/ipc-mcp-stdio.ts",
+      "ipc_handlers_file": "host/ipc-handler.ts",
+      "cache_location": "/workspace/project/data/clawsec-advisory-cache.json"
+    }
+  }
+}

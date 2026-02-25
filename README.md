@@ -33,7 +33,12 @@
 
 ## 🦞 What is ClawSec?
 
-ClawSec is a **complete security skill suite for the OpenClaw family of agents (Moltbot, Clawdbot, some clones)**. It provides a unified installer that deploys, verifies, and maintains security skills-protecting your agent's cognitive architecture against prompt injection, drift, and malicious instructions.
+ClawSec is a **complete security skill suite for AI agent platforms**. It provides unified security monitoring, integrity verification, and threat intelligence-protecting your agent's cognitive architecture against prompt injection, drift, and malicious instructions.
+
+### Supported Platforms
+
+- **OpenClaw** (Moltbot, Clawdbot, and clones) - Full suite with skill installer, file integrity protection, and security audits
+- **NanoClaw** - Containerized WhatsApp bot security with MCP tools for advisory monitoring, signature verification, and file integrity
 
 ### Core Capabilities
 
@@ -67,9 +72,68 @@ Copy this instruction to your AI agent:
 
 > Read https://clawsec.prompt.security/releases/latest/download/SKILL.md and follow the instructions to install the protection skill suite.
 
+### Shell and OS Notes
+
+ClawSec scripts are split between:
+- Cross-platform Node/Python tooling (`npm run build`, hook/setup `.mjs`, `utils/*.py`)
+- POSIX shell workflows (`*.sh`, most manual install snippets)
+
+For Linux/macOS (`bash`/`zsh`):
+- Use unquoted or double-quoted home vars: `export INSTALL_ROOT="$HOME/.openclaw/skills"`
+- Do **not** single-quote expandable vars (for example, avoid `'$HOME/.openclaw/skills'`)
+
+For Windows (PowerShell):
+- Prefer explicit path building:
+  - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+  - `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
+- POSIX `.sh` scripts require WSL or Git Bash.
+
+Troubleshooting: if you see directories such as `~/.openclaw/workspace/$HOME/...`, a home variable was passed literally. Re-run using an absolute path or an unquoted home expression.
+
 ---
 
-## 📦 ClawSec Suite
+## 📱 NanoClaw Platform Support
+
+ClawSec now supports **NanoClaw**, a containerized WhatsApp bot powered by Claude agents.
+
+### clawsec-nanoclaw Skill
+
+**Location**: `skills/clawsec-nanoclaw/`
+
+A complete security suite adapted for NanoClaw's containerized architecture:
+
+- **9 MCP Tools** for agents to check vulnerabilities
+  - Advisory checking and browsing
+  - Pre-installation safety checks
+  - Skill package signature verification (Ed25519)
+  - File integrity monitoring
+- **Automatic Advisory Feed** - Fetches and caches advisories every 6 hours
+- **Platform Filtering** - Shows only NanoClaw-relevant advisories
+- **IPC-Based** - Container-safe host communication
+- **Full Documentation** - Installation guide, usage examples, troubleshooting
+
+### Advisory Feed for NanoClaw
+
+The feed now monitors NanoClaw-specific keywords:
+- `NanoClaw` - Direct product name
+- `WhatsApp-bot` - Core functionality
+- `baileys` - WhatsApp client library dependency
+
+Advisories can specify `platforms: ["nanoclaw"]` for platform-specific issues.
+
+### Quick Start for NanoClaw
+
+See [`skills/clawsec-nanoclaw/INSTALL.md`](skills/clawsec-nanoclaw/INSTALL.md) for detailed setup instructions.
+
+**Quick integration:**
+1. Copy skill to NanoClaw deployment
+2. Integrate MCP tools in container
+3. Add IPC handlers and cache service on host
+4. Restart NanoClaw
+
+---
+
+## 📦 ClawSec Suite (OpenClaw)
 
 The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and maintains security skills from the ClawSec catalog.
 
@@ -109,9 +173,8 @@ curl -s https://clawsec.prompt.security/advisories/feed.json | jq '.advisories[]
 ### Monitored Keywords
 
 The feed polls CVEs related to:
-- `OpenClaw`
-- `clawdbot`  
-- `Moltbot`
+- **OpenClaw Platform**: `OpenClaw`, `clawdbot`, `Moltbot`
+- **NanoClaw Platform**: `NanoClaw`, `WhatsApp-bot`, `baileys`
 - Prompt injection patterns
 - Agent security vulnerabilities
 
@@ -123,6 +186,7 @@ The feed polls CVEs related to:
   "id": "CVE-2026-XXXXX",
   "severity": "critical|high|medium|low",
   "type": "vulnerable_skill",
+  "platforms": ["openclaw", "nanoclaw"],
   "title": "Short description",
   "description": "Full CVE description from NVD",
   "published": "2026-02-01T00:00:00Z",
@@ -139,6 +203,7 @@ The feed polls CVEs related to:
   "id": "CLAW-2026-0042",
   "severity": "high",
   "type": "prompt_injection|vulnerable_skill|tampering_attempt",
+  "platforms": ["nanoclaw"],
   "title": "Short description",
   "description": "Detailed description from issue",
   "published": "2026-02-01T00:00:00Z",
@@ -148,6 +213,12 @@ The feed polls CVEs related to:
   "action": "Recommended remediation"
 }
 ```
+
+**Platform values:**
+- `"openclaw"` - OpenClaw/ClawdBot/MoltBot only
+- `"nanoclaw"` - NanoClaw only
+- `["openclaw", "nanoclaw"]` - Both platforms
+- (empty/missing) - All platforms (backward compatible)
 
 ---
 
@@ -224,8 +295,8 @@ Each skill release includes:
 ### Signing Operations Documentation
 
 For feed/release signing rollout and operations guidance:
-- [`SECURITY-SIGNING.md`](SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
-- [`MIGRATION-SIGNED-FEED.md`](MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
+- [`docs/SECURITY-SIGNING.md`](docs/SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
+- [`docs/MIGRATION-SIGNED-FEED.md`](docs/MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
 
 ---
 

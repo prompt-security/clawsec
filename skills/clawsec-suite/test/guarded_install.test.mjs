@@ -347,6 +347,55 @@ async function testMissingSignatureFails() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: $HOME path expansion for local feed paths
+// -----------------------------------------------------------------------------
+async function testHomeExpansionForLocalFeedPaths() {
+  const testName = "guarded_install: expands $HOME in local feed env paths";
+  try {
+    const keyPair = generateEd25519KeyPair();
+    await setupSignedFeed([], keyPair);
+
+    const result = await runGuardedInstall(["--skill", "test-skill", "--dry-run"], {
+      HOME: tempDir,
+      CLAWSEC_LOCAL_FEED: "$HOME/advisories/feed.json",
+      CLAWSEC_LOCAL_FEED_SIG: "$HOME/advisories/feed.json.sig",
+      CLAWSEC_LOCAL_FEED_CHECKSUMS: "$HOME/advisories/checksums.json",
+      CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG: "$HOME/advisories/checksums.json.sig",
+      CLAWSEC_FEED_PUBLIC_KEY: "$HOME/advisories/feed-signing-public.pem",
+      CLAWSEC_FEED_URL: "file:///nonexistent",
+    });
+
+    if (result.code === 0 && result.stdout.includes("Advisory source: local:")) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected local feed success, got ${result.code}: ${result.stdout} ${result.stderr}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Test: escaped home token is rejected
+// -----------------------------------------------------------------------------
+async function testEscapedHomeTokenRejected() {
+  const testName = "guarded_install: escaped $HOME token is rejected";
+  try {
+    const result = await runGuardedInstall(["--skill", "test-skill", "--dry-run"], {
+      CLAWSEC_LOCAL_FEED: "\\$HOME/advisories/feed.json",
+    });
+
+    if (result.code === 1 && result.stderr.includes("Unexpanded home token")) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected token validation error, got ${result.code}: ${result.stderr || result.stdout}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Main test runner
 // -----------------------------------------------------------------------------
 async function runTests() {
@@ -361,6 +410,8 @@ async function runTests() {
     await testConfirmAdvisoryAllowsProceeding();
     await testAllowUnsignedWarning();
     await testMissingSignatureFails();
+    await testHomeExpansionForLocalFeedPaths();
+    await testEscapedHomeTokenRejected();
   } finally {
     await cleanupTestDir();
   }

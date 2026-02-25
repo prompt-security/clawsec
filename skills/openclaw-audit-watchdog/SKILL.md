@@ -1,6 +1,6 @@
 ---
 name: openclaw-audit-watchdog
-version: 0.1.0
+version: 0.1.1
 description: Automated daily security audits for OpenClaw agents with email reporting. Runs deep audits and sends formatted reports.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🔭","category":"security"}}
@@ -270,6 +270,12 @@ Optional env:
 - `PROMPTSEC_HOST_LABEL` (label included in report; default uses `hostname`)
 - `PROMPTSEC_INSTALL_DIR` (stable path used by cron payload to `cd` before running runner; default: `~/.config/security-checkup`)
 - `PROMPTSEC_GIT_PULL=1` (runner will `git pull --ff-only` if installed from git)
+
+Path expansion rules (important):
+- In `bash`/`zsh`, use `PROMPTSEC_INSTALL_DIR="$HOME/.config/security-checkup"` (or absolute path).
+- Do not pass a single-quoted literal like `'$HOME/.config/security-checkup'`.
+- On PowerShell, prefer: `$env:PROMPTSEC_INSTALL_DIR = Join-Path $HOME ".config/security-checkup"`.
+- If path resolution fails, setup now exits with a clear error instead of creating a literal `$HOME` directory segment.
 
 Interactive install is last resort if env vars or defaults are not set.
 

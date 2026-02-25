@@ -380,6 +380,78 @@ async function testEnvironmentVariableOverride() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: environment variable path expands $HOME
+// -----------------------------------------------------------------------------
+async function testEnvironmentVariableHomeExpansion() {
+  const testName = "loadSuppressionConfig: OPENCLAW_AUDIT_CONFIG expands $HOME path";
+  let fixture = null;
+
+  try {
+    const envConfig = makeConfig([
+      {
+        checkId: "ENV-HOME-001",
+        skill: "env-skill",
+        reason: "Environment variable home expansion",
+        suppressedAt: "2026-02-15",
+      },
+    ]);
+
+    fixture = await withTempFile(envConfig);
+    const fixtureDir = path.dirname(fixture.path);
+    const fixtureBase = path.basename(fixture.path);
+
+    await withEnv("HOME", fixtureDir, async () => {
+      await withEnv("OPENCLAW_AUDIT_CONFIG", `$HOME/${fixtureBase}`, async () => {
+        const config = await silenceStderr(() =>
+          loadSuppressionConfig(null, { enabled: true })
+        );
+
+        if (
+          config.source === fixture.path &&
+          config.suppressions.length === 1 &&
+          config.suppressions[0].checkId === "ENV-HOME-001"
+        ) {
+          pass(testName);
+        } else {
+          fail(testName, `Unexpected config: ${JSON.stringify(config)}`);
+        }
+      });
+    });
+  } catch (error) {
+    fail(testName, error);
+  } finally {
+    if (fixture) {
+      await fixture.cleanup();
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Test: escaped token is rejected (no silent literal path use)
+// -----------------------------------------------------------------------------
+async function testEscapedHomeTokenRejected() {
+  const testName = "loadSuppressionConfig: escaped $HOME token is rejected";
+  try {
+    await withEnv("OPENCLAW_AUDIT_CONFIG", "\\$HOME/config.json", async () => {
+      try {
+        await silenceStderr(() =>
+          loadSuppressionConfig(null, { enabled: true })
+        );
+        fail(testName, "Expected error for escaped home token");
+      } catch (err) {
+        if (String(err.message || err).includes("Unexpanded home token")) {
+          pass(testName);
+        } else {
+          fail(testName, `Wrong error message: ${err.message || err}`);
+        }
+      }
+    });
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Test: missing suppressions array fails
 // -----------------------------------------------------------------------------
 async function testMissingSuppressions() {
@@ -665,6 +737,8 @@ async function runTests() {
   await testFileNotFoundGracefulFallback();
   await testCustomPathPriority();
   await testEnvironmentVariableOverride();
+  await testEnvironmentVariableHomeExpansion();
+  await testEscapedHomeTokenRejected();
   await testMissingSuppressions();
   await testEmptySuppressions();
   await testCustomPathNotFoundFails();

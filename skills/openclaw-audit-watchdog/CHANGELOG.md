@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1]
+
+### Added
+
+- Contributor credit: portability and path-hardening improvements in this release were contributed by [@aldodelgado](https://github.com/aldodelgado) in PR #62.
+- Cross-shell home-path expansion support in watchdog path inputs (`~`, `$HOME`, `${HOME}`, `%USERPROFILE%`, `$env:HOME`).
+- Regression coverage for suppression-config home-token expansion and escaped-token rejection (`test/suppression_config.test.mjs`).
+
+### Changed
+
+- `scripts/codex_review.sh` now resolves the Codex CLI from `CODEX_BIN`, then `PATH`, then Homebrew fallback for improved portability.
+- `scripts/setup_cron.mjs` now normalizes and validates install-dir/home-derived paths before job creation.
+- `scripts/load_suppression_config.mjs` now resolves/normalizes configured file paths consistently across shell styles.
+
+### Security
+
+- Escaped or unresolved home tokens in suppression config paths now fail fast to avoid silently using unintended literal paths.
+
 ## [0.1.0]
 
 ### Added

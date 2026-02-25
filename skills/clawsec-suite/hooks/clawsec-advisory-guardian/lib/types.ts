@@ -8,6 +8,7 @@ export type Advisory = {
   id?: string;
   severity?: string;
   type?: string;
+  application?: string | string[];
   title?: string;
   description?: string;
   action?: string;

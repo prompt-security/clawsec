@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { isObject, normalizeSkillName, uniqueStrings } from "./utils.mjs";
+import { advisoryAppliesToOpenclaw } from "./advisory_scope.mjs";
 import { versionMatches } from "./version.mjs";
 import { parseAffectedSpecifier } from "./feed.mjs";
 import type { Advisory, FeedPayload, InstalledSkill, AdvisoryMatch } from "./types.ts";
@@ -68,6 +69,8 @@ export function findMatches(feed: FeedPayload, installedSkills: InstalledSkill[]
   const matches: AdvisoryMatch[] = [];
 
   for (const advisory of feed.advisories) {
+    if (!advisoryAppliesToOpenclaw(advisory)) continue;
+
     const affected = Array.isArray(advisory.affected) ? advisory.affected : [];
     if (affected.length === 0) continue;
 
