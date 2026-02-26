@@ -185,6 +185,7 @@ export const WikiBrowser: React.FC = () => {
   }
 
   const activeSlug = selectedDoc.slug.toLowerCase();
+  const pageLlmsPath = `/wiki/llms/${activeSlug}.txt`;
 
   const resolveWikiRouteFromHref = (href: string): string | null => {
     if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
@@ -220,13 +221,22 @@ export const WikiBrowser: React.FC = () => {
         </p>
         <div className="flex flex-wrap gap-3">
           <a
-            href="/wiki/llms.txt"
+            href={pageLlmsPath}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clawd-700 hover:bg-clawd-600 text-white text-sm transition-colors"
           >
             <FileText size={15} />
-            llms.txt
+            Page llms.txt
+          </a>
+          <a
+            href="/wiki/llms.txt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clawd-800 border border-clawd-700 hover:border-clawd-accent text-white text-sm transition-colors"
+          >
+            <FileText size={15} />
+            Wiki llms.txt Index
           </a>
           <a
             href="https://github.com/prompt-security/clawsec/wiki"
