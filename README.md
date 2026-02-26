@@ -313,8 +313,8 @@ Each skill release includes:
 ### Signing Operations Documentation
 
 For feed/release signing rollout and operations guidance:
-- [`docs/SECURITY-SIGNING.md`](docs/SECURITY-SIGNING.md) - key generation, GitHub secrets, rotation/revocation, incident response
-- [`docs/MIGRATION-SIGNED-FEED.md`](docs/MIGRATION-SIGNED-FEED.md) - phased migration from unsigned feed, enforcement gates, rollback plan
+- [`wiki/security-signing-runbook.md`](wiki/security-signing-runbook.md) - key generation, GitHub secrets, rotation/revocation, incident response
+- [`wiki/migration-signed-feed.md`](wiki/migration-signed-feed.md) - phased migration from unsigned feed, enforcement gates, rollback plan
 
 ---
 
@@ -375,6 +375,9 @@ npm run dev
 
 # Populate advisory feed with real NVD CVE data
 ./scripts/populate-local-feed.sh --days 120
+
+# Generate wiki llms exports from wiki/ (for local preview)
+./scripts/populate-local-wiki.sh
 ```
 
 ### Build
@@ -395,6 +398,7 @@ npm run build
 ├── scripts/
 │   ├── populate-local-feed.sh # Local CVE feed populator
 │   ├── populate-local-skills.sh # Local skills catalog populator
+│   ├── populate-local-wiki.sh # Local wiki llms export populator
 │   └── release-skill.sh       # Manual skill release helper
 ├── skills/
 │   ├── clawsec-suite/       # 📦 Suite installer (skill-of-skills)

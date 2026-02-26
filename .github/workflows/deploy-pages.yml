@@ -4,7 +4,6 @@ on:
   workflow_run:
     workflows: ["CI", "Skill Release"]
     types: [completed]
-    # Note: No branch restriction - must trigger on both main branch CI runs AND tag-based Skill Releases
   workflow_dispatch:
 
 permissions:
@@ -19,8 +18,25 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Only run if workflow_dispatch OR the triggering workflow succeeded
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Production build only: manual dispatch or trusted workflow_run sources.
+    # PR validation runs in .github/workflows/pages-verify.yml.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          (
+            github.event.workflow_run.name == 'CI' &&
+            github.event.workflow_run.event == 'push' &&
+            github.event.workflow_run.head_branch == 'main'
+          ) ||
+          (
+            github.event.workflow_run.name == 'Skill Release' &&
+            github.event.workflow_run.event != 'pull_request'
+          )
+        )
+      )
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -401,7 +417,24 @@ jobs:
           path: ./dist
 
   deploy:
-    # Deploy after build succeeds (CI or Skill Release must pass first, or manual dispatch)
+    # Deploy after a production build succeeds.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          (
+            github.event.workflow_run.name == 'CI' &&
+            github.event.workflow_run.event == 'push' &&
+            github.event.workflow_run.head_branch == 'main'
+          ) ||
+          (
+            github.event.workflow_run.name == 'Skill Release' &&
+            github.event.workflow_run.event != 'pull_request'
+          )
+        )
+      )
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

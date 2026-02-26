@@ -57,6 +57,9 @@ node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
 3. For feed/signing changes, run suite verification tests first (`feed_verification`, `guarded_install`).
 4. For workflow or release changes, also run `scripts/validate-release-links.sh` and key consistency script.
 
+## Update Notes
+- 2026-02-26: Updated source references to the migrated `wiki/platform-verification.md` checklist.
+
 ## Source References
 - AGENTS.md
 - scripts/prepare-to-push.sh
@@ -70,4 +73,4 @@ node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
 - skills/clawsec-suite/test/path_resolution.test.mjs
 - skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
 - skills/clawsec-clawhub-checker/test/reputation_check.test.mjs
-- docs/PLATFORM_VERIFICATION.md
+- wiki/platform-verification.md

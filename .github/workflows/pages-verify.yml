@@ -1,0 +1,111 @@
+name: Pages Verify
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-pages-build:
+    name: Verify Pages Build (No Publish)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Verify signing key consistency (repo + docs)
+        run: ./scripts/ci/verify_signing_key_consistency.sh
+
+      - name: Prepare advisory artifacts for pre-deploy checks
+        run: |
+          set -euo pipefail
+          mkdir -p public/advisories
+          cp advisories/feed.json public/advisories/feed.json
+
+      - name: Generate advisory checksums manifest
+        run: |
+          set -euo pipefail
+
+          FEED_FILE="public/advisories/feed.json"
+          FEED_SHA=$(sha256sum "$FEED_FILE" | awk '{print $1}')
+          FEED_SIZE=$(stat -c%s "$FEED_FILE" 2>/dev/null || stat -f%z "$FEED_FILE")
+
+          jq -n \
+            --arg schema_version "1" \
+            --arg algorithm "sha256" \
+            --arg version "1.1.0" \
+            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg repo "${{ github.repository }}" \
+            --arg sha "$FEED_SHA" \
+            --argjson size "$FEED_SIZE" \
+            '{
+              schema_version: $schema_version,
+              algorithm: $algorithm,
+              version: $version,
+              generated_at: $generated,
+              repository: $repo,
+              files: {
+                "advisories/feed.json": {
+                  sha256: $sha,
+                  size: $size,
+                  path: "advisories/feed.json",
+                  url: "https://clawsec.prompt.security/advisories/feed.json"
+                }
+              }
+            }' > public/checksums.json
+
+      - name: Generate ephemeral signing key for PR verification
+        id: test_key
+        run: |
+          set -euo pipefail
+          KEY_FILE=$(mktemp)
+          openssl genpkey -algorithm Ed25519 -out "$KEY_FILE"
+          {
+            echo "private_key<<EOF"
+            cat "$KEY_FILE"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          rm -f "$KEY_FILE"
+
+      - name: Sign advisory feed and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ steps.test_key.outputs.private_key }}
+          input_file: public/advisories/feed.json
+          signature_file: public/advisories/feed.json.sig
+          public_key_output: public/signing-public.pem
+
+      - name: Sign checksums and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ steps.test_key.outputs.private_key }}
+          input_file: public/checksums.json
+          signature_file: public/checksums.sig
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Sanity-check generated artifacts
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f public/advisories/feed.json.sig
+          test -f public/checksums.sig
+          test -f public/signing-public.pem

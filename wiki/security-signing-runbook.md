@@ -213,3 +213,16 @@ Before requiring signatures in all clients:
 - deploy pipeline mirrors signature companions
 - one rollback drill and one key rotation drill completed successfully
 - incident response on-call owner identified and documented
+
+## Source References
+- advisories/feed.json
+- advisories/feed.json.sig
+- advisories/feed-signing-public.pem
+- clawsec-signing-public.pem
+- .github/actions/sign-and-verify/action.yml
+- .github/workflows/poll-nvd-cves.yml
+- .github/workflows/community-advisory.yml
+- .github/workflows/deploy-pages.yml
+- .github/workflows/skill-release.yml
+- scripts/ci/verify_signing_key_consistency.sh
+- wiki/migration-signed-feed.md

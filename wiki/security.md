@@ -29,8 +29,8 @@
 - Release docs include manual verification commands for downstream consumers.
 
 ## Incident and Rotation Playbooks
-- `docs/SECURITY-SIGNING.md` defines key generation, custody, rotation, and incident phases.
-- `docs/MIGRATION-SIGNED-FEED.md` defines staged enforcement and rollback levels.
+- `wiki/security-signing-runbook.md` defines key generation, custody, rotation, and incident phases.
+- `wiki/migration-signed-feed.md` defines staged enforcement and rollback levels.
 - Rollback paths prioritize preserving signed publishing where possible and time-boxing any bypass.
 
 ## Example Snippets
@@ -56,10 +56,13 @@ openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | shasum -a 256
 - Add explicit tests for workflow-level signature failure scenarios.
 - Increase runtime telemetry for advisory fetch/verification failures to simplify incident triage.
 
+## Update Notes
+- 2026-02-26: Repointed signing and migration references from root `docs/` files to dedicated `wiki/` operations pages.
+
 ## Source References
 - SECURITY.md
-- docs/SECURITY-SIGNING.md
-- docs/MIGRATION-SIGNED-FEED.md
+- wiki/security-signing-runbook.md
+- wiki/migration-signed-feed.md
 - scripts/ci/verify_signing_key_consistency.sh
 - .github/actions/sign-and-verify/action.yml
 - .github/workflows/poll-nvd-cves.yml

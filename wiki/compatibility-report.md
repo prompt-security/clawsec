@@ -34,7 +34,7 @@ This could produce paths like `~/.openclaw/workspace/$HOME/...`.
 | CP-006 | High | Windows | Multiple SKILL docs and shell scripts | Install/maintenance flow is still heavily POSIX-shell based. | Add PowerShell equivalents or Node wrappers for critical flows. | Open |
 | CP-007 | Medium | Linux/macOS/Windows | `skills/soul-guardian/scripts/soul_guardian.py` | `Path(...).expanduser()` handles `~` but not `$HOME`/`%USERPROFILE%`. | Add explicit env-token expansion + validation for `--state-dir`. | Open |
 | CP-008 | Medium | Windows | `scripts/release-skill.sh`, `scripts/populate-local-*.sh` | GNU/BSD shell toolchain assumptions block native Windows usage. | Provide cross-platform Node/Python replacements or PowerShell equivalents. | Open |
-| CP-009 | Low | Windows | docs + scripts using `chmod 600/644` | POSIX permission semantics are partial/non-portable on Windows. | Document best-effort behavior and Windows ACL alternatives. | Open |
+| CP-009 | Low | Windows | documentation + scripts using `chmod 600/644` | POSIX permission semantics are partial/non-portable on Windows. | Document best-effort behavior and Windows ACL alternatives. | Open |
 | CP-010 | Low | macOS/Windows | CI non-Node jobs | Shell/Python/security scan jobs remain Ubuntu-only. | Add scoped matrix or dedicated non-Linux smoke jobs where practical. | Open |
 
 ---
@@ -54,7 +54,7 @@ This could produce paths like `~/.openclaw/workspace/$HOME/...`.
 ## Permissions / Filesystem Semantics
 - Confirmed many scripts rely on POSIX permission commands.
 - Existing `state.ts` already handles `chmod` failures on unsupported filesystems.
-- Open: docs still mostly assume POSIX permissions.
+- Open: documentation still mostly assumes POSIX permissions.
 
 ## Line Endings
 - Fixed by adding `.gitattributes` with LF rules for scripts and key text/config files.
@@ -62,7 +62,7 @@ This could produce paths like `~/.openclaw/workspace/$HOME/...`.
 ## Runtime Dependencies
 - Node scripts generally portable.
 - Python utilities are portable.
-- OpenSSL usage in docs/workflows remains shell/toolchain dependent.
+- OpenSSL usage in documentation/workflows remains shell/toolchain dependent.
 
 ## CI / Automation
 - Fixed: TS/lint/build matrix now runs on Linux/macOS/Windows.
@@ -95,3 +95,17 @@ This could produce paths like `~/.openclaw/workspace/$HOME/...`.
 - `sh` (where scripts are invoked through Node entrypoints): same path behavior in Node layer.
 - Windows PowerShell: `%USERPROFILE%` / `$env:USERPROFILE` expansion and path normalization validated in Node tests.
 
+## Source References
+- .gitattributes
+- .github/workflows/ci.yml
+- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/suppression.mjs
+- skills/clawsec-suite/scripts/guarded_skill_install.mjs
+- skills/openclaw-audit-watchdog/scripts/setup_cron.mjs
+- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- skills/soul-guardian/scripts/soul_guardian.py
+- scripts/release-skill.sh
+- scripts/populate-local-feed.sh
+- scripts/populate-local-skills.sh
+- wiki/remediation-plan.md
+- wiki/platform-verification.md

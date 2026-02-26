@@ -1,9 +1,9 @@
 # Wiki Generation Metadata
 
-- Commit hash: `448aed326192d38812cb508820f967cb74e77ae9`
-- Branch name: `main`
-- Generation timestamp (local): `2026-02-25T20:59:57+0200`
-- Generation mode: `initial`
+- Commit hash: `d5aadfbee15b48ebb4872dfb838e4df88c611d56`
+- Branch name: `codex/wiki-tab-ui`
+- Generation timestamp (local): `2026-02-26T09:16:02+0200`
+- Generation mode: `update`
 - Output language: `English`
 - Assets copied into `wiki/assets/`:
   - `overview_img_01_prompt-security-logo.png` (from `img/Black+Color.png`)
@@ -11,8 +11,8 @@
   - `architecture_img_01_prompt-line.svg` (from `public/img/prompt_line.svg`)
 
 ## Notes
-- This is a first-time generation (`wiki/` did not exist before this run).
-- Index sections were generated from repository structure and created wiki pages.
+- Migrated root documentation pages from `docs/` into dedicated `wiki/` operation pages.
+- Updated index and cross-links to use `wiki/` as the documentation source of truth.
 - Future updates should preserve existing headings and append `Update Notes` sections when making deltas.
 
 ## Source References
@@ -24,3 +24,8 @@
 - wiki/dependencies.md
 - wiki/data-flow.md
 - wiki/glossary.md
+- wiki/security-signing-runbook.md
+- wiki/migration-signed-feed.md
+- wiki/platform-verification.md
+- wiki/remediation-plan.md
+- wiki/compatibility-report.md
