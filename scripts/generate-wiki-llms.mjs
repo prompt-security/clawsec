@@ -7,6 +7,11 @@ import {
   extractTitleFromMarkdown,
   stripFrontmatter,
 } from '../utils/markdownHelpers.mjs';
+import {
+  isWikiIndexSlug,
+  toWikiLlmsPath,
+  toWikiRoute,
+} from '../utils/wikiPathHelpers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -19,15 +24,7 @@ const REPO_BASE = 'https://github.com/prompt-security/clawsec';
 const RAW_BASE = 'https://raw.githubusercontent.com/prompt-security/clawsec/main';
 
 const toPosix = (inputPath) => inputPath.split(path.sep).join('/');
-
-const isIndexSlug = (slug) => slug.toLowerCase() === 'index';
-
-const toWebsiteRoute = (slug) => (slug === 'index' ? '/wiki' : `/wiki/${slug}`);
-
-const toLlmsPagePath = (slug) =>
-  isIndexSlug(slug) ? '/wiki/llms.txt' : `/wiki/${slug}/llms.txt`;
-
-const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}${toLlmsPagePath(slug)}`;
+const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}${toWikiLlmsPath(slug)}`;
 
 const walkMarkdownFiles = async (dir) => {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -55,7 +52,7 @@ const sortDocs = (a, b) => {
 };
 
 const buildPageBody = (doc) => {
-  const pageRoute = toWebsiteRoute(doc.slug);
+  const pageRoute = toWikiRoute(doc.slug);
   const pageUrl = `${WEBSITE_BASE}/#${pageRoute}`;
   const sourceUrl = `${RAW_BASE}/wiki/${doc.relativePath}`;
   const llmsUrl = toLlmsPageUrl(doc.slug);
@@ -91,7 +88,7 @@ const buildFallbackIndexBody = (docs) => {
   ];
 
   for (const doc of docs) {
-    const pageRoute = toWebsiteRoute(doc.slug);
+    const pageRoute = toWikiRoute(doc.slug);
     const pageUrl = `${WEBSITE_BASE}/#${pageRoute}`;
     const llmsUrl = toLlmsPageUrl(doc.slug);
     lines.push(`- ${doc.title}: ${llmsUrl} (page: ${pageUrl})`);
@@ -120,8 +117,8 @@ const main = async () => {
     }
 
     docs.sort(sortDocs);
-    const pageDocs = docs.filter((doc) => !isIndexSlug(doc.slug));
-    const indexDoc = docs.find((doc) => isIndexSlug(doc.slug));
+    const pageDocs = docs.filter((doc) => !isWikiIndexSlug(doc.slug));
+    const indexDoc = docs.find((doc) => isWikiIndexSlug(doc.slug));
 
     // `public/wiki/` is fully generated; wipe stale output before regenerating.
     await fs.rm(PUBLIC_WIKI_ROOT, { recursive: true, force: true });

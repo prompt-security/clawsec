@@ -11,6 +11,11 @@ import {
   fallbackTitleFromPath,
   stripFrontmatter,
 } from '../utils/markdownHelpers.mjs';
+import {
+  isWikiIndexSlug,
+  toWikiLlmsPath,
+  toWikiRoute,
+} from '../utils/wikiPathHelpers.mjs';
 
 interface WikiDoc {
   filePath: string;
@@ -134,9 +139,6 @@ const wikiAssetByPath = new Map<string, string>(
 
 const defaultDoc = wikiDocBySlug.get('index') ?? wikiDocs[0] ?? null;
 
-const toWikiRoute = (slug: string): string =>
-  slug.toLowerCase() === 'index' ? '/wiki' : `/wiki/${slug}`;
-
 const toGroupName = (filePath: string): string => {
   if (!filePath.includes('/')) return 'Core';
   if (filePath.startsWith('modules/')) return 'Modules';
@@ -204,9 +206,8 @@ export const WikiBrowser: React.FC = () => {
   }
 
   const activeSlug = selectedDoc.slug.toLowerCase();
-  const pageLlmsPath =
-    activeSlug === 'index' ? '/wiki/llms.txt' : `/wiki/${activeSlug}/llms.txt`;
-  const showWikiLlmsIndexLink = activeSlug !== 'index';
+  const pageLlmsPath = toWikiLlmsPath(activeSlug);
+  const showWikiLlmsIndexLink = !isWikiIndexSlug(activeSlug);
 
   const resolveWikiRouteFromHref = (href: string): string | null => {
     if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
