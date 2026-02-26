@@ -81,6 +81,7 @@ flowchart TD
   <Route path="/skills/:skillId" element={<SkillDetail />} />
   <Route path="/feed" element={<FeedSetup />} />
   <Route path="/feed/:advisoryId" element={<AdvisoryDetail />} />
+  <Route path="/wiki/*" element={<WikiBrowser />} />
 </Routes>
 ```
 
@@ -102,7 +103,7 @@ const remoteFeed = await loadRemoteFeed(feedUrl, {
 | --- | --- | --- |
 | Vite app (`npm run dev`) | Local frontend server | Interactive web app for feed/skills. |
 | GitHub CI | Multi-OS matrix + dedicated jobs | Lint/type/build/security and test confidence. |
-| Skill release workflow | Tag-driven | Release assets, signed checksums, optional ClawHub publish. |
+| Skill release workflow | Tag-driven publish + PR dry-run checks | Release assets, signed checksums, optional ClawHub publish. |
 | Pages deploy workflow | Triggered by CI/Release success | Static site + mirrored advisories/releases. |
 | Runtime hooks | OpenClaw event hooks / NanoClaw IPC | Advisory alerts, gating decisions, integrity checks. |
 
@@ -117,6 +118,7 @@ const remoteFeed = await loadRemoteFeed(feedUrl, {
 - pages/SkillsCatalog.tsx
 - pages/FeedSetup.tsx
 - pages/AdvisoryDetail.tsx
+- pages/WikiBrowser.tsx
 - skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
 - skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
 - skills/clawsec-suite/scripts/guarded_skill_install.mjs

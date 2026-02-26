@@ -6,7 +6,7 @@
 
 <div align="center">
 
-## Secure Your OpenClaw Bots with a Complete Security Skill Suite
+## Secure Your OpenClaw and NanoClaw Agents with a Complete Security Skill Suite
 
 <h4>Brought to you by <a href="https://prompt.security">Prompt Security</a>, the Platform for AI Security</h4>
 
@@ -37,7 +37,7 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 
 ### Supported Platforms
 
-- **OpenClaw** (Moltbot, Clawdbot, and clones) - Full suite with skill installer, file integrity protection, and security audits
+- **OpenClaw** (MoltBot, Clawdbot, and clones) - Full suite with skill installer, file integrity protection, and security audits
 - **NanoClaw** - Containerized WhatsApp bot security with MCP tools for advisory monitoring, signature verification, and file integrity
 
 ### Core Capabilities
@@ -74,21 +74,25 @@ Direct link: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
 ### For AI Agents
 
 ```bash
-# Fetch and install the ClawSec security suite
-curl -sL https://clawsec.prompt.security/releases/latest/download/SKILL.md
+# Install the ClawSec security suite
+npx clawhub@latest install clawsec-suite
 ```
 
-The skill file contains deployment instructions. Your agent will:
-1. Detect its agent family (OpenClaw/MoltBot/ClawdBot or other)
-2. Install appropriate skills from the catalog
-3. Verify integrity using checksums
-4. Set up cron update checks
+After install, the suite can:
+1. Discover installable protections from the published skills catalog
+2. Verify release integrity using signed checksums
+3. Set up advisory monitoring and hook-based protection flows
+4. Add optional scheduled checks
+
+Manual/source-first option:
+
+> Read https://github.com/prompt-security/clawsec/releases/latest/download/SKILL.md and follow the installation instructions.
 
 ### For Humans
 
 Copy this instruction to your AI agent:
 
-> Read https://clawsec.prompt.security/releases/latest/download/SKILL.md and follow the instructions to install the protection skill suite.
+> Install ClawSec with `npx clawhub@latest install clawsec-suite`, then complete the setup steps from the generated instructions.
 
 ### Shell and OS Notes
 
@@ -160,13 +164,13 @@ The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and 
 | Skill | Description | Installation | Compatibility |
 |-------|-------------|--------------|---------------|
 | 📡 **clawsec-feed** | Security advisory feed monitoring with live CVE updates | ✅ Included by default | All agents |
-| 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ⚙️ Optional (install separately) | OpenClaw/MoltBot/ClawdBot |
+| 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ⚙️ Optional (install separately) | OpenClaw/MoltBot/Clawdbot |
 | 👻 **soul-guardian** | Drift detection and file integrity guard with auto-restore | ⚙️ Optional | All agents |
 | 🤝 **clawtributor** | Community incident reporting | ❌ Optional (Explicit request) | All agents |
 
 > ⚠️ **clawtributor** is not installed by default as it may share anonymized incident data. Install only on explicit user request.
 
-> ⚠️ **openclaw-audit-watchdog** is tailored for the OpenClaw/MoltBot/ClawdBot agent family. Other agents receive the universal skill set.
+> ⚠️ **openclaw-audit-watchdog** is tailored for the OpenClaw/MoltBot/Clawdbot agent family. Other agents receive the universal skill set.
 
 ### Suite Features
 
@@ -233,7 +237,7 @@ The feed polls CVEs related to:
 ```
 
 **Platform values:**
-- `"openclaw"` - OpenClaw/ClawdBot/MoltBot only
+- `"openclaw"` - OpenClaw/Clawdbot/MoltBot only
 - `"nanoclaw"` - NanoClaw only
 - `["openclaw", "nanoclaw"]` - Both platforms
 - (empty/missing) - All platforms (backward compatible)
@@ -248,10 +252,13 @@ ClawSec uses automated pipelines for continuous security updates and skill distr
 
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
+| **ci.yml** | PRs to `main`, pushes to `main` | Lint/type/build + skill test suites |
+| **pages-verify.yml** | PRs to `main` | Verifies Pages build and signing outputs without publishing |
 | **poll-nvd-cves.yml** | Daily cron (06:00 UTC) | Polls NVD for new CVEs, updates feed |
 | **community-advisory.yml** | Issue labeled `advisory-approved` | Processes community reports into advisories |
-| **skill-release.yml** | `<skill>-v*.*.*` tags | Packages individual skills with checksums to GitHub Releases |
-| **deploy-pages.yml** | Push to main | Builds and deploys the web interface to GitHub Pages |
+| **skill-release.yml** | Skill tags + metadata PR changes | Validates version parity in PRs and publishes signed skill releases on tags |
+| **deploy-pages.yml** | `workflow_run` after successful trusted CI/release or manual dispatch | Builds and deploys the web interface to GitHub Pages |
+| **wiki-sync.yml** | Pushes to `main` touching `wiki/**` | Syncs `wiki/` to the GitHub Wiki mirror |
 
 ### Skill Release Pipeline
 
@@ -262,7 +269,7 @@ When a skill is tagged (e.g., `soul-guardian-v1.0.0`), the pipeline:
 3. **Generates Checksums** - Creates `checksums.json` with SHA256 hashes for all SBOM files
 4. **Signs + verifies** - Signs `checksums.json` and validates the generated `signing-public.pem` fingerprint against canonical repo key material
 5. **Releases** - Publishes to GitHub Releases with all artifacts
-6. **Supersedes Old Releases** - Marks older versions (same major) as pre-releases
+6. **Supersedes Old Releases** - Deletes older versions within the same major line (tags remain)
 7. **Triggers Pages Update** - Refreshes the skills catalog on the website
 
 ### Signing Key Consistency Guardrails
@@ -378,7 +385,14 @@ npm run dev
 
 # Generate wiki llms exports from wiki/ (for local preview)
 ./scripts/populate-local-wiki.sh
+
+# Direct generator entrypoint (used by predev/prebuild)
+npm run gen:wiki-llms
 ```
+
+Notes:
+- `npm run dev` and `npm run build` automatically regenerate wiki `llms.txt` exports (`predev`/`prebuild` hooks).
+- `public/wiki/` is generated output (local + CI) and is intentionally gitignored.
 
 ### Build
 
@@ -395,7 +409,9 @@ npm run build
 │   └── feed.json              # Main advisory feed (auto-updated from NVD)
 ├── components/                 # React components
 ├── pages/                      # Page components
+├── wiki/                       # Source-of-truth docs (synced to GitHub Wiki)
 ├── scripts/
+│   ├── generate-wiki-llms.mjs # wiki/*.md -> public/wiki/**/llms.txt
 │   ├── populate-local-feed.sh # Local CVE feed populator
 │   ├── populate-local-skills.sh # Local skills catalog populator
 │   ├── populate-local-wiki.sh # Local wiki llms export populator
@@ -403,17 +419,24 @@ npm run build
 ├── skills/
 │   ├── clawsec-suite/       # 📦 Suite installer (skill-of-skills)
 │   ├── clawsec-feed/        # 📡 Advisory feed skill
+│   ├── clawsec-nanoclaw/    # 📱 NanoClaw platform security suite
+│   ├── clawsec-clawhub-checker/ # 🧪 ClawHub reputation checks
 │   ├── clawtributor/           # 🤝 Community reporting skill
 │   ├── openclaw-audit-watchdog/ # 🔭 Automated audit skill
+│   ├── prompt-agent/          # 🧠 Prompt-focused protection workflows
 │   └── soul-guardian/         # 👻 File integrity skill
 ├── utils/
 │   ├── package_skill.py       # Skill packager utility
 │   └── validate_skill.py      # Skill validator utility
 ├── .github/workflows/
+│   ├── ci.yml                 # Cross-platform lint/type/build + tests
+│   ├── pages-verify.yml       # PR-only pages build verification
 │   ├── poll-nvd-cves.yml      # CVE polling pipeline
+│   ├── community-advisory.yml # Approved issue -> advisory PR
 │   ├── skill-release.yml      # Skill release pipeline
+│   ├── wiki-sync.yml          # Sync repo wiki/ to GitHub Wiki
 │   └── deploy-pages.yml       # Pages deployment
-└── public/                     # Static assets and published skills
+└── public/                     # Static assets + generated publish artifacts
 ```
 
 ---
@@ -444,6 +467,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#submitting-security-advisories) for detail
 ## 📚 Documentation Source of Truth
 
 For all wiki content, edit files under `wiki/` in this repository. The GitHub Wiki (`<repo>.wiki.git`) is synced from `wiki/` by `.github/workflows/wiki-sync.yml` when `wiki/**` changes on `main`.
+
+LLM exports are generated from `wiki/` into `public/wiki/`:
+- `/wiki/llms.txt` is the LLM-ready export for `wiki/INDEX.md` (or a generated fallback index if `INDEX.md` is missing).
+- `/wiki/<page>/llms.txt` is the LLM-ready export for that single wiki page.
 
 ---
 

@@ -1,26 +1,30 @@
-# Migration Plan: Unsigned Feed → Signed Feed
+# Migration Record: Unsigned Feed → Signed Feed (Completed)
 
-## 1) Objective
+## 1) Objective and Status
 
-Move ClawSec advisory distribution from unsigned `feed.json` delivery to detached-signature verification with minimal disruption.
+Document how ClawSec advisory distribution moved from unsigned `feed.json` delivery to detached-signature verification, with compatibility preserved for legacy clients.
 
-This plan is written against the current repository behavior:
-- feed is produced by `poll-nvd-cves.yml` and `community-advisory.yml`
-- feed is published by `deploy-pages.yml`
-- suite consumers currently load unsigned JSON from remote/local fallback paths
+Current status on `main`:
+- Signed feed publishing is active in advisory workflows and deploy workflow.
+- Suite and NanoClaw consumers default to signed feed endpoints.
+- Unsigned behavior exists only as explicit compatibility bypass (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`).
 
-## 2) Baseline (today)
+## 2) Baseline (today, post-migration)
 
 Current feed paths in active use:
 - Source of truth: `advisories/feed.json`
+- Source signature: `advisories/feed.json.sig`
 - Skill copy: `skills/clawsec-feed/advisories/feed.json`
+- Skill copy signature: `skills/clawsec-feed/advisories/feed.json.sig`
 - Pages copy: `public/advisories/feed.json`
-- Latest mirror copy: `public/releases/latest/download/advisories/feed.json`
+- Pages signature: `public/advisories/feed.json.sig`
+- Latest mirror copy: `public/releases/latest/download/advisories/feed.json` (+ `.sig`)
 
 Current consumer defaults:
 - `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
 - `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
-- default URL: `https://raw.githubusercontent.com/prompt-security/clawsec/main/advisories/feed.json`
+- `skills/clawsec-nanoclaw/lib/advisories.ts`
+- default URL: `https://clawsec.prompt.security/advisories/feed.json`
 
 ## 3) Migration principles
 
@@ -29,9 +33,9 @@ Current consumer defaults:
 - **Measured rollout**: enforce verification after telemetry confirms stable signed publishing.
 - **Fast rollback**: preserve a path back to unsigned behavior while root cause is investigated.
 
-## 4) Phased timeline
+## 4) Phased timeline (historical)
 
-### Phase 0 — Preparation (Week 0)
+### Phase 0 — Preparation (Completed)
 
 Deliverables:
 - signing keys generated and fingerprints recorded
@@ -43,7 +47,7 @@ Exit criteria:
 - key fingerprints verified by reviewer
 - protected branch/workflow controls enabled
 
-### Phase 1 — CI signing enabled, no client enforcement (Week 1)
+### Phase 1 — CI signing enabled, no client enforcement (Completed)
 
 Implement:
 - add feed signing step/workflow to produce `advisories/feed.json.sig`
@@ -58,7 +62,7 @@ Exit criteria:
 - signatures generated successfully for all feed update paths
 - deploy artifacts contain both payload and signature companions
 
-### Phase 2 — Consumer dual-read/dual-verify support (Week 2)
+### Phase 2 — Consumer dual-read/dual-verify support (Completed)
 
 Implement in consumers:
 - read `feed.json` and `feed.json.sig`
@@ -74,7 +78,7 @@ Exit criteria:
 - verification logic released and tested
 - no false-positive verification failures in soak period
 
-### Phase 3 — Enforcement (Week 3)
+### Phase 3 — Enforcement (Completed)
 
 Actions:
 - disable temporary unsigned fallback behavior in default paths
@@ -85,7 +89,7 @@ Exit criteria:
 - all production clients verify signatures by default
 - no unsigned feed dependency in standard installation flow
 
-### Phase 4 — Stabilization (Week 4)
+### Phase 4 — Stabilization (Ongoing)
 
 Actions:
 - run first key rotation tabletop drill

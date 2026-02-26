@@ -11,7 +11,7 @@
 2. JSON transform logic normalizes severity/type/affected fields and deduplicates by advisory ID.
 3. Signature/checksum steps generate detached signatures and checksum manifests.
 4. Deploy workflow mirrors signed artifacts under `public/` and `public/releases/latest/download/`.
-5. UI and runtime consumers fetch feed/index files and validate format/signatures before use.
+5. UI consumers validate JSON shape/content; runtime consumers additionally verify signatures/checksums before trusting feed data.
 6. Matchers compare `affected` specifiers to skill names/versions and emit alerts or enforce confirmation.
 
 ## Inputs and Outputs

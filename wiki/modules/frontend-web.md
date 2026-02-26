@@ -2,6 +2,7 @@
 
 ## Responsibilities
 - Render the ClawSec website for home, skills catalog/detail, and advisory feed/detail experiences.
+- Render repository wiki content from `wiki/` markdown and expose per-page `llms.txt` links.
 - Provide resilient JSON fetch behavior that handles SPA HTML fallback cases.
 - Display install commands, checksums, and advisory metadata in a browser-focused UX.
 
@@ -13,6 +14,7 @@
 - `pages/SkillDetail.tsx`: Loads `skill.json`, checksums, README/SKILL docs with markdown renderer.
 - `pages/FeedSetup.tsx`: Advisory listing UI with pagination.
 - `pages/AdvisoryDetail.tsx`: Advisory deep-dive view and source links.
+- `pages/WikiBrowser.tsx`: In-app wiki renderer with wiki-page and `llms.txt` links.
 - `components/Layout.tsx` + `components/Header.tsx`: Shared shell and nav behavior.
 
 ## Public Interfaces
@@ -22,11 +24,14 @@
   - `/skills/:skillId`
   - `/feed`
   - `/feed/:advisoryId`
+  - `/wiki/*`
 - Static fetch targets:
   - `/skills/index.json`
   - `/skills/<skill>/skill.json`
   - `/skills/<skill>/checksums.json`
   - `/advisories/feed.json`
+  - `/wiki/llms.txt`
+  - `/wiki/<page>/llms.txt`
 - Display contracts:
   - `SkillMetadata`, `SkillJson`, `SkillChecksums`, `AdvisoryFeed`, `Advisory` from `types.ts`.
 
@@ -46,6 +51,7 @@ Inputs/outputs are summarized in the table below.
   - `vite.config.ts` (port, host, path alias)
   - `index.html` Tailwind config + custom fonts/colors
   - `constants.ts` (`ADVISORY_FEED_URL`, `LOCAL_FEED_PATH`)
+- Wiki markdown source lives in `wiki/`; `scripts/generate-wiki-llms.mjs` generates `public/wiki/**/llms.txt` (via `predev`/`prebuild`).
 - Runtime behavior assumptions:
   - JSON responses may be empty or HTML fallback and must be validated.
   - Advisory list pagination uses `ITEMS_PER_PAGE = 9`.
@@ -66,6 +72,7 @@ if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(r
 // Route map defined in App.tsx
 <Route path="/skills/:skillId" element={<SkillDetail />} />
 <Route path="/feed/:advisoryId" element={<AdvisoryDetail />} />
+<Route path="/wiki/*" element={<WikiBrowser />} />
 ```
 
 ## Edge Cases
@@ -89,6 +96,7 @@ if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(r
 - pages/SkillDetail.tsx
 - pages/FeedSetup.tsx
 - pages/AdvisoryDetail.tsx
+- pages/WikiBrowser.tsx
 - pages/Checksums.tsx
 - components/Layout.tsx
 - components/Header.tsx
@@ -96,3 +104,4 @@ if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(r
 - types.ts
 - vite.config.ts
 - index.html
+- scripts/generate-wiki-llms.mjs
