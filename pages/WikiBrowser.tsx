@@ -139,11 +139,22 @@ const toGroupName = (filePath: string): string => {
 export const WikiBrowser: React.FC = () => {
   const params = useParams<{ '*': string }>();
   const wildcard = params['*'] ?? '';
-  const requested = decodeURIComponent(wildcard.replace(/^\/+|\/+$/g, ''));
+  const normalizedWildcard = wildcard.replace(/^\/+|\/+$/g, '');
+  let requested = '';
+  let decodeFailed = false;
+  try {
+    requested = decodeURIComponent(normalizedWildcard);
+  } catch (error) {
+    decodeFailed = normalizedWildcard.length > 0;
+    console.warn('Failed to decode wiki route segment', { wildcard, error });
+    requested = '';
+  }
   const requestedSlug = requested || 'INDEX';
 
   const selectedDoc = wikiDocBySlug.get(requestedSlug.toLowerCase()) ?? defaultDoc;
-  const notFound = requested.length > 0 && !wikiDocBySlug.has(requestedSlug.toLowerCase());
+  const notFound =
+    (decodeFailed && normalizedWildcard.length > 0) ||
+    (requested.length > 0 && !wikiDocBySlug.has(requestedSlug.toLowerCase()));
 
   const groupedDocs = useMemo(() => {
     const map = new Map<string, WikiDoc[]>();
