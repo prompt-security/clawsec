@@ -77,6 +77,19 @@ const extractTitle = (markdownContent: string, filePath: string): string => {
 const isExternalHref = (href: string): boolean =>
   /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) || href.startsWith('//');
 
+const ALLOWED_LINK_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:']);
+
+const sanitizeHref = (href: string): string | null => {
+  const trimmed = href.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('//')) return null;
+
+  const schemeMatch = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.-]*:)/);
+  if (!schemeMatch) return trimmed;
+
+  return ALLOWED_LINK_SCHEMES.has(schemeMatch[1].toLowerCase()) ? trimmed : null;
+};
+
 const markdownModules = import.meta.glob('../wiki/**/*.md', {
   eager: true,
   query: '?raw',
@@ -237,11 +250,15 @@ export const WikiBrowser: React.FC = () => {
 
       const assetHref = resolveAssetUrl(href);
       const finalHref = assetHref ?? href;
-      const external = isExternalHref(finalHref);
+      const safeHref = sanitizeHref(finalHref);
+      if (!safeHref) {
+        return <span className="text-gray-300">{children}</span>;
+      }
+      const external = isExternalHref(safeHref);
 
       return (
         <a
-          href={finalHref}
+          href={safeHref}
           target={external ? '_blank' : undefined}
           rel={external ? 'noopener noreferrer' : undefined}
           className="text-clawd-accent hover:underline"
