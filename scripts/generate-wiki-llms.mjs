@@ -96,11 +96,11 @@ const buildPageBody = (doc) => {
   ].join('\n');
 };
 
-const buildIndexBody = (docs) => {
+const buildFallbackIndexBody = (docs) => {
   const lines = [
     '# ClawSec Wiki llms.txt',
     '',
-    'LLM-readable index for wiki pages. Each page has a corresponding `/wiki/<slug>/llms.txt` export.',
+    'LLM-readable index for wiki pages.',
     '',
     `Website wiki root: ${WEBSITE_BASE}/#/wiki`,
     `GitHub wiki mirror: ${REPO_BASE}/wiki`,
@@ -140,6 +140,7 @@ const buildIndexBody = (docs) => {
 
     docs.sort(sortDocs);
     const pageDocs = docs.filter((doc) => !isIndexSlug(doc.slug));
+    const indexDoc = docs.find((doc) => isIndexSlug(doc.slug));
 
     // `public/wiki/` is fully generated; wipe stale output before regenerating.
     await fs.rm(PUBLIC_WIKI_ROOT, { recursive: true, force: true });
@@ -151,7 +152,8 @@ const buildIndexBody = (docs) => {
       await fs.writeFile(outputFile, buildPageBody(doc), 'utf8');
     }
 
-    await fs.writeFile(LLM_INDEX_FILE, buildIndexBody(pageDocs), 'utf8');
+    const indexBody = indexDoc ? buildPageBody(indexDoc) : buildFallbackIndexBody(pageDocs);
+    await fs.writeFile(LLM_INDEX_FILE, indexBody, 'utf8');
 
     // Keep logs short for CI readability.
     console.log(`Generated ${pageDocs.length} page llms.txt exports and /wiki/llms.txt`);
