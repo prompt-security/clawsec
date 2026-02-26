@@ -1,8 +1,10 @@
 name: Deploy to GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_run:
-    workflows: ["CI", "Skill Release"]
+    workflows: ["Skill Release"]
     types: [completed]
   workflow_dispatch:
 
@@ -18,24 +20,19 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Production build only: manual dispatch or trusted workflow_run sources.
+    # Production build only: manual dispatch, push to main, or trusted release workflows.
     # PR validation runs in .github/workflows/pages-verify.yml.
     if: |
       github.event_name == 'workflow_dispatch' ||
       (
+        github.event_name == 'push' &&
+        github.ref_name == 'main'
+      ) ||
+      (
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.conclusion == 'success' &&
-        (
-          (
-            github.event.workflow_run.name == 'CI' &&
-            github.event.workflow_run.event == 'push' &&
-            github.event.workflow_run.head_branch == 'main'
-          ) ||
-          (
-            github.event.workflow_run.name == 'Skill Release' &&
-            github.event.workflow_run.event != 'pull_request'
-          )
-        )
+        github.event.workflow_run.name == 'Skill Release' &&
+        github.event.workflow_run.event != 'pull_request'
       )
     steps:
       - name: Checkout
@@ -421,19 +418,14 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (
+        github.event_name == 'push' &&
+        github.ref_name == 'main'
+      ) ||
+      (
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.conclusion == 'success' &&
-        (
-          (
-            github.event.workflow_run.name == 'CI' &&
-            github.event.workflow_run.event == 'push' &&
-            github.event.workflow_run.head_branch == 'main'
-          ) ||
-          (
-            github.event.workflow_run.name == 'Skill Release' &&
-            github.event.workflow_run.event != 'pull_request'
-          )
-        )
+        github.event.workflow_run.name == 'Skill Release' &&
+        github.event.workflow_run.event != 'pull_request'
       )
     environment:
       name: github-pages
