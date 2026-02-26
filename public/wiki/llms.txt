@@ -1,0 +1,43 @@
+# ClawSec Wiki (LLMs)
+
+Machine-readable index for ClawSec wiki documentation.
+
+Website wiki root: https://clawsec.prompt.security/#/wiki
+GitHub wiki mirror: https://github.com/prompt-security/clawsec/wiki
+Canonical source of truth: https://github.com/prompt-security/clawsec/tree/main/wiki
+
+## Website Wiki Pages
+- INDEX: https://clawsec.prompt.security/#/wiki
+- Overview: https://clawsec.prompt.security/#/wiki/overview
+- Architecture: https://clawsec.prompt.security/#/wiki/architecture
+- Dependencies: https://clawsec.prompt.security/#/wiki/dependencies
+- Data Flow: https://clawsec.prompt.security/#/wiki/data-flow
+- Configuration: https://clawsec.prompt.security/#/wiki/configuration
+- Testing: https://clawsec.prompt.security/#/wiki/testing
+- Workflow: https://clawsec.prompt.security/#/wiki/workflow
+- Security: https://clawsec.prompt.security/#/wiki/security
+- Glossary: https://clawsec.prompt.security/#/wiki/glossary
+- Generation Metadata: https://clawsec.prompt.security/#/wiki/GENERATION
+- Frontend Web App: https://clawsec.prompt.security/#/wiki/modules/frontend-web
+- ClawSec Suite Core: https://clawsec.prompt.security/#/wiki/modules/clawsec-suite
+- NanoClaw Integration: https://clawsec.prompt.security/#/wiki/modules/nanoclaw-integration
+- Automation and Release Pipelines: https://clawsec.prompt.security/#/wiki/modules/automation-release
+- Local Validation and Packaging Tools: https://clawsec.prompt.security/#/wiki/modules/local-tooling
+
+## Raw Markdown Sources
+- INDEX: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/INDEX.md
+- Overview: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/overview.md
+- Architecture: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/architecture.md
+- Dependencies: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/dependencies.md
+- Data Flow: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/data-flow.md
+- Configuration: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/configuration.md
+- Testing: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/testing.md
+- Workflow: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/workflow.md
+- Security: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/security.md
+- Glossary: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/glossary.md
+- Generation Metadata: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/GENERATION.md
+- Frontend Web App: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/modules/frontend-web.md
+- ClawSec Suite Core: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/modules/clawsec-suite.md
+- NanoClaw Integration: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/modules/nanoclaw-integration.md
+- Automation and Release Pipelines: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/modules/automation-release.md
+- Local Validation and Packaging Tools: https://raw.githubusercontent.com/prompt-security/clawsec/main/wiki/modules/local-tooling.md
