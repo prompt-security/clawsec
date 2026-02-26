@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X, Terminal, Layers, Rss, Home, Github, BookOpenText } from 'lucide-react';
+import { Menu, X, Terminal, Layers, Rss, Home, Github, BookOpenText, PlayCircle } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +9,7 @@ export const Header: React.FC = () => {
     { label: 'Home', path: '/', icon: Home },
     { label: 'Skills', path: '/skills', icon: Layers },
     { label: 'Security Feed', path: '/feed', icon: Rss },
+    { label: 'Product Demo', path: '/demo', icon: PlayCircle },
     { label: 'Wiki', path: '/wiki', icon: BookOpenText },
   ];
 

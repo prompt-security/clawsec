@@ -7,6 +7,7 @@ import { SkillsCatalog } from './pages/SkillsCatalog';
 import { SkillDetail } from './pages/SkillDetail';
 import { AdvisoryDetail } from './pages/AdvisoryDetail';
 import { WikiBrowser } from './pages/WikiBrowser';
+import { ProductDemo } from './pages/ProductDemo';
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
           <Route path="/skills/:skillId" element={<SkillDetail />} />
           <Route path="/feed" element={<FeedSetup />} />
           <Route path="/feed/:advisoryId" element={<AdvisoryDetail />} />
+          <Route path="/demo" element={<ProductDemo />} />
           <Route path="/wiki/*" element={<WikiBrowser />} />
         </Routes>
       </Layout>
