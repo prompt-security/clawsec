@@ -53,7 +53,7 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 
 ## 🎬 Product Demos
 
-GitHub strips inline `<video>` tags in repository READMEs. The previews below are lightweight animated GIFs (no audio). Click any preview to open the full MP4 with audio.
+Animated previews below are GIFs (no audio). Click any preview to open the full MP4 with audio.
 
 ### Install Demo (`clawsec-suite`)
 
