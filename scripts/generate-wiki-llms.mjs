@@ -3,6 +3,10 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  extractTitleFromMarkdown,
+  stripFrontmatter,
+} from '../utils/markdownHelpers.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -14,30 +18,7 @@ const WEBSITE_BASE = 'https://clawsec.prompt.security';
 const REPO_BASE = 'https://github.com/prompt-security/clawsec';
 const RAW_BASE = 'https://raw.githubusercontent.com/prompt-security/clawsec/main';
 
-const FRONTMATTER_REGEX = /^---\s*\n[\s\S]*?\n---\s*\n/;
-
 const toPosix = (inputPath) => inputPath.split(path.sep).join('/');
-
-const fallbackTitleFromPath = (filePath) => {
-  const filename = filePath.split('/').pop() ?? filePath;
-  const stem = filename.replace(/\.md$/i, '');
-  return stem
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((part) => {
-      if (part.toUpperCase() === part && part.length > 1) return part;
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    })
-    .join(' ');
-};
-
-const stripFrontmatter = (content) => content.replace(FRONTMATTER_REGEX, '');
-
-const extractTitle = (content, filePath) => {
-  const cleaned = stripFrontmatter(content).trim();
-  const match = cleaned.match(/^#\s+(.+)$/m);
-  return match?.[1]?.trim() || fallbackTitleFromPath(filePath);
-};
 
 const isIndexSlug = (slug) => slug.toLowerCase() === 'index';
 
@@ -119,7 +100,7 @@ const buildFallbackIndexBody = (docs) => {
   return `${lines.join('\n')}\n`;
 };
 
-  const main = async () => {
+const main = async () => {
   try {
     const wikiStat = await fs.stat(WIKI_ROOT).catch(() => null);
     if (!wikiStat || !wikiStat.isDirectory()) {
@@ -134,7 +115,7 @@ const buildFallbackIndexBody = (docs) => {
       const slug = relativePath.replace(/\.md$/i, '').toLowerCase();
       const rawContent = await fs.readFile(fullPath, 'utf8');
       const content = stripFrontmatter(rawContent);
-      const title = extractTitle(rawContent, relativePath);
+      const title = extractTitleFromMarkdown(rawContent, relativePath);
       docs.push({ relativePath, slug, title, content });
     }
 

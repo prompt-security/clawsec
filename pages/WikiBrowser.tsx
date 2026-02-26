@@ -6,6 +6,11 @@ import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Footer } from '../components/Footer';
 import { defaultMarkdownComponents } from '../utils/markdownComponents';
+import {
+  extractTitleFromMarkdown,
+  fallbackTitleFromPath,
+  stripFrontmatter,
+} from '../utils/markdownHelpers.mjs';
 
 interface WikiDoc {
   filePath: string;
@@ -13,11 +18,6 @@ interface WikiDoc {
   title: string;
   content: string;
 }
-
-const stripFrontmatter = (content: string): string => {
-  const frontmatterRegex = /^---\s*\n[\s\S]*?\n---\s*\n/;
-  return content.replace(frontmatterRegex, '');
-};
 
 const normalizePath = (path: string): string => {
   const clean = path.replace(/\\/g, '/');
@@ -54,25 +54,6 @@ const splitHash = (href: string): { path: string; hash: string } => {
 
 const toWikiRelativePath = (globPath: string): string =>
   globPath.replace(/^\.\.\/wiki\//, '').replace(/\\/g, '/');
-
-const fallbackTitleFromFilePath = (filePath: string): string => {
-  const filename = filePath.split('/').pop() ?? filePath;
-  const stem = filename.replace(/\.md$/i, '');
-  return stem
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((part) => {
-      if (part.toUpperCase() === part && part.length > 1) return part;
-      return part.charAt(0).toUpperCase() + part.slice(1);
-    })
-    .join(' ');
-};
-
-const extractTitle = (markdownContent: string, filePath: string): string => {
-  const cleaned = stripFrontmatter(markdownContent).trim();
-  const match = cleaned.match(/^#\s+(.+)$/m);
-  return match?.[1]?.trim() || fallbackTitleFromFilePath(filePath);
-};
 
 const isExternalHref = (href: string): boolean =>
   /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) || href.startsWith('//');
@@ -119,7 +100,7 @@ const wikiDocs: WikiDoc[] = Object.entries(markdownModules)
     return {
       filePath,
       slug: filePath.replace(/\.md$/i, ''),
-      title: extractTitle(content, filePath),
+      title: extractTitleFromMarkdown(content, filePath),
       content: stripFrontmatter(content).trim(),
     };
   })
@@ -160,7 +141,7 @@ const toGroupName = (filePath: string): string => {
   if (!filePath.includes('/')) return 'Core';
   if (filePath.startsWith('modules/')) return 'Modules';
   const [firstSegment] = filePath.split('/');
-  return fallbackTitleFromFilePath(firstSegment);
+  return fallbackTitleFromPath(firstSegment);
 };
 
 export const WikiBrowser: React.FC = () => {

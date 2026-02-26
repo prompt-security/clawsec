@@ -6,12 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Footer } from '../components/Footer';
 import type { SkillJson, SkillChecksums } from '../types';
 import { defaultMarkdownComponents } from '../utils/markdownComponents';
-
-// Strip YAML frontmatter from markdown content
-const stripFrontmatter = (content: string): string => {
-  const frontmatterRegex = /^---\s*\n[\s\S]*?\n---\s*\n/;
-  return content.replace(frontmatterRegex, '');
-};
+import { stripFrontmatter } from '../utils/markdownHelpers.mjs';
 
 const isProbablyHtmlDocument = (text: string): boolean => {
   const start = text.trimStart().slice(0, 200).toLowerCase();
