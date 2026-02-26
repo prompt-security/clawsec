@@ -37,7 +37,7 @@ Deliverables:
 - signing keys generated and fingerprints recorded
 - GitHub secrets created
 - public key(s) added in repo
-- runbooks approved (`SECURITY-SIGNING.md`, this file)
+- runbooks approved (`security-signing-runbook.md`, this file)
 
 Exit criteria:
 - key fingerprints verified by reviewer
@@ -165,3 +165,12 @@ Go only if all are true:
 - consumer verification path tested for remote + local fallback
 - rollback owner is assigned and reachable
 - key rotation procedure has been dry-run at least once
+
+## Source References
+- .github/workflows/poll-nvd-cves.yml
+- .github/workflows/community-advisory.yml
+- .github/workflows/deploy-pages.yml
+- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- skills/clawsec-suite/scripts/guarded_skill_install.mjs
+- advisories/feed.json
+- wiki/security-signing-runbook.md

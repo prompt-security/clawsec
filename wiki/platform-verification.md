@@ -85,3 +85,14 @@ Use this checklist to validate portability and path-handling behavior after chan
 4. Confirm no `$HOME` segment directory was created under working directories.
 
 Expected outcome: **no directories containing literal `$HOME` are created by supported setup scripts.**
+
+## Source References
+- .gitattributes
+- scripts/populate-local-feed.sh
+- scripts/populate-local-skills.sh
+- skills/clawsec-suite/test/path_resolution.test.mjs
+- skills/clawsec-suite/test/guarded_install.test.mjs
+- skills/clawsec-suite/test/advisory_suppression.test.mjs
+- skills/clawsec-suite/scripts/guarded_skill_install.mjs
+- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- skills/openclaw-audit-watchdog/test/suppression_config.test.mjs

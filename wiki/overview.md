@@ -18,7 +18,7 @@
 | `.github/workflows/` | CI/CD pipelines | CI, releases, NVD polling, community advisory ingestion, pages deploy. |
 | `utils/` | Python utilities | Skill validation and checksum packaging helpers. |
 | `public/` | Published static assets | Site media, mirrored advisories, and generated skill artifacts. |
-| `docs/` | Operational docs | Signing runbooks, migration plans, compatibility and verification guides. |
+| `wiki/` | Documentation hub | Architecture, operations runbooks, compatibility, and verification guides. |
 
 ## Entry Points
 | Entry | Type | Purpose |
@@ -83,6 +83,9 @@ npm run build
 - Unsigned feed bypass mode (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`) exists for migration compatibility and should not be used in steady state.
 - Skill release automation expects version parity between `skill.json` and `SKILL.md` frontmatter.
 - Some scripts are POSIX shell oriented; Windows users should prefer PowerShell equivalents or WSL.
+
+## Update Notes
+- 2026-02-26: Updated repo layout to point operational documentation at `wiki/` instead of the removed root `docs/` directory.
 
 ## Source References
 - README.md

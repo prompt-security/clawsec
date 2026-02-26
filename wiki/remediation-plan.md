@@ -71,3 +71,15 @@
   - path token validation now enforced
   - how to correct invalid quoted env values
   - where PowerShell examples live
+
+## Source References
+- .gitattributes
+- .github/workflows/ci.yml
+- scripts/populate-local-feed.sh
+- scripts/populate-local-skills.sh
+- scripts/release-skill.sh
+- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- skills/clawsec-suite/scripts/guarded_skill_install.mjs
+- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- wiki/platform-verification.md
+- wiki/compatibility-report.md
