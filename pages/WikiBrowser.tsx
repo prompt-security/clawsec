@@ -78,6 +78,7 @@ const isExternalHref = (href: string): boolean =>
   /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) || href.startsWith('//');
 
 const ALLOWED_LINK_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:']);
+const ALLOWED_IMAGE_SCHEMES = new Set(['http:', 'https:']);
 
 const sanitizeHref = (href: string): string | null => {
   const trimmed = href.trim();
@@ -88,6 +89,17 @@ const sanitizeHref = (href: string): string | null => {
   if (!schemeMatch) return trimmed;
 
   return ALLOWED_LINK_SCHEMES.has(schemeMatch[1].toLowerCase()) ? trimmed : null;
+};
+
+const sanitizeImageSrc = (src: string): string | null => {
+  const trimmed = src.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('//')) return null;
+
+  const schemeMatch = trimmed.match(/^([a-zA-Z][a-zA-Z0-9+.-]*:)/);
+  if (!schemeMatch) return trimmed;
+
+  return ALLOWED_IMAGE_SCHEMES.has(schemeMatch[1].toLowerCase()) ? trimmed : null;
 };
 
 const markdownModules = import.meta.glob('../wiki/**/*.md', {
@@ -269,7 +281,10 @@ export const WikiBrowser: React.FC = () => {
     },
     img: ({ src, alt }) => {
       const resolvedSrc = src ? resolveAssetUrl(src) : null;
-      const finalSrc = resolvedSrc ?? src ?? '';
+      const finalSrc = resolvedSrc ?? (src ? sanitizeImageSrc(src) : null);
+      if (!finalSrc) {
+        return <span className="text-gray-500 text-sm">[image blocked]</span>;
+      }
       return (
         <img
           src={finalSrc}
