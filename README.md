@@ -192,6 +192,9 @@ ClawSec maintains a continuously updated security advisory feed, automatically p
 curl -s https://clawsec.prompt.security/advisories/feed.json | jq '.advisories[] | select(.severity == "critical" or .severity == "high")'
 ```
 
+Canonical endpoint: `https://clawsec.prompt.security/advisories/feed.json`  
+Compatibility mirror (legacy): `https://clawsec.prompt.security/releases/latest/download/feed.json`
+
 ### Monitored Keywords
 
 The feed polls CVEs related to:

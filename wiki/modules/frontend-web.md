@@ -42,7 +42,7 @@ Inputs/outputs are summarized in the table below.
 | --- | --- | --- | --- |
 | Input | Skills index JSON | `/skills/index.json` | List of published skills and metadata. |
 | Input | Skill payload files | `/skills/<id>/skill.json`, markdown docs, `checksums.json` | Detail-page content and integrity table. |
-| Input | Advisory feed JSON | `/advisories/feed.json` or remote URL fallback | Advisory list/detail content. |
+| Input | Advisory feed JSON | `/advisories/feed.json`, then `https://clawsec.prompt.security/advisories/feed.json` (legacy mirror fallback to `/releases/latest/download/feed.json`) | Advisory list/detail content. |
 | Output | Route-specific UI states | Browser view state | Loading, empty, error, and populated experiences. |
 | Output | Copy-to-clipboard commands | Clipboard API | Install and checksum snippets copied for users. |
 

@@ -4,7 +4,11 @@ import { Link } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
 import { Advisory, AdvisoryFeed } from '../types';
-import { ADVISORY_FEED_URL, LOCAL_FEED_PATH } from '../constants';
+import {
+  ADVISORY_FEED_URL,
+  LEGACY_ADVISORY_FEED_URL,
+  LOCAL_FEED_PATH,
+} from '../constants';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -21,11 +25,15 @@ export const FeedSetup: React.FC = () => {
       setError(null);
 
       try {
-        // Try local feed first (for development), then fall back to GitHub releases
+        // Try local feed first (dev), then canonical hosted endpoint, then legacy mirror.
         let response = await fetch(LOCAL_FEED_PATH);
-        
+
         if (!response.ok) {
           response = await fetch(ADVISORY_FEED_URL);
+        }
+
+        if (!response.ok) {
+          response = await fetch(LEGACY_ADVISORY_FEED_URL);
         }
 
         if (!response.ok) {
