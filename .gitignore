@@ -24,8 +24,7 @@ dist-ssr
 # Derived public assets (copied during build)
 public/advisories
 public/skills
-public/wiki/llms.txt
-public/wiki/llms/
+public/wiki/
 
 # Python bytecode
 __pycache__/
