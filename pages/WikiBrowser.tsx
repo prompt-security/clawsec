@@ -223,7 +223,9 @@ export const WikiBrowser: React.FC = () => {
   }
 
   const activeSlug = selectedDoc.slug.toLowerCase();
-  const pageLlmsPath = `/wiki/llms/${activeSlug}.txt`;
+  const pageLlmsPath =
+    activeSlug === 'index' ? '/wiki/llms.txt' : `/wiki/${activeSlug}/llms.txt`;
+  const showWikiLlmsIndexLink = activeSlug !== 'index';
 
   const resolveWikiRouteFromHref = (href: string): string | null => {
     if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
@@ -317,15 +319,17 @@ export const WikiBrowser: React.FC = () => {
             <FileText size={15} />
             Page llms.txt
           </a>
-          <a
-            href="/wiki/llms.txt"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clawd-800 border border-clawd-700 hover:border-clawd-accent text-white text-sm transition-colors"
-          >
-            <FileText size={15} />
-            Wiki llms.txt Index
-          </a>
+          {showWikiLlmsIndexLink && (
+            <a
+              href="/wiki/llms.txt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clawd-800 border border-clawd-700 hover:border-clawd-accent text-white text-sm transition-colors"
+            >
+              <FileText size={15} />
+              Wiki llms.txt Index
+            </a>
+          )}
           <a
             href="https://github.com/prompt-security/clawsec/wiki"
             target="_blank"

@@ -8,7 +8,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 const WIKI_ROOT = path.join(REPO_ROOT, 'wiki');
 const PUBLIC_WIKI_ROOT = path.join(REPO_ROOT, 'public', 'wiki');
-const LLM_PAGES_ROOT = path.join(PUBLIC_WIKI_ROOT, 'llms');
 const LLM_INDEX_FILE = path.join(PUBLIC_WIKI_ROOT, 'llms.txt');
 
 const WEBSITE_BASE = 'https://clawsec.prompt.security';
@@ -40,9 +39,14 @@ const extractTitle = (content, filePath) => {
   return match?.[1]?.trim() || fallbackTitleFromPath(filePath);
 };
 
+const isIndexSlug = (slug) => slug.toLowerCase() === 'index';
+
 const toWebsiteRoute = (slug) => (slug === 'index' ? '/wiki' : `/wiki/${slug}`);
 
-const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}/wiki/llms/${slug}.txt`;
+const toLlmsPagePath = (slug) =>
+  isIndexSlug(slug) ? '/wiki/llms.txt' : `/wiki/${slug}/llms.txt`;
+
+const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}${toLlmsPagePath(slug)}`;
 
 const walkMarkdownFiles = async (dir) => {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -96,7 +100,7 @@ const buildIndexBody = (docs) => {
   const lines = [
     '# ClawSec Wiki llms.txt',
     '',
-    'LLM-readable index for wiki pages. A generated `.txt` export exists for each page.',
+    'LLM-readable index for wiki pages. Each page has a corresponding `/wiki/<slug>/llms.txt` export.',
     '',
     `Website wiki root: ${WEBSITE_BASE}/#/wiki`,
     `GitHub wiki mirror: ${REPO_BASE}/wiki`,
@@ -115,7 +119,7 @@ const buildIndexBody = (docs) => {
   return `${lines.join('\n')}\n`;
 };
 
-const main = async () => {
+  const main = async () => {
   try {
     const wikiStat = await fs.stat(WIKI_ROOT).catch(() => null);
     if (!wikiStat || !wikiStat.isDirectory()) {
@@ -135,21 +139,22 @@ const main = async () => {
     }
 
     docs.sort(sortDocs);
+    const pageDocs = docs.filter((doc) => !isIndexSlug(doc.slug));
 
+    // `public/wiki/` is fully generated; wipe stale output before regenerating.
+    await fs.rm(PUBLIC_WIKI_ROOT, { recursive: true, force: true });
     await fs.mkdir(PUBLIC_WIKI_ROOT, { recursive: true });
-    await fs.rm(LLM_PAGES_ROOT, { recursive: true, force: true });
-    await fs.mkdir(LLM_PAGES_ROOT, { recursive: true });
 
-    for (const doc of docs) {
-      const outputFile = path.join(LLM_PAGES_ROOT, `${doc.slug}.txt`);
+    for (const doc of pageDocs) {
+      const outputFile = path.join(PUBLIC_WIKI_ROOT, doc.slug, 'llms.txt');
       await fs.mkdir(path.dirname(outputFile), { recursive: true });
       await fs.writeFile(outputFile, buildPageBody(doc), 'utf8');
     }
 
-    await fs.writeFile(LLM_INDEX_FILE, buildIndexBody(docs), 'utf8');
+    await fs.writeFile(LLM_INDEX_FILE, buildIndexBody(pageDocs), 'utf8');
 
     // Keep logs short for CI readability.
-    console.log(`Generated ${docs.length} wiki llms page exports and /wiki/llms.txt`);
+    console.log(`Generated ${pageDocs.length} page llms.txt exports and /wiki/llms.txt`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Failed to generate wiki llms exports: ${message}`);

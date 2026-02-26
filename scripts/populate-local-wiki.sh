@@ -11,7 +11,6 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 WIKI_DIR="$PROJECT_ROOT/wiki"
 PUBLIC_WIKI_DIR="$PROJECT_ROOT/public/wiki"
-LLMS_DIR="$PUBLIC_WIKI_DIR/llms"
 
 if [ ! -d "$WIKI_DIR" ]; then
   echo "Error: wiki directory not found at $WIKI_DIR"
@@ -24,9 +23,9 @@ echo "Project root: $PROJECT_ROOT"
 node "$PROJECT_ROOT/scripts/generate-wiki-llms.mjs"
 
 PAGE_COUNT=0
-if [ -d "$LLMS_DIR" ]; then
-  PAGE_COUNT=$(find "$LLMS_DIR" -type f -name '*.txt' | wc -l | tr -d ' ')
+if [ -d "$PUBLIC_WIKI_DIR" ]; then
+  PAGE_COUNT=$(find "$PUBLIC_WIKI_DIR" -type f -path '*/llms.txt' ! -path "$PUBLIC_WIKI_DIR/llms.txt" | wc -l | tr -d ' ')
 fi
 
 echo "Wiki llms index: $PUBLIC_WIKI_DIR/llms.txt"
-echo "Wiki llms pages: $PAGE_COUNT files under $LLMS_DIR"
+echo "Wiki llms pages: $PAGE_COUNT files under $PUBLIC_WIKI_DIR/<page>/llms.txt"
