@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "gen:wiki-llms": "node scripts/generate-wiki-llms.mjs",
+    "populate-local-wiki": "./scripts/populate-local-wiki.sh",
     "predev": "npm run gen:wiki-llms",
     "dev": "vite",
     "prebuild": "npm run gen:wiki-llms",
