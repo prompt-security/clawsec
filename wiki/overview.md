@@ -24,11 +24,12 @@
 | Entry | Type | Purpose |
 | --- | --- | --- |
 | `index.tsx` | Frontend bootstrap | Mounts React app into `#root`. |
-| `App.tsx` | Frontend router | Defines route map for home, skills, and feed pages. |
+| `App.tsx` | Frontend router | Defines route map for home, skills, feed, and wiki pages. |
 | `scripts/prepare-to-push.sh` | Dev workflow | Runs lint/type/build/security checks before push. |
 | `scripts/populate-local-feed.sh` | Data bootstrap | Pulls CVEs from NVD and updates local advisory feeds. |
 | `scripts/populate-local-skills.sh` | Data bootstrap | Builds `public/skills/index.json` and per-skill checksums. |
-| `.github/workflows/skill-release.yml` | Release entry | Handles tag-based skill packaging/signing/release. |
+| `scripts/generate-wiki-llms.mjs` | Docs export | Generates `public/wiki/llms.txt` and per-page wiki exports. |
+| `.github/workflows/skill-release.yml` | Release entry | Handles PR version-parity/dry-run checks and tag-based packaging/signing/release. |
 | `.github/workflows/poll-nvd-cves.yml` | Scheduled feed updates | Polls NVD and updates advisories. |
 
 ## Key Artifacts
@@ -37,7 +38,8 @@
 | `advisories/feed.json` | NVD poll + community advisory workflows | Web UI, clawsec-suite hook, installers. |
 | `advisories/feed.json.sig` | Signing workflow steps | Signature verification in suite/nanoclaw tooling. |
 | `public/skills/index.json` | Deploy workflow / local populate script | `pages/SkillsCatalog.tsx` and `pages/SkillDetail.tsx`. |
-| `public/checksums.json` + `public/checksums.sig` | Deploy workflow | Client-side integrity verification flows. |
+| `public/wiki/llms.txt` + `public/wiki/**/llms.txt` | Wiki generator script + build hooks | LLM-ready wiki exports linked from the wiki UI. |
+| `public/checksums.json` + `public/checksums.sig` | Deploy workflow | Published integrity artifacts for operators and runtime clients. |
 | `release-assets/checksums.json` | Skill release workflow | Release consumers verifying zip integrity. |
 | `skills/*/skill.json` | Skill authors | Site catalog generation, validators, and release pipelines. |
 
@@ -68,7 +70,7 @@ npm run build
 - Read `README.md` for product positioning and install paths.
 - Open `App.tsx` and `pages/` to understand user-facing behavior.
 - Open `skills/clawsec-suite/skill.json` to understand the suite contract and embedded components.
-- Review `.github/workflows/ci.yml`, `.github/workflows/skill-release.yml`, and `.github/workflows/deploy-pages.yml` for production behavior.
+- Review `.github/workflows/ci.yml`, `.github/workflows/pages-verify.yml`, `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml`, and `.github/workflows/wiki-sync.yml` for production behavior.
 
 ## How to Navigate
 - UI behavior is centered in `pages/`; visual wrappers sit in `components/`.
@@ -101,5 +103,7 @@ npm run build
 - scripts/populate-local-skills.sh
 - skills/clawsec-suite/skill.json
 - .github/workflows/ci.yml
+- .github/workflows/pages-verify.yml
 - .github/workflows/skill-release.yml
 - .github/workflows/deploy-pages.yml
+- .github/workflows/wiki-sync.yml

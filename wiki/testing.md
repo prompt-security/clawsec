@@ -13,7 +13,8 @@
 | Skill unit tests | `node skills/<skill>/test/*.test.mjs` | Signature, matching, suppression, installer contracts. |
 | Python quality | `ruff check utils/`, `bandit -r utils/ -ll` | Utility correctness and security patterns. |
 | Shell/script quality | ShellCheck + manual script smoke runs | Script hygiene and command robustness. |
-| CI security scans | Trivy, npm audit, gitleaks, CodeQL, Scorecard | Dependency, config, and supply-chain security posture. |
+| CI security scans | Trivy, npm audit, CodeQL, Scorecard | Dependency, config, and supply-chain security posture. |
+| Local pre-push security scan | optional `gitleaks detect` via `scripts/prepare-to-push.sh` | Secret leak detection before push. |
 
 ## Skill Test Matrix
 | Skill | Test Files | Primary Focus |

@@ -8,10 +8,12 @@
 
 ## Key Files
 - `.github/workflows/ci.yml`: lint/type/build/security/test matrix.
+- `.github/workflows/pages-verify.yml`: PR-only Pages build/signing verification (no publish).
 - `.github/workflows/poll-nvd-cves.yml`: daily NVD advisory ingestion.
 - `.github/workflows/community-advisory.yml`: issue-label-driven advisory publishing.
 - `.github/workflows/skill-release.yml`: release validation, packaging, signing, and publishing.
 - `.github/workflows/deploy-pages.yml`: site build + asset mirroring to GitHub Pages.
+- `.github/workflows/wiki-sync.yml`: syncs repository `wiki/` into GitHub Wiki.
 - `.github/actions/sign-and-verify/action.yml`: shared Ed25519 sign/verify composite action.
 - `scripts/prepare-to-push.sh`: local CI-like quality gate.
 - `scripts/release-skill.sh`: manual helper for version bump + tag workflow.
@@ -20,10 +22,12 @@
 | Interface | Trigger | Outcome |
 | --- | --- | --- |
 | CI workflow | Push/PR on `main` | Fails fast on lint/type/build/test/security regressions. |
+| Pages Verify workflow | PR on `main` | Validates Pages build/signing artifacts without production deploy. |
 | NVD poll workflow | Cron + dispatch | Updates advisory feed with deduped, normalized CVEs. |
 | Community advisory workflow | Issue labeled `advisory-approved` | Opens PR adding signed advisory records. |
-| Skill release workflow | Tag `<skill>-v*` | Creates GitHub release assets and signatures. |
+| Skill release workflow | Metadata PR changes + tag `<skill>-v*` | PR dry-run/version checks and tagged release publishing. |
 | Deploy pages workflow | Successful CI/release run | Publishes site + mirrored artifacts to Pages. |
+| Sync wiki workflow | Push `wiki/**` on `main` | Publishes repository wiki content into GitHub Wiki remote. |
 
 ## Inputs and Outputs
 Inputs/outputs are summarized in the table below.
@@ -83,6 +87,8 @@ on:
 - .github/workflows/community-advisory.yml
 - .github/workflows/skill-release.yml
 - .github/workflows/deploy-pages.yml
+- .github/workflows/pages-verify.yml
+- .github/workflows/wiki-sync.yml
 - .github/workflows/codeql.yml
 - .github/workflows/scorecard.yml
 - .github/actions/sign-and-verify/action.yml

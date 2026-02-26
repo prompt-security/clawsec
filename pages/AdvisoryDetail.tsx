@@ -3,7 +3,11 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Shield, AlertTriangle, Github, User, Bot } from 'lucide-react';
 import { Footer } from '../components/Footer';
 import { Advisory, AdvisoryFeed } from '../types';
-import { ADVISORY_FEED_URL, LOCAL_FEED_PATH } from '../constants';
+import {
+  ADVISORY_FEED_URL,
+  LEGACY_ADVISORY_FEED_URL,
+  LOCAL_FEED_PATH,
+} from '../constants';
 
 export const AdvisoryDetail: React.FC = () => {
   const { advisoryId } = useParams<{ advisoryId: string }>();
@@ -16,11 +20,15 @@ export const AdvisoryDetail: React.FC = () => {
       if (!advisoryId) return;
 
       try {
-        // Try local feed first (for development), then fall back to GitHub releases
+        // Try local feed first (dev), then canonical hosted endpoint, then legacy mirror.
         let response = await fetch(LOCAL_FEED_PATH);
 
         if (!response.ok) {
           response = await fetch(ADVISORY_FEED_URL);
+        }
+
+        if (!response.ok) {
+          response = await fetch(LEGACY_ADVISORY_FEED_URL);
         }
 
         if (!response.ok) {

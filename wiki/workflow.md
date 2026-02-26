@@ -3,18 +3,22 @@
 ## End-to-End Lifecycle
 - Development starts with local coding + local data population for realistic UI preview.
 - PR CI validates quality/security and skill test suites.
+- PR Pages-verify validates production build/signing behavior without publishing.
 - Tag-driven release workflow packages and signs skill artifacts.
 - Pages deploy workflow mirrors release/advisory artifacts and publishes the static site.
+- Wiki-sync workflow publishes repo `wiki/` docs to GitHub Wiki on `main`.
 - Scheduled workflows continuously enrich advisory feed and supply-chain visibility.
 
 ## Primary Workflow Map
 | Workflow | Trigger | Main Steps |
 | --- | --- | --- |
 | CI | PR/push to `main` | Lint, typecheck, build, Python checks, security scans, skill tests. |
+| Pages Verify | PRs to `main` | Build Pages artifact and validate signing outputs (no publish). |
 | Poll NVD CVEs | Daily cron + manual dispatch | Fetch CVEs, transform/dedupe, update feed, sign artifacts, PR changes. |
 | Process Community Advisory | Issue label `advisory-approved` | Parse issue form, create advisory, sign feed, open PR, comment issue. |
-| Skill Release | Tag `<skill>-v*` | Validate versions, package SBOM files, sign checksums, publish release. |
+| Skill Release | Skill tags + metadata PR changes | PR: version-parity + dry-run checks; tags: package/sign/publish release assets. |
 | Deploy Pages | Successful CI/Release or manual dispatch | Discover releases, mirror assets, sign public advisories/checksums, deploy site. |
+| Sync Wiki | Pushes to `main` touching `wiki/**` + manual dispatch | Sync `wiki/` into `<repo>.wiki.git` and generate `Home.md` from `INDEX.md`. |
 
 ## Local Operator Workflow
 | Step | Command | Outcome |
@@ -22,6 +26,7 @@
 | Install deps | `npm install` | Ready local environment. |
 | Populate local catalog | `./scripts/populate-local-skills.sh` | `public/skills/index.json` and file checksums. |
 | Populate local feed | `./scripts/populate-local-feed.sh --days 120` | Updated local advisory feed copy. |
+| Generate wiki llms exports | `npm run gen:wiki-llms` | Updates `public/wiki/llms.txt` and per-page exports. |
 | Run local gate | `./scripts/prepare-to-push.sh` | CI-like pass/fail signal. |
 | Start dev UI | `npm run dev` | Browser preview at local Vite endpoint. |
 
@@ -64,11 +69,14 @@ on:
 - scripts/prepare-to-push.sh
 - scripts/populate-local-feed.sh
 - scripts/populate-local-skills.sh
+- scripts/generate-wiki-llms.mjs
 - .github/workflows/ci.yml
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/skill-release.yml
 - .github/workflows/deploy-pages.yml
+- .github/workflows/pages-verify.yml
+- .github/workflows/wiki-sync.yml
 - .github/workflows/codeql.yml
 - .github/workflows/scorecard.yml
 - .github/actions/sign-and-verify/action.yml

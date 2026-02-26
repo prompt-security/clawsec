@@ -76,7 +76,7 @@ if (baseline.mode === 'restore' && autoRestore) {
 | Test Scope | File/Path | Notes |
 | --- | --- | --- |
 | Type contracts | `skills/clawsec-nanoclaw/lib/types.ts` | Defines tool/IPC DB payload contracts. |
-| Operational docs | `docs/SKILL_SIGNING.md`, `docs/INTEGRITY.md` | Describes verification/integrity usage patterns. |
+| Operational docs | `skills/clawsec-nanoclaw/docs/SKILL_SIGNING.md`, `skills/clawsec-nanoclaw/docs/INTEGRITY.md` | Describes verification/integrity usage patterns. |
 | Cross-module behavior | Reuses suite verification patterns | Signature/checksum primitives ported from suite logic. |
 
 ## Source References

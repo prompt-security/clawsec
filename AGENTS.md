@@ -5,6 +5,8 @@ ClawSec combines a Vite + React frontend with security skill packages and releas
 - Frontend entrypoints: `index.tsx`, `App.tsx`
 - UI and routes: `components/`, `pages/`
 - Shared types/constants: `types.ts`, `constants.ts`
+- Wiki source docs: `wiki/` (synced to GitHub Wiki by `.github/workflows/wiki-sync.yml`)
+- Generated wiki exports: `public/wiki/` (`llms.txt` outputs; generated locally/CI and gitignored)
 - Skills: `skills/<skill-name>/` (`skill.json`, `SKILL.md`, optional `scripts/`, `test/`)
 - Advisory feed: `advisories/feed.json`, `advisories/feed.json.sig`
 - Automation: `scripts/`, `.github/workflows/`
@@ -15,7 +17,9 @@ ClawSec combines a Vite + React frontend with security skill packages and releas
 - `npm run dev`: run local Vite server.
 - `npm run build`: create production build (CI gate).
 - `npm run preview`: preview built app.
+- `npm run gen:wiki-llms`: generate wiki `llms.txt` exports from `wiki/` into `public/wiki/`.
 - `./scripts/prepare-to-push.sh [--fix]`: run lint, types, build, and security checks.
+- `./scripts/populate-local-wiki.sh`: regenerate local wiki `llms.txt` exports for preview.
 - `npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings 0`: lint JS/TS.
 - `npx tsc --noEmit`: type-check TypeScript.
 - `node skills/clawsec-suite/test/feed_verification.test.mjs`: run a skill-local Node test.
@@ -31,6 +35,7 @@ ClawSec combines a Vite + React frontend with security skill packages and releas
 There is no root `npm test`; tests are mostly skill-local.
 - Run changed tests directly: `node skills/<skill>/test/<name>.test.mjs`.
 - For frontend/config changes, run ESLint, `npx tsc --noEmit`, and `npm run build`.
+- For wiki rendering/export changes, run `npm run gen:wiki-llms` and `npm run build`.
 - For Python utility updates, run `ruff check utils/` and `bandit -r utils/ -ll`.
 
 ## Pull Request Guidelines
@@ -39,6 +44,7 @@ There is no root `npm test`; tests are mostly skill-local.
 - Keep PRs focused and include summary, security benefit, and testing performed.
 - Keep versions aligned between `skills/<skill>/skill.json` and `skills/<skill>/SKILL.md`.
 - Do not push release tags from PR branches; releases are tagged from `main`.
+- Do not commit generated `public/wiki/` artifacts; edit `wiki/` source files instead.
 
 ## Agent Collaboration & Git Safety
 - Delete unused or obsolete files only when your changes make them irrelevant; revert files only when the change is yours or explicitly requested. If a git operation creates uncertainty about another agent’s in-flight work, stop and coordinate instead of deleting.

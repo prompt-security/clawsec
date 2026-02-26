@@ -11,22 +11,26 @@ It covers:
 - key rotation and revocation
 - incident response
 
-## 2) Current branch reality (important)
+## 2) Current operating state (important)
 
-As of branch `integration/signing-work`, advisory distribution is **unsigned**:
+On `main`, advisory and release channels are signed and verified by default:
 
 - Feed writers:
-  - `.github/workflows/poll-nvd-cves.yml` writes `advisories/feed.json` and `skills/clawsec-feed/advisories/feed.json`
-  - `.github/workflows/community-advisory.yml` writes the same files
+  - `.github/workflows/poll-nvd-cves.yml` updates `advisories/feed.json` and signs `advisories/feed.json.sig`
+  - `.github/workflows/community-advisory.yml` does the same for approved issue reports
+  - both sync signed feed artifacts into `skills/clawsec-feed/advisories/`
 - Feed publish path:
-  - `.github/workflows/deploy-pages.yml` copies to `public/advisories/feed.json`
-  - also mirrors to `public/releases/latest/download/advisories/feed.json`
+  - `.github/workflows/deploy-pages.yml` publishes `public/advisories/feed.json` + `.sig`
+  - generates and signs `public/checksums.json` + `public/checksums.sig`
+  - publishes canonical key as `public/signing-public.pem` and `public/advisories/feed-signing-public.pem`
+  - mirrors compatibility artifacts under `public/releases/latest/download/` (including `feed.json`, `feed.json.sig`, `checksums.json`, `checksums.sig`, `signing-public.pem`)
 - Feed consumers:
   - `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
   - `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
-  - both default to `https://clawsec.prompt.security/advisories/feed.json`
+  - `skills/clawsec-nanoclaw/lib/advisories.ts`
+  - default feed URL is `https://clawsec.prompt.security/advisories/feed.json`
 
-This document defines the **target operating model** for signed artifacts while preserving compatibility during migration.
+Unsigned mode remains an explicit compatibility bypass (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`) and is not the steady-state operating model.
 
 ## 3) Target signed artifacts
 
@@ -35,10 +39,10 @@ This document defines the **target operating model** for signed artifacts while 
 - `advisories/feed.json.sig` (detached Ed25519 signature; base64)
 - `advisories/feed-signing-public.pem` (pinned public key)
 
-### Release artifact channel (recommended)
+### Release artifact channel
 - `<release>/checksums.json`
 - `<release>/checksums.sig`
-- `advisories/release-signing-public.pem` (or equivalent repo-pinned location)
+- `<release>/signing-public.pem`
 
 ## 4) Key roles and custody
 
@@ -108,7 +112,7 @@ openssl pkeyutl -verify -rawin -pubin -inkey feed-signing-public.pem -in /tmp/pr
 
 ## 7) Workflow integration points
 
-This repo already has feed mutation and deployment workflows. Signing should be inserted as a post-mutation, pre-publish control.
+This repo enforces signing as a post-mutation, pre-publish control.
 
 ### Feed pipeline
 
@@ -116,29 +120,31 @@ Current feed mutation points:
 - `.github/workflows/poll-nvd-cves.yml`
 - `.github/workflows/community-advisory.yml`
 
-Target addition:
-- add signing step/workflow that:
-  1. regenerates deterministic feed checksums manifest (optional but recommended)
-  2. signs `advisories/feed.json` into `advisories/feed.json.sig`
-  3. verifies signature in CI before commit/publish
+Current behavior:
+- workflow step signs `advisories/feed.json` into `advisories/feed.json.sig`
+- signing action verifies generated signatures during workflow execution
+- signed artifacts are committed via PR automation
 
 ### Pages pipeline
 
 Current publisher:
 - `.github/workflows/deploy-pages.yml`
 
-Target update:
-- copy `.sig` files to `public/advisories/` and `public/releases/latest/download/advisories/`
-- fail deploy if expected signed companions are missing after migration enforcement date
+Current behavior:
+- copies payload/signature to `public/advisories/`
+- generates + signs `public/checksums.json` and `public/checksums.sig`
+- publishes signing key to `public/signing-public.pem` and `public/advisories/feed-signing-public.pem`
+- mirrors advisory + signature/checksum/key companions into `public/releases/latest/download/` compatibility paths
 
 ### Skill release pipeline (recommended hardening)
 
 Current release generator:
-- `.github/workflows/skill-release.yml` creates `checksums.json`
+- `.github/workflows/skill-release.yml`
 
-Target update:
-- sign `checksums.json` before `softprops/action-gh-release`
-- attach `checksums.sig` to each release
+Current behavior:
+- creates `checksums.json`, signs it as `checksums.sig`, and verifies signature before publish
+- includes `signing-public.pem` in release assets
+- validates generated public-key fingerprint against canonical key material
 
 ## 8) Rotation policy and runbook
 
@@ -206,9 +212,9 @@ For each release cycle or feed-signing run, retain:
 - operator/reviewer approvals
 - any exception or bypass rationale
 
-## 11) Minimum acceptance criteria before enforcement
+## 11) Minimum acceptance criteria before stricter policy changes
 
-Before requiring signatures in all clients:
+Before tightening policy further (for example, removing compatibility bypass paths):
 - signed artifacts are produced consistently for at least 2 weeks
 - deploy pipeline mirrors signature companions
 - one rollback drill and one key rotation drill completed successfully

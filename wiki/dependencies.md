@@ -4,7 +4,7 @@
 | Layer | Primary Dependencies | Why It Exists |
 | --- | --- | --- |
 | Frontend runtime | `react`, `react-dom`, `react-router-dom`, `lucide-react` | UI rendering, routing, iconography. |
-| Markdown rendering | `react-markdown`, `remark-gfm` | Render skill docs/readmes in detail pages. |
+| Markdown rendering | `react-markdown`, `remark-gfm` | Render skill docs/readmes and in-app wiki markdown pages. |
 | Build tooling | `vite`, `@vitejs/plugin-react`, `typescript` | Fast TS/TSX bundling and production builds. |
 | Python utilities | stdlib + `ruff`/`bandit` policy from `pyproject.toml` | Validate/package skills and run static checks. |
 | Shell automation | `bash`, `jq`, `curl`, `openssl`, `sha256sum`/`shasum` | Feed polling, signing, checksum generation, release checks. |
@@ -45,7 +45,7 @@
 | Ruff | `ruff check utils/` | Python style and bug pattern checks. |
 | Bandit | `bandit -r utils/ -ll` | Python security checks. |
 | Trivy | Workflow + optional local run | FS/config vulnerability scans. |
-| Gitleaks | Workflow + optional local run | Secret leak detection. |
+| Gitleaks | `scripts/prepare-to-push.sh` optional local run | Secret leak detection before push. |
 
 ## Example Snippets
 ```json

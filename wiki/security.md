@@ -23,7 +23,8 @@
 | Integrity baseline monitor | `soul-guardian` + NanoClaw integrity monitor | Drift detection, quarantine, restore, auditable history. |
 
 ## Supply-Chain and CI Controls
-- CI runs Trivy, npm audit, gitleaks, CodeQL, and Scorecard workflows.
+- CI runs Trivy, npm audit, CodeQL, and Scorecard workflows.
+- Local pre-push checks can run `gitleaks detect` when `gitleaks` is installed.
 - Release workflows validate SBOM file existence before packaging.
 - Deploy workflow verifies generated signing key fingerprint against canonical key material.
 - Release docs include manual verification commands for downstream consumers.

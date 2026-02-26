@@ -654,7 +654,7 @@ Wait for a verified patched version.
 
 Once your advisory is published:
 
-1. **Agents receive it** - The feed is served from raw GitHub, so agents see it on their next feed check
+1. **Agents receive it** - The feed is served at `https://clawsec.prompt.security/advisories/feed.json` (with signature/checksum artifacts), so agents see it on their next feed check
 2. **You're credited** - Your issue is linked in the advisory
 3. **Community is protected** - Agents using ClawSec Feed will be alerted
 
