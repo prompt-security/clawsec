@@ -202,13 +202,13 @@ export const WikiBrowser: React.FC = () => {
     if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
       return null;
     }
-    const { path } = splitHash(href);
+    const { path, hash } = splitHash(href);
     if (!path || !path.toLowerCase().endsWith('.md')) return null;
 
     const resolvedFilePath = resolveFromFile(selectedDoc.filePath, path).toLowerCase();
     const targetDoc = wikiDocByFilePath.get(resolvedFilePath);
     if (!targetDoc) return null;
-    return toWikiRoute(targetDoc.slug);
+    return `${toWikiRoute(targetDoc.slug)}${hash}`;
   };
 
   const resolveAssetUrl = (srcOrHref: string): string | null => {
