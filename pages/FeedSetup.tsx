@@ -12,6 +12,14 @@ import {
 
 const ITEMS_PER_PAGE = 9;
 
+const SEVERITY_TABS = [
+  { value: 'all',      label: 'All',      active: 'bg-clawd-accent text-white',                                    inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
+  { value: 'critical', label: 'Critical', active: 'bg-red-500/20 text-red-400 border-2 border-red-400',            inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-red-400/50' },
+  { value: 'high',     label: 'High',     active: 'bg-orange-500/20 text-orange-400 border-2 border-orange-400',   inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-orange-400/50' },
+  { value: 'medium',   label: 'Medium',   active: 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-400',   inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-yellow-400/50' },
+  { value: 'low',      label: 'Low',      active: 'bg-blue-500/20 text-blue-400 border-2 border-blue-400',         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-blue-400/50' },
+] as const;
+
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [filteredAdvisories, setFilteredAdvisories] = useState<Advisory[]>([]);
@@ -113,56 +121,17 @@ export const FeedSetup: React.FC = () => {
       <section>
         {/* Severity Filter Tabs */}
         <div className="flex flex-wrap justify-center gap-3 mb-8">
-          <button
-            onClick={() => setSelectedSeverity('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              selectedSeverity === 'all'
-                ? 'bg-clawd-accent text-white'
-                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setSelectedSeverity('critical')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              selectedSeverity === 'critical'
-                ? 'bg-red-500/20 text-red-400 border-2 border-red-400'
-                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-red-400/50'
-            }`}
-          >
-            Critical
-          </button>
-          <button
-            onClick={() => setSelectedSeverity('high')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              selectedSeverity === 'high'
-                ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-400'
-                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-orange-400/50'
-            }`}
-          >
-            High
-          </button>
-          <button
-            onClick={() => setSelectedSeverity('medium')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              selectedSeverity === 'medium'
-                ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-400'
-                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-yellow-400/50'
-            }`}
-          >
-            Medium
-          </button>
-          <button
-            onClick={() => setSelectedSeverity('low')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              selectedSeverity === 'low'
-                ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-400'
-                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-blue-400/50'
-            }`}
-          >
-            Low
-          </button>
+          {SEVERITY_TABS.map(({ value, label, active, inactive }) => (
+            <button
+              key={value}
+              onClick={() => setSelectedSeverity(value)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                selectedSeverity === value ? active : inactive
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {loading ? (
