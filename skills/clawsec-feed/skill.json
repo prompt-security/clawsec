@@ -22,6 +22,11 @@
         "description": "Advisory feed skill documentation"
       },
       {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history for advisory feed updates"
+      },
+      {
         "path": "advisories/feed.json",
         "required": true,
         "description": "Community security advisory feed"
