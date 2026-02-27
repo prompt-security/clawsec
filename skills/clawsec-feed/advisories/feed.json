@@ -1,6 +1,6 @@
 {
-  "version": "0.0.3",
-  "updated": "2026-02-25T16:48:57Z",
+  "version": "0.0.4",
+  "updated": "2026-02-27T06:55:03Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -25,7 +25,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27576",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (4.0); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-27488",
@@ -49,7 +51,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27488",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); requires local access; SSRF affects agents making external requests"
     },
     {
       "id": "CVE-2026-27487",
@@ -74,7 +78,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27487",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-27486",
@@ -98,7 +104,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access"
     },
     {
       "id": "CVE-2026-27485",
@@ -122,7 +130,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27485",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.4); requires local access"
     },
     {
       "id": "CVE-2026-27484",
@@ -146,7 +156,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27484",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); requires local access"
     },
     {
       "id": "CVE-2026-27009",
@@ -170,7 +182,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27009",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.8); requires local access; XSS has limited impact in headless agents"
     },
     {
       "id": "CVE-2026-27008",
@@ -194,7 +208,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27008",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.7); requires local access"
     },
     {
       "id": "CVE-2026-27007",
@@ -218,7 +234,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27007",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.3); requires local access"
     },
     {
       "id": "CVE-2026-27004",
@@ -241,7 +259,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27004",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access"
     },
     {
       "id": "CVE-2026-27003",
@@ -264,7 +284,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27003",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access"
     },
     {
       "id": "CVE-2026-27002",
@@ -288,7 +310,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27002",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.8); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-27001",
@@ -312,7 +336,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27001",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-26972",
@@ -336,7 +362,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26972",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.7); requires local access; path traversal affects agents with file access"
     },
     {
       "id": "CVE-2026-26329",
@@ -360,7 +388,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26329",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access; path traversal affects agents with file access"
     },
     {
       "id": "CVE-2026-26328",
@@ -383,7 +413,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26328",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access"
     },
     {
       "id": "CVE-2026-26327",
@@ -407,7 +439,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26327",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access"
     },
     {
       "id": "CVE-2026-26326",
@@ -431,7 +465,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26326",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); requires local access"
     },
     {
       "id": "CVE-2026-26325",
@@ -455,7 +491,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26325",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.2); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-26324",
@@ -479,7 +517,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26324",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access; SSRF affects agents making external requests"
     },
     {
       "id": "CVE-2026-26323",
@@ -503,7 +543,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26323",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-26322",
@@ -527,7 +569,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26322",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); requires local access; SSRF affects agents making external requests"
     },
     {
       "id": "CVE-2026-26321",
@@ -551,7 +595,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26321",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access; path traversal affects agents with file access"
     },
     {
       "id": "CVE-2026-26320",
@@ -576,7 +622,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26320",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access"
     },
     {
       "id": "CVE-2026-26319",
@@ -600,7 +648,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26319",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access"
     },
     {
       "id": "CVE-2026-26317",
@@ -623,7 +673,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26317",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.1); requires local access"
     },
     {
       "id": "CVE-2026-26316",
@@ -647,7 +699,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26316",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access"
     },
     {
       "id": "CVE-2026-25474",
@@ -671,7 +725,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25474",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access"
     },
     {
       "id": "CVE-2026-24764",
@@ -695,7 +751,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24764",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.7); requires local access"
     },
     {
       "id": "CVE-2026-25593",
@@ -717,7 +775,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25593",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.4); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-25475",
@@ -739,7 +799,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25475",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access; path traversal affects agents with file access"
     },
     {
       "id": "CVE-2026-25157",
@@ -762,7 +824,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25157",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.7); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-24763",
@@ -786,7 +850,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24763",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); requires local access; RCE is critical in agent deployments"
     },
     {
       "id": "CVE-2026-25253",
@@ -810,7 +876,9 @@
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25253",
       "platforms": [
         "openclaw"
-      ]
+      ],
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); requires local access; RCE is critical in agent deployments"
     }
   ]
 }

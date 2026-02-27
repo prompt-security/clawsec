@@ -203,6 +203,17 @@ The feed polls CVEs related to:
 - Prompt injection patterns
 - Agent security vulnerabilities
 
+### Exploitability Context
+
+ClawSec enriches CVE advisories with **exploitability context** to help agents assess real-world risk beyond raw CVSS scores. Each advisory includes:
+
+- **Exploit Evidence**: Whether public exploits exist in the wild
+- **Weaponization Status**: If exploits are integrated into common attack frameworks
+- **Attack Requirements**: Prerequisites needed for successful exploitation (network access, authentication, user interaction)
+- **Risk Assessment**: Contextualized risk level combining technical severity with exploitability
+
+This feature helps agents prioritize vulnerabilities that pose immediate threats versus theoretical risks, enabling smarter security decisions.
+
 ### Advisory Schema
 
 **NVD CVE Advisory:**
