@@ -18,37 +18,19 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  pass,
+  fail,
+  report,
+  exitWithResults,
+  generateEd25519KeyPair,
+  signPayload,
+} from "./lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = path.resolve(__dirname, "..", "scripts", "guarded_skill_install.mjs");
 
 let tempDir;
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount++;
-  console.log(`✓ ${name}`);
-}
-
-function fail(name, error) {
-  failCount++;
-  console.error(`✗ ${name}`);
-  console.error(`  ${String(error)}`);
-}
-
-function generateEd25519KeyPair() {
-  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
-  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" });
-  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" });
-  return { publicKeyPem, privateKeyPem };
-}
-
-function signPayload(data, privateKeyPem) {
-  const privateKey = crypto.createPrivateKey(privateKeyPem);
-  const signature = crypto.sign(null, Buffer.from(data, "utf8"), privateKey);
-  return signature.toString("base64");
-}
 
 function createFeed(advisories) {
   return JSON.stringify(
@@ -416,11 +398,8 @@ async function runTests() {
     await cleanupTestDir();
   }
 
-  console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runTests().catch((error) => {

@@ -6,14 +6,17 @@
  * Run: node skills/clawsec-suite/test/fuzz_properties.test.mjs
  */
 
+import { pass, fail, report, exitWithResults } from "./lib/test_harness.mjs";
 import { runFuzzProperties } from "./fuzz_properties.js";
 
+console.log("=== ClawSec Fast-Check Fuzz Properties ===\n");
+
 try {
-  console.log("=== ClawSec Fast-Check Fuzz Properties ===\n");
   runFuzzProperties();
-  console.log("=== Results: all fuzz properties passed ===");
+  pass("Property-based fuzz tests");
 } catch (error) {
-  console.error("Fuzz property test failed:");
-  console.error(error);
-  process.exit(1);
+  fail("Property-based fuzz tests", error);
 }
+
+report();
+exitWithResults();

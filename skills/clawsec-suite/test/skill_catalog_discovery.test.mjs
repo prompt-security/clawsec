@@ -15,23 +15,10 @@ import http from "node:http";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { pass, fail, report, exitWithResults } from "./lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = path.resolve(__dirname, "..", "scripts", "discover_skill_catalog.mjs");
-
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount += 1;
-  console.log(`✓ ${name}`);
-}
-
-function fail(name, error) {
-  failCount += 1;
-  console.error(`✗ ${name}`);
-  console.error(`  ${String(error)}`);
-}
 
 function runCatalogScript(args, env = {}) {
   return new Promise((resolve) => {
@@ -237,11 +224,8 @@ async function runTests() {
   await testInvalidRemotePayloadFallsBack();
   await testUnreachableRemoteFallsBack();
 
-  console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runTests().catch((error) => {

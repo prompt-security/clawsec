@@ -19,55 +19,31 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import {
+  pass,
+  fail,
+  report,
+  exitWithResults,
+  createTempDir,
+  withEnv,
+} from "../../clawsec-suite/test/lib/test_harness.mjs";
 import { loadSuppressionConfig } from "../scripts/load_suppression_config.mjs";
 
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount += 1;
-  console.log(`\u2713 ${name}`);
-}
-
-function fail(name, error) {
-  failCount += 1;
-  console.error(`\u2717 ${name}`);
-  console.error(`  ${String(error)}`);
-}
-
+/**
+ * Creates a temporary file with the given content.
+ * Wrapper around createTempDir for test config file creation.
+ * @param {string} content - File content
+ * @returns {Promise<{path: string, cleanup: Function}>}
+ */
 async function withTempFile(content) {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-test-"));
-  const tmpFile = path.join(tmpDir, "test-config.json");
+  const tmpDir = await createTempDir();
+  const tmpFile = path.join(tmpDir.path, "test-config.json");
   await fs.writeFile(tmpFile, content, "utf8");
 
   return {
     path: tmpFile,
-    cleanup: async () => {
-      try {
-        await fs.rm(tmpDir, { recursive: true, force: true });
-      } catch {
-        // Ignore cleanup errors
-      }
-    },
+    cleanup: tmpDir.cleanup,
   };
-}
-
-async function withEnv(key, value, fn) {
-  const oldValue = process.env[key];
-  try {
-    if (value === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
-    return await fn();
-  } finally {
-    if (oldValue === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = oldValue;
-    }
-  }
 }
 
 /** Suppress stderr output during a function call (avoids noisy warnings in test output). */
@@ -748,11 +724,8 @@ async function runTests() {
   await testMissingSentinel();
   await testWrongSentinel();
 
-  console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runTests().catch((error) => {
