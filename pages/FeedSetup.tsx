@@ -26,6 +26,26 @@ const PLATFORM_TABS = [
   { value: 'nanoclaw', label: 'NanoClaw',      active: 'bg-clawd-secondary/20 text-clawd-secondary border-2 border-clawd-secondary', inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-secondary/50' },
 ] as const;
 
+const FilterTabs: React.FC<{
+  tabs: ReadonlyArray<{ value: string; label: string; active: string; inactive: string }>;
+  selected: string;
+  onSelect: (value: string) => void;
+}> = ({ tabs, selected, onSelect }) => (
+  <div className="flex flex-wrap justify-center gap-3 mb-8">
+    {tabs.map(({ value, label, active, inactive }) => (
+      <button
+        key={value}
+        onClick={() => onSelect(value)}
+        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          selected === value ? active : inactive
+        }`}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+);
+
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +94,7 @@ export const FeedSetup: React.FC = () => {
   const filteredAdvisories = useMemo(
     () => advisories.filter((a) =>
       (selectedSeverity === 'all' || a.severity === selectedSeverity) &&
-      (selectedPlatform === 'all' || a.platforms?.includes(selectedPlatform))
+      (selectedPlatform === 'all' || !a.platforms?.length || a.platforms.includes(selectedPlatform))
     ),
     [advisories, selectedSeverity, selectedPlatform],
   );
@@ -122,35 +142,8 @@ export const FeedSetup: React.FC = () => {
       </section>
 
       <section>
-        {/* Severity Filter Tabs */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {SEVERITY_TABS.map(({ value, label, active, inactive }) => (
-            <button
-              key={value}
-              onClick={() => setSelectedSeverity(value)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                selectedSeverity === value ? active : inactive
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Platform Filter Tabs */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {PLATFORM_TABS.map(({ value, label, active, inactive }) => (
-            <button
-              key={value}
-              onClick={() => setSelectedPlatform(value)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                selectedPlatform === value ? active : inactive
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <FilterTabs tabs={SEVERITY_TABS} selected={selectedSeverity} onSelect={setSelectedSeverity} />
+        <FilterTabs tabs={PLATFORM_TABS} selected={selectedPlatform} onSelect={setSelectedPlatform} />
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
