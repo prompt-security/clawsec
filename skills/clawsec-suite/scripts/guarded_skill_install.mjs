@@ -146,6 +146,12 @@ async function loadFeed() {
     );
   }
 
+  if (!verifyChecksumManifest) {
+    process.stderr.write(
+      "WARNING: CLAWSEC_VERIFY_CHECKSUM_MANIFEST=0 is enabled. Checksum verification for the advisory feed manifest is disabled. This reduces security guarantees.\n",
+    );
+  }
+
   const publicKeyPem = allowUnsigned ? "" : await fs.readFile(feedPublicKeyPath, "utf8");
 
   const remoteFeed = await loadRemoteFeed(feedUrl, {
