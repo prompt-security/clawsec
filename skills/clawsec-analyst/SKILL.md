@@ -103,7 +103,7 @@ echo "Installed clawsec-analyst v${VERSION} to: $DEST"
 
 ```bash
 # REQUIRED: Anthropic API key for Claude access
-export ANTHROPIC_API_KEY="sk-ant-api03-..."
+export ANTHROPIC_API_KEY=your-key-here  # Get from: console.anthropic.com
 ```
 
 ### Optional Environment Variables
@@ -294,7 +294,7 @@ Consumes ClawSec advisory feed format:
 $ node handler.ts analyze-advisory --id CVE-2024-12345
 ERROR: ANTHROPIC_API_KEY environment variable not set
 Please obtain an API key from https://console.anthropic.com/ and set:
-  export ANTHROPIC_API_KEY="sk-ant-api03-..."
+  export ANTHROPIC_API_KEY=your-key-here  # Get from: console.anthropic.com
 ```
 
 ### Claude API Rate Limit

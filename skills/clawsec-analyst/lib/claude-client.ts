@@ -46,7 +46,7 @@ export class ClaudeClient {
     if (!apiKey) {
       throw this.createError(
         'MISSING_API_KEY',
-        'ANTHROPIC_API_KEY environment variable is required. Set it with: export ANTHROPIC_API_KEY="sk-ant-..."',
+        'ANTHROPIC_API_KEY environment variable is required. Get your key from https://console.anthropic.com/',
         false
       );
     }

@@ -18,7 +18,7 @@ export class ClaudeClient {
         // Get API key from config or environment
         const apiKey = config.apiKey || process.env['ANTHROPIC_API_KEY'];
         if (!apiKey) {
-            throw this.createError('MISSING_API_KEY', 'ANTHROPIC_API_KEY environment variable is required. Set it with: export ANTHROPIC_API_KEY="sk-ant-..."', false);
+            throw this.createError('MISSING_API_KEY', 'ANTHROPIC_API_KEY environment variable is required. Get your key from https://console.anthropic.com/', false);
         }
         this.client = new Anthropic({ apiKey });
         this.config = {
