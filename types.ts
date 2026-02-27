@@ -41,6 +41,7 @@ export interface Advisory {
   references?: string[];
   cvss_score?: number | null;
   nvd_url?: string;
+  platforms?: string[];
   // Community report fields (source defaults to "Prompt Security Staff" when absent)
   source?: string;
   github_issue_url?: string;

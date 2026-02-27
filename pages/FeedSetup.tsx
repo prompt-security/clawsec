@@ -20,6 +20,12 @@ const SEVERITY_TABS = [
   { value: 'low',      label: 'Low',      active: 'bg-blue-500/20 text-blue-400 border-2 border-blue-400',         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-blue-400/50' },
 ] as const;
 
+const PLATFORM_TABS = [
+  { value: 'all',      label: 'All Platforms', active: 'bg-clawd-accent text-white',                                         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
+  { value: 'openclaw', label: 'OpenClaw',      active: 'bg-clawd-accent/20 text-clawd-accent border-2 border-clawd-accent',  inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
+  { value: 'nanoclaw', label: 'NanoClaw',      active: 'bg-clawd-secondary/20 text-clawd-secondary border-2 border-clawd-secondary', inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-secondary/50' },
+] as const;
+
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +33,7 @@ export const FeedSetup: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
 
   useEffect(() => {
     const fetchAdvisories = async () => {
@@ -65,13 +72,16 @@ export const FeedSetup: React.FC = () => {
   }, []);
 
   const filteredAdvisories = useMemo(
-    () => advisories.filter((a) => selectedSeverity === 'all' || a.severity === selectedSeverity),
-    [advisories, selectedSeverity],
+    () => advisories.filter((a) =>
+      (selectedSeverity === 'all' || a.severity === selectedSeverity) &&
+      (selectedPlatform === 'all' || a.platforms?.includes(selectedPlatform))
+    ),
+    [advisories, selectedSeverity, selectedPlatform],
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [advisories, selectedSeverity]);
+  }, [advisories, selectedSeverity, selectedPlatform]);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -127,6 +137,21 @@ export const FeedSetup: React.FC = () => {
           ))}
         </div>
 
+        {/* Platform Filter Tabs */}
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          {PLATFORM_TABS.map(({ value, label, active, inactive }) => (
+            <button
+              key={value}
+              onClick={() => setSelectedPlatform(value)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                selectedPlatform === value ? active : inactive
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-clawd-accent animate-spin" />
@@ -142,7 +167,7 @@ export const FeedSetup: React.FC = () => {
             <p className="text-gray-400">
               {advisories.length === 0
                 ? 'No security advisories at this time. Check back later.'
-                : 'No advisories found for the selected severity level.'}
+                : 'No advisories found for the selected filters.'}
             </p>
           </div>
         ) : (
@@ -181,7 +206,7 @@ export const FeedSetup: React.FC = () => {
             {filteredAdvisories.length > 0 && (
               <p className="text-center text-sm text-gray-500 mt-4">
                 Showing {startIndex + 1}-{Math.min(endIndex, filteredAdvisories.length)} of {filteredAdvisories.length} advisories
-                {selectedSeverity !== 'all' && ` (${advisories.length} total)`}
+                {(selectedSeverity !== 'all' || selectedPlatform !== 'all') && ` (${advisories.length} total)`}
               </p>
             )}
           </>
