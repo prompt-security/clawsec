@@ -12,6 +12,7 @@ const DEFAULT_FEED_URL =
   "https://clawsec.prompt.security/advisories/feed.json";
 const DEFAULT_SCAN_INTERVAL_SECONDS = 300;
 let unsignedModeWarningShown = false;
+let checksumBypassWarningShown = false;
 
 function parsePositiveInteger(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(String(value ?? ""), 10);
@@ -157,6 +158,14 @@ const handler = async (event: HookEvent): Promise<void> => {
     console.warn(
       "[clawsec-advisory-guardian] CLAWSEC_ALLOW_UNSIGNED_FEED=1 is enabled. " +
         "This bypass is temporary migration compatibility and should be removed as soon as signed feed artifacts are available.",
+    );
+  }
+
+  if (!verifyChecksumManifest && !checksumBypassWarningShown) {
+    checksumBypassWarningShown = true;
+    console.warn(
+      "[clawsec-advisory-guardian] CLAWSEC_VERIFY_CHECKSUM_MANIFEST=0 is enabled. " +
+        "This disables checksum verification and should be used with caution.",
     );
   }
 
