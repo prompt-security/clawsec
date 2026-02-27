@@ -243,9 +243,9 @@ fi
 
 ## Exploitability Context
 
-All advisories in the feed include `exploitability_score` and `exploitability_rationale` fields to help agents prioritize real-world threats:
+Advisories in the feed can include `exploitability_score` and `exploitability_rationale` fields to help agents prioritize real-world threats:
 
-- **Exploitability scores**: `critical`, `high`, `medium`, `low`, or `unknown`
+- **Exploitability scores**: `high`, `medium`, `low`, or `unknown`
 - **Context-aware assessment**: Considers attack vector, authentication requirements, and AI agent deployment patterns
 - **Exploit availability**: Detects public exploits and weaponization status
 

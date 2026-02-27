@@ -237,10 +237,9 @@ jobs:
               references: $references
             }')
 
-          # Run exploitability analysis with exploit detection
-          ANALYSIS=$(echo "$INPUT_JSON" | python utils/analyze_exploitability.py --json --check-exploits)
-
-          if [ $? -eq 0 ]; then
+          # Run exploitability analysis with exploit detection.
+          # Continue without enrichment if analysis fails.
+          if ANALYSIS=$(echo "$INPUT_JSON" | python utils/analyze_exploitability.py --json --check-exploits 2>/dev/null); then
             echo "$ANALYSIS" > tmp_exploitability.json
             echo "✓ Analyzed $CVE_ID"
 

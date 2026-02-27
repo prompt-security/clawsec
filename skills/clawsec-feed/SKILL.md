@@ -527,8 +527,7 @@ done
 
 | Exploitability | Meaning | Action Priority |
 |----------------|---------|-----------------|
-| `critical` | Trivially exploitable, active exploitation likely | **Immediate notification** |
-| `high` | Easily exploitable with public tooling | **High priority notification** |
+| `high` | Trivially or easily exploitable with public tooling | **Immediate notification** |
 | `medium` | Exploitable but requires specific conditions | **Standard notification** |
 | `low` | Difficult to exploit or theoretical | **Low priority notification** |
 
@@ -536,8 +535,8 @@ done
 
 1. **Filter for high-exploitability first:**
    ```bash
-   # Get critical and high exploitability advisories
-   echo "$FEED" | jq '.advisories[] | select(.exploitability_score == "critical" or .exploitability_score == "high")'
+   # Get high exploitability advisories
+   echo "$FEED" | jq '.advisories[] | select(.exploitability_score == "high")'
    ```
 
 2. **Include exploitability in notifications:**
@@ -551,15 +550,15 @@ done
    ```
 
 3. **Prioritize by both severity AND exploitability:**
-   - A HIGH severity + CRITICAL exploitability CVE is more urgent than a CRITICAL severity + LOW exploitability CVE
+   - A HIGH severity + HIGH exploitability CVE is more urgent than a CRITICAL severity + LOW exploitability CVE
    - Focus user attention on threats that are both severe and easily exploitable
    - Include the exploitability rationale to help users understand the risk context
 
 ### Example Notification Priority Order
 
 When multiple advisories exist, present them in this order:
-1. **Critical severity + High/Critical exploitability** - most urgent
-2. **High severity + High/Critical exploitability**
+1. **Critical severity + High exploitability** - most urgent
+2. **High severity + High exploitability**
 3. **Critical severity + Medium/Low exploitability**
 4. **High severity + Medium/Low exploitability**
 5. **Medium/Low severity** (any exploitability)
@@ -573,7 +572,7 @@ This ensures you alert users to the most actionable, immediately dangerous threa
 **Notify Immediately (Critical):**
 - New critical advisory affecting an installed skill
 - Active exploitation detected
-- **High or critical exploitability score** (regardless of severity)
+- **High exploitability score** (regardless of severity)
 
 **Notify Soon (High):**
 - New high-severity advisory affecting installed skills

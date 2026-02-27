@@ -203,11 +203,10 @@ Heartbeat output should include:
 
 When alerting on advisories, prioritize by **exploitability score** in addition to severity:
 
-- `critical` exploitability: Trivially exploitable, immediate action required
-- `high` exploitability: Easily exploitable with public tooling, high priority
+- `high` exploitability: Trivially or easily exploitable with public tooling, immediate action required
 - `medium` exploitability: Exploitable with specific conditions, standard priority
 - `low` exploitability: Difficult to exploit or theoretical, low priority
 
 **Priority Rule**: A HIGH severity + HIGH exploitability CVE should be treated more urgently than a CRITICAL severity + LOW exploitability CVE.
 
-If your runtime sends alerts, treat `critical` and `high` exploitability advisories affecting installed skills as immediate notifications, regardless of severity rating.
+If your runtime sends alerts, treat `high` exploitability advisories affecting installed skills as immediate notifications, regardless of severity rating.
