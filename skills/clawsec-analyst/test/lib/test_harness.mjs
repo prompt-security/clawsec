@@ -3,6 +3,7 @@
  * Provides consistent test reporting and runner utilities.
  */
 
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -53,6 +54,29 @@ export function exitWithResults() {
   if (failCount > 0) {
     process.exit(1);
   }
+}
+
+/**
+ * Generates an Ed25519 keypair for test use.
+ * @returns {{publicKeyPem: string, privateKeyPem: string}}
+ */
+export function generateEd25519KeyPair() {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" });
+  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" });
+  return { publicKeyPem, privateKeyPem };
+}
+
+/**
+ * Signs a payload with an Ed25519 private key.
+ * @param {string} data - Data to sign
+ * @param {string} privateKeyPem - PEM-encoded private key
+ * @returns {string} Base64-encoded signature
+ */
+export function signPayload(data, privateKeyPem) {
+  const privateKey = crypto.createPrivateKey(privateKeyPem);
+  const signature = crypto.sign(null, Buffer.from(data, "utf8"), privateKey);
+  return signature.toString("base64");
 }
 
 /**
