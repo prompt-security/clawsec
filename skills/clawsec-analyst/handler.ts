@@ -130,6 +130,34 @@ function buildAnalysisMessage(
 }
 
 /**
+ * Validate required environment variables
+ * Returns validation result with errors if any
+ */
+function validateEnvironment(): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // Check ANTHROPIC_API_KEY (required)
+  const apiKey = process.env['ANTHROPIC_API_KEY'];
+  if (!apiKey || apiKey.trim() === '') {
+    errors.push('ANTHROPIC_API_KEY is not set or empty');
+  }
+
+  // Validate optional environment variables for type correctness
+  const scanInterval = process.env['CLAWSEC_HOOK_INTERVAL_SECONDS'];
+  if (scanInterval !== undefined) {
+    const parsed = Number.parseInt(scanInterval, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      errors.push(`CLAWSEC_HOOK_INTERVAL_SECONDS must be a positive integer, got: ${scanInterval}`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
  * Main hook handler
  * Mutates event.messages in-place (does not return value)
  */
@@ -274,3 +302,40 @@ const handler = async (event: HookEvent): Promise<void> => {
 };
 
 export default handler;
+
+/**
+ * CLI entry point for startup validation
+ * Supports --dry-run flag for environment validation
+ */
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const args = process.argv.slice(2);
+  const isDryRun = args.includes('--dry-run');
+
+  if (isDryRun) {
+    // Validate environment variables
+    const validation = validateEnvironment();
+
+    if (!validation.valid) {
+      // eslint-disable-next-line no-console
+      console.error('[clawsec-analyst] Environment validation failed:');
+      for (const error of validation.errors) {
+        // eslint-disable-next-line no-console
+        console.error(`  - ${error}`);
+      }
+      process.exit(1);
+    }
+
+    // Success - output expected message
+    // eslint-disable-next-line no-console
+    console.log('[clawsec-analyst] Environment validation passed');
+    // eslint-disable-next-line no-console
+    console.log('[clawsec-analyst] API key configured');
+    // eslint-disable-next-line no-console
+    console.log('[clawsec-analyst] Ready for operation');
+    process.exit(0);
+  } else {
+    // eslint-disable-next-line no-console
+    console.error('[clawsec-analyst] Usage: node handler.ts --dry-run');
+    process.exit(1);
+  }
+}
