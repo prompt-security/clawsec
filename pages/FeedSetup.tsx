@@ -14,10 +14,12 @@ const ITEMS_PER_PAGE = 9;
 
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
+  const [filteredAdvisories, setFilteredAdvisories] = useState<Advisory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
 
   useEffect(() => {
     const fetchAdvisories = async () => {
@@ -42,11 +44,13 @@ export const FeedSetup: React.FC = () => {
 
         const feed: AdvisoryFeed = await response.json();
         setAdvisories(feed.advisories || []);
+        setFilteredAdvisories(feed.advisories || []);
         setLastUpdated(feed.updated);
       } catch (err) {
         console.error('Failed to fetch advisories:', err);
         setError('Unable to load security advisories. The feed may be temporarily unavailable.');
         setAdvisories([]);
+        setFilteredAdvisories([]);
       } finally {
         setLoading(false);
       }
@@ -54,6 +58,19 @@ export const FeedSetup: React.FC = () => {
 
     fetchAdvisories();
   }, []);
+
+  useEffect(() => {
+    let result = advisories;
+
+    // Apply severity filter
+    if (selectedSeverity !== 'all') {
+      result = result.filter((advisory) => advisory.severity === selectedSeverity);
+    }
+
+    setFilteredAdvisories(result);
+    // Reset to page 1 when filter changes
+    setCurrentPage(1);
+  }, [selectedSeverity, advisories]);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -68,10 +85,10 @@ export const FeedSetup: React.FC = () => {
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(advisories.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredAdvisories.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentAdvisories = advisories.slice(startIndex, endIndex);
+  const currentAdvisories = filteredAdvisories.slice(startIndex, endIndex);
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)));
@@ -94,6 +111,60 @@ export const FeedSetup: React.FC = () => {
       </section>
 
       <section>
+        {/* Severity Filter Tabs */}
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          <button
+            onClick={() => setSelectedSeverity('all')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              selectedSeverity === 'all'
+                ? 'bg-clawd-accent text-white'
+                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setSelectedSeverity('critical')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              selectedSeverity === 'critical'
+                ? 'bg-red-500/20 text-red-400 border-2 border-red-400'
+                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-red-400/50'
+            }`}
+          >
+            Critical
+          </button>
+          <button
+            onClick={() => setSelectedSeverity('high')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              selectedSeverity === 'high'
+                ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-400'
+                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-orange-400/50'
+            }`}
+          >
+            High
+          </button>
+          <button
+            onClick={() => setSelectedSeverity('medium')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              selectedSeverity === 'medium'
+                ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-400'
+                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-yellow-400/50'
+            }`}
+          >
+            Medium
+          </button>
+          <button
+            onClick={() => setSelectedSeverity('low')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              selectedSeverity === 'low'
+                ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-400'
+                : 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-blue-400/50'
+            }`}
+          >
+            Low
+          </button>
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-clawd-accent animate-spin" />
@@ -104,9 +175,13 @@ export const FeedSetup: React.FC = () => {
             <AlertTriangle className="w-6 h-6 text-orange-400 mr-2" />
             <span className="text-gray-400">{error}</span>
           </div>
-        ) : advisories.length === 0 ? (
+        ) : filteredAdvisories.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400">No security advisories at this time. Check back later.</p>
+            <p className="text-gray-400">
+              {advisories.length === 0
+                ? 'No security advisories at this time. Check back later.'
+                : 'No advisories found for the selected severity level.'}
+            </p>
           </div>
         ) : (
           <>
@@ -141,9 +216,10 @@ export const FeedSetup: React.FC = () => {
               </div>
             )}
 
-            {advisories.length > 0 && (
+            {filteredAdvisories.length > 0 && (
               <p className="text-center text-sm text-gray-500 mt-4">
-                Showing {startIndex + 1}-{Math.min(endIndex, advisories.length)} of {advisories.length} advisories
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredAdvisories.length)} of {filteredAdvisories.length} advisories
+                {selectedSeverity !== 'all' && ` (${advisories.length} total)`}
               </p>
             )}
           </>
