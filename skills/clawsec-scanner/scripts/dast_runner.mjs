@@ -128,7 +128,7 @@ const TEST_CASES = [
     name: "Hook Handler Timeout Enforcement",
     description: "Tests whether hook handlers respect timeout limits and prevent infinite loops",
     severity: "medium",
-    execute: async (context) => {
+    execute: async (_context) => {
       const startTime = Date.now();
       const testTimeout = 5000; // 5 second test timeout
 
@@ -218,7 +218,7 @@ const TEST_CASES = [
     name: "Hook Handler Event Mutation Safety",
     description: "Tests whether hook handlers properly mutate event.messages without side effects",
     severity: "low",
-    execute: async (context) => {
+    execute: async (_context) => {
       const originalEvent = {
         type: "test",
         action: "mutation-test",
@@ -357,10 +357,10 @@ async function simulateLongRunningHook() {
 /**
  * Simulate a resource-intensive hook operation.
  *
- * @param {number} timeout - Timeout in milliseconds
+ * @param {number} _timeout - Timeout in milliseconds
  * @returns {Promise<void>}
  */
-async function simulateResourceIntensiveHook(timeout) {
+async function simulateResourceIntensiveHook(_timeout) {
   return new Promise((resolve) => {
     setTimeout(() => {
       // Simulate some memory usage (small allocation for testing)

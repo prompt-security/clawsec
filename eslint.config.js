@@ -85,7 +85,8 @@ export default [
       }
     },
     rules: {
-      'no-empty': ['error', { allowEmptyCatch: true }]
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
     }
   },
   // Node.js scripts (.js files in scripts directory)

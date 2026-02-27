@@ -1,4 +1,4 @@
-import { normalizeSeverity, safeJsonParse, getTimestamp, uniqueStrings } from '../lib/utils.mjs';
+import { normalizeSeverity, getTimestamp, uniqueStrings } from '../lib/utils.mjs';
 
 /**
  * Query OSV API for vulnerability data.
@@ -112,11 +112,11 @@ export async function queryNVD(cveId) {
  * Query GitHub Advisory Database (optional - requires OAuth token).
  * Currently a placeholder for future implementation.
  *
- * @param {string} packageName - Package name
- * @param {string} ecosystem - Ecosystem (e.g., 'npm', 'pip')
+ * @param {string} _packageName - Package name
+ * @param {string} _ecosystem - Ecosystem (e.g., 'npm', 'pip')
  * @returns {Promise<import('../lib/types.ts').Vulnerability[]>}
  */
-export async function queryGitHub(packageName, ecosystem) {
+export async function queryGitHub(_packageName, _ecosystem) {
   const token = process.env.GITHUB_TOKEN;
 
   if (!token) {

@@ -26,65 +26,6 @@ const { queryOSV, queryNVD, queryGitHub, enrichVulnerability } = await import(
   `${SCRIPTS_PATH}/query_cve_databases.mjs`
 );
 
-// Sample OSV vulnerability response (realistic structure)
-const SAMPLE_OSV_VULN = {
-  id: "GHSA-test-1234-5678",
-  summary: "Test vulnerability in test package",
-  details: "Detailed description of the vulnerability",
-  severity: [
-    {
-      type: "CVSS_V3",
-      score: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
-    },
-  ],
-  database_specific: {
-    severity: "HIGH",
-  },
-  references: [
-    { url: "https://github.com/advisories/GHSA-test-1234-5678" },
-    { url: "https://nvd.nist.gov/vuln/detail/CVE-2023-12345" },
-  ],
-  affected: [
-    {
-      package: {
-        ecosystem: "npm",
-        name: "test-package",
-      },
-      ranges: [
-        {
-          type: "SEMVER",
-          events: [{ introduced: "0" }, { fixed: "1.2.3" }],
-        },
-      ],
-    },
-  ],
-};
-
-// Sample NVD CVE response (realistic structure)
-const SAMPLE_NVD_CVE = {
-  id: "CVE-2023-12345",
-  descriptions: [
-    {
-      lang: "en",
-      value: "A critical vulnerability was discovered in the test package",
-    },
-  ],
-  metrics: {
-    cvssMetricV31: [
-      {
-        cvssData: {
-          baseSeverity: "CRITICAL",
-          baseScore: 9.8,
-        },
-      },
-    ],
-  },
-  references: [
-    { url: "https://nvd.nist.gov/vuln/detail/CVE-2023-12345" },
-    { url: "https://github.com/advisories/GHSA-test-1234-5678" },
-  ],
-};
-
 // -----------------------------------------------------------------------------
 // Test: queryOSV - successful query with results
 // -----------------------------------------------------------------------------
@@ -216,7 +157,7 @@ async function testQueryNVD_RateLimiting() {
       const startTime = Date.now();
 
       // Query should add 6-second delay when no API key (if request succeeds)
-      const result = await queryNVD("CVE-2021-44228");
+      await queryNVD("CVE-2021-44228");
 
       const elapsed = Date.now() - startTime;
 

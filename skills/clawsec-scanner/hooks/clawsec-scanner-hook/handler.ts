@@ -81,7 +81,7 @@ async function loadState(stateFile: string): Promise<ScannerState> {
         ? parsed.known_vulnerabilities.filter((v): v is string => typeof v === "string")
         : [],
     };
-  } catch (error) {
+  } catch {
     // State file doesn't exist yet - return empty state
     return {
       last_hook_scan: null,
@@ -191,7 +191,7 @@ function buildAlertMessage(report: ScanReport, format: string): string {
   return formatReportText(report);
 }
 
-const handler = async (event: HookEvent, context: HookContext): Promise<void> => {
+const handler = async (event: HookEvent, _context: HookContext): Promise<void> => {
   if (!shouldHandleEvent(event)) return;
 
   const installRoot = configuredPath(
