@@ -2,7 +2,7 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as https from "node:https";
 import * as path from "node:path";
-import type { FeedPayload, Advisory } from "./types.js";
+import type { FeedPayload } from "./types.js";
 
 /**
  * Allowed domains for feed/signature fetching.
