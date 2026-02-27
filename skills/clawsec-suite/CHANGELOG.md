@@ -5,6 +5,17 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4]
+
+### Added
+
+- Audit warning when `CLAWSEC_VERIFY_CHECKSUM_MANIFEST=0` is enabled in `guarded_skill_install.mjs` to match visibility pattern of `CLAWSEC_ALLOW_UNSIGNED_FEED` bypass.
+- Audit warning when `CLAWSEC_VERIFY_CHECKSUM_MANIFEST=0` is enabled in `handler.ts` with once-only flag pattern to prevent repeated warnings.
+
+### Security
+
+- Enhanced visibility for checksum verification bypass: operators are now immediately notified when the checksum manifest verification layer is disabled, following the fail-open visibility principle.
+
 ## [0.1.3]
 
 ### Added
