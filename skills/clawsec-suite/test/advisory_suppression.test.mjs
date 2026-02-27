@@ -15,9 +15,9 @@
  */
 
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pass, fail, report, exitWithResults, createTempDir } from "./lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardian", "lib");
@@ -27,29 +27,6 @@ const { isAdvisorySuppressed, loadAdvisorySuppression } = await import(
 );
 
 let tempDir;
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount++;
-  console.log(`\u2713 ${name}`);
-}
-
-function fail(name, error) {
-  failCount++;
-  console.error(`\u2717 ${name}`);
-  console.error(`  ${String(error)}`);
-}
-
-async function setupTestDir() {
-  tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "advisory-suppression-test-"));
-}
-
-async function cleanupTestDir() {
-  if (tempDir) {
-    await fs.rm(tempDir, { recursive: true, force: true });
-  }
-}
 
 function makeMatch(advisoryId, skillName, version = "1.0.0") {
   return {
@@ -190,7 +167,7 @@ async function testMissingAdvisoryId() {
 async function testLoadWithAdvisorySentinel() {
   const testName = "loadAdvisorySuppression: loads config with advisory sentinel";
   try {
-    const configFile = path.join(tempDir, "advisory-config.json");
+    const configFile = path.join(tempDir.path, "advisory-config.json");
     await fs.writeFile(configFile, JSON.stringify({
       enabledFor: ["advisory"],
       suppressions: [{
@@ -215,7 +192,7 @@ async function testLoadWithAdvisorySentinel() {
 async function testLoadWithMissingSentinel() {
   const testName = "loadAdvisorySuppression: missing sentinel returns empty config";
   try {
-    const configFile = path.join(tempDir, "no-sentinel.json");
+    const configFile = path.join(tempDir.path, "no-sentinel.json");
     await fs.writeFile(configFile, JSON.stringify({
       suppressions: [{
         checkId: "CVE-2026-25593",
@@ -239,7 +216,7 @@ async function testLoadWithMissingSentinel() {
 async function testLoadWithAuditOnlySentinel() {
   const testName = "loadAdvisorySuppression: audit-only sentinel returns empty for advisory";
   try {
-    const configFile = path.join(tempDir, "audit-only.json");
+    const configFile = path.join(tempDir.path, "audit-only.json");
     await fs.writeFile(configFile, JSON.stringify({
       enabledFor: ["audit"],
       suppressions: [{
@@ -264,7 +241,7 @@ async function testLoadWithAuditOnlySentinel() {
 async function testLoadWithBothSentinels() {
   const testName = "loadAdvisorySuppression: both audit+advisory sentinels activates advisory";
   try {
-    const configFile = path.join(tempDir, "both-sentinel.json");
+    const configFile = path.join(tempDir.path, "both-sentinel.json");
     await fs.writeFile(configFile, JSON.stringify({
       enabledFor: ["audit", "advisory"],
       suppressions: [{
@@ -289,7 +266,7 @@ async function testLoadWithBothSentinels() {
 async function testLoadNonexistentExplicitPath() {
   const testName = "loadAdvisorySuppression: explicit nonexistent path throws";
   try {
-    await loadAdvisorySuppression(path.join(tempDir, "does-not-exist.json"));
+    await loadAdvisorySuppression(path.join(tempDir.path, "does-not-exist.json"));
     fail(testName, "Expected error for nonexistent explicit path");
   } catch (error) {
     if (String(error).includes("not found")) {
@@ -328,7 +305,7 @@ async function testLoadNoConfigReturnsEmpty() {
 async function testEnvPathHomeExpansion() {
   const testName = "loadAdvisorySuppression: OPENCLAW_AUDIT_CONFIG expands $HOME";
   try {
-    const configFile = path.join(tempDir, "env-home.json");
+    const configFile = path.join(tempDir.path, "env-home.json");
     await fs.writeFile(configFile, JSON.stringify({
       enabledFor: ["advisory"],
       suppressions: [{
@@ -341,7 +318,7 @@ async function testEnvPathHomeExpansion() {
 
     const savedConfig = process.env.OPENCLAW_AUDIT_CONFIG;
     const savedHome = process.env.HOME;
-    process.env.HOME = tempDir;
+    process.env.HOME = tempDir.path;
     process.env.OPENCLAW_AUDIT_CONFIG = "$HOME/env-home.json";
     try {
       const config = await loadAdvisorySuppression();
@@ -390,7 +367,7 @@ async function testEscapedHomeTokenRejected() {
 async function runAllTests() {
   console.log("=== Advisory Suppression Tests ===\n");
 
-  await setupTestDir();
+  tempDir = await createTempDir();
 
   try {
     // isAdvisorySuppressed tests
@@ -412,15 +389,11 @@ async function runAllTests() {
     await testEnvPathHomeExpansion();
     await testEscapedHomeTokenRejected();
   } finally {
-    await cleanupTestDir();
+    await tempDir.cleanup();
   }
 
-  console.log("");
-  console.log(`=== Results: ${passCount} passed, ${failCount} failed ===`);
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runAllTests().catch((err) => {

@@ -113,6 +113,6 @@ export default [
     }
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.config.js', 'public/']
+    ignores: ['dist/', 'node_modules/', '*.config.js', 'public/', '.venv/']
   }
 ];

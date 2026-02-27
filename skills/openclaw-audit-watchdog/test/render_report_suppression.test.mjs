@@ -16,39 +16,16 @@
  */
 
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { pass, fail, report, exitWithResults, createTempDir } from "../../clawsec-suite/test/lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = path.resolve(__dirname, "..", "scripts", "render_report.mjs");
 const NODE_BIN = process.execPath;
 
 let tempDir;
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount++;
-  console.log(`✓ ${name}`);
-}
-
-function fail(name, error) {
-  failCount++;
-  console.error(`✗ ${name}`);
-  console.error(`  ${String(error)}`);
-}
-
-async function setupTestDir() {
-  tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "render-report-test-"));
-}
-
-async function cleanupTestDir() {
-  if (tempDir) {
-    await fs.rm(tempDir, { recursive: true, force: true });
-  }
-}
 
 function createAuditJson(findings) {
   return JSON.stringify({
@@ -730,7 +707,8 @@ async function testConfigWithoutEnableFlagDoesNotSuppress() {
 // Main test runner
 // -----------------------------------------------------------------------------
 async function runAllTests() {
-  await setupTestDir();
+  const tmpDir = await createTempDir();
+  tempDir = tmpDir.path;
 
   try {
     await testSuppressedFindingsDisplayed();
@@ -745,16 +723,11 @@ async function runAllTests() {
     await testEmptySuppressions();
     await testConfigWithoutEnableFlagDoesNotSuppress();
   } finally {
-    await cleanupTestDir();
+    await tmpDir.cleanup();
   }
 
-  console.log("");
-  console.log(`Passed: ${passCount}`);
-  console.log(`Failed: ${failCount}`);
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runAllTests().catch((err) => {

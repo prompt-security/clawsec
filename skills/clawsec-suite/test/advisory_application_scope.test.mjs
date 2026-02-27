@@ -11,24 +11,11 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pass, fail, report, exitWithResults } from "./lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardian", "lib");
 const { advisoryAppliesToOpenclaw } = await import(`${LIB_PATH}/advisory_scope.mjs`);
-
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount += 1;
-  console.log(`\u2713 ${name}`);
-}
-
-function fail(name, error) {
-  failCount += 1;
-  console.error(`\u2717 ${name}`);
-  console.error(`  ${String(error)}`);
-}
 
 function testFindMatchesFiltersByApplicationScope() {
   const testName = "advisoryAppliesToOpenclaw: openclaw + legacy advisories are considered";
@@ -89,10 +76,8 @@ function runTests() {
   testFindMatchesAcceptsApplicationArray();
   testInvalidApplicationValueFallsBackCompat();
 
-  console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runTests();

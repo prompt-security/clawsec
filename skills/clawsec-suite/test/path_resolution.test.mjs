@@ -8,42 +8,11 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pass, fail, report, exitWithResults, withEnv } from "./lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardian", "lib");
 const { resolveUserPath, resolveConfiguredPath } = await import(`${LIB_PATH}/utils.mjs`);
-
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount += 1;
-  console.log(`\u2713 ${name}`);
-}
-
-function fail(name, error) {
-  failCount += 1;
-  console.error(`\u2717 ${name}`);
-  console.error(`  ${String(error)}`);
-}
-
-async function withEnv(key, value, fn) {
-  const oldValue = process.env[key];
-  try {
-    if (value === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
-    return await fn();
-  } finally {
-    if (oldValue === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = oldValue;
-    }
-  }
-}
 
 async function testTildeExpansion() {
   const testName = "resolveUserPath: expands leading tilde";
@@ -157,10 +126,8 @@ async function runTests() {
   await testConfiguredPathFallbackOnInvalidExplicit();
   await testConfiguredPathUsesValidExplicit();
 
-  console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runTests().catch((error) => {

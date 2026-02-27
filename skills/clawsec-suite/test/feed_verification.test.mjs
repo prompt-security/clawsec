@@ -14,9 +14,17 @@
 
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  pass,
+  fail,
+  report,
+  exitWithResults,
+  generateEd25519KeyPair,
+  signPayload,
+  createTempDir,
+} from "./lib/test_harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardian", "lib");
@@ -26,33 +34,7 @@ const { verifySignedPayload, loadLocalFeed, isValidFeedPayload } = await import(
   `${LIB_PATH}/feed.mjs`
 );
 
-let tempDir;
-let passCount = 0;
-let failCount = 0;
-
-function pass(name) {
-  passCount++;
-  console.log(`✓ ${name}`);
-}
-
-function fail(name, error) {
-  failCount++;
-  console.error(`✗ ${name}`);
-  console.error(`  ${String(error)}`);
-}
-
-function generateEd25519KeyPair() {
-  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
-  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" });
-  const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" });
-  return { publicKeyPem, privateKeyPem };
-}
-
-function signPayload(data, privateKeyPem) {
-  const privateKey = crypto.createPrivateKey(privateKeyPem);
-  const signature = crypto.sign(null, Buffer.from(data, "utf8"), privateKey);
-  return signature.toString("base64");
-}
+let tempDirCleanup;
 
 function createValidFeed() {
   return JSON.stringify(
@@ -86,16 +68,6 @@ function createChecksumManifest(files) {
     null,
     2,
   );
-}
-
-async function setupTestDir() {
-  tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "clawsec-test-"));
-}
-
-async function cleanupTestDir() {
-  if (tempDir) {
-    await fs.rm(tempDir, { recursive: true, force: true });
-  }
 }
 
 // -----------------------------------------------------------------------------
@@ -252,11 +224,11 @@ async function testLoadLocalFeed_ValidSignedFeed() {
     const checksumSignature = signPayload(checksumManifest, privateKeyPem);
 
     // Write files
-    const feedPath = path.join(tempDir, "feed.json");
-    const sigPath = path.join(tempDir, "feed.json.sig");
-    const checksumPath = path.join(tempDir, "checksums.json");
-    const checksumSigPath = path.join(tempDir, "checksums.json.sig");
-    const keyPath = path.join(tempDir, "feed-signing-public.pem");
+    const feedPath = path.join(globalThis.__testTempDir, "feed.json");
+    const sigPath = path.join(globalThis.__testTempDir, "feed.json.sig");
+    const checksumPath = path.join(globalThis.__testTempDir, "checksums.json");
+    const checksumSigPath = path.join(globalThis.__testTempDir, "checksums.json.sig");
+    const keyPath = path.join(globalThis.__testTempDir, "feed-signing-public.pem");
 
     await fs.writeFile(feedPath, feedContent);
     await fs.writeFile(sigPath, feedSignature + "\n");
@@ -293,7 +265,7 @@ async function testLoadLocalFeed_AdvisoriesPrefixedChecksumKeys() {
     const feedContent = createValidFeed();
     const feedSignature = signPayload(feedContent, privateKeyPem);
 
-    const advisoriesDir = path.join(tempDir, "advisories");
+    const advisoriesDir = path.join(globalThis.__testTempDir, "advisories");
     await fs.mkdir(advisoriesDir, { recursive: true });
 
     const checksumManifest = createChecksumManifest({
@@ -347,8 +319,8 @@ async function testLoadLocalFeed_TamperedFeedFails() {
     // Tamper with feed after signing
     const tamperedFeed = feedContent.replace("TEST-001", "TAMPERED-001");
 
-    const feedPath = path.join(tempDir, "tampered-feed.json");
-    const sigPath = path.join(tempDir, "tampered-feed.json.sig");
+    const feedPath = path.join(globalThis.__testTempDir, "tampered-feed.json");
+    const sigPath = path.join(globalThis.__testTempDir, "tampered-feed.json.sig");
 
     await fs.writeFile(feedPath, tamperedFeed);
     await fs.writeFile(sigPath, feedSignature + "\n");
@@ -383,8 +355,8 @@ async function testLoadLocalFeed_MissingSignatureFails() {
     const { publicKeyPem } = generateEd25519KeyPair();
     const feedContent = createValidFeed();
 
-    const feedPath = path.join(tempDir, "nosig-feed.json");
-    const sigPath = path.join(tempDir, "nosig-feed.json.sig");
+    const feedPath = path.join(globalThis.__testTempDir, "nosig-feed.json");
+    const sigPath = path.join(globalThis.__testTempDir, "nosig-feed.json.sig");
 
     await fs.writeFile(feedPath, feedContent);
     // Don't write signature file
@@ -418,7 +390,7 @@ async function testLoadLocalFeed_AllowUnsignedBypasses() {
   try {
     const feedContent = createValidFeed();
 
-    const feedPath = path.join(tempDir, "unsigned-feed.json");
+    const feedPath = path.join(globalThis.__testTempDir, "unsigned-feed.json");
     await fs.writeFile(feedPath, feedContent);
 
     const feed = await loadLocalFeed(feedPath, {
@@ -462,10 +434,10 @@ async function testLoadLocalFeed_ChecksumMismatchFails() {
     );
     const checksumSignature = signPayload(badChecksumManifest, privateKeyPem);
 
-    const feedPath = path.join(tempDir, "badcs-feed.json");
-    const sigPath = path.join(tempDir, "badcs-feed.json.sig");
-    const checksumPath = path.join(tempDir, "badcs-checksums.json");
-    const checksumSigPath = path.join(tempDir, "badcs-checksums.json.sig");
+    const feedPath = path.join(globalThis.__testTempDir, "badcs-feed.json");
+    const sigPath = path.join(globalThis.__testTempDir, "badcs-feed.json.sig");
+    const checksumPath = path.join(globalThis.__testTempDir, "badcs-checksums.json");
+    const checksumSigPath = path.join(globalThis.__testTempDir, "badcs-checksums.json.sig");
 
     await fs.writeFile(feedPath, feedContent);
     await fs.writeFile(sigPath, feedSignature + "\n");
@@ -580,7 +552,11 @@ async function testIsValidFeedPayload_AdvisoryMissingId() {
 async function runTests() {
   console.log("=== ClawSec Feed Verification Tests ===\n");
 
-  await setupTestDir();
+  const tempDir = await createTempDir();
+  tempDirCleanup = tempDir.cleanup;
+
+  // Store temp dir path in module scope for tests to access
+  globalThis.__testTempDir = tempDir.path;
 
   try {
     // Signature verification tests
@@ -604,14 +580,11 @@ async function runTests() {
     await testIsValidFeedPayload_MissingVersion();
     await testIsValidFeedPayload_AdvisoryMissingId();
   } finally {
-    await cleanupTestDir();
+    await tempDirCleanup();
   }
 
-  console.log(`\n=== Results: ${passCount} passed, ${failCount} failed ===`);
-
-  if (failCount > 0) {
-    process.exit(1);
-  }
+  report();
+  exitWithResults();
 }
 
 runTests().catch((error) => {
