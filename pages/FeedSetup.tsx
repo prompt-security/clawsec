@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Rss, RefreshCw, Loader2, AlertTriangle, ChevronLeft, ChevronRight, Download, Users, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Footer } from '../components/Footer';
@@ -22,7 +22,6 @@ const SEVERITY_TABS = [
 
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
-  const [filteredAdvisories, setFilteredAdvisories] = useState<Advisory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -52,13 +51,11 @@ export const FeedSetup: React.FC = () => {
 
         const feed: AdvisoryFeed = await response.json();
         setAdvisories(feed.advisories || []);
-        setFilteredAdvisories(feed.advisories || []);
         setLastUpdated(feed.updated);
       } catch (err) {
         console.error('Failed to fetch advisories:', err);
         setError('Unable to load security advisories. The feed may be temporarily unavailable.');
         setAdvisories([]);
-        setFilteredAdvisories([]);
       } finally {
         setLoading(false);
       }
@@ -67,18 +64,14 @@ export const FeedSetup: React.FC = () => {
     fetchAdvisories();
   }, []);
 
+  const filteredAdvisories = useMemo(
+    () => advisories.filter((a) => selectedSeverity === 'all' || a.severity === selectedSeverity),
+    [advisories, selectedSeverity],
+  );
+
   useEffect(() => {
-    let result = advisories;
-
-    // Apply severity filter
-    if (selectedSeverity !== 'all') {
-      result = result.filter((advisory) => advisory.severity === selectedSeverity);
-    }
-
-    setFilteredAdvisories(result);
-    // Reset to page 1 when filter changes
     setCurrentPage(1);
-  }, [selectedSeverity, advisories]);
+  }, [advisories, selectedSeverity]);
 
   const formatDate = (dateStr: string) => {
     try {
