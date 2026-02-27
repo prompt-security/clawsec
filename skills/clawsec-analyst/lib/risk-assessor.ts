@@ -16,6 +16,14 @@ import type {
 import { ClaudeClient } from './claude-client.js';
 import { loadLocalFeed, loadRemoteFeed, parseAffectedSpecifier } from './feed-reader.js';
 
+// Type declaration for Node.js error types
+interface NodeJSErrnoException extends Error {
+  errno?: number;
+  code?: string;
+  path?: string;
+  syscall?: string;
+}
+
 /**
  * Configuration for risk assessment
  */
@@ -88,7 +96,7 @@ async function parseSkillJson(skillJsonPath: string): Promise<SkillMetadata> {
 
     return parsed as SkillMetadata;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJSErrnoException).code === 'ENOENT') {
       throw new Error(`skill.json not found: ${skillJsonPath}`);
     }
     throw new Error(`Failed to parse skill.json: ${(error as Error).message}`);
@@ -104,7 +112,7 @@ async function readSkillMd(skillMdPath: string): Promise<string | null> {
   try {
     return await fs.readFile(skillMdPath, 'utf-8');
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJSErrnoException).code === 'ENOENT') {
       return null;
     }
     // Log but don't fail - SKILL.md is optional for risk assessment

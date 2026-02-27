@@ -77,7 +77,7 @@ class MockClaudeClient {
     return this;
   }
 
-  async analyzeAdvisory(advisory) {
+  async analyzeAdvisory(_advisory) {
     if (this._error) {
       throw this._error;
     }
@@ -92,7 +92,7 @@ async function resetTestState() {
   try {
     await fs.rm(cacheDir, { recursive: true, force: true });
     await fs.mkdir(cacheDir, { recursive: true });
-  } catch (error) {
+  } catch {
     // Ignore errors - directory might not exist yet
   }
 }
@@ -764,7 +764,7 @@ async function testAnalyzeAdvisory_CacheReadError() {
     try {
       const cacheDir = path.join(TEST_CACHE_DIR, ".openclaw", "clawsec-analyst-cache");
       await fs.chmod(cacheDir, 0o755);
-    } catch (e) {
+    } catch {
       // Ignore
     }
     fail(testName, error);
@@ -812,7 +812,7 @@ async function runAllTests() {
     // Cleanup test cache directory
     try {
       await fs.rm(TEST_CACHE_DIR, { recursive: true, force: true });
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors
     }
 

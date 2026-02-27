@@ -172,7 +172,6 @@ const handler = async (event: HookEvent): Promise<void> => {
   if (!apiKey || apiKey.trim() === '') {
     // Don't fail the hook, but log warning
     if (process.env['NODE_ENV'] !== 'test') {
-      // eslint-disable-next-line no-console
       console.warn(
         '[clawsec-analyst] ANTHROPIC_API_KEY not set. ' +
         'AI-powered analysis disabled. Set the environment variable to enable.'
@@ -218,7 +217,6 @@ const handler = async (event: HookEvent): Promise<void> => {
       });
     } catch (remoteError) {
       if (process.env['NODE_ENV'] !== 'test') {
-        // eslint-disable-next-line no-console
         console.warn('[clawsec-analyst] Remote feed unavailable, trying local fallback:', remoteError);
       }
 
@@ -228,7 +226,6 @@ const handler = async (event: HookEvent): Promise<void> => {
         });
       } catch (localError) {
         if (process.env['NODE_ENV'] !== 'test') {
-          // eslint-disable-next-line no-console
           console.warn('[clawsec-analyst] Local feed unavailable:', localError);
         }
       }
@@ -283,7 +280,6 @@ const handler = async (event: HookEvent): Promise<void> => {
   } catch (error) {
     // Don't fail the hook on analysis errors
     if (process.env['NODE_ENV'] !== 'test') {
-      // eslint-disable-next-line no-console
       console.warn('[clawsec-analyst] Analysis failed:', error);
     }
 
@@ -316,25 +312,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const validation = validateEnvironment();
 
     if (!validation.valid) {
-      // eslint-disable-next-line no-console
       console.error('[clawsec-analyst] Environment validation failed:');
       for (const error of validation.errors) {
-        // eslint-disable-next-line no-console
         console.error(`  - ${error}`);
       }
       process.exit(1);
     }
 
     // Success - output expected message
-    // eslint-disable-next-line no-console
     console.log('[clawsec-analyst] Environment validation passed');
-    // eslint-disable-next-line no-console
     console.log('[clawsec-analyst] API key configured');
-    // eslint-disable-next-line no-console
     console.log('[clawsec-analyst] Ready for operation');
     process.exit(0);
   } else {
-    // eslint-disable-next-line no-console
     console.error('[clawsec-analyst] Usage: node handler.ts --dry-run');
     process.exit(1);
   }

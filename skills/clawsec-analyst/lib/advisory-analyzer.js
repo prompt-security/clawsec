@@ -20,7 +20,6 @@ export async function analyzeAdvisory(advisory, client) {
         const cached = await getCachedAnalysis(advisory.id);
         if (cached) {
             if (process.env['NODE_ENV'] !== 'test') {
-                // eslint-disable-next-line no-console
                 console.log(`Using cached analysis for ${advisory.id}`);
             }
             return cached;
@@ -29,7 +28,6 @@ export async function analyzeAdvisory(advisory, client) {
     catch (error) {
         // Cache errors are non-critical, continue with API call
         if (process.env['NODE_ENV'] !== 'test') {
-            // eslint-disable-next-line no-console
             console.warn(`Cache lookup failed for ${advisory.id}:`, error);
         }
     }
@@ -45,13 +43,11 @@ export async function analyzeAdvisory(advisory, client) {
     catch (error) {
         // If API fails, try to use cached analysis (even if stale)
         if (process.env['NODE_ENV'] !== 'test') {
-            // eslint-disable-next-line no-console
             console.warn(`Claude API failed for ${advisory.id}, checking cache...`, error);
         }
         const cached = await getCachedAnalysis(advisory.id);
         if (cached) {
             if (process.env['NODE_ENV'] !== 'test') {
-                // eslint-disable-next-line no-console
                 console.warn(`Using cached analysis for ${advisory.id} (may be outdated)`);
             }
             return cached;
@@ -78,7 +74,6 @@ export async function analyzeAdvisories(advisories, client) {
         catch (error) {
             // Log error but continue processing other advisories
             if (process.env['NODE_ENV'] !== 'test') {
-                // eslint-disable-next-line no-console
                 console.error(`Failed to analyze advisory ${advisory.id}:`, error);
             }
             // Add a fallback analysis with LOW priority for failed analyses

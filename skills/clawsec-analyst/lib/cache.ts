@@ -9,6 +9,14 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import type { CachedAnalysis, AdvisoryAnalysis } from './types.js';
 
+// Type declaration for Node.js error types
+interface NodeJSErrnoException extends Error {
+  errno?: number;
+  code?: string;
+  path?: string;
+  syscall?: string;
+}
+
 // Cache configuration
 const CACHE_DIR = path.join(os.homedir(), '.openclaw', 'clawsec-analyst-cache');
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -74,7 +82,7 @@ export async function getCachedAnalysis(advisoryId: string): Promise<AdvisoryAna
     return cached.analysis;
   } catch (error) {
     // Cache miss is expected - not an error condition
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJSErrnoException).code === 'ENOENT') {
       return null;
     }
 
@@ -140,7 +148,7 @@ export async function clearStaleCache(): Promise<number> {
           await fs.unlink(filePath);
           clearedCount++;
         }
-      } catch (error) {
+      } catch {
         // If we can't read/parse the file, delete it
         console.warn(`Removing corrupted cache file: ${entry}`);
         await fs.unlink(filePath);
@@ -155,7 +163,7 @@ export async function clearStaleCache(): Promise<number> {
     return clearedCount;
   } catch (error) {
     // Cache directory might not exist yet - not an error
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJSErrnoException).code === 'ENOENT') {
       return 0;
     }
 
@@ -206,7 +214,7 @@ export async function getCacheStats(): Promise<{
         if (oldestEntryAge === null || age > oldestEntryAge) {
           oldestEntryAge = age;
         }
-      } catch (error) {
+      } catch {
         // Skip corrupted entries
         continue;
       }
@@ -219,7 +227,7 @@ export async function getCacheStats(): Promise<{
       oldestEntryAge,
     };
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJSErrnoException).code === 'ENOENT') {
       return {
         totalEntries: 0,
         staleEntries: 0,

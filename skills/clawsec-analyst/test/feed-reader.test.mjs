@@ -38,7 +38,7 @@ const {
   verifySignedPayload,
   defaultChecksumsUrl,
   loadLocalFeed,
-  loadRemoteFeed,
+  loadRemoteFeed: _loadRemoteFeed,
 } = await import(`${LIB_PATH}/feed-reader.js`);
 
 let tempDirCleanup;

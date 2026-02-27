@@ -103,7 +103,7 @@ class MockAPIError extends Error {
  * This must be done before importing the module under test
  */
 let mockClientInstance;
-const MockAnthropicModule = {
+const _MockAnthropicModule = {
   default: class {
     constructor(config) {
       mockClientInstance = new MockAnthropicClient(config);
@@ -114,7 +114,7 @@ const MockAnthropicModule = {
 };
 
 // Override module resolution to use our mock
-const originalImport = import.meta.resolve;
+const _originalImport = import.meta.resolve;
 
 // Import the module under test with NODE_ENV=test
 // This ensures console.warn is suppressed during retry tests
@@ -139,7 +139,7 @@ try {
 
 // Override the Anthropic import by mocking the constructor
 // We need to patch the ClaudeClient prototype to use our mock
-const originalConstructor = ClaudeClient.prototype.constructor;
+const _originalConstructor = ClaudeClient.prototype.constructor;
 
 /**
  * Helper to create a mock ClaudeClient that uses our mocked Anthropic
@@ -562,7 +562,7 @@ async function testRetryLogic_ServerError() {
 // -----------------------------------------------------------------------------
 // Test: Retry logic - no retry on client error (4xx)
 // -----------------------------------------------------------------------------
-async function testRetryLogic_NoRetryOnClientError() {
+async function _testRetryLogic_NoRetryOnClientError() {
   const testName = "retry logic: does not retry on client error (4xx)";
   try {
     await withEnv("ANTHROPIC_API_KEY", "test-key", async () => {
@@ -577,7 +577,7 @@ async function testRetryLogic_NoRetryOnClientError() {
         const result = await client.sendMessage("Test");
         // Debug: if we got here, the mock didn't throw
         console.error(`DEBUG: sendMessage returned: ${result}`);
-      } catch (error) {
+      } catch {
         caughtError = true;
         const duration = Date.now() - startTime;
 
@@ -636,7 +636,7 @@ async function testRetryLogic_ExhaustsRetries() {
 // -----------------------------------------------------------------------------
 // Test: Error handling - 401 authentication error
 // -----------------------------------------------------------------------------
-async function testErrorHandling_AuthenticationError() {
+async function _testErrorHandling_AuthenticationError() {
   const testName = "error handling: converts 401 to MISSING_API_KEY error";
   try {
     await withEnv("ANTHROPIC_API_KEY", "test-key", async () => {
@@ -665,7 +665,7 @@ async function testErrorHandling_AuthenticationError() {
 // -----------------------------------------------------------------------------
 // Test: Error handling - 429 rate limit error
 // -----------------------------------------------------------------------------
-async function testErrorHandling_RateLimitError() {
+async function _testErrorHandling_RateLimitError() {
   const testName = "error handling: converts 429 to RATE_LIMIT_EXCEEDED error";
   try {
     await withEnv("ANTHROPIC_API_KEY", "test-key", async () => {
@@ -695,7 +695,7 @@ async function testErrorHandling_RateLimitError() {
 // -----------------------------------------------------------------------------
 // Test: Error handling - 5xx server error
 // -----------------------------------------------------------------------------
-async function testErrorHandling_ServerError() {
+async function _testErrorHandling_ServerError() {
   const testName = "error handling: converts 5xx to NETWORK_FAILURE error";
   try {
     await withEnv("ANTHROPIC_API_KEY", "test-key", async () => {

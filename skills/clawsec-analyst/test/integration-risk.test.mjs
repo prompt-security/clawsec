@@ -17,7 +17,6 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 import { fileURLToPath } from "node:url";
 import {
   pass,
@@ -37,7 +36,7 @@ process.env.NODE_ENV = "test";
 
 // Dynamic import to ensure we test the actual compiled modules
 const { assessSkillRisk, assessMultipleSkills } = await import(`${LIB_PATH}/risk-assessor.js`);
-const { loadLocalFeed } = await import(`${LIB_PATH}/feed-reader.js`);
+const { loadLocalFeed: _loadLocalFeed } = await import(`${LIB_PATH}/feed-reader.js`);
 
 let tempDirCleanup;
 
@@ -134,7 +133,7 @@ function createSkillJson(overrides = {}) {
 /**
  * Create a valid SKILL.md
  */
-function createSkillMd(skillName = "test-skill") {
+function _createSkillMd(skillName = "test-skill") {
   return `---
 name: ${skillName}
 version: 1.0.0

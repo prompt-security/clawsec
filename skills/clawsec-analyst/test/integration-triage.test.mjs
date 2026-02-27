@@ -120,7 +120,7 @@ async function clearTestCache() {
   try {
     await fs.rm(cacheDir, { recursive: true, force: true });
     await fs.mkdir(cacheDir, { recursive: true });
-  } catch (error) {
+  } catch {
     // Ignore errors - directory might not exist yet
   }
 }
@@ -623,7 +623,7 @@ async function runAllTests() {
     // Cleanup test cache directory
     try {
       await fs.rm(TEST_CACHE_DIR, { recursive: true, force: true });
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors
     }
 

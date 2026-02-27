@@ -91,7 +91,7 @@ async function secureFetch(url: string, options: RequestInit = {}): Promise<Resp
   return globalThis.fetch(url, {
     ...options,
     // Attach secure agent for Node.js fetch
-    // @ts-ignore - agent is supported in Node.js fetch
+    // @ts-expect-error - agent is supported in Node.js fetch
     agent,
   });
 }

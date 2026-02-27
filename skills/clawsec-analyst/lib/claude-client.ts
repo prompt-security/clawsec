@@ -224,7 +224,6 @@ If the policy statement is too ambiguous or unimplementable, set confidence < 0.
 
         // Log retry attempt (not to console in production)
         if (process.env['NODE_ENV'] !== 'test') {
-          // eslint-disable-next-line no-console
           console.warn(
             `Claude API error (attempt ${attempt + 1}/${maxRetries + 1}): ${(error as Error).message}. Retrying in ${delayMs}ms...`
           );

@@ -18,7 +18,6 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs/promises";
-import os from "node:os";
 import {
   pass,
   fail,
@@ -65,7 +64,7 @@ class MockClaudeClient {
     return this;
   }
 
-  async assessSkillRisk(payload) {
+  async assessSkillRisk(_payload) {
     if (this._error) {
       throw this._error;
     }
