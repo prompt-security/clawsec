@@ -18,8 +18,100 @@ declare const server: { tool: (...args: any[]) => void };
 declare function writeIpcFile(dir: string, data: any): void;
 declare const TASKS_DIR: string;
 declare const groupFolder: string;
+const CACHE_FILE = '/workspace/project/data/clawsec-advisory-cache.json';
+
+const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+const exploitabilityOrder: Record<string, number> = { high: 0, medium: 1, low: 2, unknown: 3 };
 
 // Add these helper functions to the file:
+
+function normalizeSkillName(name: string): string {
+  return name.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+}
+
+function normalizeExploitabilityScore(score: unknown): 'high' | 'medium' | 'low' | 'unknown' {
+  const value = String(score || '').toLowerCase().trim();
+  if (value === 'high' || value === 'medium' || value === 'low') {
+    return value;
+  }
+  return 'unknown';
+}
+
+function parseAffectedSpecifier(rawSpecifier: string): { name: string; versionSpec: string } | null {
+  const specifier = rawSpecifier.trim();
+  if (!specifier) return null;
+
+  const atIndex = specifier.lastIndexOf('@');
+  if (atIndex <= 0) {
+    return { name: specifier, versionSpec: '*' };
+  }
+
+  return {
+    name: specifier.slice(0, atIndex),
+    versionSpec: specifier.slice(atIndex + 1),
+  };
+}
+
+function versionMatches(version: string, versionSpec: string): boolean {
+  const v = version.trim();
+  const spec = versionSpec.trim();
+
+  if (spec === '*' || spec === '') return true;
+  if (v === spec) return true;
+
+  const parseVersion = (raw: string): number[] => {
+    const match = raw.match(/^(\d+)\.(\d+)\.(\d+)/);
+    if (!match) return [];
+    return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+  };
+
+  const versionParts = parseVersion(v);
+  const specParts = parseVersion(spec.replace(/^[~^]/, ''));
+  if (versionParts.length === 0 || specParts.length === 0) return false;
+
+  if (spec.startsWith('^')) {
+    if (versionParts[0] !== specParts[0]) return false;
+    if (versionParts[0] === 0) {
+      if (versionParts[1] !== specParts[1]) return false;
+      return versionParts[2] >= specParts[2];
+    }
+    if (versionParts[1] > specParts[1]) return true;
+    if (versionParts[1] < specParts[1]) return false;
+    return versionParts[2] >= specParts[2];
+  }
+
+  if (spec.startsWith('~')) {
+    if (versionParts[0] !== specParts[0]) return false;
+    if (versionParts[1] !== specParts[1]) return false;
+    return versionParts[2] >= specParts[2];
+  }
+
+  return false;
+}
+
+function matchesAffectedSpecifier(
+  affected: string,
+  skillName: string,
+  skillVersion: string | null,
+  skillDirName?: string
+): boolean {
+  const parsed = parseAffectedSpecifier(affected);
+  if (!parsed) return false;
+
+  const normalizedTarget = normalizeSkillName(parsed.name);
+  const normalizedSkillName = normalizeSkillName(skillName);
+  const normalizedDirName = skillDirName ? normalizeSkillName(skillDirName) : null;
+
+  if (normalizedTarget !== normalizedSkillName && normalizedTarget !== normalizedDirName) {
+    return false;
+  }
+
+  if (!skillVersion) {
+    return true;
+  }
+
+  return versionMatches(skillVersion, parsed.versionSpec);
+}
 
 /**
  * Discover installed skills in a directory
@@ -84,10 +176,7 @@ function findAdvisoryMatches(
       const matchedAffected: string[] = [];
 
       for (const affected of advisory.affected || []) {
-        const atIndex = affected.lastIndexOf('@');
-        const affectedName = atIndex > 0 ? affected.slice(0, atIndex) : affected;
-
-        if (affectedName === skill.name || affectedName === skill.dirName) {
+        if (matchesAffectedSpecifier(affected, skill.name, skill.version, skill.dirName)) {
           matchedAffected.push(affected);
         }
       }
@@ -123,10 +212,8 @@ server.tool(
     }
 
     // Read cache from shared mount
-    const cacheFile = '/workspace/project/data/clawsec-advisory-cache.json';
-
     try {
-      const cacheData = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      const cacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
       const installRoot = args.installRoot || path.join(process.env.HOME || '~', '.claude', 'skills');
 
       // Discover installed skills
@@ -153,6 +240,8 @@ server.tool(
             description: m.advisory.description,
             action: m.advisory.action,
             published: m.advisory.published,
+            exploitability_score: normalizeExploitabilityScore(m.advisory.exploitability_score),
+            exploitability_rationale: m.advisory.exploitability_rationale || null,
           },
           skill: m.skill,
           matchedAffected: m.matchedAffected,
@@ -187,17 +276,13 @@ server.tool(
     skillVersion: z.string().optional().describe('Version of skill (optional, for version-specific checks)'),
   },
   async (args) => {
-    const cacheFile = '/workspace/project/data/clawsec-advisory-cache.json';
-
     try {
-      const cacheData = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      const cacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
 
       // Find matching advisories for this skill
       const matchingAdvisories = cacheData.feed.advisories.filter((advisory: any) =>
         advisory.affected.some((affected: string) => {
-          const atIndex = affected.lastIndexOf('@');
-          const affectedName = atIndex > 0 ? affected.slice(0, atIndex) : affected;
-          return affectedName === args.skillName;
+          return matchesAffectedSpecifier(affected, args.skillName, args.skillVersion || null);
         })
       );
 
@@ -215,11 +300,16 @@ server.tool(
         };
       }
 
-      // Evaluate severity
-      const hasMalicious = matchingAdvisories.some((a: any) => a.type === 'malicious');
-      const hasRemoveAction = matchingAdvisories.some((a: any) => a.action === 'remove');
+      // Evaluate severity + exploitability context
+      const hasMalicious = matchingAdvisories.some((a: any) => String(a.type || '').toLowerCase().includes('malicious'));
+      const hasRemoveAction = matchingAdvisories.some((a: any) =>
+        /\b(remove|uninstall|disable|quarantine|block)\b/i.test(String(a.action || ''))
+      );
       const hasCritical = matchingAdvisories.some((a: any) => a.severity === 'critical');
       const hasHigh = matchingAdvisories.some((a: any) => a.severity === 'high');
+      const hasHighExploitability = matchingAdvisories.some(
+        (a: any) => normalizeExploitabilityScore(a.exploitability_score) === 'high'
+      );
 
       let recommendation: 'install' | 'block' | 'review';
       let reason: string;
@@ -227,9 +317,15 @@ server.tool(
       if (hasMalicious || hasRemoveAction) {
         recommendation = 'block';
         reason = 'Malicious skill or removal recommended by ClawSec';
+      } else if (hasCritical && hasHighExploitability) {
+        recommendation = 'block';
+        reason = 'Critical advisory with high exploitability context - do not install';
       } else if (hasCritical) {
         recommendation = 'block';
         reason = 'Critical security advisory - do not install';
+      } else if (hasHighExploitability) {
+        recommendation = 'review';
+        reason = 'High exploitability advisory - urgent user review strongly recommended';
       } else if (hasHigh) {
         recommendation = 'review';
         reason = 'High severity advisory - user review strongly recommended';
@@ -252,10 +348,13 @@ server.tool(
               action: a.action,
               published: a.published,
               affected: a.affected,
+              exploitability_score: normalizeExploitabilityScore(a.exploitability_score),
+              exploitability_rationale: a.exploitability_rationale || null,
             })),
             recommendation,
             reason,
             skillName: args.skillName,
+            skillVersion: args.skillVersion || null,
             advisoryCount: matchingAdvisories.length,
           }, null, 2),
         }],
@@ -280,18 +379,18 @@ server.tool(
 
 server.tool(
   'clawsec_list_advisories',
-  'List ClawSec advisories with optional filtering. Use this to browse security advisories, filter by severity/type, or search for specific affected skills.',
+  'List ClawSec advisories with optional filtering. Use this to browse security advisories, filter by severity/type/exploitability, or search for specific affected skills.',
   {
     severity: z.enum(['critical', 'high', 'medium', 'low']).optional().describe('Filter by severity level'),
-    type: z.enum(['vulnerability', 'malicious', 'deprecated']).optional().describe('Filter by advisory type'),
+    type: z.string().optional().describe('Filter by advisory type (for example: vulnerable_skill, malicious_skill, prompt_injection)'),
+    exploitabilityScore: z.enum(['high', 'medium', 'low', 'unknown']).optional()
+      .describe('Filter by exploitability score'),
     affectedSkill: z.string().optional().describe('Filter by affected skill name (partial match supported)'),
     limit: z.number().optional().describe('Maximum number of results (default: unlimited)'),
   },
   async (args) => {
-    const cacheFile = '/workspace/project/data/clawsec-advisory-cache.json';
-
     try {
-      const cacheData = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      const cacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
       let advisories = [...cacheData.feed.advisories];
 
       // Apply filters
@@ -299,7 +398,13 @@ server.tool(
         advisories = advisories.filter((a: any) => a.severity === args.severity);
       }
       if (args.type) {
-        advisories = advisories.filter((a: any) => a.type === args.type);
+        const typeFilter = String(args.type).toLowerCase().trim();
+        advisories = advisories.filter((a: any) => String(a.type || '').toLowerCase().trim() === typeFilter);
+      }
+      if (args.exploitabilityScore) {
+        advisories = advisories.filter(
+          (a: any) => normalizeExploitabilityScore(a.exploitability_score) === args.exploitabilityScore
+        );
       }
       if (args.affectedSkill) {
         advisories = advisories.filter((a: any) =>
@@ -307,9 +412,13 @@ server.tool(
         );
       }
 
-      // Sort by severity (critical first) and published date (newest first)
-      const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+      // Sort by exploitability first, then severity, then publish date (newest first).
       advisories.sort((a: any, b: any) => {
+        const exploitabilityDiff =
+          (exploitabilityOrder[normalizeExploitabilityScore(a.exploitability_score)] ?? 999) -
+          (exploitabilityOrder[normalizeExploitabilityScore(b.exploitability_score)] ?? 999);
+        if (exploitabilityDiff !== 0) return exploitabilityDiff;
+
         const severityDiff = (severityOrder[a.severity] || 999) - (severityOrder[b.severity] || 999);
         if (severityDiff !== 0) return severityDiff;
         return (b.published || '').localeCompare(a.published || '');
@@ -336,6 +445,8 @@ server.tool(
               action: a.action,
               published: a.published,
               affected: a.affected,
+              exploitability_score: normalizeExploitabilityScore(a.exploitability_score),
+              exploitability_rationale: a.exploitability_rationale || null,
             })),
             total: cacheData.feed.advisories.length,
             filtered: originalCount,
@@ -343,6 +454,7 @@ server.tool(
             filters: {
               severity: args.severity || null,
               type: args.type || null,
+              exploitabilityScore: args.exploitabilityScore || null,
               affectedSkill: args.affectedSkill || null,
               limit: args.limit || null,
             },

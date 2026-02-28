@@ -28,6 +28,11 @@
         "description": "NanoClaw skill documentation"
       },
       {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
+      },
+      {
         "path": "INSTALL.md",
         "required": true,
         "description": "Installation guide for NanoClaw deployments"
@@ -112,9 +117,10 @@
   "capabilities": [
     "Advisory feed monitoring from clawsec.prompt.security",
     "MCP tools for agent-initiated vulnerability scans",
+    "Exploitability-aware advisory prioritization for agent environments",
     "Pre-installation skill safety checks",
     "Ed25519 signature verification for advisory feeds",
-    "Platform-specific advisory filtering (nanoclaw vs openclaw)",
+    "Platform metadata preserved in advisory records for downstream filtering",
     "Containerized agent support with IPC communication"
   ],
   "nanoclaw": {
@@ -135,7 +141,7 @@
     },
     "integration": {
       "mcp_tools_file": "container/agent-runner/src/ipc-mcp-stdio.ts",
-      "ipc_handlers_file": "host/ipc-handler.ts",
+      "ipc_handlers_file": "src/ipc.ts",
       "cache_location": "/workspace/project/data/clawsec-advisory-cache.json"
     }
   }
