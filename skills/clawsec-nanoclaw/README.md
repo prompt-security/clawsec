@@ -56,9 +56,9 @@ ClawSec provides a complete security skill for NanoClaw deployments:
   - `clawsec_integrity_status` - View file baseline status
   - `clawsec_verify_audit` - Verify audit log hash chain
 
-- **Advisory Cache Service**: Automatic feed fetching every 6 hours
+- **Advisory Cache Service**: Host-managed feed fetching with signature validation
 - **Signature Verification**: Ed25519-signed feeds ensure integrity
-- **Platform Filtering**: Shows only relevant advisories for NanoClaw
+- **Exploitability Context**: Surfaces `exploitability_score` and rationale to reduce alert fatigue
 - **IPC Communication**: Container-safe host communication
 
 ### Installation
@@ -77,19 +77,19 @@ The skill integrates into three places:
 **1. MCP Tools** (container):
 ```typescript
 // container/agent-runner/src/ipc-mcp-stdio.ts
-import { clawsecTools } from '../../../skills/clawsec-nanoclaw/mcp-tools/advisory-tools.js';
+import '../../../skills/clawsec-nanoclaw/mcp-tools/advisory-tools.js';
 ```
 
 **2. IPC Handlers** (host):
 ```typescript
-// host/ipc-handler.ts
-import { registerClawSecHandlers } from '../skills/clawsec-nanoclaw/host-services/ipc-handlers.js';
+// src/ipc.ts
+import { handleAdvisoryIpc } from '../skills/clawsec-nanoclaw/host-services/ipc-handlers.js';
 ```
 
 **3. Cache Service** (host):
 ```typescript
-// host/index.ts
-import { startAdvisoryCache } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
+// src/index.ts
+import { AdvisoryCacheManager } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
 ```
 
 ### Advisory Feed
@@ -148,4 +148,4 @@ Planned features for future releases:
 
 - **Issues**: https://github.com/prompt-security/clawsec/issues
 - **Security**: security@prompt.security
-- NanoClaw Repository: (link TBD)
+- NanoClaw Repository: https://github.com/qwibitai/nanoclaw

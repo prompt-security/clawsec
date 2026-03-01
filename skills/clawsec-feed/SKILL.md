@@ -1,6 +1,6 @@
 ---
 name: clawsec-feed
-version: 0.0.4
+version: 0.0.5
 description: Security advisory feed with automated NVD CVE polling for OpenClaw-related vulnerabilities. Updated daily.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
@@ -318,7 +318,9 @@ curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL"
       "description": "Skill sends user data to external server",
       "affected": ["helper-plus@1.0.0", "helper-plus@1.0.1"],
       "action": "Remove immediately",
-      "published": "2026-02-01T10:00:00Z"
+      "published": "2026-02-01T10:00:00Z",
+      "exploitability_score": "critical",
+      "exploitability_rationale": "Trivially exploitable through normal skill usage; no special conditions required. Active exploitation observed in the wild."
     }
   ]
 }
@@ -383,6 +385,42 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "$RECENT"
+```
+
+### Filter by exploitability score
+
+Shared exploitability prioritization guidance is maintained in:
+
+- [`wiki/exploitability-scoring.md`](../../wiki/exploitability-scoring.md)
+- [`skills/clawsec-suite/SKILL.md`](../clawsec-suite/SKILL.md) ("Quick feed check")
+
+### Get exploitability context for an advisory
+
+```bash
+# Show exploitability details for a specific CVE
+CVE_ID="CVE-2026-27488"
+echo "$FEED" | jq --arg cve "$CVE_ID" '.advisories[] | select(.id == $cve) | {
+  id: .id,
+  severity: .severity,
+  exploitability_score: .exploitability_score,
+  exploitability_rationale: .exploitability_rationale,
+  title: .title
+}'
+```
+
+### Prioritize advisories by exploitability
+
+```bash
+# Sort advisories by exploitability (critical → high → medium → low)
+# This helps agents focus on the most immediately actionable threats
+echo "$FEED" | jq '[.advisories[] | select(.exploitability_score != null)] |
+  sort_by(
+    if .exploitability_score == "critical" then 0
+    elif .exploitability_score == "high" then 1
+    elif .exploitability_score == "medium" then 2
+    elif .exploitability_score == "low" then 3
+    else 4 end
+  )'
 ```
 
 ---
@@ -476,23 +514,75 @@ done
 
 ---
 
+## Prioritizing High-Exploitability Threats
+
+**IMPORTANT:** When reviewing advisories, always prioritize by **exploitability score** in addition to severity. The exploitability score indicates how easily a vulnerability can be exploited in practice, helping you focus on the most actionable threats.
+
+### Exploitability Priority Levels
+
+| Exploitability | Meaning | Action Priority |
+|----------------|---------|-----------------|
+| `high` | Trivially or easily exploitable with public tooling | **Immediate notification** |
+| `medium` | Exploitable but requires specific conditions | **Standard notification** |
+| `low` | Difficult to exploit or theoretical | **Low priority notification** |
+
+### How to Use Exploitability in Notifications
+
+1. **Filter for high-exploitability first:**
+   ```bash
+   # Get high exploitability advisories
+   echo "$FEED" | jq '.advisories[] | select(.exploitability_score == "high")'
+   ```
+
+2. **Include exploitability in notifications:**
+   ```
+   📡 ClawSec Feed: High-exploitability alert
+
+   CRITICAL - CVE-2026-27488 (Exploitability: HIGH)
+     → Trivially exploitable RCE in skill-loader v2.1.0
+     → Public exploit code available
+     → Recommended action: Immediate removal or upgrade to v2.1.1
+   ```
+
+3. **Prioritize by both severity AND exploitability:**
+   - A HIGH severity + HIGH exploitability CVE is more urgent than a CRITICAL severity + LOW exploitability CVE
+   - Focus user attention on threats that are both severe and easily exploitable
+   - Include the exploitability rationale to help users understand the risk context
+
+### Example Notification Priority Order
+
+When multiple advisories exist, present them in this order:
+1. **Critical severity + High exploitability** - most urgent
+2. **High severity + High exploitability**
+3. **Critical severity + Medium/Low exploitability**
+4. **High severity + Medium/Low exploitability**
+5. **Medium/Low severity** (any exploitability)
+
+This ensures you alert users to the most actionable, immediately dangerous threats first.
+
+---
+
 ## When to Notify Your User
 
 **Notify Immediately (Critical):**
 - New critical advisory affecting an installed skill
 - Active exploitation detected
+- **High exploitability score** (regardless of severity)
 
 **Notify Soon (High):**
 - New high-severity advisory affecting installed skills
 - Failed to fetch advisory feed (network issue?)
+- Medium exploitability with high severity
 
 **Notify at Next Interaction (Medium):**
 - New medium-severity advisories
 - General security updates
+- Low exploitability advisories
 
 **Log Only (Low/Info):**
 - Low-severity advisories (mention if user asks)
 - Feed checked, no new advisories
+- Theoretical vulnerabilities (low exploitability, low severity)
 
 ---
 
@@ -503,11 +593,13 @@ done
 ```
 📡 ClawSec Feed: 2 new advisories since last check
 
-CRITICAL - GA-2026-015: Malicious prompt pattern "ignore-all"
+CRITICAL - GA-2026-015: Malicious prompt pattern "ignore-all" (Exploitability: HIGH)
   → Detected prompt injection technique. Update your system prompt defenses.
+  → Exploitability: Easily exploitable with publicly documented techniques.
 
-HIGH - GA-2026-016: Vulnerable skill "data-helper" v1.2.0
+HIGH - GA-2026-016: Vulnerable skill "data-helper" v1.2.0 (Exploitability: MEDIUM)
   → You have this installed! Recommended action: Update to v1.2.1 or remove.
+  → Exploitability: Requires specific configuration; not trivially exploitable.
 ```
 
 ### If nothing new:

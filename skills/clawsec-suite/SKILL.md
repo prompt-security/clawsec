@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.3
+version: 0.1.4
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -234,11 +234,24 @@ if [ -s "$NEW_IDS_FILE" ]; then
   while IFS= read -r id; do
     [ -z "$id" ] && continue
     jq -r --arg id "$id" '.advisories[] | select(.id == $id) | "- [\(.severity | ascii_upcase)] \(.id): \(.title)"' "$TMP/feed.json"
+    jq -r --arg id "$id" '.advisories[] | select(.id == $id) | "  Exploitability: \(.exploitability_score // "unknown" | ascii_upcase)"' "$TMP/feed.json"
   done < "$NEW_IDS_FILE"
 else
   echo "FEED_OK - no new advisories"
 fi
 ```
+
+## Exploitability Context
+
+Advisories in the feed can include `exploitability_score` and `exploitability_rationale` fields to help agents prioritize real-world threats:
+
+- **Exploitability scores**: `high`, `medium`, `low`, or `unknown`
+- **Context-aware assessment**: Considers attack vector, authentication requirements, and AI agent deployment patterns
+- **Exploit availability**: Detects public exploits and weaponization status
+
+When processing advisories, prioritize by exploitability in addition to severity. A HIGH severity + HIGH exploitability CVE is more urgent than a CRITICAL severity + LOW exploitability CVE.
+
+For detailed methodology, see the [exploitability scoring documentation](../../wiki/exploitability-scoring.md).
 
 ## Heartbeat Integration
 

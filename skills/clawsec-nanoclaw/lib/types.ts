@@ -15,6 +15,8 @@ export interface Advisory {
   references: string[];
   cvss_score?: number;
   nvd_url?: string;
+  exploitability_score?: 'high' | 'medium' | 'low' | 'unknown';
+  exploitability_rationale?: string;
   source?: string;
   github_issue_url?: string;
   reporter?: {
