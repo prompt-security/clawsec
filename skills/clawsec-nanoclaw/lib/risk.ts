@@ -17,7 +17,7 @@ export interface AdvisoryRiskEvaluation {
   reason: string;
 }
 
-function normalizeExploitabilityScore(score: unknown): 'high' | 'medium' | 'low' | 'unknown' {
+export function normalizeExploitabilityScore(score: unknown): 'high' | 'medium' | 'low' | 'unknown' {
   const value = String(score || '').toLowerCase().trim();
   if (value === 'high' || value === 'medium' || value === 'low') {
     return value;

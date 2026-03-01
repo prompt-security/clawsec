@@ -389,15 +389,10 @@ echo "$RECENT"
 
 ### Filter by exploitability score
 
-```bash
-# Get high and critical exploitability advisories (most urgent)
-HIGH_EXPLOIT=$(echo "$FEED" | jq '.advisories[] | select(.exploitability_score == "high" or .exploitability_score == "critical")')
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to filter by exploitability"
-  exit 1
-fi
-echo "$HIGH_EXPLOIT"
-```
+Shared exploitability prioritization guidance is maintained in:
+
+- [`wiki/exploitability-scoring.md`](../../wiki/exploitability-scoring.md)
+- [`skills/clawsec-suite/SKILL.md`](../clawsec-suite/SKILL.md) ("Quick feed check")
 
 ### Get exploitability context for an advisory
 

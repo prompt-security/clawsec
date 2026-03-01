@@ -11,7 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
-import { evaluateAdvisoryRisk } from '../lib/risk.js';
+import { evaluateAdvisoryRisk, normalizeExploitabilityScore } from '../lib/risk.js';
 
 // These variables are provided by the host environment (ipc-mcp-stdio.ts)
 // when this code is integrated into the NanoClaw container agent.
@@ -28,14 +28,6 @@ const exploitabilityOrder: Record<string, number> = { high: 0, medium: 1, low: 2
 
 function normalizeSkillName(name: string): string {
   return name.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
-}
-
-function normalizeExploitabilityScore(score: unknown): 'high' | 'medium' | 'low' | 'unknown' {
-  const value = String(score || '').toLowerCase().trim();
-  if (value === 'high' || value === 'medium' || value === 'low') {
-    return value;
-  }
-  return 'unknown';
 }
 
 function parseAffectedSpecifier(rawSpecifier: string): { name: string; versionSpec: string } | null {
