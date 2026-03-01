@@ -1,6 +1,6 @@
 {
   "name": "clawsec-nanoclaw",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "ClawSec security suite for NanoClaw - Advisory feed monitoring, MCP tools for vulnerability checking, and Ed25519 signature verification for containerized WhatsApp bot agents",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
