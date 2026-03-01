@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import { evaluateAdvisoryRisk, normalizeExploitabilityScore } from '../lib/risk.js';
+import { matchesAffectedSpecifier } from '../lib/advisories.js';
 
 // These variables are provided by the host environment (ipc-mcp-stdio.ts)
 // when this code is integrated into the NanoClaw container agent.
@@ -23,88 +24,6 @@ const CACHE_FILE = '/workspace/project/data/clawsec-advisory-cache.json';
 
 const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 const exploitabilityOrder: Record<string, number> = { high: 0, medium: 1, low: 2, unknown: 3 };
-
-// Add these helper functions to the file:
-
-function normalizeSkillName(name: string): string {
-  return name.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
-}
-
-function parseAffectedSpecifier(rawSpecifier: string): { name: string; versionSpec: string } | null {
-  const specifier = rawSpecifier.trim();
-  if (!specifier) return null;
-
-  const atIndex = specifier.lastIndexOf('@');
-  if (atIndex <= 0) {
-    return { name: specifier, versionSpec: '*' };
-  }
-
-  return {
-    name: specifier.slice(0, atIndex),
-    versionSpec: specifier.slice(atIndex + 1),
-  };
-}
-
-function versionMatches(version: string, versionSpec: string): boolean {
-  const v = version.trim();
-  const spec = versionSpec.trim();
-
-  if (spec === '*' || spec === '') return true;
-  if (v === spec) return true;
-
-  const parseVersion = (raw: string): number[] => {
-    const match = raw.match(/^(\d+)\.(\d+)\.(\d+)/);
-    if (!match) return [];
-    return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
-  };
-
-  const versionParts = parseVersion(v);
-  const specParts = parseVersion(spec.replace(/^[~^]/, ''));
-  if (versionParts.length === 0 || specParts.length === 0) return false;
-
-  if (spec.startsWith('^')) {
-    if (versionParts[0] !== specParts[0]) return false;
-    if (versionParts[0] === 0) {
-      if (versionParts[1] !== specParts[1]) return false;
-      return versionParts[2] >= specParts[2];
-    }
-    if (versionParts[1] > specParts[1]) return true;
-    if (versionParts[1] < specParts[1]) return false;
-    return versionParts[2] >= specParts[2];
-  }
-
-  if (spec.startsWith('~')) {
-    if (versionParts[0] !== specParts[0]) return false;
-    if (versionParts[1] !== specParts[1]) return false;
-    return versionParts[2] >= specParts[2];
-  }
-
-  return false;
-}
-
-function matchesAffectedSpecifier(
-  affected: string,
-  skillName: string,
-  skillVersion: string | null,
-  skillDirName?: string
-): boolean {
-  const parsed = parseAffectedSpecifier(affected);
-  if (!parsed) return false;
-
-  const normalizedTarget = normalizeSkillName(parsed.name);
-  const normalizedSkillName = normalizeSkillName(skillName);
-  const normalizedDirName = skillDirName ? normalizeSkillName(skillDirName) : null;
-
-  if (normalizedTarget !== normalizedSkillName && normalizedTarget !== normalizedDirName) {
-    return false;
-  }
-
-  if (!skillVersion) {
-    return true;
-  }
-
-  return versionMatches(skillVersion, parsed.versionSpec);
-}
 
 /**
  * Discover installed skills in a directory

@@ -122,6 +122,34 @@ export function versionMatches(version: string, versionSpec: string): boolean {
 }
 
 /**
+ * Checks whether an affected specifier matches a skill name/version.
+ * Optionally matches against a skill directory name as alias.
+ */
+export function matchesAffectedSpecifier(
+  affected: string,
+  skillName: string,
+  skillVersion: string | null,
+  skillDirName?: string
+): boolean {
+  const parsed = parseAffectedSpecifier(affected);
+  if (!parsed) return false;
+
+  const normalizedTarget = normalizeSkillName(parsed.name);
+  const normalizedSkillName = normalizeSkillName(skillName);
+  const normalizedDirName = skillDirName ? normalizeSkillName(skillDirName) : null;
+
+  if (normalizedTarget !== normalizedSkillName && normalizedTarget !== normalizedDirName) {
+    return false;
+  }
+
+  if (!skillVersion) {
+    return true;
+  }
+
+  return versionMatches(skillVersion, parsed.versionSpec);
+}
+
+/**
  * Loads advisory feed from a remote URL with signature verification.
  */
 export async function loadRemoteFeed(
@@ -296,15 +324,7 @@ export function findAdvisoryMatches(
     if (affected.length === 0) continue;
 
     for (const specifier of affected) {
-      const parsed = parseAffectedSpecifier(specifier);
-      if (!parsed) continue;
-
-      if (normalizeSkillName(parsed.name) !== normalizeSkillName(skillName)) {
-        continue;
-      }
-
-      // If version specified, check if it matches
-      if (version && !versionMatches(version, parsed.versionSpec)) {
+      if (!matchesAffectedSpecifier(specifier, skillName, version)) {
         continue;
       }
 
