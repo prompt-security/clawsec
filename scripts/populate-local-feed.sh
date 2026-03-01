@@ -11,11 +11,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=./feed-utils.sh
+source "$SCRIPT_DIR/feed-utils.sh"
 
 # Configuration - same as pipeline
-FEED_PATH="$PROJECT_ROOT/advisories/feed.json"
-SKILL_FEED_PATH="$PROJECT_ROOT/skills/clawsec-feed/advisories/feed.json"
-PUBLIC_FEED_PATH="$PROJECT_ROOT/public/advisories/feed.json"
+init_feed_paths "$PROJECT_ROOT"
 KEYWORDS="OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
 GITHUB_REF_PATTERN="github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
 
@@ -338,16 +338,9 @@ if jq empty "$TEMP_DIR/updated_feed.json" 2>/dev/null; then
   # Update main feed
   cp "$TEMP_DIR/updated_feed.json" "$FEED_PATH"
   echo "✓ Updated: $FEED_PATH"
-  
-  # Update skill feed
-  mkdir -p "$(dirname "$SKILL_FEED_PATH")"
-  cp "$FEED_PATH" "$SKILL_FEED_PATH"
-  echo "✓ Updated: $SKILL_FEED_PATH"
-  
-  # Update public feed for local dev
-  mkdir -p "$(dirname "$PUBLIC_FEED_PATH")"
-  cp "$FEED_PATH" "$PUBLIC_FEED_PATH"
-  echo "✓ Updated: $PUBLIC_FEED_PATH"
+
+  # Sync feed mirrors for local skill/public consumers.
+  sync_feed_to_mirrors "$FEED_PATH" "create"
   
   echo ""
   TOTAL_ADVISORIES=$(jq '.advisories | length' "$FEED_PATH")
