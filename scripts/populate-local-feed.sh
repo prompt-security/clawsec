@@ -18,7 +18,7 @@ source "$SCRIPT_DIR/feed-utils.sh"
 init_feed_paths "$PROJECT_ROOT"
 KEYWORDS="OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
 GITHUB_REF_PATTERN="github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
-ANALYZER="$PROJECT_ROOT/utils/analyze_exploitability.py"
+ENRICH_SCRIPT="$PROJECT_ROOT/scripts/ci/enrich_exploitability.sh"
 
 # Parse args
 DAYS_BACK=120
@@ -47,19 +47,9 @@ echo "Days back: $DAYS_BACK"
 echo "Force mode: $FORCE"
 echo ""
 
-# Verify exploitability analyzer prerequisites
-if ! command -v python3 &> /dev/null; then
-  echo "Error: python3 is required but not found in PATH"
-  exit 1
-fi
-
-if [ ! -f "$ANALYZER" ]; then
-  echo "Error: Exploitability analyzer not found: $ANALYZER"
-  exit 1
-fi
-
-if ! python3 "$ANALYZER" --help &> /dev/null; then
-  echo "Error: Exploitability analyzer failed to run. Check Python environment."
+# Verify enrichment helper exists (it validates Python/analyzer prerequisites internally).
+if [ ! -x "$ENRICH_SCRIPT" ]; then
+  echo "Error: Exploitability enrichment helper not found or not executable: $ENRICH_SCRIPT"
   exit 1
 fi
 
@@ -331,70 +321,11 @@ jq '
   }] | map({(.id): .cvss_vector}) | add
 ' "$TEMP_DIR/filtered_cves.json" > "$TEMP_DIR/cvss_vectors.json"
 
-ANALYZED_COUNT=0
-FAILED_ANALYSIS=0
-
-while IFS= read -r advisory; do
-  CVE_ID=$(echo "$advisory" | jq -r '.id')
-  CVSS_SCORE=$(echo "$advisory" | jq -r '.cvss_score // 0')
-  CVSS_VECTOR=$(jq -r --arg id "$CVE_ID" '.[$id] // ""' "$TEMP_DIR/cvss_vectors.json")
-  VULN_TYPE=$(echo "$advisory" | jq -r '.type // ""')
-  DESCRIPTION=$(echo "$advisory" | jq -r '.description // ""')
-  REFERENCES=$(echo "$advisory" | jq -c '.references // []')
-
-  INPUT_JSON=$(jq -n \
-    --arg cve_id "$CVE_ID" \
-    --argjson cvss_score "$CVSS_SCORE" \
-    --arg cvss_vector "$CVSS_VECTOR" \
-    --arg type "$VULN_TYPE" \
-    --arg description "$DESCRIPTION" \
-    --argjson references "$REFERENCES" \
-    '{
-      cve_id: $cve_id,
-      cvss_score: $cvss_score,
-      cvss_vector: $cvss_vector,
-      type: $type,
-      description: $description,
-      references: $references
-    }')
-
-  if ANALYSIS=$(echo "$INPUT_JSON" | python3 "$ANALYZER" --json --check-exploits 2>/dev/null); then
-    echo "$ANALYSIS" > "$TEMP_DIR/exploitability_${CVE_ID}.json"
-    SCORE=$(echo "$ANALYSIS" | jq -r '.exploitability_score // "unknown"')
-    echo "  ✓ $CVE_ID -> $SCORE"
-    ANALYZED_COUNT=$((ANALYZED_COUNT + 1))
-  else
-    echo "  ⚠ $CVE_ID analysis failed; keeping null exploitability fields"
-    FAILED_ANALYSIS=$((FAILED_ANALYSIS + 1))
-  fi
-done < <(jq -c '.[]' "$TEMP_DIR/new_advisories.json")
-
-if ls "$TEMP_DIR"/exploitability_*.json >/dev/null 2>&1; then
-  jq -s '.' "$TEMP_DIR"/exploitability_*.json > "$TEMP_DIR/exploitability_analyses.json"
-else
-  echo '[]' > "$TEMP_DIR/exploitability_analyses.json"
-fi
-
-jq --slurpfile analyses "$TEMP_DIR/exploitability_analyses.json" '
-  map(
-    . as $advisory |
-    ($analyses[0] | map(select(.cve_id == $advisory.id)) | first) as $analysis |
-    if $analysis then
-      $advisory + {
-        exploitability_score: $analysis.exploitability_score,
-        exploitability_rationale: $analysis.exploitability_rationale,
-        attack_vector_analysis: $analysis.attack_vector_analysis,
-        exploit_detection: $analysis.exploit_detection
-      }
-    else
-      $advisory
-    end
-  )
-' "$TEMP_DIR/new_advisories.json" > "$TEMP_DIR/new_advisories_enriched.json"
-
-mv "$TEMP_DIR/new_advisories_enriched.json" "$TEMP_DIR/new_advisories.json"
-
-echo "Exploitability analysis complete: $ANALYZED_COUNT analyzed, $FAILED_ANALYSIS failed"
+"$ENRICH_SCRIPT" \
+  --mode batch \
+  --input "$TEMP_DIR/new_advisories.json" \
+  --output "$TEMP_DIR/new_advisories.json" \
+  --cvss-vectors "$TEMP_DIR/cvss_vectors.json"
 
 echo ""
 echo "=== New Advisories ==="
