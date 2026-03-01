@@ -68,6 +68,11 @@
         "description": "TypeScript type definitions"
       },
       {
+        "path": "lib/risk.ts",
+        "required": true,
+        "description": "Shared advisory risk evaluation logic for host and MCP tools"
+      },
+      {
         "path": "advisories/feed-signing-public.pem",
         "required": true,
         "description": "Pinned Ed25519 public key for feed signature verification"

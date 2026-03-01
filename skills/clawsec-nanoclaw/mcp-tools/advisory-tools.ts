@@ -11,6 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
+import { evaluateAdvisoryRisk } from '../lib/risk.js';
 
 // These variables are provided by the host environment (ipc-mcp-stdio.ts)
 // when this code is integrated into the NanoClaw container agent.
@@ -300,45 +301,13 @@ server.tool(
         };
       }
 
-      // Evaluate severity + exploitability context
-      const hasMalicious = matchingAdvisories.some((a: any) => String(a.type || '').toLowerCase().includes('malicious'));
-      const hasRemoveAction = matchingAdvisories.some((a: any) =>
-        /\b(remove|uninstall|disable|quarantine|block)\b/i.test(String(a.action || ''))
-      );
-      const hasCritical = matchingAdvisories.some((a: any) => a.severity === 'critical');
-      const hasHigh = matchingAdvisories.some((a: any) => a.severity === 'high');
-      const hasHighExploitability = matchingAdvisories.some(
-        (a: any) => normalizeExploitabilityScore(a.exploitability_score) === 'high'
-      );
-
-      let recommendation: 'install' | 'block' | 'review';
-      let reason: string;
-
-      if (hasMalicious || hasRemoveAction) {
-        recommendation = 'block';
-        reason = 'Malicious skill or removal recommended by ClawSec';
-      } else if (hasCritical && hasHighExploitability) {
-        recommendation = 'block';
-        reason = 'Critical advisory with high exploitability context - do not install';
-      } else if (hasCritical) {
-        recommendation = 'block';
-        reason = 'Critical security advisory - do not install';
-      } else if (hasHighExploitability) {
-        recommendation = 'review';
-        reason = 'High exploitability advisory - urgent user review strongly recommended';
-      } else if (hasHigh) {
-        recommendation = 'review';
-        reason = 'High severity advisory - user review strongly recommended';
-      } else {
-        recommendation = 'review';
-        reason = 'Advisory found - review details before installing';
-      }
+      const risk = evaluateAdvisoryRisk(matchingAdvisories);
 
       return {
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
-            safe: false, // Always false when advisories exist
+            safe: risk.safe,
             advisories: matchingAdvisories.map((a: any) => ({
               id: a.id,
               severity: a.severity,
@@ -351,8 +320,8 @@ server.tool(
               exploitability_score: normalizeExploitabilityScore(a.exploitability_score),
               exploitability_rationale: a.exploitability_rationale || null,
             })),
-            recommendation,
-            reason,
+            recommendation: risk.recommendation,
+            reason: risk.reason,
             skillName: args.skillName,
             skillVersion: args.skillVersion || null,
             advisoryCount: matchingAdvisories.length,
