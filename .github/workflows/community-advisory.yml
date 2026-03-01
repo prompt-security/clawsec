@@ -195,7 +195,7 @@ jobs:
 
       - name: Set up Python for exploitability analysis
         if: steps.parse.outputs.already_exists != 'true'
-        uses: actions/setup-python@8d2f52b6169cf4c0f64d2e9f6f8f6d6a6e1c90f7 # v5.4.1
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.10'
 
