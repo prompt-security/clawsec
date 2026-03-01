@@ -206,60 +206,13 @@ jobs:
 
           echo "=== Analyzing exploitability for community advisory ==="
 
-          # Extract fields from advisory for analysis
-          CVE_ID=$(jq -r '.id' tmp_advisory.json)
-          SEVERITY=$(jq -r '.severity // "medium"' tmp_advisory.json)
-          VULN_TYPE=$(jq -r '.type // "unknown"' tmp_advisory.json)
-          DESCRIPTION=$(jq -r '.description // ""' tmp_advisory.json)
-          REFERENCES=$(jq -c '.references // []' tmp_advisory.json)
+          scripts/ci/enrich_exploitability.sh \
+            --mode single \
+            --input tmp_advisory.json \
+            --output tmp_advisory.json
 
-          # Map severity to approximate CVSS score for analysis
-          case "$SEVERITY" in
-            critical) CVSS_SCORE=9.5 ;;
-            high) CVSS_SCORE=7.5 ;;
-            medium) CVSS_SCORE=5.5 ;;
-            low) CVSS_SCORE=3.0 ;;
-            *) CVSS_SCORE=5.0 ;;
-          esac
-
-          # Build input JSON for analyzer
-          INPUT_JSON=$(jq -n \
-            --arg cve_id "$CVE_ID" \
-            --argjson cvss_score "$CVSS_SCORE" \
-            --arg type "$VULN_TYPE" \
-            --arg description "$DESCRIPTION" \
-            --argjson references "$REFERENCES" \
-            '{
-              cve_id: $cve_id,
-              cvss_score: $cvss_score,
-              type: $type,
-              description: $description,
-              references: $references
-            }')
-
-          # Run exploitability analysis with exploit detection.
-          # Continue without enrichment if analysis fails.
-          if ANALYSIS=$(echo "$INPUT_JSON" | python utils/analyze_exploitability.py --json --check-exploits 2>/dev/null); then
-            echo "$ANALYSIS" > tmp_exploitability.json
-            echo "✓ Analyzed $CVE_ID"
-
-            # Merge exploitability analysis into advisory
-            jq --slurpfile analysis tmp_exploitability.json '
-              . + {
-                exploitability_score: $analysis[0].exploitability_score,
-                exploitability_rationale: $analysis[0].exploitability_rationale,
-                attack_vector_analysis: $analysis[0].attack_vector_analysis,
-                exploit_detection: $analysis[0].exploit_detection
-              }
-            ' tmp_advisory.json > tmp_advisory_enriched.json
-
-            mv tmp_advisory_enriched.json tmp_advisory.json
-
-            echo "=== Exploitability analysis complete ==="
-            echo "Exploitability score: $(jq -r '.exploitability_score // "unknown"' tmp_advisory.json)"
-          else
-            echo "::warning::Failed to analyze exploitability for $CVE_ID, continuing without enrichment"
-          fi
+          echo "=== Exploitability analysis complete ==="
+          echo "Exploitability score: $(jq -r '.exploitability_score // "unknown"' tmp_advisory.json)"
 
       - name: Update feed
         if: steps.parse.outputs.already_exists != 'true'

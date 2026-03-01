@@ -684,68 +684,11 @@ jobs:
             }] | map({(.id): .cvss_vector}) | add
           ' tmp/filtered_cves.json > tmp/cvss_vectors.json
 
-          # Process each advisory through exploitability analyzer
-          jq -c '.[]' tmp/new_advisories.json | while IFS= read -r advisory; do
-            CVE_ID=$(echo "$advisory" | jq -r '.id')
-            CVSS_SCORE=$(echo "$advisory" | jq -r '.cvss_score // 0')
-            CVSS_VECTOR=$(jq -r --arg id "$CVE_ID" '.[$id] // ""' tmp/cvss_vectors.json)
-            VULN_TYPE=$(echo "$advisory" | jq -r '.type // ""')
-            DESCRIPTION=$(echo "$advisory" | jq -r '.description // ""')
-            REFERENCES=$(echo "$advisory" | jq -c '.references // []')
-
-            # Build input JSON for analyzer
-            INPUT_JSON=$(jq -n \
-              --arg cve_id "$CVE_ID" \
-              --argjson cvss_score "$CVSS_SCORE" \
-              --arg cvss_vector "$CVSS_VECTOR" \
-              --arg type "$VULN_TYPE" \
-              --arg description "$DESCRIPTION" \
-              --argjson references "$REFERENCES" \
-              '{
-                cve_id: $cve_id,
-                cvss_score: $cvss_score,
-                cvss_vector: $cvss_vector,
-                type: $type,
-                description: $description,
-                references: $references
-              }')
-
-            # Run exploitability analysis with exploit detection.
-            # Keep processing if any single advisory analysis fails.
-            if ANALYSIS=$(echo "$INPUT_JSON" | python utils/analyze_exploitability.py --json --check-exploits 2>/dev/null); then
-              echo "$ANALYSIS" > "tmp/exploitability_${CVE_ID}.json"
-              echo "✓ Analyzed $CVE_ID"
-            else
-              echo "::warning::Failed to analyze exploitability for $CVE_ID, skipping enrichment"
-            fi
-          done
-
-          # Merge exploitability analysis back into advisories.
-          if ls tmp/exploitability_*.json >/dev/null 2>&1; then
-            jq -s '.' tmp/exploitability_*.json > tmp/exploitability_analyses.json
-          else
-            echo '[]' > tmp/exploitability_analyses.json
-          fi
-
-          jq --slurpfile analyses tmp/exploitability_analyses.json '
-            map(
-              . as $advisory |
-              ($analyses[0] | map(select(.cve_id == $advisory.id)) | first) as $analysis |
-              if $analysis then
-                $advisory + {
-                  exploitability_score: $analysis.exploitability_score,
-                  exploitability_rationale: $analysis.exploitability_rationale,
-                  attack_vector_analysis: $analysis.attack_vector_analysis,
-                  exploit_detection: $analysis.exploit_detection
-                }
-              else
-                $advisory
-              end
-            )
-          ' tmp/new_advisories.json > tmp/new_advisories_enriched.json
-
-          # Replace original with enriched version
-          mv tmp/new_advisories_enriched.json tmp/new_advisories.json
+          scripts/ci/enrich_exploitability.sh \
+            --mode batch \
+            --input tmp/new_advisories.json \
+            --output tmp/new_advisories.json \
+            --cvss-vectors tmp/cvss_vectors.json
 
           echo "=== Exploitability analysis complete ==="
 
