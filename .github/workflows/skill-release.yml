@@ -540,7 +540,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     outputs:
       skill_name: ${{ steps.parse.outputs.skill_name }}
       version: ${{ steps.parse.outputs.version }}
@@ -877,15 +877,6 @@ jobs:
             } >> $GITHUB_OUTPUT
           fi
 
-      - name: Require automation token for release publishing
-        env:
-          AUTOMATION_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
-        run: |
-          if [ -z "$AUTOMATION_TOKEN" ]; then
-            echo "::error::Set POLL_NVD_CVES_PAT with repo write permissions."
-            exit 1
-          fi
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
@@ -945,7 +936,7 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete superseded releases
         run: |
@@ -982,7 +973,7 @@ jobs:
 
           echo "Superseded release cleanup complete"
         env:
-          GITHUB_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-clawhub:
     # Separate job for ClawHub publishing - runs after GitHub release
