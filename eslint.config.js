@@ -85,7 +85,8 @@ export default [
       }
     },
     rules: {
-      'no-empty': ['error', { allowEmptyCatch: true }]
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
     }
   },
   // Node.js scripts (.js files in scripts directory)
@@ -105,6 +106,32 @@ export default [
         clearTimeout: 'readonly',
         clearInterval: 'readonly',
         URL: 'readonly'
+      }
+    },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
+    }
+  },
+  // Skills JavaScript files
+  {
+    files: ['skills/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+        URL: 'readonly',
+        fetch: 'readonly',
+        AbortController: 'readonly'
       }
     },
     rules: {
