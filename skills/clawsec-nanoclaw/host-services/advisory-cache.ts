@@ -16,6 +16,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import https from 'node:https';
 import path from 'node:path';
+import { evaluateAdvisoryRisk } from '../lib/risk.js';
 
 // ClawSec public key (from clawsec-signing-public.pem)
 const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
@@ -35,6 +36,8 @@ export interface Advisory {
   action?: string;
   published?: string;
   updated?: string;
+  exploitability_score?: 'high' | 'medium' | 'low' | 'unknown' | string;
+  exploitability_rationale?: string;
   affected: string[];
 }
 
@@ -376,42 +379,5 @@ export function evaluateSkillSafety(advisories: Advisory[]): {
   recommendation: 'install' | 'block' | 'review';
   reason: string;
 } {
-  if (advisories.length === 0) {
-    return { safe: true, recommendation: 'install', reason: 'No advisories found' };
-  }
-
-  const hasMalicious = advisories.some((a) => a.type === 'malicious');
-  const hasRemoveAction = advisories.some((a) => a.action === 'remove');
-  const hasCritical = advisories.some((a) => a.severity === 'critical');
-  const hasHigh = advisories.some((a) => a.severity === 'high');
-
-  if (hasMalicious || hasRemoveAction) {
-    return {
-      safe: false,
-      recommendation: 'block',
-      reason: 'Malicious skill or removal recommended',
-    };
-  }
-
-  if (hasCritical) {
-    return {
-      safe: false,
-      recommendation: 'block',
-      reason: 'Critical security advisory',
-    };
-  }
-
-  if (hasHigh) {
-    return {
-      safe: false,
-      recommendation: 'review',
-      reason: 'High severity advisory - user review recommended',
-    };
-  }
-
-  return {
-    safe: false,
-    recommendation: 'review',
-    reason: 'Advisory found - review before installing',
-  };
+  return evaluateAdvisoryRisk(advisories);
 }

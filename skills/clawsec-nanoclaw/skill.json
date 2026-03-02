@@ -1,6 +1,6 @@
 {
   "name": "clawsec-nanoclaw",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "ClawSec security suite for NanoClaw - Advisory feed monitoring, MCP tools for vulnerability checking, and Ed25519 signature verification for containerized WhatsApp bot agents",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -26,6 +26,11 @@
         "path": "SKILL.md",
         "required": true,
         "description": "NanoClaw skill documentation"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
       },
       {
         "path": "INSTALL.md",
@@ -61,6 +66,11 @@
         "path": "lib/types.ts",
         "required": true,
         "description": "TypeScript type definitions"
+      },
+      {
+        "path": "lib/risk.ts",
+        "required": true,
+        "description": "Shared advisory risk evaluation logic for host and MCP tools"
       },
       {
         "path": "advisories/feed-signing-public.pem",
@@ -112,9 +122,10 @@
   "capabilities": [
     "Advisory feed monitoring from clawsec.prompt.security",
     "MCP tools for agent-initiated vulnerability scans",
+    "Exploitability-aware advisory prioritization for agent environments",
     "Pre-installation skill safety checks",
     "Ed25519 signature verification for advisory feeds",
-    "Platform-specific advisory filtering (nanoclaw vs openclaw)",
+    "Platform metadata preserved in advisory records for downstream filtering",
     "Containerized agent support with IPC communication"
   ],
   "nanoclaw": {
@@ -135,7 +146,7 @@
     },
     "integration": {
       "mcp_tools_file": "container/agent-runner/src/ipc-mcp-stdio.ts",
-      "ipc_handlers_file": "host/ipc-handler.ts",
+      "ipc_handlers_file": "src/ipc.ts",
       "cache_location": "/workspace/project/data/clawsec-advisory-cache.json"
     }
   }

@@ -1,6 +1,6 @@
 ---
 name: clawsec-nanoclaw
-version: 0.0.1
+version: 0.0.2
 description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
 ---
 
@@ -10,7 +10,7 @@ Security advisory monitoring that protects your WhatsApp bot from known vulnerab
 
 ## Overview
 
-ClawSec provides MCP tools that check installed skills against a curated feed of security advisories. It prevents installation of vulnerable skills and alerts you to issues in existing ones.
+ClawSec provides MCP tools that check installed skills against a curated feed of security advisories. It prevents installation of vulnerable skills, includes exploitability context for triage, and alerts you to issues in existing ones.
 
 **Core principle:** Check before you install. Monitor what's running.
 
@@ -36,7 +36,7 @@ Do NOT use for:
 // Before installing any skill
 const safety = await tools.clawsec_check_skill_safety({
   skillName: 'new-skill',
-  version: '1.0.0'  // optional
+  skillVersion: '1.0.0'  // optional
 });
 
 if (!safety.safe) {
@@ -48,14 +48,16 @@ if (!safety.safe) {
 ### Security Audit
 
 ```typescript
-// Check all installed skills
+// Check all installed skills (defaults to ~/.claude/skills in the container)
 const result = await tools.clawsec_check_advisories({
-  skillsRoot: '/workspace/project/skills'  // optional
+  installRoot: '/home/node/.claude/skills'  // optional
 });
 
-if (result.criticalCount > 0) {
+if (result.matches.some((m) =>
+  m.advisory.severity === 'critical' || m.advisory.exploitability_score === 'high'
+)) {
   // Alert user immediately
-  console.error('CRITICAL vulnerabilities found!');
+  console.error('Urgent advisories found!');
 }
 ```
 
@@ -64,8 +66,8 @@ if (result.criticalCount > 0) {
 ```typescript
 // List advisories with filters
 const advisories = await tools.clawsec_list_advisories({
-  platform: 'nanoclaw',    // optional: nanoclaw, openclaw, or both
-  severity: 'critical'     // optional: critical, high, medium, low
+  severity: 'high',               // optional
+  exploitabilityScore: 'high'     // optional
 });
 ```
 
@@ -75,7 +77,7 @@ const advisories = await tools.clawsec_list_advisories({
 |------|------|---------------|
 | Pre-install check | `clawsec_check_skill_safety` | `skillName` |
 | Audit all skills | `clawsec_check_advisories` | `installRoot` (optional) |
-| Browse feed | `clawsec_list_advisories` | `severity`, `type` (optional) |
+| Browse feed | `clawsec_list_advisories` | `severity`, `type`, `exploitabilityScore` (optional) |
 | Verify package signature | `clawsec_verify_skill_package` | `packagePath` |
 | Refresh advisory cache | `clawsec_refresh_cache` | (none) |
 | Check file integrity | `clawsec_check_integrity` | `mode`, `autoRestore` (optional) |
@@ -110,7 +112,7 @@ if (safety.safe) {
 ```typescript
 // Add to scheduled tasks
 schedule_task({
-  prompt: "Check for security advisories using clawsec_check_advisories and alert if any critical issues found",
+  prompt: "Check advisories using clawsec_check_advisories and alert when critical or high-exploitability matches appear",
   schedule_type: "cron",
   schedule_value: "0 9 * * *"  // Daily at 9am
 });
@@ -125,8 +127,8 @@ You: I'll check installed skills for known vulnerabilities.
 [Use clawsec_check_advisories]
 
 Response:
-✅ No critical issues found.
-- 2 low-severity advisories (not urgent)
+✅ No urgent issues found.
+- 2 low-severity/low-exploitability advisories
 - All skills up to date
 ```
 
@@ -146,30 +148,33 @@ const safety = await tools.clawsec_check_skill_safety({
 if (safety.safe) await installSkill('untrusted-skill');
 ```
 
-### ❌ Ignoring platform filters
+### ❌ Ignoring exploitability context
 ```typescript
-// DON'T: Check OpenClaw advisories on NanoClaw
-const advisories = await tools.clawsec_list_advisories({
-  platform: 'openclaw'  // Wrong platform!
-});
+// DON'T: Use severity only
+if (advisory.severity === 'high') {
+  notifyNow(advisory);
+}
 ```
 
 ```typescript
-// DO: Use correct platform or let it auto-filter
-const advisories = await tools.clawsec_list_advisories({
-  platform: 'nanoclaw'  // Correct
-});
+// DO: Use exploitability + severity
+if (
+  advisory.exploitability_score === 'high' ||
+  advisory.severity === 'critical'
+) {
+  notifyNow(advisory);
+}
 ```
 
 ### ❌ Skipping critical severity
 ```typescript
-// DON'T: Only check low severity
-if (result.lowCount > 0) alert();
+// DON'T: Ignore high exploitability in medium severity advisories
+if (advisory.severity === 'critical') alert();
 ```
 
 ```typescript
-// DO: Prioritize critical and high
-if (result.criticalCount > 0 || result.highCount > 0) {
+// DO: Prioritize exploitability and severity together
+if (advisory.exploitability_score === 'high' || advisory.severity === 'critical') {
   // Alert immediately
 }
 ```
@@ -182,7 +187,7 @@ if (result.criticalCount > 0 || result.highCount > 0) {
 
 **Signature Verification**: Ed25519 signed feeds
 
-**Cache Location**: `/workspace/project/data/clawsec-cache.json`
+**Cache Location**: `/workspace/project/data/clawsec-advisory-cache.json`
 
 See [INSTALL.md](./INSTALL.md) for setup and [docs/](./docs/) for advanced usage.
 

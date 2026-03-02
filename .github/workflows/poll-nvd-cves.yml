@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       force_full_scan:
-        description: 'Ignore last poll date and scan all CVEs'
+        description: 'Ignore feed state and rebuild CVE advisories from full NVD history'
         required: false
         default: 'false'
         type: boolean
@@ -86,6 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p tmp
+          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
           
           START_DATE="${{ steps.dates.outputs.start_date }}"
           END_DATE="${{ steps.dates.outputs.end_date }}"
@@ -101,35 +102,93 @@ jobs:
           # Fetch for each keyword
           for KEYWORD in $KEYWORDS; do
             echo "Fetching keyword: $KEYWORD"
-            
-            URL="https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${KEYWORD}&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}"
-            echo "URL: $URL"
-            
-            # Fetch with retry logic
+
             keyword_ok=false
             last_http_code=""
-            for i in 1 2 3; do
-              HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL" || true)
-              if [ -z "$HTTP_CODE" ]; then
-                HTTP_CODE="000"
-              fi
-              last_http_code="$HTTP_CODE"
-              if [ "$HTTP_CODE" = "200" ]; then
-                if jq -e . "tmp/nvd_${KEYWORD}.json" >/dev/null 2>&1; then
-                  echo "Success for $KEYWORD"
+
+            if [ "$FORCE_FULL_SCAN" = "true" ]; then
+              echo "Full scan mode enabled: paginating complete NVD history for keyword '$KEYWORD'"
+              echo '{"vulnerabilities":[]}' > "tmp/nvd_${KEYWORD}.json"
+              START_INDEX=0
+              RESULTS_PER_PAGE=2000
+
+              while true; do
+                URL="https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${KEYWORD}&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}"
+                PAGE_FILE="tmp/nvd_${KEYWORD}_${START_INDEX}.json"
+                echo "URL: $URL"
+
+                page_ok=false
+                for i in 1 2 3; do
+                  HTTP_CODE=$(curl -sS -w "%{http_code}" -o "$PAGE_FILE" "$URL" || true)
+                  if [ -z "$HTTP_CODE" ]; then
+                    HTTP_CODE="000"
+                  fi
+                  last_http_code="$HTTP_CODE"
+                  if [ "$HTTP_CODE" = "200" ]; then
+                    if jq -e . "$PAGE_FILE" >/dev/null 2>&1; then
+                      page_ok=true
+                      break
+                    fi
+                    echo "Invalid JSON for $KEYWORD page $START_INDEX, retry $i..."
+                    sleep 5
+                  elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
+                    echo "Rate limited, waiting 30s before retry $i..."
+                    sleep 30
+                  else
+                    echo "HTTP $HTTP_CODE for $KEYWORD page $START_INDEX, retry $i..."
+                    sleep 5
+                  fi
+                done
+
+                if [ "$page_ok" != "true" ]; then
+                  break
+                fi
+
+                jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
+                  "tmp/nvd_${KEYWORD}.json" "$PAGE_FILE" > "tmp/nvd_${KEYWORD}_merged.json"
+                mv "tmp/nvd_${KEYWORD}_merged.json" "tmp/nvd_${KEYWORD}.json"
+
+                PAGE_COUNT=$(jq '.vulnerabilities | length' "$PAGE_FILE")
+                TOTAL_RESULTS=$(jq '.totalResults // 0' "$PAGE_FILE")
+                echo "Fetched $PAGE_COUNT results at startIndex=$START_INDEX (totalResults=$TOTAL_RESULTS)"
+
+                START_INDEX=$((START_INDEX + RESULTS_PER_PAGE))
+                if [ "$START_INDEX" -ge "$TOTAL_RESULTS" ] || [ "$PAGE_COUNT" -eq 0 ]; then
                   keyword_ok=true
                   break
                 fi
-                echo "Invalid JSON for $KEYWORD, retry $i..."
-                sleep 5
-              elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
-                echo "Rate limited, waiting 30s before retry $i..."
-                sleep 30
-              else
-                echo "HTTP $HTTP_CODE for $KEYWORD, retry $i..."
-                sleep 5
-              fi
-            done
+
+                # NVD recommends 6 second delay between requests
+                sleep 6
+              done
+            else
+              URL="https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${KEYWORD}&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}"
+              echo "URL: $URL"
+
+              # Fetch with retry logic
+              for i in 1 2 3; do
+                HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL" || true)
+                if [ -z "$HTTP_CODE" ]; then
+                  HTTP_CODE="000"
+                fi
+                last_http_code="$HTTP_CODE"
+                if [ "$HTTP_CODE" = "200" ]; then
+                  if jq -e . "tmp/nvd_${KEYWORD}.json" >/dev/null 2>&1; then
+                    echo "Success for $KEYWORD"
+                    keyword_ok=true
+                    break
+                  fi
+                  echo "Invalid JSON for $KEYWORD, retry $i..."
+                  sleep 5
+                elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
+                  echo "Rate limited, waiting 30s before retry $i..."
+                  sleep 30
+                else
+                  echo "HTTP $HTTP_CODE for $KEYWORD, retry $i..."
+                  sleep 5
+                fi
+              done
+            fi
 
             if [ "$keyword_ok" != "true" ]; then
               echo "::error::Failed to fetch valid NVD response for keyword '$KEYWORD' (last HTTP code: ${last_http_code:-unknown})."
@@ -212,6 +271,14 @@ jobs:
       - name: Check for updates to existing advisories
         id: updates
         run: |
+          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+            echo "Full scan mode enabled: skipping delta update detection."
+            echo '[]' > tmp/updated_advisories.json
+            echo "Advisories to update: 0"
+            echo "update_count=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # Compare existing CVE advisories against NVD data for changes
           # Only check advisories that start with "CVE-" (NVD-sourced)
 
@@ -353,7 +420,9 @@ jobs:
               title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
               affected: normalized_affected,
               platforms: normalized_platforms,
-              references: [.cve.references[]?.url // empty] | unique | .[0:3]
+              references: [.cve.references[]?.url // empty] | unique | .[0:3],
+              exploitability_score: null,
+              exploitability_rationale: null
             }]
           ' tmp/filtered_cves.json > tmp/nvd_current_state.json
 
@@ -422,7 +491,12 @@ jobs:
         id: transform
         run: |
           # Read existing IDs into a jq-friendly format
-          EXISTING_IDS=$(cat tmp/existing_ids.txt | jq -R -s 'split("\n") | map(select(length > 0))')
+          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+            echo "Full scan mode enabled: rebuilding CVE advisories from scratch."
+            EXISTING_IDS='[]'
+          else
+            EXISTING_IDS=$(cat tmp/existing_ids.txt | jq -R -s 'split("\n") | map(select(length > 0))')
+          fi
           
           # Transform NVD CVEs to our advisory format
           jq --argjson existing "$EXISTING_IDS" '
@@ -553,7 +627,7 @@ jobs:
                   end
               );
             
-            [.[] | 
+            [.[] |
               select(.cve.id as $id | $existing | index($id) | not) |
               {
                 id: .cve.id,
@@ -568,7 +642,9 @@ jobs:
                 published: .cve.published,
                 references: [.cve.references[]?.url // empty] | unique | .[0:3],
                 cvss_score: get_cvss_score,
-                nvd_url: ("https://nvd.nist.gov/vuln/detail/" + .cve.id)
+                nvd_url: ("https://nvd.nist.gov/vuln/detail/" + .cve.id),
+                exploitability_score: null,
+                exploitability_rationale: null
               }
             ]
           ' tmp/filtered_cves.json > tmp/new_advisories.json
@@ -582,12 +658,63 @@ jobs:
             jq '.[].id' tmp/new_advisories.json
           fi
 
+      - name: Set up Python for exploitability analysis
+        if: steps.transform.outputs.new_count != '0'
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.10'
+
+      - name: Analyze exploitability for new advisories
+        if: steps.transform.outputs.new_count != '0'
+        run: |
+          set -euo pipefail
+
+          echo "=== Analyzing exploitability for new advisories ==="
+
+          # Extract CVSS vectors from filtered CVEs to merge with advisories
+          jq '
+            [.[] | {
+              id: .cve.id,
+              cvss_vector: (
+                .cve.metrics.cvssMetricV31[0]?.cvssData.vectorString //
+                .cve.metrics.cvssMetricV30[0]?.cvssData.vectorString //
+                .cve.metrics.cvssMetricV2[0]?.vectorString //
+                ""
+              )
+            }] | map({(.id): .cvss_vector}) | add
+          ' tmp/filtered_cves.json > tmp/cvss_vectors.json
+
+          scripts/ci/enrich_exploitability.sh \
+            --mode batch \
+            --input tmp/new_advisories.json \
+            --output tmp/new_advisories.json \
+            --cvss-vectors tmp/cvss_vectors.json
+
+          echo "=== Exploitability analysis complete ==="
+
+          # Show summary of exploitability scores
+          echo "Exploitability score distribution:"
+          jq -r '.[] | "\(.id): \(.exploitability_score // "unknown")"' tmp/new_advisories.json | \
+            awk -F': ' '{scores[$2]++} END {for (s in scores) print "  " s ": " scores[s]}'
+
       - name: Update feed.json
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
         run: |
           NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
 
-          if [ -f "$FEED_PATH" ]; then
+          if [ -f "$FEED_PATH" ] && [ "$FORCE_FULL_SCAN" = "true" ]; then
+            # Full scan mode: replace all CVE advisories with rebuilt set and keep non-CVE entries.
+            jq --argjson rebuilt "$(cat tmp/new_advisories.json)" --arg now "$NOW" '
+              .updated = $now |
+              .advisories = (
+                ((.advisories // []) | map(select((.id // "") | startswith("CVE-") | not)))
+                + $rebuilt
+                | sort_by(.published)
+                | reverse
+              )
+            ' "$FEED_PATH" > tmp/updated_feed.json
+          elif [ -f "$FEED_PATH" ]; then
             # Step 1: Apply updates to existing advisories
             jq --slurpfile updates tmp/updated_advisories.json '
               .advisories = [
@@ -671,6 +798,7 @@ jobs:
             ## Summary
             Automated update from NVD CVE feed.
 
+            - **Mode:** ${{ inputs.force_full_scan == true && 'full-rebuild (ignore feed state)' || 'delta (incremental)' }}
             - **New advisories:** ${{ steps.transform.outputs.new_count }}
             - **Updated advisories:** ${{ steps.updates.outputs.update_count }}
             - **Poll window:** ${{ steps.dates.outputs.start_date }} → ${{ steps.dates.outputs.end_date }}
@@ -730,10 +858,17 @@ jobs:
 
       - name: Summary
         run: |
+          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+            MODE="full-rebuild (ignore feed state)"
+          else
+            MODE="delta (incremental)"
+          fi
+
           echo "## NVD CVE Poll Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | $MODE |" >> $GITHUB_STEP_SUMMARY
           echo "| Poll Window | ${{ steps.dates.outputs.start_date }} → ${{ steps.dates.outputs.end_date }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Keywords | $KEYWORDS |" >> $GITHUB_STEP_SUMMARY
           echo "| CVEs Found (filtered) | ${{ steps.process.outputs.filtered_count }} |" >> $GITHUB_STEP_SUMMARY

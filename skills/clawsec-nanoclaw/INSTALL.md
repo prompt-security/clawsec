@@ -8,7 +8,7 @@ ClawSec provides security advisory monitoring for NanoClaw through:
 - **MCP Tools**: Agents can check for vulnerabilities via `clawsec_check_advisories`
 - **Advisory Feed**: Automatic monitoring of https://clawsec.prompt.security/advisories/feed.json
 - **Signature Verification**: Ed25519-signed feeds ensure integrity
-- **Platform Targeting**: Advisories can be NanoClaw-specific or cross-platform
+- **Exploitability Context**: Advisories include exploitability score and rationale for triage
 
 ## Prerequisites
 
@@ -57,18 +57,30 @@ in each tool file).
 
 Add the host-side IPC handlers for ClawSec operations.
 
-**File**: `host/ipc-handler.ts`
+**File**: `src/ipc.ts`
 
 ```typescript
-// Add this import at the top
-import { registerClawSecHandlers } from '../skills/clawsec-nanoclaw/host-services/ipc-handlers.js';
+// Add these imports at the top
+import { handleAdvisoryIpc } from '../skills/clawsec-nanoclaw/host-services/ipc-handlers.js';
+import { AdvisoryCacheManager } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
+import { SkillSignatureVerifier } from '../skills/clawsec-nanoclaw/host-services/skill-signature-handler.js';
 
-// In your IPC handler setup function
-export function setupIpcHandlers() {
-  // ... your existing handlers ...
+// Initialize these once in host startup and pass through deps
+const advisoryCacheManager = new AdvisoryCacheManager('/workspace/project/data', logger);
+const signatureVerifier = new SkillSignatureVerifier();
 
-  // Register ClawSec handlers
-  registerClawSecHandlers();
+// In processTaskIpc switch:
+case 'refresh_advisory_cache':
+case 'verify_skill_signature':
+  await handleAdvisoryIpc(
+    data,
+    { advisoryCacheManager, signatureVerifier },
+    logger,
+    sourceGroup
+  );
+  break;
+default:
+  // existing task handling
 }
 ```
 
@@ -76,23 +88,25 @@ export function setupIpcHandlers() {
 
 Add the advisory cache manager to your host services.
 
-**File**: `host/index.ts` (or your main entry point)
+**File**: `src/index.ts` (or your main entry point)
 
 ```typescript
-// Add this import
-import { startAdvisoryCache } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
+import { AdvisoryCacheManager } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
 
 // Start the service when your host process starts
 async function main() {
   // ... your existing initialization ...
 
-  // Start ClawSec advisory cache (fetches feed every 6 hours)
-  startAdvisoryCache({
-    cacheFile: '/workspace/project/data/clawsec-advisory-cache.json',
-    feedUrl: 'https://clawsec.prompt.security/advisories/feed.json',
-    publicKeyPath: '/workspace/project/skills/clawsec-nanoclaw/advisories/feed-signing-public.pem',
-    refreshInterval: 6 * 60 * 60 * 1000, // 6 hours
-  });
+  // Initialize cache manager and prime it at startup
+  const advisoryCacheManager = new AdvisoryCacheManager('/workspace/project/data', logger);
+  await advisoryCacheManager.initialize();
+
+  // Recommended refresh cadence (6h)
+  setInterval(() => {
+    advisoryCacheManager.refresh().catch((error) => {
+      logger.error({ error }, 'Periodic advisory cache refresh failed');
+    });
+  }, 6 * 60 * 60 * 1000);
 
   // ... rest of your startup ...
 }
@@ -151,9 +165,9 @@ cat /workspace/project/data/clawsec-advisory-cache.json
 
 You should see:
 - `feed`: Array of advisories
-- `signature`: Ed25519 signature
-- `lastFetch`: Timestamp of last update
+- `fetchedAt`: Timestamp of last update
 - `verified`: Should be `true`
+- `publicKeyFingerprint`: SHA-256 fingerprint of the pinned signing key
 
 ## Usage Examples
 
@@ -183,13 +197,13 @@ You can also call the MCP tools directly from agent code:
 ```typescript
 // Check all installed skills
 const result = await tools.clawsec_check_advisories({
-  skillsRoot: '/workspace/project/skills'
+  installRoot: '/home/node/.claude/skills'
 });
 
 // Check specific skill before installation
 const safetyCheck = await tools.clawsec_check_skill_safety({
   skillName: 'risky-skill',
-  version: '1.0.0'
+  skillVersion: '1.0.0'
 });
 ```
 
@@ -199,19 +213,19 @@ const safetyCheck = await tools.clawsec_check_skill_safety({
 
 Default: `/workspace/project/data/clawsec-advisory-cache.json`
 
-To change, update the `cacheFile` parameter in `startAdvisoryCache()`.
+To change, pass a different data directory path to `new AdvisoryCacheManager(dataDir, logger)`.
 
 ### Refresh Interval
 
 Default: 6 hours
 
-To change, update the `refreshInterval` parameter (in milliseconds).
+To change, update the `setInterval(...)` duration (in milliseconds) in host startup.
 
 ### Feed URL
 
 Default: `https://clawsec.prompt.security/advisories/feed.json`
 
-To use a mirror or custom feed, update the `feedUrl` parameter.
+To use a mirror or custom feed, update `FEED_URL` in `skills/clawsec-nanoclaw/host-services/advisory-cache.ts`.
 
 ## Platform-Specific Advisories
 
@@ -222,7 +236,7 @@ ClawSec advisories can target specific platforms:
 - **`platforms: ["openclaw", "nanoclaw"]`**: Affects both
 - **No `platforms` field**: Applies to all platforms
 
-The MCP tools automatically filter advisories based on your platform.
+Platform metadata is preserved in advisory records and can be filtered by your policy layer.
 
 ## Security
 
@@ -260,7 +274,7 @@ Never manually edit the cache file - it will break signature verification.
 **Problem**: Advisory cache is empty or stale
 
 **Solution**:
-1. Check that `startAdvisoryCache()` is called in your host entry point
+1. Check that `AdvisoryCacheManager.initialize()` is called in your host entry point
 2. Verify network access to `clawsec.prompt.security`
 3. Check host logs for fetch errors
 4. Manually trigger: `curl https://clawsec.prompt.security/advisories/feed.json`
@@ -280,7 +294,7 @@ Never manually edit the cache file - it will break signature verification.
 **Problem**: Tools return errors about IPC
 
 **Solution**:
-1. Verify IPC handlers are registered in `host/ipc-handler.ts`
+1. Verify IPC handlers are registered in `src/ipc.ts`
 2. Check that IPC directory exists and is writable
 3. Ensure host process is running
 4. Check host logs for handler errors
@@ -290,8 +304,8 @@ Never manually edit the cache file - it will break signature verification.
 To remove ClawSec from NanoClaw:
 
 1. Remove MCP tool registration from `ipc-mcp-stdio.ts`
-2. Remove IPC handler registration from `host/ipc-handler.ts`
-3. Remove `startAdvisoryCache()` call from host entry point
+2. Remove IPC handler registration from `src/ipc.ts`
+3. Remove `AdvisoryCacheManager` initialization from host entry point
 4. Delete the skill directory: `rm -rf skills/clawsec-nanoclaw`
 5. Delete the cache file: `rm /workspace/project/data/clawsec-advisory-cache.json`
 6. Restart NanoClaw

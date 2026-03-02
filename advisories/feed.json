@@ -1,8 +1,42 @@
 {
   "version": "0.0.3",
-  "updated": "2026-02-25T16:48:57Z",
+  "updated": "2026-03-01T18:07:41Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-28363",
+      "severity": "critical",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "In OpenClaw before 2026.2.23, tools.exec.safeBins validation for sort could be bypassed via GNU long...",
+      "description": "In OpenClaw before 2026.2.23, tools.exec.safeBins validation for sort could be bypassed via GNU long-option abbreviations (such as --compress-prog) in allowlist mode, leading to approval-free execution paths that were intended to require approval. Only an exact string such as --compress-program was denied.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-02-27T04:16:03.227",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3c6h-g97w-fg78"
+      ],
+      "cvss_score": 9.9,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-28363",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.9); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-27576",
       "severity": "medium",
@@ -14,6 +48,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:13.437",
       "references": [
@@ -23,9 +60,18 @@
       ],
       "cvss_score": 4.0,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27576",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (4.0); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27488",
@@ -38,6 +84,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:13.267",
       "references": [
@@ -47,9 +96,18 @@
       ],
       "cvss_score": 7.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27488",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27487",
@@ -63,6 +121,9 @@
         "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:13.100",
       "references": [
@@ -72,9 +133,18 @@
       ],
       "cvss_score": 7.6,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27487",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27486",
@@ -87,6 +157,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:12.903",
       "references": [
@@ -96,9 +169,18 @@
       ],
       "cvss_score": 5.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27486",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27485",
@@ -111,6 +193,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:12.723",
       "references": [
@@ -120,9 +205,18 @@
       ],
       "cvss_score": 4.4,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27485",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.4); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27484",
@@ -135,6 +229,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-21T10:16:12.557",
       "references": [
@@ -144,9 +241,18 @@
       ],
       "cvss_score": 4.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27484",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27009",
@@ -159,6 +265,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.620",
       "references": [
@@ -168,9 +277,18 @@
       ],
       "cvss_score": 5.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27009",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.8); requires local access; XSS has limited impact in headless agents",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27008",
@@ -183,6 +301,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.460",
       "references": [
@@ -192,9 +313,18 @@
       ],
       "cvss_score": 6.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27008",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.7); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27007",
@@ -207,6 +337,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.303",
       "references": [
@@ -216,9 +349,18 @@
       ],
       "cvss_score": 3.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27007",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27004",
@@ -231,6 +373,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:17.140",
       "references": [
@@ -239,9 +384,18 @@
       ],
       "cvss_score": 5.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27004",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27003",
@@ -254,6 +408,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.983",
       "references": [
@@ -262,9 +419,18 @@
       ],
       "cvss_score": 5.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27003",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27002",
@@ -277,6 +443,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.827",
       "references": [
@@ -286,9 +455,18 @@
       ],
       "cvss_score": 9.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27002",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.8); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-27001",
@@ -301,6 +479,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.653",
       "references": [
@@ -310,9 +491,18 @@
       ],
       "cvss_score": 7.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27001",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26972",
@@ -325,6 +515,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:16.500",
       "references": [
@@ -334,9 +527,18 @@
       ],
       "cvss_score": 6.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26972",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.7); requires local access; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26329",
@@ -349,6 +551,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:15.687",
       "references": [
@@ -358,9 +563,18 @@
       ],
       "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26329",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26328",
@@ -370,7 +584,11 @@
       "title": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, under iMessage `groupPolicy=allowli...",
       "description": "OpenClaw is a personal AI assistant. Prior to version 2026.2.14, under iMessage `groupPolicy=allowlist`, group authorization could be satisfied by sender identities coming from the DM pairing store, broadening DM trust into group contexts. Version 2026.2.14 fixes the issue.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
       ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-20T00:16:15.523",
@@ -381,9 +599,18 @@
       ],
       "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26328",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26327",
@@ -396,6 +623,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:26.100",
       "references": [
@@ -405,9 +635,18 @@
       ],
       "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26327",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26326",
@@ -420,6 +659,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.950",
       "references": [
@@ -429,9 +671,18 @@
       ],
       "cvss_score": 4.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26326",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26325",
@@ -444,6 +695,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.800",
       "references": [
@@ -453,9 +707,18 @@
       ],
       "cvss_score": 7.2,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26325",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.2); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26324",
@@ -468,6 +731,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.653",
       "references": [
@@ -477,9 +743,18 @@
       ],
       "cvss_score": 7.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26324",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26323",
@@ -492,6 +767,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.500",
       "references": [
@@ -501,9 +779,18 @@
       ],
       "cvss_score": 8.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26323",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26322",
@@ -516,6 +803,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.340",
       "references": [
@@ -525,9 +815,18 @@
       ],
       "cvss_score": 7.6,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26322",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26321",
@@ -540,6 +839,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.180",
       "references": [
@@ -549,9 +851,18 @@
       ],
       "cvss_score": 7.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26321",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26320",
@@ -565,6 +876,9 @@
         "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:25.017",
       "references": [
@@ -574,9 +888,18 @@
       ],
       "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26320",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26319",
@@ -589,6 +912,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T23:16:24.857",
       "references": [
@@ -598,9 +924,18 @@
       ],
       "cvss_score": 7.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26319",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26317",
@@ -610,7 +945,11 @@
       "title": "OpenClaw is a personal AI assistant. Prior to 2026.2.14, browser-facing localhost mutation routes ac...",
       "description": "OpenClaw is a personal AI assistant. Prior to 2026.2.14, browser-facing localhost mutation routes accepted cross-origin browser requests without explicit Origin/Referer validation. Loopback binding reduces remote exposure but does not prevent browser-initiated requests from malicious origins. A malicious website can trigger unauthorized state changes against a victim's local OpenClaw browser control plane (for example opening tabs, starting/stopping the browser, mutating storage/cookies) if the browser control service is reachable on loopback in the victim's browser context. Starting in version 2026.2.14, mutating HTTP methods (POST/PUT/PATCH/DELETE) are rejected when the request indicates a non-loopback Origin/Referer (or `Sec-Fetch-Site: cross-site`). Other mitigations include enabling browser control auth (token/password) and avoid running with auth disabled.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
       ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T22:16:47.270",
@@ -621,9 +960,18 @@
       ],
       "cvss_score": 7.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26317",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-26316",
@@ -636,6 +984,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T22:16:47.110",
       "references": [
@@ -645,9 +996,18 @@
       ],
       "cvss_score": 7.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-26316",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-25474",
@@ -660,6 +1020,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T07:17:45.847",
       "references": [
@@ -669,9 +1032,18 @@
       ],
       "cvss_score": 7.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25474",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-24764",
@@ -684,6 +1056,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-19T07:17:44.957",
       "references": [
@@ -693,9 +1068,18 @@
       ],
       "cvss_score": 3.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24764",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.7); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-25593",
@@ -708,6 +1092,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-06T21:16:17.790",
       "references": [
@@ -715,9 +1102,18 @@
       ],
       "cvss_score": 8.4,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25593",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.4); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-25475",
@@ -730,6 +1126,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-04T20:16:07.287",
       "references": [
@@ -737,9 +1136,18 @@
       ],
       "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25475",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-25157",
@@ -753,6 +1161,9 @@
         "cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-04T20:16:06.577",
       "references": [
@@ -760,9 +1171,18 @@
       ],
       "cvss_score": 7.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25157",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.7); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-24763",
@@ -775,6 +1195,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-02T23:16:08.593",
       "references": [
@@ -784,9 +1207,18 @@
       ],
       "cvss_score": 8.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24763",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "CVE-2026-25253",
@@ -799,6 +1231,9 @@
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
+      "platforms": [
+        "openclaw"
+      ],
       "action": "Review and update affected components. See NVD for remediation details.",
       "published": "2026-02-01T23:15:49.717",
       "references": [
@@ -808,9 +1243,18 @@
       ],
       "cvss_score": 8.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-25253",
-      "platforms": [
-        "openclaw"
-      ]
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     }
   ]
 }
