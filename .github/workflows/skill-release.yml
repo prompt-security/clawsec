@@ -17,6 +17,9 @@ on:
 
 permissions: read-all
 
+env:
+  CLAWHUB_CLI_VERSION: 0.7.0
+
 concurrency:
   group: skill-release-${{ github.ref }}
   cancel-in-progress: false
@@ -1006,7 +1009,12 @@ jobs:
 
       - name: Install clawhub CLI
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
-        run: npm install -g clawhub@0.7.0
+        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+
+      - name: Patch clawhub publish payload workaround
+        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
+        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        run: node ./scripts/ci/patch_clawhub_publish_accept_license.mjs
 
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1117,7 +1125,11 @@ jobs:
           node-version: 20
 
       - name: Install clawhub CLI
-        run: npm install -g clawhub@0.7.0
+        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+
+      - name: Patch clawhub publish payload workaround
+        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
+        run: node ./scripts/ci/patch_clawhub_publish_accept_license.mjs
 
       - name: Login to ClawHub
         run: |
