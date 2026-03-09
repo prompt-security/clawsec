@@ -224,8 +224,6 @@ export interface VerifySkillSignatureRequest {
   timestamp: string;
   packagePath: string;
   signaturePath: string;
-  publicKeyPem?: string;      // Optional: override default public key
-  allowUnsigned?: boolean;    // Optional: allow missing signature (default: false)
 }
 
 /**

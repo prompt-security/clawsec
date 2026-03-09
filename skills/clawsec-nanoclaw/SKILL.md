@@ -186,6 +186,7 @@ if (advisory.exploitability_score === 'high' || advisory.severity === 'critical'
 **Update Frequency**: Every 6 hours (automatic)
 
 **Signature Verification**: Ed25519 signed feeds
+**Package Verification Policy**: pinned key only, bounded package/signature paths
 
 **Cache Location**: `/workspace/project/data/clawsec-advisory-cache.json`
 

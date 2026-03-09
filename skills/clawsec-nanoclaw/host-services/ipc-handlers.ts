@@ -61,7 +61,7 @@ export async function handleAdvisoryIpc(
 
     case 'verify_skill_signature': {
       // Skill signature verification (Phase 1)
-      const { requestId, packagePath, signaturePath, publicKeyPem, allowUnsigned } = task;
+      const { requestId, packagePath, signaturePath } = task;
 
       logger.info({ sourceGroup, requestId, packagePath }, 'Verifying skill signature');
 
@@ -73,8 +73,6 @@ export async function handleAdvisoryIpc(
         const result = await deps.signatureVerifier.verify({
           packagePath,
           signaturePath,
-          publicKeyPem,
-          allowUnsigned: allowUnsigned || false,
         });
 
         await writeResponse(requestId, {

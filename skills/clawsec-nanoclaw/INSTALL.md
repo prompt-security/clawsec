@@ -140,6 +140,8 @@ From within a NanoClaw agent session, the following tools should be available:
 
 **Signature Verification** (mcp-tools/signature-verification.ts):
 - `clawsec_verify_skill_package` - Verify Ed25519 signature on skill packages
+  - Uses pinned ClawSec public key (no runtime key override)
+  - Accepts staged package/signature paths only under `/tmp`, `/var/tmp`, `/workspace/ipc`, `/workspace/project/data`, `/workspace/project/tmp`, `/workspace/project/downloads`
 
 **Integrity Monitoring** (mcp-tools/integrity-tools.ts):
 - `clawsec_check_integrity` - Check protected files for unauthorized changes
