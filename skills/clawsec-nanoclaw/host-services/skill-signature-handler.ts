@@ -40,8 +40,81 @@ export interface VerificationResult {
 export interface VerifyParams {
   packagePath: string;
   signaturePath: string;
-  publicKeyPem?: string;      // Optional override of pinned key
-  allowUnsigned?: boolean;    // Allow missing signature (default: false)
+}
+
+const ALLOWED_PACKAGE_ROOTS = [
+  '/tmp',
+  '/var/tmp',
+  '/workspace/ipc',
+  '/workspace/project/data',
+  '/workspace/project/tmp',
+  '/workspace/project/downloads',
+] as const;
+
+const ALLOWED_PACKAGE_EXTENSIONS = ['.zip', '.tar', '.tgz', '.tar.gz'] as const;
+
+function isWithinAllowedRoots(filePath: string): boolean {
+  return ALLOWED_PACKAGE_ROOTS.some((root) => filePath === root || filePath.startsWith(`${root}/`));
+}
+
+function hasAllowedPackageExtension(filePath: string): boolean {
+  return ALLOWED_PACKAGE_EXTENSIONS.some((ext) => filePath.endsWith(ext));
+}
+
+function normalizeAndValidatePath(rawPath: string, kind: 'package' | 'signature'): string {
+  if (!path.isAbsolute(rawPath)) {
+    throw new SecurityPolicyError(`${kind} path must be absolute`);
+  }
+
+  const resolved = path.resolve(rawPath);
+  if (!isWithinAllowedRoots(resolved)) {
+    throw new SecurityPolicyError(
+      `${kind} path must be under allowed roots: ${ALLOWED_PACKAGE_ROOTS.join(', ')}`
+    );
+  }
+
+  if (kind === 'package' && !hasAllowedPackageExtension(resolved)) {
+    throw new SecurityPolicyError(
+      `package path must use one of: ${ALLOWED_PACKAGE_EXTENSIONS.join(', ')}`
+    );
+  }
+
+  if (kind === 'signature' && !resolved.endsWith('.sig')) {
+    throw new SecurityPolicyError('signature path must end with .sig');
+  }
+
+  return resolved;
+}
+
+function ensureExistingRegularFile(filePath: string, kind: 'package' | 'signature'): string {
+  if (!fs.existsSync(filePath)) {
+    throw new SecurityPolicyError(`${kind} file not found: ${filePath}`);
+  }
+
+  const stat = fs.lstatSync(filePath);
+  if (stat.isSymbolicLink()) {
+    throw new SecurityPolicyError(`${kind} path cannot be a symlink`);
+  }
+  if (!stat.isFile()) {
+    throw new SecurityPolicyError(`${kind} path must be a regular file`);
+  }
+
+  const realPath = fs.realpathSync(filePath);
+  if (!isWithinAllowedRoots(realPath)) {
+    throw new SecurityPolicyError(`${kind} real path escapes allowed roots`);
+  }
+
+  return realPath;
+}
+
+function validatePackagePath(rawPackagePath: string): string {
+  const resolved = normalizeAndValidatePath(rawPackagePath, 'package');
+  return ensureExistingRegularFile(resolved, 'package');
+}
+
+function validateSignaturePath(rawSignaturePath: string): string {
+  const resolved = normalizeAndValidatePath(rawSignaturePath, 'signature');
+  return ensureExistingRegularFile(resolved, 'signature');
 }
 
 /**
@@ -68,70 +141,40 @@ export class SkillSignatureVerifier {
     const {
       packagePath,
       signaturePath,
-      publicKeyPem,
-      allowUnsigned = false
     } = params;
 
-    // Validate package file exists
-    if (!fs.existsSync(packagePath)) {
+    let validatedPackagePath: string;
+    let validatedSignaturePath: string;
+    try {
+      validatedPackagePath = validatePackagePath(packagePath);
+      validatedSignaturePath = validateSignaturePath(signaturePath);
+    } catch (error) {
       return {
         valid: false,
         signer: null,
         packageHash: '',
         verifiedAt: new Date().toISOString(),
         algorithm: 'Ed25519',
-        error: `Package file not found: ${packagePath}`
+        error: error instanceof Error ? error.message : String(error),
       };
     }
 
-    // Check signature file exists
-    if (!fs.existsSync(signaturePath)) {
-      if (allowUnsigned) {
-        // Unsigned allowed - compute hash but mark invalid
-        const packageHash = sha256File(packagePath);
-        return {
-          valid: false,
-          signer: null,
-          packageHash,
-          verifiedAt: new Date().toISOString(),
-          algorithm: 'Ed25519',
-          error: 'No signature file found (unsigned package)'
-        };
-      } else {
-        // Unsigned not allowed - fail
+    // Load pinned ClawSec key only
+    let keyPem: string;
+    try {
+      if (!fs.existsSync(this.publicKeyPath)) {
         return {
           valid: false,
           signer: null,
           packageHash: '',
           verifiedAt: new Date().toISOString(),
           algorithm: 'Ed25519',
-          error: `Signature file not found: ${signaturePath}`
+          error: `Public key file not found: ${this.publicKeyPath}`
         };
       }
-    }
 
-    // Load public key (either custom or pinned)
-    let keyPem: string;
-    try {
-      if (publicKeyPem) {
-        // Custom key provided - validate format
-        loadPublicKey(publicKeyPem); // Throws if invalid
-        keyPem = publicKeyPem;
-      } else {
-        // Load pinned ClawSec key
-        if (!fs.existsSync(this.publicKeyPath)) {
-          return {
-            valid: false,
-            signer: null,
-            packageHash: '',
-            verifiedAt: new Date().toISOString(),
-            algorithm: 'Ed25519',
-            error: `Public key file not found: ${this.publicKeyPath}`
-          };
-        }
-        keyPem = fs.readFileSync(this.publicKeyPath, 'utf8');
-        loadPublicKey(keyPem); // Validate pinned key
-      }
+      keyPem = fs.readFileSync(this.publicKeyPath, 'utf8');
+      loadPublicKey(keyPem); // Validate pinned key
     } catch (error) {
       if (error instanceof SecurityPolicyError) {
         return {
@@ -156,7 +199,7 @@ export class SkillSignatureVerifier {
     // Compute package hash (always, for integrity tracking)
     let packageHash: string;
     try {
-      packageHash = sha256File(packagePath);
+      packageHash = sha256File(validatedPackagePath);
     } catch (error) {
       return {
         valid: false,
@@ -170,8 +213,8 @@ export class SkillSignatureVerifier {
 
     // Verify signature
     const verificationResult = verifyDetachedSignatureWithDetails(
-      packagePath,
-      signaturePath,
+      validatedPackagePath,
+      validatedSignaturePath,
       keyPem
     );
 

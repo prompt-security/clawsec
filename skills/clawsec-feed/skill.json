@@ -1,6 +1,6 @@
 {
   "name": "clawsec-feed",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -20,6 +20,11 @@
         "path": "SKILL.md",
         "required": true,
         "description": "Advisory feed skill documentation"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history for advisory feed updates"
       },
       {
         "path": "advisories/feed.json",

@@ -121,6 +121,7 @@ else
     while IFS= read -r id; do
       [ -z "$id" ] && continue
       jq -r --arg id "$id" '.advisories[] | select(.id == $id) | "- [\(.severity | ascii_upcase)] \(.id): \(.title)"' "$FEED_TMP"
+      jq -r --arg id "$id" '.advisories[] | select(.id == $id) | "  Exploitability: \(.exploitability_score // "unknown" | ascii_upcase)"' "$FEED_TMP"
       jq -r --arg id "$id" '.advisories[] | select(.id == $id) | "  Action: \(.action // "Review advisory details")"' "$FEED_TMP"
     done < "$NEW_IDS_FILE"
   else
@@ -194,8 +195,18 @@ fi
 Heartbeat output should include:
 - suite version status,
 - advisory feed status,
-- new advisory list (if any),
+- new advisory list (if any) with exploitability scores,
 - installed skills that appear in advisory `affected` lists,
 - and a double-confirmation reminder before risky install/remove actions.
 
-If your runtime sends alerts, treat `critical` and `high` advisories affecting installed skills as immediate notifications.
+### Exploitability-Based Prioritization
+
+When alerting on advisories, prioritize by **exploitability score** in addition to severity:
+
+- `high` exploitability: Trivially or easily exploitable with public tooling, immediate action required
+- `medium` exploitability: Exploitable with specific conditions, standard priority
+- `low` exploitability: Difficult to exploit or theoretical, low priority
+
+**Priority Rule**: A HIGH severity + HIGH exploitability CVE should be treated more urgently than a CRITICAL severity + LOW exploitability CVE.
+
+If your runtime sends alerts, treat `high` exploitability advisories affecting installed skills as immediate notifications, regardless of severity rating.

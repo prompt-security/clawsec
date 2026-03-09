@@ -5,6 +5,21 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-02-28
+
+### Added
+
+- Advisory output snippets now include exploitability context in suite quick-check and heartbeat examples.
+
+### Changed
+
+- Clarified exploitability guidance to match runtime score values (`high|medium|low|unknown`).
+- Prioritization guidance now emphasizes high-exploitability advisories for immediate handling.
+
+### Fixed
+
+- Kept exploitability enrichment in advisory workflows non-fatal per item so a single analysis failure does not abort feed updates.
+
 ## [0.1.3]
 
 ### Added

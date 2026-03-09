@@ -17,6 +17,9 @@ on:
 
 permissions: read-all
 
+env:
+  CLAWHUB_CLI_VERSION: 0.7.0
+
 concurrency:
   group: skill-release-${{ github.ref }}
   cancel-in-progress: false
@@ -540,7 +543,7 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     outputs:
       skill_name: ${{ steps.parse.outputs.skill_name }}
       version: ${{ steps.parse.outputs.version }}
@@ -877,15 +880,6 @@ jobs:
             } >> $GITHUB_OUTPUT
           fi
 
-      - name: Require automation token for release publishing
-        env:
-          AUTOMATION_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
-        run: |
-          if [ -z "$AUTOMATION_TOKEN" ]; then
-            echo "::error::Set POLL_NVD_CVES_PAT with repo write permissions."
-            exit 1
-          fi
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
@@ -945,7 +939,7 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete superseded releases
         run: |
@@ -982,7 +976,7 @@ jobs:
 
           echo "Superseded release cleanup complete"
         env:
-          GITHUB_TOKEN: ${{ secrets.POLL_NVD_CVES_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-clawhub:
     # Separate job for ClawHub publishing - runs after GitHub release
@@ -1015,7 +1009,51 @@ jobs:
 
       - name: Install clawhub CLI
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
-        run: npm install -g clawhub@0.7.0
+        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+
+      - name: Patch clawhub publish payload workaround
+        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
+        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        run: |
+          node <<'NODE'
+          const { execSync } = require("node:child_process");
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+          const publishScriptPath = path.join(
+            npmRoot,
+            "clawhub",
+            "dist",
+            "cli",
+            "commands",
+            "publish.js"
+          );
+
+          if (!fs.existsSync(publishScriptPath)) {
+            throw new Error(`clawhub publish script not found: ${publishScriptPath}`);
+          }
+
+          const original = fs.readFileSync(publishScriptPath, "utf8");
+          if (original.includes("acceptLicenseTerms: true")) {
+            console.log(`[patch-clawhub] Already patched: ${publishScriptPath}`);
+            process.exit(0);
+          }
+
+          const payloadPattern = /changelog,\r?\n(\s*)tags,/;
+          if (!payloadPattern.test(original)) {
+            throw new Error(
+              `[patch-clawhub] Could not find expected publish payload pattern in ${publishScriptPath}`
+            );
+          }
+
+          const patched = original.replace(
+            payloadPattern,
+            (_, indent) => `changelog,\n${indent}acceptLicenseTerms: true,\n${indent}tags,`
+          );
+          fs.writeFileSync(publishScriptPath, patched, "utf8");
+          console.log(`[patch-clawhub] Patched: ${publishScriptPath}`);
+          NODE
 
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1126,7 +1164,50 @@ jobs:
           node-version: 20
 
       - name: Install clawhub CLI
-        run: npm install -g clawhub@0.7.0
+        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+
+      - name: Patch clawhub publish payload workaround
+        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
+        run: |
+          node <<'NODE'
+          const { execSync } = require("node:child_process");
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+          const publishScriptPath = path.join(
+            npmRoot,
+            "clawhub",
+            "dist",
+            "cli",
+            "commands",
+            "publish.js"
+          );
+
+          if (!fs.existsSync(publishScriptPath)) {
+            throw new Error(`clawhub publish script not found: ${publishScriptPath}`);
+          }
+
+          const original = fs.readFileSync(publishScriptPath, "utf8");
+          if (original.includes("acceptLicenseTerms: true")) {
+            console.log(`[patch-clawhub] Already patched: ${publishScriptPath}`);
+            process.exit(0);
+          }
+
+          const payloadPattern = /changelog,\r?\n(\s*)tags,/;
+          if (!payloadPattern.test(original)) {
+            throw new Error(
+              `[patch-clawhub] Could not find expected publish payload pattern in ${publishScriptPath}`
+            );
+          }
+
+          const patched = original.replace(
+            payloadPattern,
+            (_, indent) => `changelog,\n${indent}acceptLicenseTerms: true,\n${indent}tags,`
+          );
+          fs.writeFileSync(publishScriptPath, patched, "utf8");
+          console.log(`[patch-clawhub] Patched: ${publishScriptPath}`);
+          NODE
 
       - name: Login to ClawHub
         run: |

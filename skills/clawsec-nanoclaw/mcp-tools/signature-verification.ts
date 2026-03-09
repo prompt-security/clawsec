@@ -18,6 +18,55 @@ declare function writeIpcFile(dir: string, data: any): void;
 declare const TASKS_DIR: string;
 declare const groupFolder: string;
 
+const ALLOWED_VERIFICATION_ROOTS = [
+  '/tmp',
+  '/var/tmp',
+  '/workspace/ipc',
+  '/workspace/project/data',
+  '/workspace/project/tmp',
+  '/workspace/project/downloads',
+] as const;
+
+const ALLOWED_PACKAGE_EXTENSIONS = ['.zip', '.tar', '.tgz', '.tar.gz'] as const;
+
+function isWithinAllowedRoots(filePath: string): boolean {
+  return ALLOWED_VERIFICATION_ROOTS.some((root) => filePath === root || filePath.startsWith(`${root}/`));
+}
+
+function validatePackagePath(rawPath: string): string {
+  if (!path.isAbsolute(rawPath)) {
+    throw new Error('packagePath must be absolute');
+  }
+
+  const resolved = path.resolve(rawPath);
+  if (!isWithinAllowedRoots(resolved)) {
+    throw new Error(`packagePath must be under: ${ALLOWED_VERIFICATION_ROOTS.join(', ')}`);
+  }
+
+  if (!ALLOWED_PACKAGE_EXTENSIONS.some((ext) => resolved.endsWith(ext))) {
+    throw new Error(`packagePath must end with one of: ${ALLOWED_PACKAGE_EXTENSIONS.join(', ')}`);
+  }
+
+  return resolved;
+}
+
+function validateSignaturePath(rawPath: string): string {
+  if (!path.isAbsolute(rawPath)) {
+    throw new Error('signaturePath must be absolute');
+  }
+
+  const resolved = path.resolve(rawPath);
+  if (!isWithinAllowedRoots(resolved)) {
+    throw new Error(`signaturePath must be under: ${ALLOWED_VERIFICATION_ROOTS.join(', ')}`);
+  }
+
+  if (!resolved.endsWith('.sig')) {
+    throw new Error('signaturePath must end with .sig');
+  }
+
+  return resolved;
+}
+
 // Result waiting helper
 async function waitForResult(requestId: string, timeoutMs: number = 5000): Promise<any> {
   const resultDir = '/workspace/ipc/clawsec_results';
@@ -49,10 +98,13 @@ server.tool(
   },
   async (args: { packagePath: string; signaturePath?: string }) => {
     const requestId = `verify-signature-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const sigPath = args.signaturePath || `${args.packagePath}.sig`;
+    let packagePath: string;
+    let sigPath: string;
 
-    // Validate package file exists
-    if (!fs.existsSync(args.packagePath)) {
+    try {
+      packagePath = validatePackagePath(args.packagePath);
+      sigPath = validateSignaturePath(args.signaturePath || `${packagePath}.sig`);
+    } catch (error) {
       return {
         content: [{
           type: 'text' as const,
@@ -60,7 +112,23 @@ server.tool(
             success: false,
             valid: false,
             recommendation: 'block',
-            error: `Package file not found: ${args.packagePath}`
+            error: error instanceof Error ? error.message : String(error),
+          }, null, 2)
+        }],
+        isError: true
+      };
+    }
+
+    // Validate package file exists
+    if (!fs.existsSync(packagePath)) {
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({
+            success: false,
+            valid: false,
+            recommendation: 'block',
+            error: `Package file not found: ${packagePath}`
           }, null, 2)
         }],
         isError: true
@@ -73,7 +141,7 @@ server.tool(
       requestId,
       groupFolder,
       timestamp: new Date().toISOString(),
-      packagePath: args.packagePath,
+      packagePath,
       signaturePath: sigPath,
     });
 
@@ -90,7 +158,7 @@ server.tool(
               success: false,
               valid: false,
               recommendation: 'block',
-              packagePath: args.packagePath,
+              packagePath,
               signaturePath: sigPath,
               error: result.message || 'Verification failed',
               reason: result.error?.code || 'UNKNOWN_ERROR'
@@ -109,7 +177,7 @@ server.tool(
               success: true,
               valid: false,
               recommendation: 'block',
-              packagePath: args.packagePath,
+              packagePath,
               signaturePath: sigPath,
               reason: result.data?.error || 'Signature verification failed',
               packageInfo: {
@@ -128,13 +196,13 @@ server.tool(
             success: true,
             valid: true,
             recommendation: 'install',
-            packagePath: args.packagePath,
+            packagePath,
             signaturePath: sigPath,
             signer: result.data.signer,
             algorithm: result.data.algorithm,
             verifiedAt: result.data.verifiedAt,
             packageInfo: {
-              size: fs.statSync(args.packagePath).size,
+              size: fs.statSync(packagePath).size,
               sha256: result.data.packageHash
             }
           }, null, 2)

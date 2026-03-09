@@ -11,13 +11,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# shellcheck source=./feed-utils.sh
+source "$SCRIPT_DIR/feed-utils.sh"
 
 # Configuration - same as pipeline
-FEED_PATH="$PROJECT_ROOT/advisories/feed.json"
-SKILL_FEED_PATH="$PROJECT_ROOT/skills/clawsec-feed/advisories/feed.json"
-PUBLIC_FEED_PATH="$PROJECT_ROOT/public/advisories/feed.json"
+init_feed_paths "$PROJECT_ROOT"
 KEYWORDS="OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
 GITHUB_REF_PATTERN="github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
+ENRICH_SCRIPT="$PROJECT_ROOT/scripts/ci/enrich_exploitability.sh"
 
 # Parse args
 DAYS_BACK=120
@@ -46,6 +47,12 @@ echo "Days back: $DAYS_BACK"
 echo "Force mode: $FORCE"
 echo ""
 
+# Verify enrichment helper exists (it validates Python/analyzer prerequisites internally).
+if [ ! -x "$ENRICH_SCRIPT" ]; then
+  echo "Error: Exploitability enrichment helper not found or not executable: $ENRICH_SCRIPT"
+  exit 1
+fi
+
 # Create temp directory
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
@@ -62,7 +69,7 @@ fi
 if [ -z "${START_DATE:-}" ]; then
   # macOS vs Linux date compatibility
   if date -v-1d > /dev/null 2>&1; then
-    START_DATE=$(date -u -v-${DAYS_BACK}d +%Y-%m-%dT%H:%M:%S.000Z)
+    START_DATE=$(date -u -v-"${DAYS_BACK}"d +%Y-%m-%dT%H:%M:%S.000Z)
   else
     START_DATE=$(date -u -d "${DAYS_BACK} days ago" +%Y-%m-%dT%H:%M:%S.000Z)
   fi
@@ -74,8 +81,8 @@ echo "End date: $END_DATE"
 echo ""
 
 # URL encode dates
-START_ENC=$(echo "$START_DATE" | sed 's/:/%3A/g')
-END_ENC=$(echo "$END_DATE" | sed 's/:/%3A/g')
+START_ENC=${START_DATE//:/%3A}
+END_ENC=${END_DATE//:/%3A}
 
 echo "=== Fetching CVEs from NVD ==="
 
@@ -267,7 +274,7 @@ jq --argjson existing "$EXISTING_JSON" '
       | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
     );
   
-  [.[] | 
+  [.[] |
     select(.cve.id as $id | $existing | index($id) | not) |
     {
       id: .cve.id,
@@ -281,7 +288,9 @@ jq --argjson existing "$EXISTING_JSON" '
       published: .cve.published,
       references: [.cve.references[]?.url // empty] | unique | .[0:3],
       cvss_score: get_cvss_score,
-      nvd_url: ("https://nvd.nist.gov/vuln/detail/" + .cve.id)
+      nvd_url: ("https://nvd.nist.gov/vuln/detail/" + .cve.id),
+      exploitability_score: null,
+      exploitability_rationale: null
     }
   ]
 ' "$TEMP_DIR/filtered_cves.json" > "$TEMP_DIR/new_advisories.json"
@@ -295,6 +304,28 @@ if [ "$NEW_COUNT" -eq 0 ]; then
   echo "Use --force to re-fetch all CVEs regardless of existing entries."
   exit 0
 fi
+
+echo ""
+echo "=== Analyzing Exploitability ==="
+
+# Build CVSS vector lookup for enriched analysis inputs.
+jq '
+  [.[] | {
+    id: .cve.id,
+    cvss_vector: (
+      .cve.metrics.cvssMetricV31[0]?.cvssData.vectorString //
+      .cve.metrics.cvssMetricV30[0]?.cvssData.vectorString //
+      .cve.metrics.cvssMetricV2[0]?.vectorString //
+      ""
+    )
+  }] | map({(.id): .cvss_vector}) | add
+' "$TEMP_DIR/filtered_cves.json" > "$TEMP_DIR/cvss_vectors.json"
+
+"$ENRICH_SCRIPT" \
+  --mode batch \
+  --input "$TEMP_DIR/new_advisories.json" \
+  --output "$TEMP_DIR/new_advisories.json" \
+  --cvss-vectors "$TEMP_DIR/cvss_vectors.json"
 
 echo ""
 echo "=== New Advisories ==="
@@ -338,16 +369,9 @@ if jq empty "$TEMP_DIR/updated_feed.json" 2>/dev/null; then
   # Update main feed
   cp "$TEMP_DIR/updated_feed.json" "$FEED_PATH"
   echo "✓ Updated: $FEED_PATH"
-  
-  # Update skill feed
-  mkdir -p "$(dirname "$SKILL_FEED_PATH")"
-  cp "$FEED_PATH" "$SKILL_FEED_PATH"
-  echo "✓ Updated: $SKILL_FEED_PATH"
-  
-  # Update public feed for local dev
-  mkdir -p "$(dirname "$PUBLIC_FEED_PATH")"
-  cp "$FEED_PATH" "$PUBLIC_FEED_PATH"
-  echo "✓ Updated: $PUBLIC_FEED_PATH"
+
+  # Sync feed mirrors for local skill/public consumers.
+  sync_feed_to_mirrors "$FEED_PATH" "create"
   
   echo ""
   TOTAL_ADVISORIES=$(jq '.advisories | length' "$FEED_PATH")

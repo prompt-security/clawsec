@@ -193,6 +193,27 @@ jobs:
           echo "Created advisory JSON:"
           cat tmp_advisory.json
 
+      - name: Set up Python for exploitability analysis
+        if: steps.parse.outputs.already_exists != 'true'
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.10'
+
+      - name: Analyze exploitability for community advisory
+        if: steps.parse.outputs.already_exists != 'true'
+        run: |
+          set -euo pipefail
+
+          echo "=== Analyzing exploitability for community advisory ==="
+
+          scripts/ci/enrich_exploitability.sh \
+            --mode single \
+            --input tmp_advisory.json \
+            --output tmp_advisory.json
+
+          echo "=== Exploitability analysis complete ==="
+          echo "Exploitability score: $(jq -r '.exploitability_score // "unknown"' tmp_advisory.json)"
+
       - name: Update feed
         if: steps.parse.outputs.already_exists != 'true'
         run: |

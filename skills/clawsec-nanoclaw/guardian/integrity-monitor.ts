@@ -312,7 +312,7 @@ export class IntegrityMonitor {
       if (target.path) {
         // Direct path
         targets.push({
-          path: target.path,
+          path: path.resolve(target.path),
           mode: target.mode,
           priority: target.priority
         });
@@ -336,6 +336,18 @@ export class IntegrityMonitor {
     return targets;
   }
 
+  private normalizeBaselines(manifest: BaselinesManifest): BaselinesManifest {
+    const normalizedFiles: Record<string, FileBaseline> = {};
+    for (const [filePath, baseline] of Object.entries(manifest.files || {})) {
+      normalizedFiles[path.resolve(filePath)] = baseline;
+    }
+
+    return {
+      ...manifest,
+      files: normalizedFiles,
+    };
+  }
+
   // --------------------------------------------------------------------------
   // Baseline Management
   // --------------------------------------------------------------------------
@@ -343,7 +355,7 @@ export class IntegrityMonitor {
   private loadBaselines(): BaselinesManifest {
     if (fs.existsSync(this.baselinesPath)) {
       const raw = fs.readFileSync(this.baselinesPath, 'utf-8');
-      return JSON.parse(raw);
+      return this.normalizeBaselines(JSON.parse(raw));
     }
 
     return {
@@ -585,37 +597,43 @@ export class IntegrityMonitor {
       throw new Error('Baselines not loaded');
     }
 
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`File not found: ${filePath}`);
+    const normalizedFilePath = path.resolve(filePath);
+
+    if (!fs.existsSync(normalizedFilePath)) {
+      throw new Error(`File not found: ${normalizedFilePath}`);
     }
 
-    refuseSymlink(filePath);
+    refuseSymlink(normalizedFilePath);
 
-    const previousSha = this.baselines.files[filePath]?.sha256;
-    const currentSha = sha256File(filePath);
+    const targets = this.resolveTargets();
+    const target = targets.find(t => t.path === normalizedFilePath);
+    if (!target || target.mode === 'ignore') {
+      throw new Error(`File ${normalizedFilePath} not in policy`);
+    }
+
+    const previousSha = this.baselines.files[normalizedFilePath]?.sha256;
+    const currentSha = sha256File(normalizedFilePath);
 
     // Generate diff
-    const snapshot = path.join(this.approvedDir, path.basename(filePath));
+    const snapshot = path.join(this.approvedDir, path.basename(normalizedFilePath));
     const oldText = fs.existsSync(snapshot) ? fs.readFileSync(snapshot, 'utf-8') : '';
-    const newText = fs.readFileSync(filePath, 'utf-8');
-    const diff = unifiedDiff(oldText, newText, `approved/${path.basename(filePath)}`, path.basename(filePath));
+    const newText = fs.readFileSync(normalizedFilePath, 'utf-8');
+    const diff = unifiedDiff(
+      oldText,
+      newText,
+      `approved/${path.basename(normalizedFilePath)}`,
+      path.basename(normalizedFilePath)
+    );
 
     const patchPath = path.join(
       this.patchesDir,
-      `${new Date().toISOString().replace(/[:.]/g, '-')}-approve-${safePatchTag(path.basename(filePath))}.patch`
+      `${new Date().toISOString().replace(/[:.]/g, '-')}-approve-${safePatchTag(path.basename(normalizedFilePath))}.patch`
     );
     fs.writeFileSync(patchPath, diff);
 
     // Update baseline
-    if (!this.baselines.files[filePath]) {
-      // Find mode from policy
-      const targets = this.resolveTargets();
-      const target = targets.find(t => t.path === filePath);
-      if (!target) {
-        throw new Error(`File ${filePath} not in policy`);
-      }
-
-      this.baselines.files[filePath] = {
+    if (!this.baselines.files[normalizedFilePath]) {
+      this.baselines.files[normalizedFilePath] = {
         sha256: currentSha,
         approved_at: utcNowIso(),
         approved_by: actor,
@@ -623,13 +641,13 @@ export class IntegrityMonitor {
         priority: target.priority
       };
     } else {
-      this.baselines.files[filePath].sha256 = currentSha;
-      this.baselines.files[filePath].approved_at = utcNowIso();
-      this.baselines.files[filePath].approved_by = actor;
+      this.baselines.files[normalizedFilePath].sha256 = currentSha;
+      this.baselines.files[normalizedFilePath].approved_at = utcNowIso();
+      this.baselines.files[normalizedFilePath].approved_by = actor;
     }
 
     // Update snapshot
-    fs.copyFileSync(filePath, snapshot);
+    fs.copyFileSync(normalizedFilePath, snapshot);
 
     // Save and audit
     this.saveBaselines();
@@ -639,7 +657,7 @@ export class IntegrityMonitor {
       event: 'approve',
       actor,
       note,
-      path: filePath,
+      path: normalizedFilePath,
       expected_sha: previousSha,
       found_sha: currentSha,
       patch_path: patchPath
@@ -656,8 +674,9 @@ export class IntegrityMonitor {
       throw new Error('Baselines not loaded');
     }
 
-    const files = filePath
-      ? { [filePath]: this.baselines.files[filePath] }
+    const normalizedFilePath = filePath ? path.resolve(filePath) : null;
+    const files = normalizedFilePath
+      ? { [normalizedFilePath]: this.baselines.files[normalizedFilePath] }
       : this.baselines.files;
 
     return {

@@ -130,8 +130,13 @@ console.log('Safe to proceed with installation.');
 ### MCP Tool: `clawsec_verify_skill_package`
 
 **Parameters:**
-- `packagePath` (required): Absolute path to skill package (`.tar.gz` or `.zip`)
+- `packagePath` (required): Absolute path to skill package (`.tar.gz`, `.tar`, `.tgz`, or `.zip`)
 - `signaturePath` (optional): Path to signature file (auto-detects `.sig` if omitted)
+
+Path policy:
+- Files must be under one of: `/tmp`, `/var/tmp`, `/workspace/ipc`, `/workspace/project/data`, `/workspace/project/tmp`, `/workspace/project/downloads`
+- Symlinks are rejected
+- Signatures must use `.sig`
 
 **Returns:**
 ```typescript
@@ -139,7 +144,7 @@ console.log('Safe to proceed with installation.');
   success: boolean,           // Operation completed without errors
   valid: boolean,             // Signature is cryptographically valid
   recommendation: string,     // "install" | "block" | "review"
-  signer: string,             // "clawsec" or custom signer
+  signer: string,             // "clawsec"
   algorithm: "Ed25519",       // Signature algorithm
   verifiedAt: string,         // ISO timestamp
   packageInfo: {
@@ -335,22 +340,10 @@ openssl pkey -pubin -in feed-signing-public.pem -outform DER | \
 # Expected: <will be filled in after key generation>
 ```
 
-### Using Custom Public Keys
+### Public Key Policy
 
-For organizational deployments with custom skill publishers:
-
-```typescript
-// Load custom public key
-const customPublicKey = fs.readFileSync('/path/to/org-public.pem', 'utf8');
-
-// Verify with custom key (not pinned ClawSec key)
-const verification = await tools.clawsec_verify_skill_package({
-  packagePath: '/tmp/org-skill.tar.gz',
-  publicKeyPath: '/path/to/org-public.pem'  // Custom key
-});
-```
-
-**Note**: The MCP tool currently uses the pinned key. Custom key support via `publicKeyPem` parameter requires host-side implementation.
+The verifier always uses the pinned ClawSec public key from this skill package.
+Runtime public-key overrides are intentionally not supported.
 
 ### Key Rotation
 

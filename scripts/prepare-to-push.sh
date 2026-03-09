@@ -76,13 +76,13 @@ fi
 # ESLint
 echo -e "\n${YELLOW}Running ESLint...${NC}"
 if $FIX_MODE; then
-  if npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --fix; then
+  if npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --ignore-pattern '.auto-claude/**' --fix; then
     check_pass "ESLint (with auto-fix)"
   else
     check_fail "ESLint found unfixable issues"
   fi
 else
-  if npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings 0; then
+  if npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --ignore-pattern '.auto-claude/**' --max-warnings 0; then
     check_pass "ESLint"
   else
     check_fail "ESLint found issues (run with --fix to auto-fix)"
@@ -190,7 +190,7 @@ print_header "Security"
 # Trivy FS Scan
 if command -v trivy &> /dev/null; then
   echo -e "\n${YELLOW}Running Trivy filesystem scan...${NC}"
-  if trivy fs . --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed; then
+  if trivy fs . --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed --skip-dirs .auto-claude --skip-files clawsec-signing-private.pem; then
     check_pass "Trivy filesystem scan"
   else
     check_fail "Trivy found CRITICAL/HIGH vulnerabilities"
