@@ -852,9 +852,8 @@ jobs:
           VERSION="${{ steps.parse.outputs.version }}"
 
           if [ ! -f "$SKILL_PATH/CHANGELOG.md" ]; then
-            echo "No CHANGELOG.md found"
-            echo "changelog=" >> $GITHUB_OUTPUT
-            exit 0
+            echo "::error::Missing required changelog file: $SKILL_PATH/CHANGELOG.md"
+            exit 1
           fi
 
           # Extract the changelog section for this version
@@ -868,17 +867,18 @@ jobs:
           ' "$SKILL_PATH/CHANGELOG.md" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
 
           if [ -z "$CHANGELOG_ENTRY" ]; then
-            echo "No changelog entry found for version $VERSION"
-            echo "changelog=" >> $GITHUB_OUTPUT
-          else
-            echo "Found changelog entry for version $VERSION"
-            # Use multiline output format for GitHub Actions
-            {
-              echo "changelog<<EOF"
-              echo "$CHANGELOG_ENTRY"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
+            echo "::error::No changelog entry found for version $VERSION in $SKILL_PATH/CHANGELOG.md"
+            echo "::error::Expected heading format: ## [$VERSION] - YYYY-MM-DD"
+            exit 1
           fi
+
+          echo "Found changelog entry for version $VERSION"
+          # Use multiline output format for GitHub Actions
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG_ENTRY"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
