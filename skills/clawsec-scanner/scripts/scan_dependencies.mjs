@@ -124,9 +124,7 @@ async function scanNpmAudit(targetPath) {
   try {
     // Run npm audit with JSON output
     // NOTE: npm audit exits non-zero when vulnerabilities are found
-    const { stdout } = await execCommand("npm", ["audit", "--json"], {
-      env: { ...process.env, npm_config_prefix: targetPath },
-    });
+    const { stdout } = await execCommand("npm", ["audit", "--json"], { cwd: targetPath });
 
     const auditData = safeJsonParse(stdout, {
       fallback: { vulnerabilities: {} },
@@ -229,9 +227,9 @@ async function scanPipAudit(targetPath) {
   }
 
   try {
-    // Run pip-audit with JSON output
-    // pip-audit scans the current directory by default
-    const { stdout } = await execCommand("pip-audit", ["-f", "json", "-r", requirementsTxt]);
+    // Prefer requirements.txt when present; otherwise scan project context in target dir.
+    const pipAuditArgs = hasRequirements ? ["-f", "json", "-r", "requirements.txt"] : ["-f", "json"];
+    const { stdout } = await execCommand("pip-audit", pipAuditArgs, { cwd: targetPath });
 
     const auditData = safeJsonParse(stdout, {
       fallback: { dependencies: [] },

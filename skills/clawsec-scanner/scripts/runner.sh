@@ -155,9 +155,15 @@ fi
 # Run DAST tests
 if [[ "$RUN_DAST" -eq 1 ]]; then
   if command -v node >/dev/null 2>&1; then
-    node "$SCRIPT_DIR/dast_runner.mjs" --target "$TARGET" --format json > "$DAST_REPORT" 2>/dev/null || {
-      echo '{"scan_id":"","timestamp":"","target":"","vulnerabilities":[],"summary":{"critical":0,"high":0,"medium":0,"low":0,"info":0}}' > "$DAST_REPORT"
-    }
+    if ! node "$SCRIPT_DIR/dast_runner.mjs" --target "$TARGET" --format json > "$DAST_REPORT" 2>/dev/null; then
+      # dast_runner exits non-zero when high/critical findings exist.
+      # Preserve a valid JSON report in that case; only fall back to empty on true execution errors.
+      if [[ -s "$DAST_REPORT" ]] && jq -e '.vulnerabilities and .summary' "$DAST_REPORT" >/dev/null 2>&1; then
+        echo "Warning: DAST runner exited non-zero; preserving generated findings report" >&2
+      else
+        echo '{"scan_id":"","timestamp":"","target":"","vulnerabilities":[],"summary":{"critical":0,"high":0,"medium":0,"low":0,"info":0}}' > "$DAST_REPORT"
+      fi
+    fi
   else
     echo "Warning: node not found, skipping DAST tests" >&2
     echo '{"scan_id":"","timestamp":"","target":"","vulnerabilities":[],"summary":{"critical":0,"high":0,"medium":0,"low":0,"info":0}}' > "$DAST_REPORT"

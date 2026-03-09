@@ -16,7 +16,7 @@ export function isObject(value) {
  *
  * @param {string} cmd - Command to execute
  * @param {string[]} args - Command arguments
- * @param {{env?: Record<string, string>}} [options] - Execution options
+ * @param {{env?: Record<string, string>, cwd?: string}} [options] - Execution options
  * @returns {Promise<{code: number, stdout: string, stderr: string}>}
  */
 export function execCommand(cmd, args, options = {}) {
@@ -24,6 +24,7 @@ export function execCommand(cmd, args, options = {}) {
     const proc = spawn(cmd, args, {
       stdio: ["ignore", "pipe", "pipe"],
       env: { ...process.env, ...options.env },
+      cwd: options.cwd,
     });
 
     let stdout = "";
