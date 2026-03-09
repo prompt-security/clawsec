@@ -73,12 +73,16 @@ async function loadState(stateFile: string): Promise<ScannerState> {
   try {
     const content = await fs.readFile(stateFile, "utf8");
     const parsed = safeJsonParse(content, { fallback: {}, label: "scanner state" });
+    const parsedState =
+      parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
 
     return {
-      last_hook_scan: String(parsed?.last_hook_scan ?? ""),
-      last_full_scan: String(parsed?.last_full_scan ?? ""),
-      known_vulnerabilities: Array.isArray(parsed?.known_vulnerabilities)
-        ? parsed.known_vulnerabilities.filter((v): v is string => typeof v === "string")
+      last_hook_scan:
+        typeof parsedState.last_hook_scan === "string" ? parsedState.last_hook_scan : null,
+      last_full_scan:
+        typeof parsedState.last_full_scan === "string" ? parsedState.last_full_scan : null,
+      known_vulnerabilities: Array.isArray(parsedState.known_vulnerabilities)
+        ? parsedState.known_vulnerabilities.filter((v): v is string => typeof v === "string")
         : [],
     };
   } catch {
