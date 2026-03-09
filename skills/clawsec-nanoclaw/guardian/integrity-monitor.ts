@@ -312,7 +312,7 @@ export class IntegrityMonitor {
       if (target.path) {
         // Direct path
         targets.push({
-          path: target.path,
+          path: path.resolve(target.path),
           mode: target.mode,
           priority: target.priority
         });
@@ -336,6 +336,18 @@ export class IntegrityMonitor {
     return targets;
   }
 
+  private normalizeBaselines(manifest: BaselinesManifest): BaselinesManifest {
+    const normalizedFiles: Record<string, FileBaseline> = {};
+    for (const [filePath, baseline] of Object.entries(manifest.files || {})) {
+      normalizedFiles[path.resolve(filePath)] = baseline;
+    }
+
+    return {
+      ...manifest,
+      files: normalizedFiles,
+    };
+  }
+
   // --------------------------------------------------------------------------
   // Baseline Management
   // --------------------------------------------------------------------------
@@ -343,7 +355,7 @@ export class IntegrityMonitor {
   private loadBaselines(): BaselinesManifest {
     if (fs.existsSync(this.baselinesPath)) {
       const raw = fs.readFileSync(this.baselinesPath, 'utf-8');
-      return JSON.parse(raw);
+      return this.normalizeBaselines(JSON.parse(raw));
     }
 
     return {
@@ -662,8 +674,9 @@ export class IntegrityMonitor {
       throw new Error('Baselines not loaded');
     }
 
-    const files = filePath
-      ? { [filePath]: this.baselines.files[filePath] }
+    const normalizedFilePath = filePath ? path.resolve(filePath) : null;
+    const files = normalizedFilePath
+      ? { [normalizedFilePath]: this.baselines.files[normalizedFilePath] }
       : this.baselines.files;
 
     return {

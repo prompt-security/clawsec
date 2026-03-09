@@ -47,3 +47,11 @@ test('integrity approvals are restricted to policy targets', () => {
     'must require approved file to exist in non-ignored policy target list'
   );
 });
+
+test('integrity targets and baselines use normalized absolute paths', () => {
+  const source = readSkillFile('guardian/integrity-monitor.ts');
+
+  assert.ok(source.includes('path: path.resolve(target.path)'), 'resolveTargets must normalize direct target paths');
+  assert.ok(source.includes('const normalizedFilePath = path.resolve(filePath);'), 'status/approval lookups must normalize file paths');
+  assert.ok(source.includes('normalizedFiles[path.resolve(filePath)] = baseline;'), 'loaded baselines must be normalized to absolute keys');
+});
