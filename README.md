@@ -159,14 +159,22 @@ See [`skills/clawsec-nanoclaw/INSTALL.md`](skills/clawsec-nanoclaw/INSTALL.md) f
 
 The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and maintains security skills from the ClawSec catalog.
 
-### Skills in the Suite
+### Skills in the ClawSec Catalog
+
+All currently published skills in this repository:
 
 | Skill | Description | Installation | Compatibility |
 |-------|-------------|--------------|---------------|
-| 📡 **clawsec-feed** | Security advisory feed monitoring with live CVE updates | ✅ Included by default | All agents |
+| 📦 **clawsec-suite** | Suite manager with advisory monitoring, signature verification, and guarded skill install flows | `npx clawhub@latest install clawsec-suite` | OpenClaw/MoltBot/Clawdbot |
+| 📡 **clawsec-feed** | Security advisory feed monitoring with live CVE updates | ✅ Included by default via `clawsec-suite` | All agents |
+| 🧪 **clawsec-clawhub-checker** | ClawHub reputation checker with VirusTotal Code Insight integration | ⚙️ Optional (install separately) | OpenClaw/MoltBot/Clawdbot |
+| 🔍 **clawsec-scanner** | Automated vulnerability scanner (dependency scan, CVE enrichment, SAST, basic DAST) | ⚙️ Optional (install separately) | Agent platforms (OpenClaw first-class support) |
+| 📱 **clawsec-nanoclaw** | NanoClaw security suite with MCP tools, advisory checks, and signature verification | ⚙️ Optional (install separately) | NanoClaw |
+| 👻 **soul-guardian** | Drift detection and file integrity guard with auto-restore | ⚙️ Optional (install separately) | All agents |
 | 🔭 **openclaw-audit-watchdog** | Automated daily audits with email reporting | ⚙️ Optional (install separately) | OpenClaw/MoltBot/Clawdbot |
-| 👻 **soul-guardian** | Drift detection and file integrity guard with auto-restore | ⚙️ Optional | All agents |
 | 🤝 **clawtributor** | Community incident reporting | ❌ Optional (Explicit request) | All agents |
+| 🧠 **prompt-agent** | Security audit enforcement and prompt hardening workflows | ⚙️ Optional (install separately) | Agent platforms |
+| 🚀 **claw-release** | Release automation for Claw skills and website | ⚙️ Optional (install separately) | Maintainer workflow tooling |
 
 > ⚠️ **clawtributor** is not installed by default as it may share anonymized incident data. Install only on explicit user request.
 
@@ -433,14 +441,16 @@ npm run build
 │   ├── populate-local-wiki.sh # Local wiki llms export populator
 │   └── release-skill.sh       # Manual skill release helper
 ├── skills/
-│   ├── clawsec-suite/       # 📦 Suite installer (skill-of-skills)
-│   ├── clawsec-feed/        # 📡 Advisory feed skill
-│   ├── clawsec-nanoclaw/    # 📱 NanoClaw platform security suite
+│   ├── clawsec-suite/          # 📦 Suite installer (skill-of-skills)
+│   ├── clawsec-feed/           # 📡 Advisory feed skill
 │   ├── clawsec-clawhub-checker/ # 🧪 ClawHub reputation checks
-│   ├── clawtributor/           # 🤝 Community reporting skill
+│   ├── clawsec-scanner/        # 🔍 Automated vulnerability scanner
+│   ├── clawsec-nanoclaw/       # 📱 NanoClaw platform security suite
+│   ├── soul-guardian/          # 👻 File integrity skill
 │   ├── openclaw-audit-watchdog/ # 🔭 Automated audit skill
-│   ├── prompt-agent/          # 🧠 Prompt-focused protection workflows
-│   └── soul-guardian/         # 👻 File integrity skill
+│   ├── clawtributor/           # 🤝 Community reporting skill
+│   ├── prompt-agent/           # 🧠 Prompt-focused protection workflows
+│   └── claw-release/           # 🚀 Release automation skill
 ├── utils/
 │   ├── package_skill.py       # Skill packager utility
 │   └── validate_skill.py      # Skill validator utility
