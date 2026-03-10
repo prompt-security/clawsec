@@ -90,6 +90,8 @@ Manual/source-first option:
 
 Quick install for a standalone skill release:
 
+All ClawSec skills are installable standalone (without `clawsec-suite`).
+
 ```bash
 # Example: install clawsec-scanner directly
 npx clawhub@latest install clawsec-scanner
@@ -168,6 +170,8 @@ See [`skills/clawsec-nanoclaw/INSTALL.md`](skills/clawsec-nanoclaw/INSTALL.md) f
 
 The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and maintains security skills from the ClawSec catalog.
 
+`clawsec-suite` is optional orchestration; skills can still be installed directly as standalone packages.
+
 ### Skills in the Suite
 
 | Skill | Description | Installation | Compatibility |
@@ -180,12 +184,6 @@ The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and 
 > ⚠️ **clawtributor** is not installed by default as it may share anonymized incident data. Install only on explicit user request.
 
 > ⚠️ **openclaw-audit-watchdog** is tailored for the OpenClaw/MoltBot/Clawdbot agent family. Other agents receive the universal skill set.
-
-### Additional Standalone Skills
-
-| Skill | Description | Installation | Compatibility |
-|-------|-------------|--------------|---------------|
-| 🔍 **clawsec-scanner** | Automated multi-layer scanner (dependency scanning, SAST, and OpenClaw hook-focused DAST harness checks) | ⚙️ Optional (install separately) | OpenClaw and compatible agent environments |
 
 ### Suite Features
 
