@@ -196,6 +196,11 @@ function buildAlertMessage(report: ScanReport, format: string): string {
 }
 
 const handler = async (event: HookEvent, _context: HookContext): Promise<void> => {
+  // DAST harness mode executes hook handlers directly; skip recursive scanner runs.
+  if (process.env.CLAWSEC_DAST_HARNESS === "1" || _context?.dastMode === true) {
+    return;
+  }
+
   if (!shouldHandleEvent(event)) return;
 
   const installRoot = configuredPath(

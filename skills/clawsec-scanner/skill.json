@@ -1,7 +1,7 @@
 {
   "name": "clawsec-scanner",
-  "version": "0.0.1",
-  "description": "Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and basic DAST security testing for skill hooks.",
+  "version": "0.0.2",
+  "description": "Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific DAST hook execution testing for OpenClaw hooks.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security/",
@@ -57,7 +57,12 @@
       {
         "path": "scripts/dast_runner.mjs",
         "required": true,
-        "description": "Dynamic analysis framework for skill hook security testing"
+        "description": "Dynamic analysis harness executing OpenClaw hook handlers with malicious-input and timeout checks"
+      },
+      {
+        "path": "scripts/dast_hook_executor.mjs",
+        "required": true,
+        "description": "Isolated hook execution helper used by DAST for real OpenClaw harness testing"
       },
       {
         "path": "scripts/setup_scanner_hook.mjs",
@@ -103,6 +108,11 @@
         "path": "test/sast_engine.test.mjs",
         "required": false,
         "description": "Unit tests for SAST analysis (Semgrep, Bandit)"
+      },
+      {
+        "path": "test/dast_harness.test.mjs",
+        "required": false,
+        "description": "DAST harness tests for real hook execution and malicious-input failure detection"
       }
     ]
   },

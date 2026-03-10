@@ -20,7 +20,7 @@ The hook orchestrates four independent scanning engines:
 1. **Dependency Scanning**: Executes `npm audit` and `pip-audit` to detect known vulnerabilities in JavaScript and Python dependencies
 2. **SAST (Static Analysis)**: Runs Semgrep (JS/TS) and Bandit (Python) to detect security issues like hardcoded secrets, command injection, and path traversal
 3. **CVE Database Lookup**: Queries OSV API (primary), NVD 2.0 (optional), and GitHub Advisory Database (optional) for vulnerability enrichment
-4. **DAST (Dynamic Analysis)**: Tests skill hook security including input validation, timeout enforcement, and resource limits
+4. **DAST (Dynamic Analysis)**: Executes real OpenClaw hook handlers in an isolated harness and tests malicious-input resilience, timeout behavior, output bounds, and event mutation safety
 
 ## Safety Contract
 

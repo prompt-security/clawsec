@@ -1,7 +1,7 @@
 ---
 name: clawsec-scanner
-version: 0.0.1
-description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and basic DAST security testing for skill hooks.
+version: 0.0.2
+description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific DAST hook execution testing for OpenClaw hooks.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "🔍"
@@ -16,7 +16,7 @@ Comprehensive security scanner for agent platforms that automates vulnerability 
 - **Dependency Scanning**: Analyzes npm and Python dependencies using `npm audit` and `pip-audit` with structured JSON output parsing
 - **CVE Database Integration**: Queries OSV (primary), NVD 2.0, and GitHub Advisory Database for vulnerability enrichment
 - **SAST Analysis**: Static code analysis using Semgrep (JavaScript/TypeScript) and Bandit (Python) to detect hardcoded secrets, command injection, path traversal, and unsafe deserialization
-- **DAST Framework**: Basic dynamic analysis for skill hook security testing (input validation, timeout enforcement)
+- **DAST Framework**: Agent-specific dynamic analysis with real OpenClaw hook execution harness (malicious input, timeout, output bounds, event mutation safety)
 - **Unified Reporting**: Consolidated vulnerability reports with severity classification and remediation guidance
 - **Continuous Monitoring**: OpenClaw hook integration for automated periodic scanning
 
@@ -43,8 +43,8 @@ The scanner orchestrates four complementary scan types to provide comprehensive 
    - Identifies: hardcoded secrets (API keys, tokens), command injection (`eval`, `exec`), path traversal, unsafe deserialization
 
 4. **Dynamic Analysis (DAST)**
-   - Test framework for skill hook security validation
-   - Verifies: malicious input handling, timeout enforcement, resource limits
+   - Real hook execution harness for OpenClaw hook handlers discovered from `HOOK.md` metadata
+   - Verifies: malicious input resilience, timeout behavior, output amplification bounds, and core event mutation safety
    - Note: Traditional web DAST tools (ZAP, Burp) do not apply to agent platforms - this provides agent-specific testing
 
 ### Unified Reporting
@@ -248,7 +248,8 @@ scripts/runner.sh              # Orchestration layer
 ├── scan_dependencies.mjs      # npm audit + pip-audit
 ├── query_cve_databases.mjs    # OSV/NVD/GitHub API queries
 ├── sast_analyzer.mjs          # Semgrep + Bandit static analysis
-└── dast_runner.mjs            # Dynamic security testing
+├── dast_runner.mjs            # Dynamic security testing orchestration
+└── dast_hook_executor.mjs     # Isolated real hook execution harness
 
 lib/
 ├── report.mjs                 # Result aggregation and formatting
@@ -342,6 +343,7 @@ Check scanner is working correctly:
 node test/dependency_scanner.test.mjs
 node test/cve_integration.test.mjs
 node test/sast_engine.test.mjs
+node test/dast_harness.test.mjs
 
 # Validate skill structure
 python ../../utils/validate_skill.py .
@@ -364,6 +366,7 @@ done
 node test/dependency_scanner.test.mjs  # Dependency scanning
 node test/cve_integration.test.mjs     # CVE database APIs
 node test/sast_engine.test.mjs         # Static analysis
+node test/dast_harness.test.mjs        # DAST harness execution
 ```
 
 ### Linting
@@ -448,11 +451,11 @@ npx clawhub@latest install clawsec-suite
 
 ## Roadmap
 
-### v0.1.0 (Current)
+### v0.0.2 (Current)
 - [x] Dependency scanning (npm audit, pip-audit)
 - [x] CVE database integration (OSV, NVD, GitHub Advisory)
 - [x] SAST analysis (Semgrep, Bandit)
-- [x] Basic DAST framework for skill hooks
+- [x] Real OpenClaw hook execution harness for DAST
 - [x] Unified JSON reporting
 - [x] OpenClaw hook integration
 

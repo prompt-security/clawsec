@@ -73,6 +73,7 @@ function assertSourceHookExists() {
     "scripts/scan_dependencies.mjs",
     "scripts/sast_analyzer.mjs",
     "scripts/dast_runner.mjs",
+    "scripts/dast_hook_executor.mjs",
     "scripts/query_cve_databases.mjs",
   ];
   for (const file of requiredScripts) {
