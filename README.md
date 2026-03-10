@@ -88,17 +88,6 @@ Manual/source-first option:
 
 > Read https://github.com/prompt-security/clawsec/releases/latest/download/SKILL.md and follow the installation instructions.
 
-Quick install for a standalone skill release:
-
-All ClawSec skills are installable standalone (without `clawsec-suite`).
-
-```bash
-# Example: install clawsec-scanner directly
-npx clawhub@latest install clawsec-scanner
-```
-
-If you already have `clawsec-suite` installed, ask your agent to pull this skill and it will take care of everything automatically.
-
 ### For Humans
 
 Copy this instruction to your AI agent:
