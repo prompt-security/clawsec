@@ -29,6 +29,7 @@
 ## Modules
 - [Frontend Web App](modules/frontend-web.md)
 - [ClawSec Suite Core](modules/clawsec-suite.md)
+- [ClawSec Scanner](modules/clawsec-scanner.md)
 - [NanoClaw Integration](modules/nanoclaw-integration.md)
 - [Automation and Release Pipelines](modules/automation-release.md)
 - [Local Validation and Packaging Tools](modules/local-tooling.md)
@@ -40,6 +41,7 @@
 - [Generation Metadata](GENERATION.md)
 
 ## Update Notes
+- 2026-03-10: Added ClawSec Scanner module documentation and linked it under Modules.
 - 2026-02-26: Added Operations pages and updated navigation guidance after migrating root docs into wiki pages.
 
 ## Source References
@@ -50,4 +52,6 @@
 - scripts/populate-local-feed.sh
 - scripts/populate-local-skills.sh
 - skills/clawsec-suite/skill.json
+- skills/clawsec-scanner/skill.json
+- wiki/modules/clawsec-scanner.md
 - .github/workflows/ci.yml

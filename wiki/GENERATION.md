@@ -1,8 +1,8 @@
 # Wiki Generation Metadata
 
-- Commit hash: `d5aadfbee15b48ebb4872dfb838e4df88c611d56`
-- Branch name: `codex/wiki-tab-ui`
-- Generation timestamp (local): `2026-02-26T09:16:02+0200`
+- Commit hash: `c3983a100581a9f27eb8cc3b5baa4f585e6c45e4`
+- Branch name: `codex/clawsec-scanner-0.0.2-dast-harness`
+- Generation timestamp (local): `2026-03-10T19:06:29+0200`
 - Generation mode: `update`
 - Output language: `English`
 - Assets copied into `wiki/assets/`:
@@ -13,6 +13,7 @@
 ## Notes
 - Migrated root documentation pages from `docs/` into dedicated `wiki/` operation pages.
 - Updated index and cross-links to use `wiki/` as the documentation source of truth.
+- Added a dedicated module page for `clawsec-scanner` and linked it from `wiki/INDEX.md`.
 - Future updates should preserve existing headings and append `Update Notes` sections when making deltas.
 
 ## Source References
@@ -21,6 +22,7 @@
 - AGENTS.md
 - wiki/overview.md
 - wiki/architecture.md
+- wiki/modules/clawsec-scanner.md
 - wiki/dependencies.md
 - wiki/data-flow.md
 - wiki/glossary.md
