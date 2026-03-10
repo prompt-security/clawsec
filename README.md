@@ -88,6 +88,15 @@ Manual/source-first option:
 
 > Read https://github.com/prompt-security/clawsec/releases/latest/download/SKILL.md and follow the installation instructions.
 
+Quick install for a standalone skill release:
+
+```bash
+# Example: install clawsec-scanner directly
+npx clawhub@latest install clawsec-scanner
+```
+
+If you already have `clawsec-suite` installed, ask your agent to pull this skill and it will take care of everything automatically.
+
 ### For Humans
 
 Copy this instruction to your AI agent:
@@ -171,6 +180,12 @@ The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and 
 > ⚠️ **clawtributor** is not installed by default as it may share anonymized incident data. Install only on explicit user request.
 
 > ⚠️ **openclaw-audit-watchdog** is tailored for the OpenClaw/MoltBot/Clawdbot agent family. Other agents receive the universal skill set.
+
+### Additional Standalone Skills
+
+| Skill | Description | Installation | Compatibility |
+|-------|-------------|--------------|---------------|
+| 🔍 **clawsec-scanner** | Automated multi-layer scanner (dependency scanning, SAST, and OpenClaw hook-focused DAST harness checks) | ⚙️ Optional (install separately) | OpenClaw and compatible agent environments |
 
 ### Suite Features
 
@@ -435,6 +450,7 @@ npm run build
 ├── skills/
 │   ├── clawsec-suite/       # 📦 Suite installer (skill-of-skills)
 │   ├── clawsec-feed/        # 📡 Advisory feed skill
+│   ├── clawsec-scanner/     # 🔍 Vulnerability scanner (deps + SAST + OpenClaw DAST)
 │   ├── clawsec-nanoclaw/    # 📱 NanoClaw platform security suite
 │   ├── clawsec-clawhub-checker/ # 🧪 ClawHub reputation checks
 │   ├── clawtributor/           # 🤝 Community reporting skill

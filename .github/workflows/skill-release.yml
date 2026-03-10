@@ -898,6 +898,9 @@ jobs:
             npx clawhub@latest install ${{ steps.parse.outputs.skill_name }}
             ```
 
+            **If you already have `clawsec-suite` installed:**
+            Ask your agent to pull `${{ steps.parse.outputs.skill_name }}` from the ClawSec catalog and it will handle setup and verification automatically.
+
             **Manual download with verification:**
             ```bash
             # 1. Download the release archive, checksums, and signing material
