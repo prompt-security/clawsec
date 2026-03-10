@@ -161,7 +161,7 @@ The **clawsec-suite** is a skill-of-skills manager that installs, verifies, and 
 
 `clawsec-suite` is optional orchestration; skills can still be installed directly as standalone packages.
 
-### Skills in the Suite
+### ClawSec Skills
 
 | Skill | Description | Installation | Compatibility |
 |-------|-------------|--------------|---------------|
@@ -435,7 +435,7 @@ npm run build
 │   ├── populate-local-wiki.sh # Local wiki llms export populator
 │   └── release-skill.sh       # Manual skill release helper
 ├── skills/
-│   ├── clawsec-suite/       # 📦 Suite installer (skill-of-skills)
+│   ├── clawsec-suite/       # 📦 Suite installer (skill-of-skills - start here and have your agent do the rest)
 │   ├── clawsec-feed/        # 📡 Advisory feed skill
 │   ├── clawsec-scanner/     # 🔍 Vulnerability scanner (deps + SAST + OpenClaw DAST)
 │   ├── clawsec-nanoclaw/    # 📱 NanoClaw platform security suite
