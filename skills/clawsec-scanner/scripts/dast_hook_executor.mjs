@@ -77,6 +77,10 @@ async function fileExists(filePath) {
 }
 
 async function loadTypeScriptCompiler() {
+  if (process.env.CLAWSEC_DAST_DISABLE_TYPESCRIPT === "1") {
+    return null;
+  }
+
   try {
     const imported = await import("typescript");
     return imported.default || imported;

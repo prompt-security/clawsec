@@ -326,6 +326,11 @@ proc.on('close', code => {
 - Requires Python 3.8+ runtime
 - Alternative: use Docker image `returntocorp/semgrep`
 
+**"TypeScript hook not executable in DAST harness"**
+- The DAST harness executes real hook handlers and transpiles `handler.ts` files when a TypeScript compiler is available
+- Install TypeScript in the scanner environment: `npm install -D typescript` (or provide `handler.js`/`handler.mjs`)
+- Without a compiler, scanner reports an `info`-level coverage finding instead of a high-severity vulnerability
+
 **"Concurrent scan detected"**
 - Lockfile exists: `/tmp/clawsec-scanner.lock`
 - Wait for running scan to complete or manually remove lockfile

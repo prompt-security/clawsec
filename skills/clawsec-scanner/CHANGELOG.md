@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replaced simulated DAST checks with real OpenClaw hook execution harness testing
 - Updated DAST semantics so high-severity findings are emitted for actual hook execution failures/timeouts, not static payload pattern matches
+- Reclassified DAST harness capability limitations (for example missing TypeScript compiler for `.ts` hooks) to `info` coverage findings instead of high severity
 - Added DAST harness mode guard to prevent recursive scanner execution when hook handlers are tested in isolation
 
 ### Added

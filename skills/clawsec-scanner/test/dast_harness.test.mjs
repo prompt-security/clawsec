@@ -19,9 +19,10 @@ const DAST_SCRIPT = path.join(SKILL_ROOT, "scripts", "dast_runner.mjs");
 /**
  * @param {string} targetPath
  * @param {number} timeoutMs
+ * @param {Record<string, string>} envOverrides
  * @returns {Promise<{code: number, stdout: string, stderr: string, report: any}>}
  */
-async function runDast(targetPath, timeoutMs = 3000) {
+async function runDast(targetPath, timeoutMs = 3000, envOverrides = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(
       "node",
@@ -29,6 +30,10 @@ async function runDast(targetPath, timeoutMs = 3000) {
       {
         cwd: SKILL_ROOT,
         stdio: ["ignore", "pipe", "pipe"],
+        env: {
+          ...process.env,
+          ...envOverrides,
+        },
       },
     );
 
@@ -65,9 +70,10 @@ async function runDast(targetPath, timeoutMs = 3000) {
  * @param {string} hookDir
  * @param {string} eventsLiteral
  * @param {string} handlerSource
+ * @param {string} [handlerFile]
  * @returns {Promise<void>}
  */
-async function writeHookFixture(hookDir, eventsLiteral, handlerSource) {
+async function writeHookFixture(hookDir, eventsLiteral, handlerSource, handlerFile = "handler.js") {
   await fs.mkdir(hookDir, { recursive: true });
 
   const hookMd = `---
@@ -80,7 +86,7 @@ metadata: { "openclaw": { "events": [${eventsLiteral}] } }
 `;
 
   await fs.writeFile(path.join(hookDir, "HOOK.md"), hookMd, "utf8");
-  await fs.writeFile(path.join(hookDir, "handler.js"), handlerSource, "utf8");
+  await fs.writeFile(path.join(hookDir, handlerFile), handlerSource, "utf8");
 }
 
 async function testSafeHookExecutesAndDoesNotReportMisleadingHigh() {
@@ -183,9 +189,59 @@ export default handler;
   }
 }
 
+async function testMissingTypeScriptCompilerIsCoverageInfo() {
+  const testName = "DAST harness: missing TypeScript compiler reports coverage info, not high";
+  const tmp = await createTempDir();
+
+  try {
+    const targetPath = path.join(tmp.path, "skill");
+    const hookDir = path.join(targetPath, "hooks", "ts-hook");
+
+    await writeHookFixture(
+      hookDir,
+      '"command:new"',
+      `type Ctx = { dastMode?: boolean };
+
+const handler = async (_event: unknown, _context: Ctx): Promise<void> => {
+  return;
+};
+
+export default handler;
+`,
+      "handler.ts",
+    );
+
+    const result = await runDast(
+      targetPath,
+      2500,
+      { CLAWSEC_DAST_DISABLE_TYPESCRIPT: "1" },
+    );
+
+    const noHigh = Number(result.report?.summary?.high || 0) === 0
+      && Number(result.report?.summary?.critical || 0) === 0;
+    const hasCoverageInfo = Array.isArray(result.report?.vulnerabilities)
+      && result.report.vulnerabilities.some((v) => String(v.id || "").includes("DAST-COVERAGE"));
+    const hasInfoCount = Number(result.report?.summary?.info || 0) > 0;
+
+    if (result.code === 0 && noHigh && hasCoverageInfo && hasInfoCount) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected coverage info only (no high/critical). Got exit=${result.code}, summary=${JSON.stringify(result.report?.summary)}, findings=${JSON.stringify(result.report?.vulnerabilities || [])}`,
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  } finally {
+    await tmp.cleanup();
+  }
+}
+
 async function main() {
   await testSafeHookExecutesAndDoesNotReportMisleadingHigh();
   await testMaliciousCrashProducesHighFinding();
+  await testMissingTypeScriptCompilerIsCoverageInfo();
 
   report();
   exitWithResults();

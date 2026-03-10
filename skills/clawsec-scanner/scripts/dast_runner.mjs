@@ -503,6 +503,19 @@ function slug(input) {
 }
 
 /**
+ * @param {string} reason
+ * @returns {boolean}
+ */
+function isHarnessCapabilityError(reason) {
+  const normalized = String(reason ?? "").toLowerCase();
+  return (
+    normalized.includes("typescript compiler not available")
+    || normalized.includes("does not export a handler function")
+    || normalized.includes("is not a function")
+  );
+}
+
+/**
  * @param {Vulnerability[]} bucket
  * @param {string} id
  * @param {'critical' | 'high' | 'medium' | 'low' | 'info'} severity
@@ -577,15 +590,28 @@ async function evaluateHook(hook, targetPath, timeoutMs) {
     const normalizedSafe = normalizeHarnessPayload(safeResult.parsed);
     if (!normalizedSafe.ok) {
       const reason = normalizedSafe.error || safeResult.stderr || "unknown error";
-      pushHookVulnerability(
-        findings,
-        `DAST-CRASH-${slug(`${hook.name}-${eventKey}`)}`,
-        "high",
-        hook,
-        eventKey,
-        "Hook throws on baseline input",
-        `Hook execution failed for event '${eventKey}' under safe baseline input: ${reason}`,
-      );
+
+      if (isHarnessCapabilityError(reason)) {
+        pushHookVulnerability(
+          findings,
+          `DAST-COVERAGE-${slug(`${hook.name}-${eventKey}`)}`,
+          "info",
+          hook,
+          eventKey,
+          "Hook not executable in local DAST harness",
+          `DAST harness could not execute hook for event '${eventKey}' due to runtime capability limits: ${reason}`,
+        );
+      } else {
+        pushHookVulnerability(
+          findings,
+          `DAST-CRASH-${slug(`${hook.name}-${eventKey}`)}`,
+          "high",
+          hook,
+          eventKey,
+          "Hook throws on baseline input",
+          `Hook execution failed for event '${eventKey}' under safe baseline input: ${reason}`,
+        );
+      }
       continue;
     }
 
