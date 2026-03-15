@@ -1,13 +1,118 @@
 {
   "version": "0.0.3",
-  "updated": "2026-03-12T06:16:01Z",
+  "updated": "2026-03-15T06:18:51Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
-      "id": "CVE-2026-30741",
+      "id": "CVE-2026-32302",
+      "severity": "high",
+      "type": "unknown_cwe_346",
+      "nvd_category_id": "CWE-346",
+      "title": "OpenClaw is a personal AI assistant. Prior to 2026.3.11, browser-originated WebSocket connections co...",
+      "description": "OpenClaw is a personal AI assistant. Prior to 2026.3.11, browser-originated WebSocket connections could bypass origin validation when gateway.auth.mode was set to trusted-proxy and the request arrived with proxy headers. A page served from an untrusted origin could connect through a trusted reverse proxy, inherit proxy-authenticated identity, and establish a privileged operator session. This vulnerability is fixed in 2026.3.11.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-03-13T19:54:41.650",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/ebed3bbde1a72a1aaa9b87b63b91e7c04a50036b",
+        "https://github.com/openclaw/openclaw/releases/tag/v2026.3.11",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5wcw-8jjv-m286"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32302",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-4040",
+      "severity": "low",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "A vulnerability was identified in OpenClaw up to 2026.2.17. This issue affects the function tools.ex...",
+      "description": "A vulnerability was identified in OpenClaw up to 2026.2.17. This issue affects the function tools.exec.safeBins of the component File Existence Handler. The manipulation leads to information exposure through discrepancy. The attack needs to be performed locally. Upgrading to version 2026.2.19-beta.1 is capable of addressing this issue. The identifier of the patch is bafdbb6f112409a65decd3d4e7350fbd637c7754. Upgrading the affected component is advised.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-03-12T12:15:59.990",
+      "references": [
+        "https://github.com/openclaw/openclaw/",
+        "https://github.com/openclaw/openclaw/commit/bafdbb6f112409a65decd3d4e7350fbd637c7754",
+        "https://github.com/openclaw/openclaw/releases/tag/v2026.2.19-beta.1"
+      ],
+      "cvss_score": 3.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-4040",
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-4039",
       "severity": "medium",
-      "type": "unspecified_weakness",
-      "nvd_category_id": null,
+      "type": "unknown_cwe_74",
+      "nvd_category_id": "CWE-74",
+      "title": "A vulnerability was determined in OpenClaw 2026.2.19-2. This vulnerability affects the function appl...",
+      "description": "A vulnerability was determined in OpenClaw 2026.2.19-2. This vulnerability affects the function applySkillConfigenvOverrides of the component Skill Env Handler. Executing a manipulation can lead to code injection. It is possible to launch the attack remotely. Upgrading to version 2026.2.21-beta.1 is able to resolve this issue. This patch is called 8c9f35cdb51692b650ddf05b259ccdd75cc9a83c. It is recommended to upgrade the affected component.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-03-12T12:15:59.740",
+      "references": [
+        "https://github.com/openclaw/openclaw/",
+        "https://github.com/openclaw/openclaw/commit/8c9f35cdb51692b650ddf05b259ccdd75cc9a83c",
+        "https://github.com/openclaw/openclaw/releases/tag/v2026.2.21-beta.1"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-4039",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-30741",
+      "severity": "critical",
+      "type": "code_injection",
+      "nvd_category_id": "CWE-94",
       "title": "A remote code execution (RCE) vulnerability in OpenClaw Agent Platform v2026.2.6 allows attackers to...",
       "description": "A remote code execution (RCE) vulnerability in OpenClaw Agent Platform v2026.2.6 allows attackers to execute arbitrary code via a Request-Side prompt injection attack.",
       "affected": [
@@ -23,7 +128,7 @@
         "https://github.com/OpenClaw/OpenClaw",
         "https://www.bilibili.com/video/BV1LoFazeEBM"
       ],
-      "cvss_score": null,
+      "cvss_score": 9.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-30741",
       "exploitability_score": "high",
       "exploitability_rationale": "No CVSS score available; requires local access; RCE is critical in agent deployments",
