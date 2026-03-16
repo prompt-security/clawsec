@@ -1,7 +1,7 @@
 ---
 name: clawsec-clawhub-checker
 version: 0.0.1
-description: ClawHub reputation checker for ClawSec suite. Enhances guarded skill installer with VirusTotal Code Insight reputation scores and additional safety checks.
+description: ClawHub reputation checker for ClawSec suite. Queries VirusTotal Code Insight scores and additional safety signals before allowing skill installation. Use when installing skills, checking skill safety, verifying reputation scores, running a security scan, or when asked whether a skill is trustworthy or safe.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "🛡️"
@@ -14,13 +14,7 @@ clawdis:
 
 Enhances the ClawSec suite's guarded skill installer with ClawHub reputation checks. Adds a second layer of security by checking VirusTotal Code Insight scores and other reputation signals before allowing skill installation.
 
-## What It Does
-
-1. **Wraps `clawhub install`** - Intercepts skill installation requests
-2. **Checks VirusTotal reputation** - Uses ClawHub's built-in VirusTotal Code Insight
-3. **Adds double confirmation** - For suspicious skills (reputation score below threshold)
-4. **Integrates with advisory feed** - Works alongside existing clawsec-suite advisories
-5. **Provides detailed reports** - Shows why a skill is flagged as suspicious
+Wraps `clawhub install` to intercept skill installation requests, check VirusTotal reputation and advisory feeds, and require double confirmation for suspicious skills before proceeding.
 
 ## Installation
 
@@ -117,25 +111,8 @@ node scripts/guarded_skill_install_wrapper.mjs --skill suspicious-skill --versio
 
 ## Current Limitations
 
-### Missing OpenClaw Internal Check Data
-ClawHub shows two security badges on skill pages:
-1. **VirusTotal Code Insight** - ✅ Our checker catches these flags
-2. **OpenClaw internal check** - ❌ Not exposed via API (only on website)
-
-Example from `clawsec-suite` page:
-- VirusTotal: "Benign" ✓
-- OpenClaw internal check: "The package is internally consistent with a feed-monitoring / advisory-guardian purpose, but a few operational details and optional bypasses deserve attention before installing."
-
-**Our checker cannot access OpenClaw internal check warnings** as they're not exposed via `clawhub` CLI or API.
-
-### Recommendation for ClawHub
-To enable complete reputation checking, ClawHub should expose internal check results via:
-- `clawhub inspect --json` endpoint
-- Additional API field for security tools
-- Or include in `clawhub install` warning output
-
-### Workaround
-Our heuristic checks (skill age, author reputation, downloads, updates) provide similar risk assessment but miss specific operational warnings about bypasses, missing signatures, etc. Always check the ClawHub website for complete security assessment.
+- **OpenClaw internal check data** is not exposed via `clawhub` CLI or API, so this checker cannot access those warnings. Only VirusTotal Code Insight flags are caught.
+- Heuristic checks (skill age, author reputation, downloads) provide similar risk assessment but miss specific operational warnings. Always check the ClawHub website for complete security assessment.
 
 ## Development
 

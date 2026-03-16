@@ -1,7 +1,7 @@
 ---
 name: clawsec-nanoclaw
 version: 0.0.3
-description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
+description: Scans NanoClaw skills for known vulnerabilities, validates safety before installation, and checks security advisories affecting the bot. Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories.
 ---
 
 # ClawSec for NanoClaw
@@ -148,34 +148,19 @@ const safety = await tools.clawsec_check_skill_safety({
 if (safety.safe) await installSkill('untrusted-skill');
 ```
 
-### ❌ Ignoring exploitability context
+### ❌ Using severity alone without exploitability
 ```typescript
-// DON'T: Use severity only
-if (advisory.severity === 'high') {
-  notifyNow(advisory);
-}
-```
-
-```typescript
-// DO: Use exploitability + severity
-if (
-  advisory.exploitability_score === 'high' ||
-  advisory.severity === 'critical'
-) {
-  notifyNow(advisory);
-}
-```
-
-### ❌ Skipping critical severity
-```typescript
-// DON'T: Ignore high exploitability in medium severity advisories
+// DON'T: Use only severity or only exploitability
 if (advisory.severity === 'critical') alert();
 ```
 
 ```typescript
 // DO: Prioritize exploitability and severity together
-if (advisory.exploitability_score === 'high' || advisory.severity === 'critical') {
-  // Alert immediately
+if (
+  advisory.exploitability_score === 'high' ||
+  advisory.severity === 'critical'
+) {
+  notifyNow(advisory);
 }
 ```
 
@@ -191,10 +176,3 @@ if (advisory.exploitability_score === 'high' || advisory.severity === 'critical'
 **Cache Location**: `/workspace/project/data/clawsec-advisory-cache.json`
 
 See [INSTALL.md](./INSTALL.md) for setup and [docs/](./docs/) for advanced usage.
-
-## Real-World Impact
-
-- Prevents installation of skills with known RCE vulnerabilities
-- Alerts to supply chain attacks in dependencies
-- Provides actionable remediation steps
-- Zero false positives (curated feed only)

@@ -1,7 +1,7 @@
 ---
 name: clawsec-feed
 version: 0.0.5
-description: Security advisory feed with automated NVD CVE polling for OpenClaw-related vulnerabilities. Updated daily.
+description: Security advisory feed with automated NVD CVE polling for OpenClaw-related vulnerabilities. Use when checking for security advisories, looking up CVEs, monitoring vulnerability feeds, or verifying whether installed skills have known security issues.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
 clawdis:
@@ -20,41 +20,12 @@ This feed is automatically updated daily with CVEs related to OpenClaw, clawdbot
 
 ---
 
-## Installation Options
+## Installation
 
-You can get clawsec-feed in two ways:
+**Bundled with ClawSec Suite:** If you installed clawsec-suite, clawsec-feed is already included at `~/.openclaw/skills/clawsec-feed/`.
 
-### Option A: Bundled with ClawSec Suite (Recommended)
+**Standalone installation:** Follow the steps below if you only need the advisory feed.
 
-**If you've installed clawsec-suite, you may already have this!**
-
-ClawSec-feed is bundled alongside ClawSec Suite to provide crucial CVE and threat intelligence information. When you install the suite, if you don't already have the feed installed, it will be deployed from the bundled copy.
-
-**Advantages:**
-- Convenient - no separate download needed
-- Standard location - installed to `~/.openclaw/skills/clawsec-feed/`
-- Preserved - if you already have feed installed, it won't be overwritten
-- Single verification - integrity checked as part of suite package
-
-### Option B: Standalone Installation (This Page)
-
-Install clawsec-feed independently without the full suite.
-
-**When to use standalone:**
-- You only need the advisory feed (not other suite components)
-- You want to install before installing the suite
-- You prefer explicit control over feed installation
-
-**Advantages:**
-- Lighter weight installation
-- Independent from suite
-- Direct control over installation process
-
-Continue below for standalone installation instructions.
-
----
-
-Installation Steps:
 Agents should review scripts before execution!
 
 
@@ -277,21 +248,6 @@ ClawSec Feed deployed successfully. I will now:
 
 ---
 
-## What ClawSec Feed Does
-
-### Advisory Feed Monitoring
-
-Subscribes to the community advisory feed for:
-
-- **Known malicious skills/plugins** - Skills that have been identified as harmful
-- **Prompt injection patterns** - Attack patterns observed in the wild
-- **Vulnerable skill versions** - Skills with known security flaws
-- **Security best practice updates** - New recommendations for agent safety
-
-When a relevant advisory is published, your agent will notify you.
-
----
-
 ## Checking the Advisory Feed
 
 ```bash
@@ -330,61 +286,18 @@ curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL"
 
 ## Parsing the Feed
 
-### Get advisory count
+All examples below assume `$FEED` contains the fetched JSON (see "Checking the Advisory Feed" above).
 
 ```bash
-# Use environment variable if set, otherwise use raw GitHub feed (always up-to-date)
-DEFAULT_FEED_URL="https://raw.githubusercontent.com/prompt-security/ClawSec/main/advisories/feed.json"
-FEED_URL="${CLAWSEC_FEED_URL:-$DEFAULT_FEED_URL}"
+# Advisory count
+echo "$FEED" | jq '.advisories | length'
 
-TEMP_FEED=$(mktemp)
-trap "rm -f '$TEMP_FEED'" EXIT
+# Critical advisories only
+echo "$FEED" | jq '.advisories[] | select(.severity == "critical")'
 
-if ! curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL" -o "$TEMP_FEED"; then
-  echo "Error: Failed to fetch advisory feed"
-  exit 1
-fi
-
-# Validate JSON before parsing
-if ! jq empty "$TEMP_FEED" 2>/dev/null; then
-  echo "Error: Invalid JSON in feed"
-  exit 1
-fi
-
-FEED=$(cat "$TEMP_FEED")
-
-# Get advisory count with error handling
-COUNT=$(echo "$FEED" | jq '.advisories | length')
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to parse advisories"
-  exit 1
-fi
-echo "Advisory count: $COUNT"
-```
-
-### Get critical advisories
-
-```bash
-# Parse critical advisories with jq error handling
-CRITICAL=$(echo "$FEED" | jq '.advisories[] | select(.severity == "critical")')
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to filter critical advisories"
-  exit 1
-fi
-echo "$CRITICAL"
-```
-
-### Get advisories from the last 7 days
-
-```bash
-# Use UTC timezone for consistent date handling
+# Advisories from the last 7 days
 WEEK_AGO=$(TZ=UTC date -v-7d +%Y-%m-%dT00:00:00Z 2>/dev/null || TZ=UTC date -d '7 days ago' +%Y-%m-%dT00:00:00Z)
-RECENT=$(echo "$FEED" | jq --arg since "$WEEK_AGO" '.advisories[] | select(.published > $since)')
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to filter recent advisories"
-  exit 1
-fi
-echo "$RECENT"
+echo "$FEED" | jq --arg since "$WEEK_AGO" '.advisories[] | select(.published > $since)'
 ```
 
 ### Filter by exploitability score
@@ -429,65 +342,24 @@ echo "$FEED" | jq '[.advisories[] | select(.exploitability_score != null)] |
 
 Check if any of your installed skills are affected by advisories:
 
+Assumes `$FEED` is already fetched (see "Checking the Advisory Feed").
+
 ```bash
-# List your installed skills (adjust path for your platform)
 INSTALL_DIR="${CLAWSEC_INSTALL_DIR:-$HOME/.openclaw/skills}"
-
-# Use environment variable if set, otherwise use raw GitHub feed (always up-to-date)
-DEFAULT_FEED_URL="https://raw.githubusercontent.com/prompt-security/ClawSec/main/advisories/feed.json"
-FEED_URL="${CLAWSEC_FEED_URL:-$DEFAULT_FEED_URL}"
-
-TEMP_FEED=$(mktemp)
-trap "rm -f '$TEMP_FEED'" EXIT
-
-if ! curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL" -o "$TEMP_FEED"; then
-  echo "Error: Failed to fetch advisory feed"
-  exit 1
-fi
-
-# Validate and parse feed
-if ! jq empty "$TEMP_FEED" 2>/dev/null; then
-  echo "Error: Invalid JSON in feed"
-  exit 1
-fi
-
-FEED=$(cat "$TEMP_FEED")
 AFFECTED=$(echo "$FEED" | jq -r '.advisories[].affected[]?' 2>/dev/null | sort -u)
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to parse affected skills from feed"
-  exit 1
-fi
 
-# Safely validate all installed skills before processing
-# This prevents shell injection via malicious filenames
-VALIDATED_SKILLS=()
+# Validate skill names to prevent shell injection
 while IFS= read -r -d '' skill_path; do
   skill=$(basename "$skill_path")
-
-  # Validate skill name BEFORE adding to array (prevents injection)
-  if [[ "$skill" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-    VALIDATED_SKILLS+=("$skill")
-  else
-    echo "Warning: Skipping invalid skill name: $skill" >&2
-  fi
-done < <(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
-
-# Check each validated skill against affected list
-# Use grep -qF for fixed string matching (prevents regex injection)
-for skill in "${VALIDATED_SKILLS[@]}"; do
-  # At this point, $skill is guaranteed to match ^[a-zA-Z0-9_-]+$
+  [[ "$skill" =~ ^[a-zA-Z0-9_-]+$ ]] || continue
   if echo "$AFFECTED" | grep -qF "$skill"; then
     echo "WARNING: Installed skill '$skill' has a security advisory!"
-    # Get advisory details for this skill
     echo "$FEED" | jq --arg s "$skill" '.advisories[] | select(.affected[] | contains($s))'
   fi
-done
+done < <(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
 ```
 
-**If you find affected skills:**
-1. Check the advisory for details and severity
-2. Notify your user immediately for critical/high severity
-3. Include the recommended action from the advisory
+If affected skills are found, notify the user immediately for critical/high severity and include the recommended action.
 
 ---
 
@@ -503,110 +375,44 @@ done
 
 ---
 
-## Severity Levels
+## Severity and Exploitability
 
-| Severity | Action Required |
-|----------|-----------------|
-| `critical` | Notify user immediately, take action |
-| `high` | Notify user soon, plan remediation |
-| `medium` | Notify at next interaction |
-| `low` | Log for reference |
+| Severity | Action | | Exploitability | Meaning |
+|----------|--------|-|----------------|---------|
+| `critical` | Notify immediately, take action | | `high` | Trivially exploitable with public tooling |
+| `high` | Notify soon, plan remediation | | `medium` | Requires specific conditions |
+| `medium` | Notify at next interaction | | `low` | Difficult to exploit or theoretical |
+| `low` | Log for reference | | | |
 
----
+Always prioritize by **both** severity and exploitability. A HIGH severity + HIGH exploitability CVE is more urgent than CRITICAL + LOW exploitability.
 
-## Prioritizing High-Exploitability Threats
-
-**IMPORTANT:** When reviewing advisories, always prioritize by **exploitability score** in addition to severity. The exploitability score indicates how easily a vulnerability can be exploited in practice, helping you focus on the most actionable threats.
-
-### Exploitability Priority Levels
-
-| Exploitability | Meaning | Action Priority |
-|----------------|---------|-----------------|
-| `high` | Trivially or easily exploitable with public tooling | **Immediate notification** |
-| `medium` | Exploitable but requires specific conditions | **Standard notification** |
-| `low` | Difficult to exploit or theoretical | **Low priority notification** |
-
-### How to Use Exploitability in Notifications
-
-1. **Filter for high-exploitability first:**
-   ```bash
-   # Get high exploitability advisories
-   echo "$FEED" | jq '.advisories[] | select(.exploitability_score == "high")'
-   ```
-
-2. **Include exploitability in notifications:**
-   ```
-   📡 ClawSec Feed: High-exploitability alert
-
-   CRITICAL - CVE-2026-27488 (Exploitability: HIGH)
-     → Trivially exploitable RCE in skill-loader v2.1.0
-     → Public exploit code available
-     → Recommended action: Immediate removal or upgrade to v2.1.1
-   ```
-
-3. **Prioritize by both severity AND exploitability:**
-   - A HIGH severity + HIGH exploitability CVE is more urgent than a CRITICAL severity + LOW exploitability CVE
-   - Focus user attention on threats that are both severe and easily exploitable
-   - Include the exploitability rationale to help users understand the risk context
-
-### Example Notification Priority Order
-
-When multiple advisories exist, present them in this order:
-1. **Critical severity + High exploitability** - most urgent
-2. **High severity + High exploitability**
-3. **Critical severity + Medium/Low exploitability**
-4. **High severity + Medium/Low exploitability**
-5. **Medium/Low severity** (any exploitability)
-
-This ensures you alert users to the most actionable, immediately dangerous threats first.
-
----
-
-## When to Notify Your User
-
-**Notify Immediately (Critical):**
-- New critical advisory affecting an installed skill
-- Active exploitation detected
-- **High exploitability score** (regardless of severity)
-
-**Notify Soon (High):**
-- New high-severity advisory affecting installed skills
-- Failed to fetch advisory feed (network issue?)
-- Medium exploitability with high severity
-
-**Notify at Next Interaction (Medium):**
-- New medium-severity advisories
-- General security updates
-- Low exploitability advisories
-
-**Log Only (Low/Info):**
-- Low-severity advisories (mention if user asks)
-- Feed checked, no new advisories
-- Theoretical vulnerabilities (low exploitability, low severity)
+```bash
+# Sort advisories by exploitability (critical → high → medium → low)
+echo "$FEED" | jq '[.advisories[] | select(.exploitability_score != null)] |
+  sort_by(
+    if .exploitability_score == "critical" then 0
+    elif .exploitability_score == "high" then 1
+    elif .exploitability_score == "medium" then 2
+    elif .exploitability_score == "low" then 3
+    else 4 end
+  )'
+```
 
 ---
 
 ## Response Format
 
-### If there are new advisories:
-
 ```
 📡 ClawSec Feed: 2 new advisories since last check
 
 CRITICAL - GA-2026-015: Malicious prompt pattern "ignore-all" (Exploitability: HIGH)
-  → Detected prompt injection technique. Update your system prompt defenses.
-  → Exploitability: Easily exploitable with publicly documented techniques.
+  → Action: Update your system prompt defenses.
 
 HIGH - GA-2026-016: Vulnerable skill "data-helper" v1.2.0 (Exploitability: MEDIUM)
-  → You have this installed! Recommended action: Update to v1.2.1 or remove.
-  → Exploitability: Requires specific configuration; not trivially exploitable.
+  → Action: Update to v1.2.1 or remove.
 ```
 
-### If nothing new:
-
-```
-FEED_OK - Advisory feed checked, no new alerts. 📡
-```
+If nothing new: `FEED_OK - Advisory feed checked, no new alerts. 📡`
 
 ---
 
@@ -629,43 +435,25 @@ Save to: `~/.openclaw/clawsec-feed-state.json`
 
 ```bash
 STATE_FILE="$HOME/.openclaw/clawsec-feed-state.json"
+DEFAULT_STATE='{"schema_version":"1.0","last_feed_check":null,"last_feed_updated":null,"known_advisories":[]}'
 
-# Create state file with secure permissions if it doesn't exist
-if [ ! -f "$STATE_FILE" ]; then
-  echo '{"schema_version":"1.0","last_feed_check":null,"last_feed_updated":null,"known_advisories":[]}' > "$STATE_FILE"
+# Initialize if missing or corrupted
+if [ ! -f "$STATE_FILE" ] || ! jq -e '.schema_version' "$STATE_FILE" >/dev/null 2>&1; then
+  [ -f "$STATE_FILE" ] && cp "$STATE_FILE" "${STATE_FILE}.bak.$(TZ=UTC date +%Y%m%d%H%M%S)"
+  echo "$DEFAULT_STATE" > "$STATE_FILE"
   chmod 600 "$STATE_FILE"
-fi
-
-# Validate state file before reading
-if ! jq -e '.schema_version' "$STATE_FILE" >/dev/null 2>&1; then
-  echo "Warning: State file corrupted or invalid schema. Creating backup and resetting."
-  cp "$STATE_FILE" "${STATE_FILE}.bak.$(TZ=UTC date +%Y%m%d%H%M%S)"
-  echo '{"schema_version":"1.0","last_feed_check":null,"last_feed_updated":null,"known_advisories":[]}' > "$STATE_FILE"
-  chmod 600 "$STATE_FILE"
-fi
-
-# Check for major version compatibility
-SCHEMA_VER=$(jq -r '.schema_version // "0"' "$STATE_FILE")
-if [[ "${SCHEMA_VER%%.*}" != "1" ]]; then
-  echo "Warning: State file schema version $SCHEMA_VER may not be compatible with this version"
 fi
 
 # Update last check time (always use UTC)
-TEMP_STATE=$(mktemp)
-if jq --arg t "$(TZ=UTC date +%Y-%m-%dT%H:%M:%SZ)" '.last_feed_check = $t' "$STATE_FILE" > "$TEMP_STATE"; then
-  mv "$TEMP_STATE" "$STATE_FILE"
-  chmod 600 "$STATE_FILE"
-else
-  echo "Error: Failed to update state file"
-  rm -f "$TEMP_STATE"
-fi
+jq --arg t "$(TZ=UTC date +%Y-%m-%dT%H:%M:%SZ)" '.last_feed_check = $t' "$STATE_FILE" | \
+  sponge "$STATE_FILE" || echo "Error: Failed to update state file"
 ```
 
 ---
 
 ## Rate Limiting
 
-**Important:** To avoid excessive requests to the feed server, follow these guidelines:
+To avoid excessive requests to the feed server, respect these minimum intervals:
 
 | Check Type | Recommended Interval | Minimum Interval |
 |------------|---------------------|------------------|
@@ -673,20 +461,7 @@ fi
 | Full feed refresh | Every 1-4 hours | 30 minutes |
 | Cross-reference scan | Once per session | 5 minutes |
 
-```bash
-# Check if enough time has passed since last check
-STATE_FILE="$HOME/.openclaw/clawsec-feed-state.json"
-MIN_INTERVAL_SECONDS=300  # 5 minutes
-
-LAST_CHECK=$(jq -r '.last_feed_check // "1970-01-01T00:00:00Z"' "$STATE_FILE" 2>/dev/null)
-LAST_EPOCH=$(TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%SZ" "$LAST_CHECK" +%s 2>/dev/null || date -d "$LAST_CHECK" +%s 2>/dev/null || echo 0)
-NOW_EPOCH=$(TZ=UTC date +%s)
-
-if [ $((NOW_EPOCH - LAST_EPOCH)) -lt $MIN_INTERVAL_SECONDS ]; then
-  echo "Rate limit: Last check was less than 5 minutes ago. Skipping."
-  exit 0
-fi
-```
+Compare `last_feed_check` from the state file against the current time before fetching.
 
 ---
 
@@ -701,56 +476,15 @@ fi
 
 ## Updating ClawSec Feed
 
-Check for and install newer versions:
-
 ```bash
-# Check current installed version
 INSTALL_DIR="${CLAWSEC_INSTALL_DIR:-$HOME/.openclaw/skills/clawsec-feed}"
-CURRENT_VERSION=$(jq -r '.version' "$INSTALL_DIR/skill.json" 2>/dev/null || echo "unknown")
-echo "Installed version: $CURRENT_VERSION"
-
-# Check latest available version
-LATEST_URL="https://api.github.com/repos/prompt-security/ClawSec/releases"
-LATEST_VERSION=$(curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$LATEST_URL" 2>/dev/null | \
+CURRENT=$(jq -r '.version' "$INSTALL_DIR/skill.json" 2>/dev/null || echo "unknown")
+LATEST=$(curl -sSL https://api.github.com/repos/prompt-security/ClawSec/releases | \
   jq -r '[.[] | select(.tag_name | startswith("clawsec-feed-v"))][0].tag_name // empty' | \
   sed 's/clawsec-feed-v//')
-
-if [ -z "$LATEST_VERSION" ]; then
-  echo "Warning: Could not determine latest version"
-else
-  echo "Latest version: $LATEST_VERSION"
-
-  if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
-    echo "Update available! Run the deployment steps with the new version."
-  else
-    echo "You are running the latest version."
-  fi
-fi
+echo "Installed: $CURRENT | Latest: $LATEST"
+[ "$CURRENT" != "$LATEST" ] && echo "Update available! Re-run deployment steps."
 ```
-
----
-
-## Initial Download Integrity
-
-**Bootstrap Trust Problem:** The initial download of this skill cannot be verified by the skill itself. To establish trust:
-
-1. **Verify the source URL** - Ensure you are downloading from `https://clawsec.prompt.security`
-2. **Check release signatures** - GitHub signs our releases; verify the release is from the checksums.
-3. **Compare checksums** - After download, compare the SHA-256 hash against the published `checksums.json`:
-
-```bash
-# After downloading SKILL.md, verify its integrity
-EXPECTED_HASH="<hash-from-checksums.json>"
-ACTUAL_HASH=$(shasum -a 256 SKILL.md | cut -d' ' -f1)
-
-if [ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]; then
-  echo "ERROR: Skill file integrity check failed!"
-  echo "This file may have been tampered with. Do not proceed."
-  exit 1
-fi
-```
-
-**Note:** For maximum security, verify checksums.json via a separate trusted channel (e.g., direct from GitHub release page UI, not via curl).
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: clawsec-scanner
 version: 0.0.2
-description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific DAST hook execution testing for OpenClaw hooks.
+description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific DAST hook execution testing. Use when running security scans, checking for vulnerabilities, auditing dependencies, or finding security issues in agent platforms.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "🔍"
@@ -20,34 +20,7 @@ Comprehensive security scanner for agent platforms that automates vulnerability 
 - **Unified Reporting**: Consolidated vulnerability reports with severity classification and remediation guidance
 - **Continuous Monitoring**: OpenClaw hook integration for automated periodic scanning
 
-## Features
-
-### Multi-Engine Scanning
-
-The scanner orchestrates four complementary scan types to provide comprehensive vulnerability coverage:
-
-1. **Dependency Scanning**
-   - Executes `npm audit --json` and `pip-audit -f json` as subprocesses
-   - Parses structured output to extract CVE IDs, severity, affected versions
-   - Handles edge cases: missing package-lock.json, zero vulnerabilities, malformed JSON
-
-2. **CVE Database Queries**
-   - **OSV API** (primary): Free, no authentication, broad ecosystem support (npm, PyPI, Go, Maven)
-   - **NVD 2.0** (optional): Requires API key to avoid 6-second rate limiting
-   - **GitHub Advisory Database** (optional): GraphQL API with OAuth token
-   - Normalizes all API responses to unified `Vulnerability` schema
-
-3. **Static Analysis (SAST)**
-   - **Semgrep** for JavaScript/TypeScript: Detects security issues using `--config auto` or `--config p/security-audit`
-   - **Bandit** for Python: Leverages existing `pyproject.toml` configuration
-   - Identifies: hardcoded secrets (API keys, tokens), command injection (`eval`, `exec`), path traversal, unsafe deserialization
-
-4. **Dynamic Analysis (DAST)**
-   - Real hook execution harness for OpenClaw hook handlers discovered from `HOOK.md` metadata
-   - Verifies: malicious input resilience, timeout behavior, output amplification bounds, and core event mutation safety
-   - Note: Traditional web DAST tools (ZAP, Burp) do not apply to agent platforms - this provides agent-specific testing
-
-### Unified Reporting
+## Unified Reporting
 
 All scan types emit a consistent `ScanReport` JSON schema:
 
@@ -66,18 +39,6 @@ All scan types emit a consistent `ScanReport` JSON schema:
   }
 }
 ```
-
-Each `Vulnerability` object includes:
-- `id`: CVE-2023-12345 or GHSA-xxxx-yyyy-zzzz
-- `source`: npm-audit | pip-audit | osv | nvd | github | sast | dast
-- `severity`: critical | high | medium | low | info
-- `package`: Package name (or 'N/A' for SAST/DAST)
-- `version`: Affected version
-- `fixed_version`: First version with fix (if available)
-- `title`: Short description
-- `description`: Full advisory text
-- `references`: URLs for more info
-- `discovered_at`: ISO 8601 timestamp
 
 ### OpenClaw Integration
 
@@ -263,155 +224,16 @@ hooks/clawsec-scanner-hook/
 
 ### Fail-Open Philosophy
 
-The scanner prioritizes availability over strict failure propagation:
-
-- Network failures → emit partial results, log warnings
-- Missing tools → skip that scan type, continue with others
-- Malformed JSON → parse what's valid, log errors
-- API rate limits → implement exponential backoff, fallback to other sources
-- Zero vulnerabilities → emit success report with empty array
-
-**Critical failures** that exit immediately:
-- Target path does not exist
-- No scanning tools available (all bins missing)
-- Concurrent scan detected (lockfile present)
-
-### Subprocess Execution Pattern
-
-All external tools run as subprocesses with structured JSON output:
-
-```javascript
-import { spawn } from 'node:child_process';
-
-// Example: npm audit execution
-const proc = spawn('npm', ['audit', '--json'], {
-  cwd: targetPath,
-  stdio: ['ignore', 'pipe', 'pipe']
-});
-
-// Handle non-zero exit codes gracefully
-// npm audit exits 1 when vulnerabilities found (not an error!)
-proc.on('close', code => {
-  if (code !== 0 && stderr.includes('ERR!')) {
-    // Actual error
-    reject(new Error(stderr));
-  } else {
-    // Vulnerabilities found or success
-    resolve(JSON.parse(stdout));
-  }
-});
-```
+The scanner follows a fail-open philosophy: network failures, missing tools, or malformed JSON produce partial results with warnings rather than hard failures. Critical failures (target path missing, no scanning tools available, concurrent scan detected) exit immediately.
 
 ## Troubleshooting
 
-### Common Issues
-
-**"Missing package-lock.json" warning**
-- `npm audit` requires lockfile to run
-- Run `npm install` in target directory to generate
-- Scanner continues with other scan types if npm audit fails
-
-**"NVD API rate limit exceeded"**
-- Set `CLAWSEC_NVD_API_KEY` environment variable
-- Without API key: 6-second delays enforced between requests
-- OSV API used as primary source (no rate limits)
-
-**"pip-audit not found"**
-- Install: `uv pip install pip-audit` or `pip install pip-audit`
-- Verify: `which pip-audit`
-- Add to PATH if installed in non-standard location
-
-**"Semgrep binary missing"**
-- Install: `pip install semgrep` OR `brew install semgrep`
-- Requires Python 3.8+ runtime
-- Alternative: use Docker image `returntocorp/semgrep`
-
-**"TypeScript hook not executable in DAST harness"**
-- The DAST harness executes real hook handlers and transpiles `handler.ts` files when a TypeScript compiler is available
-- Install TypeScript in the scanner environment: `npm install -D typescript` (or provide `handler.js`/`handler.mjs`)
-- Without a compiler, scanner reports an `info`-level coverage finding instead of a high-severity vulnerability
-
-**"Concurrent scan detected"**
-- Lockfile exists: `/tmp/clawsec-scanner.lock`
-- Wait for running scan to complete or manually remove lockfile
-- Prevents overlapping scans that could produce inconsistent results
-
-### Verification
-
-Check scanner is working correctly:
-
-```bash
-# Verify required binaries
-./scripts/runner.sh --check
-
-# Run unit tests
-node test/dependency_scanner.test.mjs
-node test/cve_integration.test.mjs
-node test/sast_engine.test.mjs
-node test/dast_harness.test.mjs
-
-# Validate skill structure
-python ../../utils/validate_skill.py .
-
-# Scan test fixtures (should detect known vulnerabilities)
-./scripts/runner.sh --target test/fixtures/ --format text
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# All tests (vanilla Node.js, no framework)
-for test in test/*.test.mjs; do
-  node "$test" || exit 1
-done
-
-# Individual test suites
-node test/dependency_scanner.test.mjs  # Dependency scanning
-node test/cve_integration.test.mjs     # CVE database APIs
-node test/sast_engine.test.mjs         # Static analysis
-node test/dast_harness.test.mjs        # DAST harness execution
-```
-
-### Linting
-
-```bash
-# JavaScript/TypeScript
-npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings 0
-
-# Python (Bandit already configured in pyproject.toml)
-ruff check .
-bandit -r . -ll
-
-# Shell scripts
-shellcheck scripts/*.sh
-```
-
-### Adding Custom Semgrep Rules
-
-Create custom rules in `.semgrep/rules/`:
-
-```yaml
-rules:
-  - id: custom-security-rule
-    pattern: dangerous_function($ARG)
-    message: Avoid dangerous_function - use safe_alternative instead
-    severity: WARNING
-    languages: [javascript, typescript]
-```
-
-Update `scripts/sast_analyzer.mjs` to include custom rules:
-
-```javascript
-const proc = spawn('semgrep', [
-  'scan',
-  '--config', 'auto',
-  '--config', '.semgrep/rules/',  // Add custom rules
-  '--json',
-  targetPath
-]);
-```
+- **"Missing package-lock.json"**: Run `npm install` in target directory to generate lockfile. Scanner continues with other scan types.
+- **"NVD API rate limit exceeded"**: Set `CLAWSEC_NVD_API_KEY` environment variable. OSV API is used as primary source with no rate limits.
+- **"pip-audit not found"**: Install via `uv pip install pip-audit` or `pip install pip-audit`.
+- **"Semgrep binary missing"**: Install via `pip install semgrep` or `brew install semgrep`.
+- **"TypeScript hook not executable in DAST harness"**: Install TypeScript (`npm install -D typescript`) or provide `handler.js`/`handler.mjs`.
+- **"Concurrent scan detected"**: Wait for running scan or remove `/tmp/clawsec-scanner.lock`.
 
 ## Integration with ClawSec Suite
 
@@ -454,44 +276,6 @@ npx clawhub@latest install clawsec-suite
 - Deprecated API usage
 - Code quality issues flagged by linters
 
-## Roadmap
-
-### v0.0.2 (Current)
-- [x] Dependency scanning (npm audit, pip-audit)
-- [x] CVE database integration (OSV, NVD, GitHub Advisory)
-- [x] SAST analysis (Semgrep, Bandit)
-- [x] Real OpenClaw hook execution harness for DAST
-- [x] Unified JSON reporting
-- [x] OpenClaw hook integration
-
-### Future Enhancements
-- [ ] Automatic remediation (dependency upgrades, code fixes)
-- [ ] SARIF output format for GitHub Code Scanning integration
-- [ ] Web dashboard for vulnerability tracking over time
-- [ ] CI/CD GitHub Action for PR blocking on high-severity findings
-- [ ] Container image scanning (Docker, OCI)
-- [ ] Infrastructure-as-Code scanning (Terraform, CloudFormation)
-- [ ] Comprehensive agent workflow DAST (requires deeper platform integration)
-
-## Contributing
-
-Found a security issue? Please report privately to security@prompt.security.
-
-For feature requests and bug reports, open an issue at:
-https://github.com/prompt-security/clawsec/issues
-
 ## License
 
 AGPL-3.0-or-later
-
-See LICENSE file in repository root for full text.
-
-## Resources
-
-- **ClawSec Homepage**: https://clawsec.prompt.security
-- **Documentation**: https://clawsec.prompt.security/scanner
-- **GitHub Repository**: https://github.com/prompt-security/clawsec
-- **OSV API Docs**: https://osv.dev/docs/
-- **NVD API Docs**: https://nvd.nist.gov/developers/vulnerabilities
-- **Semgrep Registry**: https://semgrep.dev/explore
-- **Bandit Documentation**: https://bandit.readthedocs.io/

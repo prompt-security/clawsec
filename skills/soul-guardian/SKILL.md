@@ -1,7 +1,7 @@
 ---
 name: soul-guardian
 version: 0.0.2
-description: Drift detection + baseline integrity guard for agent workspace files with automatic alerting support
+description: Drift detection and baseline integrity guard for agent workspace files. Detects unauthorized changes, auto-restores protected files, and alerts on modifications. Use when checking for file changes, verifying file integrity, detecting unauthorized modifications, or monitoring agent workspace files.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"👻","category":"security"}}
 clawdis:

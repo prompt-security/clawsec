@@ -1,7 +1,7 @@
 ---
 name: openclaw-audit-watchdog
 version: 0.1.1
-description: Automated daily security audits for OpenClaw agents with email reporting. Runs deep audits and sends formatted reports.
+description: Automated daily security audits for OpenClaw agents with email reporting. Runs standard and deep audits, summarizes findings, and delivers reports. Use when setting up security audit schedules, running vulnerability scans, or configuring automated security reports for OpenClaw agents.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🔭","category":"security"}}
 clawdis:
@@ -12,37 +12,9 @@ clawdis:
 
 # Prompt Security Audit (openclaw)
 
-## Installation Options
+## Installation
 
-You can get openclaw-audit-watchdog in two ways:
-
-### Option A: Bundled with ClawSec Suite (Recommended)
-
-**If you've installed clawsec-suite, you may already have this!**
-
-Openclaw-audit-watchdog is bundled alongside ClawSec Suite to provide crucial automated security audit capabilities. When you install the suite, if you don't already have the audit watchdog installed, it will be deployed from the bundled copy.
-
-**Advantages:**
-- Convenient - no separate download needed
-- Standard location - installed to `~/.openclaw/skills/openclaw-audit-watchdog/`
-- Preserved - if you already have audit watchdog installed, it won't be overwritten
-- Single verification - integrity checked as part of suite package
-
-### Option B: Standalone Installation (This Page)
-
-Install openclaw-audit-watchdog independently without the full suite.
-
-**When to use standalone:**
-- You only need the audit watchdog (not other suite components)
-- You want to install before installing the suite
-- You prefer explicit control over audit watchdog installation
-
-**Advantages:**
-- Lighter weight installation
-- Independent from suite
-- Direct control over installation process
-
-Continue below for standalone installation instructions.
+Available bundled with ClawSec Suite or as a standalone installation. If you have clawsec-suite installed, you may already have this skill deployed at `~/.openclaw/skills/openclaw-audit-watchdog/`.
 
 ---
 
@@ -82,47 +54,7 @@ export PROMPTSEC_HOST_LABEL="prod-server-01"
 
 The skill will automatically configure and create the cron job without prompts.
 
-### Example 2: Interactive Setup
-
-If environment variables aren't set, the skill will prompt minimally:
-
-```
-User: /openclaw-audit-watchdog
-
-Agent: Setting up daily security audit watchdog...
-       What channel should I use for delivery? (e.g., telegram, slack)
-User: telegram
-
-Agent: What's the recipient ID or handle?
-User: @myhandle
-
-Agent: Which timezone for the 23:00 daily run? (default: UTC)
-User: America/Los_Angeles
-
-Agent: ✓ Created cron job "Daily security audit (Prompt Security)"
-       Schedule: Daily at 23:00 America/Los_Angeles
-       Delivery: telegram → @myhandle
-```
-
-### Example 3: Updating Existing Job
-
-If a job already exists, the skill updates it instead of creating duplicates:
-
-```
-User: /openclaw-audit-watchdog
-
-Agent: Found existing "Daily security audit (Prompt Security)" job.
-       Current: Daily at 23:00 UTC → telegram:@oldhandle
-
-       Update delivery target? (current: telegram:@oldhandle)
-User: slack:#security-alerts
-
-Agent: ✓ Updated cron job
-       Schedule: Daily at 23:00 UTC
-       Delivery: slack:#security-alerts
-```
-
-### Example 4: What Gets Delivered
+### Example 2: What Gets Delivered
 
 Each day at the scheduled time, you'll receive a report like:
 
@@ -156,35 +88,7 @@ WARNINGS
 Run `openclaw security audit --deep` for full details.
 ```
 
-### Example 5: Custom Schedule
-
-Want a different schedule? Set it before invoking:
-
-```bash
-# Run every 6 hours instead of daily
-export PROMPTSEC_SCHEDULE="0 */6 * * *"
-/openclaw-audit-watchdog
-```
-
-### Example 6: Multiple Environments
-
-For managing multiple servers, use different host labels:
-
-```bash
-# On dev server
-export PROMPTSEC_HOST_LABEL="dev-01"
-export PROMPTSEC_DM_TO="@dev-team"
-/openclaw-audit-watchdog
-
-# On prod server
-export PROMPTSEC_HOST_LABEL="prod-01"
-export PROMPTSEC_DM_TO="@oncall"
-/openclaw-audit-watchdog
-```
-
-Each will send reports with clear host identification.
-
-### Example 7: Suppressing Known Findings
+### Example 3: Suppressing Known Findings
 
 To suppress audit findings that have been reviewed and accepted, pass the `--enable-suppressions` flag and ensure the config file includes the `"enabledFor": ["audit"]` sentinel:
 
@@ -244,18 +148,7 @@ If either gate is absent, all findings are reported normally and the suppression
 }
 ```
 
-### Sentinel Semantics
-
-- `"enabledFor": ["audit"]` -- audit suppression active (requires `--enable-suppressions` flag too)
-- `"enabledFor": ["advisory"]` -- only advisory pipeline suppression (no effect on audit)
-- `"enabledFor": ["audit", "advisory"]` -- both pipelines honor suppressions
-- Missing or empty `enabledFor` -- no suppression active (safe default)
-
-### Matching Rules
-
-- **checkId:** exact match against the audit finding's check identifier (e.g., `skills.code_safety`)
-- **skill:** case-insensitive match against the skill name from the finding
-- Both fields must match for a finding to be suppressed
+For full sentinel semantics and matching rules, see the clawsec-suite skill documentation.
 
 ## Installation flow (interactive)
 

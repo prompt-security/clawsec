@@ -1,7 +1,7 @@
 ---
 name: clawsec-suite
 version: 0.1.4
-description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
+description: ClawSec suite manager with embedded advisory-feed monitoring and guided setup for security skills. Use when setting up agent security, checking advisory feeds, installing security skills, verifying skill signatures, or managing the ClawSec security suite.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "📦"
@@ -11,12 +11,7 @@ clawdis:
 
 # ClawSec Suite
 
-This means `clawsec-suite` can:
-- monitor the ClawSec advisory feed,
-- track which advisories are new since last check,
-- cross-reference advisories against locally installed skills,
-- recommend removal for malicious-skill advisories and require explicit user approval first,
-- and still act as the setup/management entrypoint for other ClawSec protections.
+ClawSec Suite is the central management entrypoint for ClawSec security protections. It monitors the ClawSec advisory feed, tracks new advisories, cross-references them against locally installed skills, recommends removal for malicious-skill advisories (with explicit user approval), and provides guided setup for additional security skills.
 
 ## Included vs Optional Protections
 
@@ -61,81 +56,14 @@ npx clawhub@latest install clawsec-suite
 
 ### Option B: Manual download with signature + checksum verification
 
-```bash
-set -euo pipefail
+For manual installation, download the release archive from GitHub Releases and verify integrity before installing:
 
-VERSION="${SKILL_VERSION:?Set SKILL_VERSION (e.g. 0.0.8)}"
-INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.openclaw/skills}"
-DEST="$INSTALL_ROOT/clawsec-suite"
-BASE="https://github.com/prompt-security/clawsec/releases/download/clawsec-suite-v${VERSION}"
+1. Set `SKILL_VERSION` and download `clawsec-suite-v${VERSION}.zip`, `checksums.json`, and `checksums.sig` from the release URL.
+2. Verify the Ed25519 signature on `checksums.json` using the pinned release-signing public key (fingerprint: `711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8`).
+3. Verify the archive SHA-256 hash matches `checksums.json`.
+4. Extract to `$INSTALL_ROOT/clawsec-suite` and set permissions (`chmod 600 skill.json`).
 
-TEMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TEMP_DIR"' EXIT
-
-# Pinned release-signing public key (verify fingerprint out-of-band on first use)
-# Fingerprint (SHA-256 of SPKI DER): 711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8
-RELEASE_PUBKEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"
-cat > "$TEMP_DIR/release-signing-public.pem" <<'PEM'
------BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAS7nijfMcUoOBCj4yOXJX+GYGv2pFl2Yaha1P4v5Cm6A=
------END PUBLIC KEY-----
-PEM
-
-ACTUAL_KEY_SHA256="$(openssl pkey -pubin -in "$TEMP_DIR/release-signing-public.pem" -outform DER | shasum -a 256 | awk '{print $1}')"
-if [ "$ACTUAL_KEY_SHA256" != "$RELEASE_PUBKEY_SHA256" ]; then
-  echo "ERROR: Release public key fingerprint mismatch" >&2
-  exit 1
-fi
-
-ZIP_NAME="clawsec-suite-v${VERSION}.zip"
-
-# 1) Download release archive + signed checksums manifest + signing public key
-curl -fsSL "$BASE/$ZIP_NAME" -o "$TEMP_DIR/$ZIP_NAME"
-curl -fsSL "$BASE/checksums.json" -o "$TEMP_DIR/checksums.json"
-curl -fsSL "$BASE/checksums.sig" -o "$TEMP_DIR/checksums.sig"
-
-# 2) Verify checksums manifest signature before trusting any hashes
-openssl base64 -d -A -in "$TEMP_DIR/checksums.sig" -out "$TEMP_DIR/checksums.sig.bin"
-if ! openssl pkeyutl -verify \
-  -pubin \
-  -inkey "$TEMP_DIR/release-signing-public.pem" \
-  -sigfile "$TEMP_DIR/checksums.sig.bin" \
-  -rawin \
-  -in "$TEMP_DIR/checksums.json" >/dev/null 2>&1; then
-  echo "ERROR: checksums.json signature verification failed" >&2
-  exit 1
-fi
-
-EXPECTED_ZIP_SHA="$(jq -r '.archive.sha256 // empty' "$TEMP_DIR/checksums.json")"
-if [ -z "$EXPECTED_ZIP_SHA" ]; then
-  echo "ERROR: checksums.json missing archive.sha256" >&2
-  exit 1
-fi
-
-if command -v shasum >/dev/null 2>&1; then
-  ACTUAL_ZIP_SHA="$(shasum -a 256 "$TEMP_DIR/$ZIP_NAME" | awk '{print $1}')"
-else
-  ACTUAL_ZIP_SHA="$(sha256sum "$TEMP_DIR/$ZIP_NAME" | awk '{print $1}')"
-fi
-
-if [ "$EXPECTED_ZIP_SHA" != "$ACTUAL_ZIP_SHA" ]; then
-  echo "ERROR: Archive checksum mismatch for $ZIP_NAME" >&2
-  exit 1
-fi
-
-echo "Checksums manifest signature and archive hash verified."
-
-# 3) Install verified archive
-mkdir -p "$INSTALL_ROOT"
-rm -rf "$DEST"
-unzip -q "$TEMP_DIR/$ZIP_NAME" -d "$INSTALL_ROOT"
-
-chmod 600 "$DEST/skill.json"
-find "$DEST" -type f ! -name "skill.json" -exec chmod 644 {} \;
-
-echo "Installed clawsec-suite v${VERSION} to: $DEST"
-echo "Next step (OpenClaw): node \"\$DEST/scripts/setup_advisory_hook.mjs\""
-```
+See the [clawsec-scanner SKILL.md](../clawsec-scanner/SKILL.md) for a full verification script example using the same signing key.
 
 ## OpenClaw Automation (Hook + Optional Cron)
 
@@ -344,29 +272,7 @@ The advisory guardian resolves the suppression config using the same priority or
 
 ### Shared Config with Audit Pipeline
 
-The advisory and audit pipelines share the same config file. Use the `enabledFor` array to control which pipelines honor the suppression list:
-
-```json
-{
-  "enabledFor": ["audit", "advisory"],
-  "suppressions": [
-    {
-      "checkId": "skills.code_safety",
-      "skill": "clawsec-suite",
-      "reason": "First-party tooling — audit finding accepted",
-      "suppressedAt": "2026-02-15"
-    },
-    {
-      "checkId": "CVE-2026-25593",
-      "skill": "clawsec-suite",
-      "reason": "First-party tooling — advisory reviewed",
-      "suppressedAt": "2026-02-15"
-    }
-  ]
-}
-```
-
-Audit entries (with check identifiers like `skills.code_safety`) are only matched by the audit pipeline. Advisory entries (with advisory IDs like `CVE-2026-25593` or `CLAW-2026-0001`) are only matched by the advisory pipeline. Each pipeline filters for its own relevant entries.
+The advisory and audit pipelines share the same config file. Use the `enabledFor` array to control which pipelines honor the suppression list. Audit entries (with check identifiers like `skills.code_safety`) are only matched by the audit pipeline. Advisory entries (with advisory IDs like `CVE-2026-25593` or `CLAW-2026-0001`) are only matched by the advisory pipeline.
 
 ## Optional Skill Installation
 

@@ -1,7 +1,7 @@
 ---
 name: claw-release
 version: 0.0.1
-description: Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.
+description: Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification. Use when releasing a skill, publishing a new version, deploying to production, cutting a release, shipping a build, or creating a changelog.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🚀","category":"utility","internal":true}}
 clawdis:
