@@ -1,8 +1,43 @@
 {
   "version": "0.0.3",
-  "updated": "2026-03-25T06:21:11Z",
+  "updated": "2026-03-29T06:22:49Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-32846",
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "OpenClaw through 2026.3.23 (fixed in commit 4797bbc) contains a path traversal vulnerability in medi...",
+      "description": "OpenClaw through 2026.3.23 (fixed in commit 4797bbc) contains a path traversal vulnerability in media parsing that allows attackers to read arbitrary files by bypassing path validation in the isLikelyLocalPath() and isValidMedia() functions. Attackers can exploit incomplete validation and the allowBareFilename bypass to reference files outside the intended application sandbox, resulting in disclosure of sensitive information including system files, environment files, and SSH keys.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-03-26T17:16:37.640",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/4797bbc5b96e2cca5532e43b58915c051746fe37",
+        "https://github.com/openclaw/openclaw/pull/54642",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-f6pf-4gjx-c94r"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32846",
+      "exploitability_score": "unknown",
+      "exploitability_rationale": "No CVSS score available; requires local access; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "unknown"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-32913",
       "severity": "critical",
@@ -60,7 +95,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-9q36-67vc-rrwg",
         "https://vulncheck.com/advisories/openclaw-mar-sandbox-escape-via-acp-spawn-command"
       ],
-      "cvss_score": 5.3,
+      "cvss_score": 6.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27646",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.3); requires local access",
@@ -96,7 +131,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-r6qf-8968-wj9q",
         "https://vulncheck.com/advisories/openclaw-mar-shell-approval-gating-bypass-via-dispatch-wrapper-depth-mismatch"
       ],
-      "cvss_score": 4.5,
+      "cvss_score": 5.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27183",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (4.5); requires local access",
@@ -437,7 +472,7 @@
     },
     {
       "id": "CVE-2026-32057",
-      "severity": "medium",
+      "severity": "high",
       "type": "unknown_cwe_807",
       "nvd_category_id": "CWE-807",
       "title": "OpenClaw versions prior to 2026.2.25 contain an authentication bypass vulnerability in the trusted-p...",
@@ -456,7 +491,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-vvgp-4c28-m3jm",
         "https://www.vulncheck.com/advisories/openclaw-authentication-bypass-via-control-ui-client-id-parameter"
       ],
-      "cvss_score": 5.9,
+      "cvss_score": 7.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32057",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.9); network accessible",
@@ -1258,7 +1293,7 @@
     },
     {
       "id": "CVE-2026-32034",
-      "severity": "medium",
+      "severity": "high",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw versions prior to 2026.2.21 contain an authentication bypass vulnerability in the Control U...",
@@ -1277,7 +1312,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-3cvx-236h-m9fj",
         "https://www.vulncheck.com/advisories/openclaw-insecure-control-ui-authentication-over-plaintext-http"
       ],
-      "cvss_score": 6.8,
+      "cvss_score": 8.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32034",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.8); network accessible; RCE is critical in agent deployments",
@@ -1313,7 +1348,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-27cr-4p5m-74rj",
         "https://www.vulncheck.com/advisories/openclaw-path-traversal-via-prefixed-absolute-paths-in-workspace-boundary-validation"
       ],
-      "cvss_score": 5.3,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32033",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.3); network accessible; path traversal affects agents with file access",
@@ -1349,7 +1384,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-f8mp-vj46-cq8v",
         "https://www.vulncheck.com/advisories/openclaw-arbitrary-shell-execution-via-unvalidated-shell-environment-variable"
       ],
-      "cvss_score": 7.0,
+      "cvss_score": 7.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32032",
       "exploitability_score": "medium",
       "exploitability_rationale": "High CVSS score (7.0); requires local access",
@@ -1401,7 +1436,7 @@
     },
     {
       "id": "CVE-2026-32030",
-      "severity": "medium",
+      "severity": "high",
       "type": "path_traversal",
       "nvd_category_id": "CWE-22",
       "title": "OpenClaw versions prior to 2026.2.19 contain a path traversal vulnerability in the stageSandboxMedia...",
@@ -1420,7 +1455,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-x9cf-3w63-rpq9",
         "https://www.vulncheck.com/advisories/openclaw-sensitive-file-disclosure-via-stagesandboxmedia-path-traversal"
       ],
-      "cvss_score": 5.9,
+      "cvss_score": 7.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32030",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (5.9); remotely exploitable without authentication; path traversal affects agents with file access",
@@ -1437,7 +1472,7 @@
     },
     {
       "id": "CVE-2026-32029",
-      "severity": "low",
+      "severity": "medium",
       "type": "unknown_cwe_345",
       "nvd_category_id": "CWE-345",
       "title": "OpenClaw versions prior to 2026.2.21 improperly parse the left-most X-Forwarded-For header value whe...",
@@ -1456,7 +1491,7 @@
         "https://github.com/openclaw/openclaw/commit/8877bfd11ec7760b115b2d0d7500a45da2749747",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-2rgf-hm63-5qph"
       ],
-      "cvss_score": 3.7,
+      "cvss_score": 5.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32029",
       "exploitability_score": "low",
       "exploitability_rationale": "Low CVSS score (3.7); remotely exploitable without authentication",
@@ -1473,7 +1508,7 @@
     },
     {
       "id": "CVE-2026-32028",
-      "severity": "low",
+      "severity": "medium",
       "type": "incorrect_authorization",
       "nvd_category_id": "CWE-863",
       "title": "OpenClaw versions prior to 2026.2.25 fail to enforce dmPolicy and allowFrom authorization checks on ...",
@@ -1492,7 +1527,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-354r-7mfh-7rh2",
         "https://www.vulncheck.com/advisories/openclaw-missing-authorization-check-in-discord-dm-reaction-ingress"
       ],
-      "cvss_score": 3.7,
+      "cvss_score": 5.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32028",
       "exploitability_score": "high",
       "exploitability_rationale": "Low CVSS score (3.7); remotely exploitable without authentication; RCE is critical in agent deployments",
@@ -1510,8 +1545,8 @@
     {
       "id": "CVE-2026-32027",
       "severity": "medium",
-      "type": "path_traversal",
-      "nvd_category_id": "CWE-22",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
       "title": "OpenClaw versions prior to 2026.2.26 contain an authorization bypass vulnerability where DM pairing-...",
       "description": "OpenClaw versions prior to 2026.2.26 contain an authorization bypass vulnerability where DM pairing-store identities are incorrectly eligible for group allowlist authorization checks. Attackers can exploit this cross-context authorization flaw by using a sender approved via DM pairing to satisfy group sender allowlist checks without explicit presence in groupAllowFrom, bypassing group message access controls.",
       "affected": [
@@ -1653,7 +1688,7 @@
     },
     {
       "id": "CVE-2026-32023",
-      "severity": "medium",
+      "severity": "high",
       "type": "incorrect_authorization",
       "nvd_category_id": "CWE-863",
       "title": "OpenClaw versions prior to 2026.2.24 contain an approval gating bypass vulnerability in system.run a...",
@@ -1672,7 +1707,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-ccg8-46r6-9qgj",
         "https://www.vulncheck.com/advisories/openclaw-approval-gating-bypass-via-dispatch-wrapper-depth-cap-mismatch-in-system-run"
       ],
-      "cvss_score": 5.9,
+      "cvss_score": 7.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32023",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.9); network accessible",
@@ -1708,7 +1743,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-3xfw-4pmr-4xc5",
         "https://www.vulncheck.com/advisories/openclaw-arbitrary-file-read-via-grep-e-flag-policy-bypass"
       ],
-      "cvss_score": 5.3,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32022",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.3); network accessible",
@@ -1744,7 +1779,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-j4xf-96qf-rx69",
         "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-display-name-collision-in-feishu-allowfrom"
       ],
-      "cvss_score": 4.8,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32021",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (4.8); remotely exploitable without authentication",
@@ -1797,7 +1832,7 @@
     },
     {
       "id": "CVE-2026-32019",
-      "severity": "medium",
+      "severity": "high",
       "type": "server_side_request_forgery",
       "nvd_category_id": "CWE-918",
       "title": "OpenClaw versions prior to 2026.2.22 contain incomplete IPv4 special-use range validation in the isP...",
@@ -1815,7 +1850,7 @@
         "https://github.com/openclaw/openclaw/commit/44dfbd23df453e51b71ef79a148c28c53e89168c",
         "https://github.com/openclaw/openclaw/commit/71bd15bb4294d3d1b54386064d69cd0f5f731bd8"
       ],
-      "cvss_score": 6.0,
+      "cvss_score": 7.4,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32019",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.0); network accessible; SSRF affects agents making external requests",
@@ -1867,7 +1902,7 @@
     },
     {
       "id": "CVE-2026-32017",
-      "severity": "medium",
+      "severity": "high",
       "type": "unknown_cwe_184",
       "nvd_category_id": "CWE-184",
       "title": "OpenClaw versions prior to 2026.2.19 contain an allowlist bypass vulnerability in the exec safeBins ...",
@@ -1886,7 +1921,7 @@
         "https://github.com/openclaw/openclaw/commit/cfe8457a0f4aae5324daec261d3b0aad1461a4bc",
         "https://github.com/openclaw/openclaw/commit/fec48a5006eab37c6a5821726ccaeec886486b13"
       ],
-      "cvss_score": 5.9,
+      "cvss_score": 7.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32017",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.9); network accessible",
@@ -1923,7 +1958,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-7f4q-9rqh-x36p",
         "https://www.vulncheck.com/advisories/openclaw-path-traversal-via-basename-only-allowlist-matching-on-macos"
       ],
-      "cvss_score": 7.0,
+      "cvss_score": 7.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32016",
       "exploitability_score": "medium",
       "exploitability_rationale": "High CVSS score (7.0); requires local access",
@@ -1959,7 +1994,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-g75x-8qqm-2vxp",
         "https://www.vulncheck.com/advisories/openclaw-path-hijacking-bypass-in-tools-exec-safebins-allowlist-validation"
       ],
-      "cvss_score": 7.0,
+      "cvss_score": 7.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32015",
       "exploitability_score": "medium",
       "exploitability_rationale": "High CVSS score (7.0); requires local access",
@@ -2444,7 +2479,7 @@
     },
     {
       "id": "CVE-2026-32000",
-      "severity": "medium",
+      "severity": "high",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw versions prior to 2026.2.19 contain a command injection vulnerability in the Lobster extens...",
@@ -2463,7 +2498,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-7fcc-cw49-xm78",
         "https://www.vulncheck.com/advisories/openclaw-command-injection-via-windows-shell-fallback-in-lobster-tool-execution"
       ],
-      "cvss_score": 6.3,
+      "cvss_score": 7.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-32000",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.3); requires local access; RCE is critical in agent deployments",
@@ -2534,7 +2569,7 @@
         "https://github.com/openclaw/openclaw/commit/7655c0cb3a47d0647cbbf5284e177f90b4b82ddb",
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-gw85-xp4q-5gp9"
       ],
-      "cvss_score": 7.0,
+      "cvss_score": 8.6,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-31998",
       "exploitability_score": "high",
       "exploitability_rationale": "High CVSS score (7.0); remotely exploitable without authentication",
@@ -2586,7 +2621,7 @@
     },
     {
       "id": "CVE-2026-31996",
-      "severity": "low",
+      "severity": "medium",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw versions prior to 2026.2.19 tools.exec.safeBins contains an input validation bypass vulnera...",
@@ -2605,7 +2640,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-4685-c5cp-vp95",
         "https://www.vulncheck.com/advisories/openclaw-safebins-stdin-only-bypass-via-sort-output-and-recursive-grep-flags"
       ],
-      "cvss_score": 3.6,
+      "cvss_score": 4.4,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-31996",
       "exploitability_score": "high",
       "exploitability_rationale": "Low CVSS score (3.6); requires local access; RCE is critical in agent deployments",
@@ -2930,7 +2965,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-6j27-pc5c-m8w8",
         "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-allow-always-wrapper-persistence"
       ],
-      "cvss_score": 6.4,
+      "cvss_score": 6.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-29607",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.4); network accessible; RCE is critical in agent deployments",
@@ -2982,7 +3017,7 @@
     },
     {
       "id": "CVE-2026-28460",
-      "severity": "medium",
+      "severity": "high",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw versions prior to 2026.2.22 contain an allowlist bypass vulnerability in system.run that al...",
@@ -3001,7 +3036,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-9868-vxmx-w862",
         "https://www.vulncheck.com/advisories/openclaw-allowlist-bypass-via-shell-line-continuation-command-substitution-in-system-run"
       ],
-      "cvss_score": 5.9,
+      "cvss_score": 7.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-28460",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (5.9); network accessible; RCE is critical in agent deployments",
@@ -3037,7 +3072,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-r9q5-c7qc-p26w",
         "https://www.vulncheck.com/advisories/openclaw-webhook-replay-attack-via-missing-durable-replay-suppression"
       ],
-      "cvss_score": 4.8,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-28449",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (4.8); remotely exploitable without authentication",
@@ -3198,7 +3233,7 @@
     },
     {
       "id": "CVE-2026-27524",
-      "severity": "low",
+      "severity": "medium",
       "type": "unknown_cwe_1321",
       "nvd_category_id": "CWE-1321",
       "title": "OpenClaw versions prior to 2026.2.21 accept prototype-reserved keys in runtime /debug set override o...",
@@ -3217,7 +3252,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-62f6-mrcj-v8h5",
         "https://www.vulncheck.com/advisories/openclaw-prototype-pollution-via-debug-override-path"
       ],
-      "cvss_score": 3.1,
+      "cvss_score": 4.3,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-27524",
       "exploitability_score": "medium",
       "exploitability_rationale": "Low CVSS score (3.1); network accessible; prototype pollution can escalate in Node.js agents",
@@ -3325,7 +3360,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-p4wh-cr8m-gm6c",
         "https://www.vulncheck.com/advisories/openclaw-arbitrary-binary-execution-via-shell-environment-variable-trusted-prefix-fallback"
       ],
-      "cvss_score": 5.3,
+      "cvss_score": 6.1,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-22217",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (5.3); requires local access; RCE is critical in agent deployments",
@@ -3342,7 +3377,7 @@
     },
     {
       "id": "CVE-2026-22181",
-      "severity": "medium",
+      "severity": "high",
       "type": "server_side_request_forgery",
       "nvd_category_id": "CWE-918",
       "title": "OpenClaw versions prior to 2026.3.2 contain a DNS pinning bypass vulnerability in strict URL fetch p...",
@@ -3361,7 +3396,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-8mvx-p2r9-r375",
         "https://www.vulncheck.com/advisories/openclaw-dns-pinning-bypass-via-environment-proxy-configuration-in-web-fetch"
       ],
-      "cvss_score": 6.4,
+      "cvss_score": 7.6,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-22181",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.4); network accessible; SSRF affects agents making external requests",
@@ -3414,7 +3449,7 @@
     },
     {
       "id": "CVE-2026-22179",
-      "severity": "medium",
+      "severity": "high",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw versions prior to 2026.2.22 in macOS node-host system.run contain an allowlist bypass vulne...",
@@ -3433,7 +3468,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-9p38-94jf-hgjj",
         "https://www.vulncheck.com/advisories/openclaw-allowlist-bypass-via-command-substitution-in-system-run"
       ],
-      "cvss_score": 6.6,
+      "cvss_score": 7.2,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-22179",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.6); network accessible; RCE is critical in agent deployments",
@@ -3577,7 +3612,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-v3j7-34xh-6g3w",
         "https://www.vulncheck.com/advisories/openclaw-gateway-token-disclosure-via-chrome-cdp-probe"
       ],
-      "cvss_score": 5.7,
+      "cvss_score": 6.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-22174",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (5.7); requires local access; RCE is critical in agent deployments",
@@ -3649,7 +3684,7 @@
         "https://github.com/openclaw/openclaw/commit/4540790cb62412676f7b61cfc6e47443f84a251e",
         "https://github.com/openclaw/openclaw/commit/51c0893673de8e5cea64e64351dbfa4680ba0dec"
       ],
-      "cvss_score": 4.8,
+      "cvss_score": 6.5,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-22170",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (4.8); remotely exploitable without authentication",
@@ -3685,7 +3720,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-vmqr-rc7x-3446",
         "https://www.vulncheck.com/advisories/openclaw-allowlist-bypass-via-sort-configuration-in-safebins"
       ],
-      "cvss_score": 6.4,
+      "cvss_score": 6.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-22169",
       "exploitability_score": "high",
       "exploitability_rationale": "Medium CVSS score (6.4); requires local access; RCE is critical in agent deployments",
@@ -3924,6 +3959,8 @@
       "title": "OpenClaw versions2026.2.21-2 prior to 2026.2.22 and @openclaw/voice-call versions 2026.2.21 prior to...",
       "description": "OpenClaw versions2026.2.21-2 prior to 2026.2.22 and @openclaw/voice-call versions 2026.2.21 prior to 2026.2.22 accept media-stream WebSocket upgrades before stream validation, allowing unauthenticated clients to establish connections. Remote attackers can hold idle pre-authenticated sockets open to consume connection resources and degrade service availability for legitimate streams.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "cpe:2.3:a:openclaw:openclaw\\/voice-call:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -4780,7 +4817,7 @@
     },
     {
       "id": "CVE-2026-28470",
-      "severity": "high",
+      "severity": "critical",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
       "title": "OpenClaw versions prior to 2026.2.2 contain an exec approvals (must be enabled) allowlist bypass vul...",
@@ -4799,7 +4836,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-3hcm-ggvf-rch5",
         "https://www.vulncheck.com/advisories/openclaw-exec-allowlist-bypass-via-command-substitution-in-double-quotes"
       ],
-      "cvss_score": 8.1,
+      "cvss_score": 9.8,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-28470",
       "exploitability_score": "high",
       "exploitability_rationale": "Critical CVSS score (9.8); remotely exploitable without authentication",
