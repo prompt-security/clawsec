@@ -5,6 +5,13 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2026-04-08
+
+### Fixed
+
+- Fixed heartbeat update detection to rely on GitHub release metadata for latest-version resolution, addressing false update status results reported in [#168](https://github.com/prompt-security/clawsec/issues/168).
+- Hardened fallback behavior when release API auth/config is unavailable so version checks still resolve the correct latest release.
+
 ## [0.1.4] - 2026-02-28
 
 ### Added
