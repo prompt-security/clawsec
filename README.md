@@ -442,7 +442,6 @@ npm run build
 │   ├── clawsec-clawhub-checker/ # 🧪 ClawHub reputation checks
 │   ├── clawtributor/           # 🤝 Community reporting skill
 │   ├── openclaw-audit-watchdog/ # 🔭 Automated audit skill
-│   ├── prompt-agent/          # 🧠 Prompt-focused protection workflows
 │   └── soul-guardian/         # 👻 File integrity skill
 ├── utils/
 │   ├── package_skill.py       # Skill packager utility
