@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-04-05T06:25:01Z",
+  "updated": "2026-04-08T20:59:34Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -46,6 +46,7 @@
       "title": "OpenClaw versions prior to commit b57b680 contain an approval bypass vulnerability due to inconsiste...",
       "description": "OpenClaw versions prior to commit b57b680 contain an approval bypass vulnerability due to inconsistent environment variable normalization between approval and execution paths, allowing attackers to inject attacker-controlled environment variables into execution without approval system validation. Attackers can exploit differing normalization logic to discard non-portable keys during approval processing while accepting them at execution time, bypassing operator review and potentially influencing runtime behavior including execution of attacker-controlled binaries.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -116,6 +117,7 @@
       "title": "OpenClaw before 2026.3.22 contains a path traversal vulnerability in Windows media loaders that acce...",
       "description": "OpenClaw before 2026.3.22 contains a path traversal vulnerability in Windows media loaders that accepts remote-host file URLs and UNC-style paths before local-path validation. Attackers can exploit this by providing network-hosted file targets that are treated as local content, bypassing intended access restrictions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -289,7 +291,7 @@
     },
     {
       "id": "CVE-2026-33579",
-      "severity": "high",
+      "severity": "critical",
       "type": "incorrect_authorization",
       "nvd_category_id": "CWE-863",
       "title": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability in the /pair approve command...",
@@ -308,7 +310,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-hc5h-pmr3-3497",
         "https://www.vulncheck.com/advisories/openclaw-privilege-escalation-via-missing-caller-scope-validation-in-device-pair-approval"
       ],
-      "cvss_score": 8.1,
+      "cvss_score": 9.9,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-33579",
       "exploitability_score": "high",
       "exploitability_rationale": "High CVSS score (8.1); network accessible",
@@ -6594,8 +6596,8 @@
       "severity": "high",
       "type": "os_command_injection",
       "nvd_category_id": "CWE-78",
-      "title": "OpenClaw exec-approvals allowlist validation checks pre-expansion argv tokens but execution uses rea...",
-      "description": "OpenClaw exec-approvals allowlist validation checks pre-expansion argv tokens but execution uses real shell expansion, allowing safe bins like head, tail, or grep to read arbitrary local files via glob patterns or environment variables. Authorized callers or prompt-injection attacks can exploit this to disclose files readable by the gateway or node process when host execution is enabled in allowlist mode.",
+      "title": "OpenClaw versions prior to 2026.2.14 contain an arbitrary file read vulnerability in the exec-approv...",
+      "description": "OpenClaw versions prior to 2026.2.14 contain an arbitrary file read vulnerability in the exec-approvals allowlist validation that checks pre-expansion argv tokens but executes using real shell expansion. Attackers with authorization or through prompt-injection attacks can exploit safe binaries like head, tail, or grep with glob patterns or environment variables to disclose files readable by the gateway or node process when host execution is enabled in allowlist mode.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
