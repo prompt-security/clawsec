@@ -93,21 +93,37 @@ jobs:
             md_path="${skill_dir}/SKILL.md"
 
             head_json_version=""
+            head_has_json=false
             if [ -f "${json_path}" ]; then
+              head_has_json=true
               head_json_version="$(jq -r '.version // empty' "${json_path}" 2>/dev/null || true)"
             fi
 
             head_md_version=""
+            head_has_md=false
             if [ -f "${md_path}" ]; then
+              head_has_md=true
               head_md_version="$(get_md_version "${md_path}")"
             fi
 
             base_json_version=""
+            base_has_json=false
             if git cat-file -e "${BASE_SHA}:${json_path}" 2>/dev/null; then
+              base_has_json=true
               base_json_version="$(git show "${BASE_SHA}:${json_path}" | jq -r '.version // empty' 2>/dev/null || true)"
             fi
 
-            base_md_version="$(get_md_version_from_git "${BASE_SHA}" "${md_path}")"
+            base_md_version=""
+            base_has_md=false
+            if git cat-file -e "${BASE_SHA}:${md_path}" 2>/dev/null; then
+              base_has_md=true
+              base_md_version="$(get_md_version_from_git "${BASE_SHA}" "${md_path}")"
+            fi
+
+            if [ "${base_has_json}" = "true" ] && [ "${base_has_md}" = "true" ] && [ "${head_has_json}" != "true" ] && [ "${head_has_md}" != "true" ]; then
+              echo "Skill ${skill_dir} was removed in this PR; skipping version parity check."
+              continue
+            fi
 
             json_version_changed=false
             md_version_changed=false
@@ -330,21 +346,37 @@ jobs:
             md_path="${skill_dir}/SKILL.md"
 
             head_json_version=""
+            head_has_json=false
             if [ -f "${json_path}" ]; then
+              head_has_json=true
               head_json_version="$(jq -r '.version // empty' "${json_path}" 2>/dev/null || true)"
             fi
 
             head_md_version=""
+            head_has_md=false
             if [ -f "${md_path}" ]; then
+              head_has_md=true
               head_md_version="$(get_md_version "${md_path}")"
             fi
 
             base_json_version=""
+            base_has_json=false
             if git cat-file -e "${BASE_SHA}:${json_path}" 2>/dev/null; then
+              base_has_json=true
               base_json_version="$(git show "${BASE_SHA}:${json_path}" | jq -r '.version // empty' 2>/dev/null || true)"
             fi
 
-            base_md_version="$(get_md_version_from_git "${BASE_SHA}" "${md_path}")"
+            base_md_version=""
+            base_has_md=false
+            if git cat-file -e "${BASE_SHA}:${md_path}" 2>/dev/null; then
+              base_has_md=true
+              base_md_version="$(get_md_version_from_git "${BASE_SHA}" "${md_path}")"
+            fi
+
+            if [ "${base_has_json}" = "true" ] && [ "${base_has_md}" = "true" ] && [ "${head_has_json}" != "true" ] && [ "${head_has_md}" != "true" ]; then
+              echo "Skill ${skill_dir} was removed in this PR; skipping dry-run."
+              continue
+            fi
 
             json_version_changed=false
             md_version_changed=false
