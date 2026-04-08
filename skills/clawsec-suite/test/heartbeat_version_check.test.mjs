@@ -155,8 +155,78 @@ async function testHeartbeatVersionCheckUsesSuiteVersion() {
   }
 }
 
+async function testHeartbeatVersionCheckFallbackDoesNotFalseAlert() {
+  const testName = "heartbeat step 1: release metadata failure warns without false update alert";
+  let fixture = null;
+  let tempDir = null;
+
+  try {
+    const markdown = await fs.readFile(HEARTBEAT_PATH, "utf8");
+    const stepScript = extractStepOneScript(markdown);
+    if (!stepScript) {
+      fail(testName, "Failed to extract Step 1 shell block from HEARTBEAT.md");
+      return;
+    }
+
+    tempDir = await createTempDir();
+    const installRoot = path.join(tempDir.path, "skills");
+    const suiteDir = path.join(installRoot, "clawsec-suite");
+    await fs.mkdir(suiteDir, { recursive: true });
+    await fs.writeFile(
+      path.join(suiteDir, "skill.json"),
+      JSON.stringify({ name: "clawsec-suite", version: "0.1.4" }, null, 2),
+      "utf8",
+    );
+
+    fixture = await withServer((req, res) => {
+      if (req.url === "/api/releases") {
+        res.writeHead(403, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "API rate limit exceeded" }));
+        return;
+      }
+
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "not found" }));
+    });
+
+    const result = await runShellScript(stepScript, {
+      INSTALL_ROOT: installRoot,
+      SUITE_DIR: suiteDir,
+      GITHUB_RELEASES_API: `${fixture.url}/api/releases`,
+      RELEASE_DOWNLOAD_BASE_URL: `${fixture.url}/releases/download`,
+    });
+
+    if (result.code !== 0) {
+      fail(testName, `Expected exit 0, got ${result.code}: ${result.stderr}`);
+      return;
+    }
+
+    if (result.stdout.includes("UPDATE AVAILABLE")) {
+      fail(testName, `Unexpected update reported:\n${result.stdout}`);
+      return;
+    }
+
+    if (!result.stdout.includes("WARNING: Could not determine latest suite version from release metadata.")) {
+      fail(testName, `Expected warning about release metadata fallback. Output:\n${result.stdout}`);
+      return;
+    }
+
+    pass(testName);
+  } catch (error) {
+    fail(testName, error);
+  } finally {
+    if (fixture) {
+      await fixture.close();
+    }
+    if (tempDir) {
+      await tempDir.cleanup();
+    }
+  }
+}
+
 async function runTests() {
   await testHeartbeatVersionCheckUsesSuiteVersion();
+  await testHeartbeatVersionCheckFallbackDoesNotFalseAlert();
   report();
   exitWithResults();
 }

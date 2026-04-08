@@ -9,14 +9,30 @@ Time to check in on your security status!
 ```bash
 # Fetch current release info with error handling
 INSTALL_DIR="${PROMPT_AGENT_INSTALL_DIR:-$HOME/.openclaw/skills/prompt-agent}"
+PROMPT_AGENT_RELEASES_API="${PROMPT_AGENT_RELEASES_API:-https://api.github.com/repos/prompt-security/clawsec/releases?per_page=100}"
+PROMPT_AGENT_RELEASE_DOWNLOAD_BASE_URL="${PROMPT_AGENT_RELEASE_DOWNLOAD_BASE_URL:-https://github.com/prompt-security/clawsec/releases/download}"
+PROMPT_AGENT_TAG_PREFIX="${PROMPT_AGENT_TAG_PREFIX:-prompt-agent-v}"
 TEMP_FILE=$(mktemp)
-trap "rm -f '$TEMP_FILE'" EXIT
+TEMP_RELEASES=$(mktemp)
+trap "rm -f '$TEMP_FILE' '$TEMP_RELEASES'" EXIT
 
-LATEST_TAG=$(curl -sSL https://api.github.com/repos/prompt-security/ClawSec/releases | \
-  jq -r '[.[] | select(.tag_name | startswith("prompt-agent-v"))][0].tag_name')
+LATEST_TAG=""
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  if curl -sSL --fail --show-error -H "Authorization: Bearer $GITHUB_TOKEN" "$PROMPT_AGENT_RELEASES_API" -o "$TEMP_RELEASES"; then
+    LATEST_TAG=$(jq -r --arg prefix "$PROMPT_AGENT_TAG_PREFIX" '[.[] | select(.tag_name | startswith($prefix))][0].tag_name // empty' "$TEMP_RELEASES" 2>/dev/null || true)
+  else
+    echo "Warning: Could not fetch release metadata"
+  fi
+elif curl -sSL --fail --show-error "$PROMPT_AGENT_RELEASES_API" -o "$TEMP_RELEASES"; then
+  LATEST_TAG=$(jq -r --arg prefix "$PROMPT_AGENT_TAG_PREFIX" '[.[] | select(.tag_name | startswith($prefix))][0].tag_name // empty' "$TEMP_RELEASES" 2>/dev/null || true)
+else
+  echo "Warning: Could not fetch release metadata"
+fi
 
-if ! curl -sSL --fail --show-error "https://github.com/prompt-security/clawsec/releases/download/$LATEST_TAG/skill.json" -o "$TEMP_FILE"; then
-  echo "Warning: Could not fetch remote skill.json"
+if [ -z "$LATEST_TAG" ]; then
+  echo "Warning: Could not determine latest prompt-agent release tag"
+elif ! curl -sSL --fail --show-error "$PROMPT_AGENT_RELEASE_DOWNLOAD_BASE_URL/$LATEST_TAG/skill.json" -o "$TEMP_FILE"; then
+  echo "Warning: Could not fetch remote skill.json for $LATEST_TAG"
 else
   # Validate JSON before parsing
   if ! jq empty "$TEMP_FILE" 2>/dev/null; then
@@ -260,22 +276,38 @@ Save to: `~/.openclaw/prompt-agent-state.json`
 # Full heartbeat sequence
 echo "=== Prompt Agent Heartbeat ==="
 INSTALL_DIR="${PROMPT_AGENT_INSTALL_DIR:-$HOME/.openclaw/skills/prompt-agent}"
+PROMPT_AGENT_RELEASES_API="${PROMPT_AGENT_RELEASES_API:-https://api.github.com/repos/prompt-security/clawsec/releases?per_page=100}"
+PROMPT_AGENT_RELEASE_DOWNLOAD_BASE_URL="${PROMPT_AGENT_RELEASE_DOWNLOAD_BASE_URL:-https://github.com/prompt-security/clawsec/releases/download}"
+PROMPT_AGENT_TAG_PREFIX="${PROMPT_AGENT_TAG_PREFIX:-prompt-agent-v}"
 STATE_FILE="$HOME/.openclaw/prompt-agent-state.json"
 
 # 1. Check for updates (with error handling)
 echo "Checking for updates..."
 TEMP_FILE=$(mktemp)
-trap "rm -f '$TEMP_FILE'" EXIT
+TEMP_RELEASES=$(mktemp)
+trap "rm -f '$TEMP_FILE' '$TEMP_RELEASES'" EXIT
 
-LATEST_TAG=$(curl -sSL https://api.github.com/repos/prompt-security/ClawSec/releases | \
-  jq -r '[.[] | select(.tag_name | startswith("prompt-agent-v"))][0].tag_name')
+LATEST_TAG=""
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+  if curl -sSL --fail --show-error -H "Authorization: Bearer $GITHUB_TOKEN" "$PROMPT_AGENT_RELEASES_API" -o "$TEMP_RELEASES"; then
+    LATEST_TAG=$(jq -r --arg prefix "$PROMPT_AGENT_TAG_PREFIX" '[.[] | select(.tag_name | startswith($prefix))][0].tag_name // empty' "$TEMP_RELEASES" 2>/dev/null || true)
+  else
+    echo "Warning: Could not fetch release metadata"
+  fi
+elif curl -sSL --fail --show-error "$PROMPT_AGENT_RELEASES_API" -o "$TEMP_RELEASES"; then
+  LATEST_TAG=$(jq -r --arg prefix "$PROMPT_AGENT_TAG_PREFIX" '[.[] | select(.tag_name | startswith($prefix))][0].tag_name // empty' "$TEMP_RELEASES" 2>/dev/null || true)
+else
+  echo "Warning: Could not fetch release metadata"
+fi
 
-if curl -sSL --fail --show-error "https://github.com/prompt-security/clawsec/releases/download/$LATEST_TAG/skill.json" -o "$TEMP_FILE" 2>/dev/null; then
+if [ -z "$LATEST_TAG" ]; then
+  echo "Warning: Could not determine latest prompt-agent release tag"
+elif curl -sSL --fail --show-error "$PROMPT_AGENT_RELEASE_DOWNLOAD_BASE_URL/$LATEST_TAG/skill.json" -o "$TEMP_FILE" 2>/dev/null; then
   if jq -r '.version' "$TEMP_FILE" 2>/dev/null; then
     echo "Remote version fetched successfully"
   fi
 else
-  echo "Warning: Could not fetch remote version"
+  echo "Warning: Could not fetch remote version for $LATEST_TAG"
 fi
 
 # 2. Verify health
