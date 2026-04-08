@@ -15,7 +15,8 @@ Run this periodically (cron/systemd/CI/agent scheduler). It assumes POSIX shell,
 ```bash
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.openclaw/skills}"
 SUITE_DIR="$INSTALL_ROOT/clawsec-suite"
-CHECKSUMS_URL="${CHECKSUMS_URL:-https://clawsec.prompt.security/releases/latest/download/checksums.json}"
+GITHUB_RELEASES_API="${GITHUB_RELEASES_API:-https://api.github.com/repos/prompt-security/clawsec/releases?per_page=100}"
+RELEASE_DOWNLOAD_BASE_URL="${RELEASE_DOWNLOAD_BASE_URL:-https://github.com/prompt-security/clawsec/releases/download}"
 FEED_URL="${CLAWSEC_FEED_URL:-https://clawsec.prompt.security/advisories/feed.json}"
 STATE_FILE="${CLAWSEC_SUITE_STATE_FILE:-$HOME/.openclaw/clawsec-suite-feed-state.json}"
 MIN_FEED_INTERVAL_SECONDS="${MIN_FEED_INTERVAL_SECONDS:-300}"
@@ -44,15 +45,26 @@ echo "Suite: $SUITE_DIR"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-curl -fsSLo "$TMP/checksums.json" "$CHECKSUMS_URL"
-
 INSTALLED_VER="$(jq -r '.version // ""' "$SUITE_DIR/skill.json" 2>/dev/null || true)"
-LATEST_VER="$(jq -r '.version // ""' "$TMP/checksums.json" 2>/dev/null || true)"
+LATEST_TAG=""
+LATEST_VER=""
+
+if curl -fsSLo "$TMP/releases.json" "$GITHUB_RELEASES_API"; then
+  LATEST_TAG="$(jq -r '[.[] | select(.tag_name | startswith("clawsec-suite-v"))][0].tag_name // ""' "$TMP/releases.json" 2>/dev/null || true)"
+fi
+
+if [ -n "$LATEST_TAG" ]; then
+  if curl -fsSLo "$TMP/remote-skill.json" "$RELEASE_DOWNLOAD_BASE_URL/$LATEST_TAG/skill.json"; then
+    LATEST_VER="$(jq -r '.version // ""' "$TMP/remote-skill.json" 2>/dev/null || true)"
+  fi
+fi
 
 echo "Installed suite: ${INSTALLED_VER:-unknown}"
 echo "Latest suite:    ${LATEST_VER:-unknown}"
 
-if [ -n "$LATEST_VER" ] && [ "$LATEST_VER" != "$INSTALLED_VER" ]; then
+if [ -z "$LATEST_VER" ]; then
+  echo "WARNING: Could not determine latest suite version from release metadata."
+elif [ "$LATEST_VER" != "$INSTALLED_VER" ]; then
   echo "UPDATE AVAILABLE: clawsec-suite ${INSTALLED_VER:-unknown} -> $LATEST_VER"
 else
   echo "Suite appears up to date."
