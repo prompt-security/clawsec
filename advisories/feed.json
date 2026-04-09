@@ -1,8 +1,43 @@
 {
   "version": "0.0.3",
-  "updated": "2026-04-08T20:59:34Z",
+  "updated": "2026-04-09T07:33:03Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-40037",
+      "severity": "medium",
+      "type": "open_redirect",
+      "nvd_category_id": "CWE-601",
+      "title": "OpenClaw before 2026.3.31 (patched in 2026.4.8) contains a request body replay vulnerability in fetc...",
+      "description": "OpenClaw before 2026.3.31 (patched in 2026.4.8) contains a request body replay vulnerability in fetchWithSsrFGuard that allows unsafe request bodies to be resent across cross-origin redirects. Attackers can exploit this by triggering redirects to exfiltrate sensitive request data or headers to unintended origins.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-08T22:16:24.370",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qx8j-g322-qj6m",
+        "https://www.vulncheck.com/advisories/openclaw-unsafe-request-body-replay-via-fetchwithssrfguard-cross-origin-redirects"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-40037",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-34511",
       "severity": "medium",
