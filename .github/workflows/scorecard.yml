@@ -7,10 +7,20 @@ on:
   # For Branch-Protection check. Only the default branch is supported. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#branch-protection
   branch_protection_rule:
+  # Run immediately after dependency changes on main so vulnerability alerts close quickly.
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - package-lock.json
+      - npm-shrinkwrap.json
+      - .github/workflows/scorecard.yml
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
     - cron: '19 23 * * 0'
+  # Allow maintainers to rescan main on demand after hotfixes.
+  workflow_dispatch:
 
 # Declare default permissions as read only.
 permissions: read-all

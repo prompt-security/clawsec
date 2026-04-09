@@ -762,6 +762,24 @@ jobs:
             exit 1
           fi
 
+      - name: Guard dependency manifests from NVD updates
+        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        run: |
+          set -euo pipefail
+
+          BLOCKED_FILES=()
+          for file in package.json package-lock.json npm-shrinkwrap.json; do
+            if ! git diff --quiet -- "$file"; then
+              BLOCKED_FILES+=("$file")
+            fi
+          done
+
+          if [ "${#BLOCKED_FILES[@]}" -gt 0 ]; then
+            echo "::error::NVD workflow must not modify dependency manifests: ${BLOCKED_FILES[*]}"
+            git --no-pager diff -- "${BLOCKED_FILES[@]}" || true
+            exit 1
+          fi
+
       - name: Sign advisory feed and verify
         if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
         uses: ./.github/actions/sign-and-verify
