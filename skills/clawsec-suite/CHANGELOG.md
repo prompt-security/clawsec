@@ -5,6 +5,25 @@ All notable changes to the ClawSec Suite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-04-14
+
+### Added
+
+- Runtime and operator-review metadata covering hook installation, optional cron persistence, guarded install flows, and feed URL overrides.
+- Preflight disclosure in `scripts/setup_advisory_hook.mjs` and `scripts/setup_advisory_cron.mjs`.
+- Regression coverage for setup disclosure behavior in `test/setup_disclosure.test.mjs`.
+
+### Changed
+
+- Declared `node`, `npx`, `openclaw`, and `unzip` in the suite runtime metadata to match the documented setup and install flows.
+- Updated catalog messaging for `openclaw-audit-watchdog` to reflect DM delivery with optional email instead of implying email-only reporting.
+- Marked local advisory signature/checksum SBOM entries as optional until those companion artifacts are bundled in the repository.
+
+### Security
+
+- Hook and cron setup now announce their persistence and approval boundaries before enabling host-side automation.
+- Clarified that the suite can recommend removal or block risky installs, but destructive actions remain approval-gated.
+
 ## [0.1.5] - 2026-04-08
 
 ### Fixed

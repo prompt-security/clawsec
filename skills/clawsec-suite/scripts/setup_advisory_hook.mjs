@@ -64,12 +64,26 @@ function installHookFiles() {
   fs.cpSync(SOURCE_HOOK_DIR, TARGET_HOOK_DIR, { recursive: true });
 }
 
+function printPreflightSummary() {
+  const lines = [
+    "Preflight review:",
+    `- This setup installs a persistent OpenClaw hook under ${TARGET_HOOK_DIR} and enables it globally.`,
+    "- Required runtime: openclaw CLI, node.",
+    "- The installed hook fetches signed advisory feed data and may recommend removal of risky skills, but destructive actions remain approval-gated.",
+    `- Source hook files: ${SOURCE_HOOK_DIR}`,
+    "- Restart your OpenClaw gateway process after setup so the hook loads intentionally.",
+  ];
+
+  process.stdout.write(lines.join("\n") + "\n\n");
+}
+
 function enableHook() {
   sh("openclaw", ["hooks", "enable", HOOK_NAME]);
 }
 
 function main() {
   assertSourceHookExists();
+  printPreflightSummary();
   requireOpenClawCli();
   installHookFiles();
   enableHook();

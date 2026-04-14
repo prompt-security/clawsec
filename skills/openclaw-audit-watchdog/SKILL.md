@@ -1,13 +1,13 @@
 ---
 name: openclaw-audit-watchdog
-version: 0.1.1
-description: Automated daily security audits for OpenClaw agents with email reporting. Runs deep audits and sends formatted reports.
+version: 0.1.2
+description: Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Runs deep audits, creates or updates a recurring cron job, and sends formatted reports to configured recipients.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🔭","category":"security"}}
 clawdis:
   emoji: "🔭"
   requires:
-    bins: [bash, curl]
+    bins: [bash, curl, openclaw, node]
 ---
 
 # Prompt Security Audit (openclaw)
@@ -42,9 +42,25 @@ Install openclaw-audit-watchdog independently without the full suite.
 - Independent from suite
 - Direct control over installation process
 
+Standalone installation usually involves a network download from the published GitHub release. Verify the release source and archive integrity before installing it on production hosts.
+
 Continue below for standalone installation instructions.
 
 ---
+
+## Operational requirements
+
+Required runtime:
+- `openclaw`
+- `node`
+- `bash`
+
+Optional runtime:
+- `sendmail` for local MTA delivery
+- SMTP relay via `PROMPTSEC_SMTP_HOST` / `PROMPTSEC_SMTP_PORT`
+- `git` only if `PROMPTSEC_GIT_PULL=1`
+
+This skill is not `always`-on by default, but when invoked it creates or updates an unattended `openclaw cron` job. Review the configured DM/email recipients and the host's `openclaw`/SMTP environment before enabling it.
 
 ## Goal
 
@@ -58,11 +74,14 @@ Create (or update) a daily cron job that:
 
 3) Sends the report to:
 - a user-selected DM target (channel + recipient id/handle)
+- an optional email recipient only when `PROMPTSEC_EMAIL_TO` is configured
 
 Default schedule: **daily at 23:00 (11pm)** in the chosen timezone.
 
 Delivery:
-- DM to last active session
+- DM to the configured target
+- Optional email only when an explicit recipient is configured
+- Persistence via `openclaw cron` (unattended recurring job)
 
 ## Usage Examples
 
@@ -73,6 +92,7 @@ For automated/MDM deployments, set environment variables before invoking:
 ```bash
 export PROMPTSEC_DM_CHANNEL="telegram"
 export PROMPTSEC_DM_TO="@yourhandle"
+export PROMPTSEC_EMAIL_TO="security@yourcompany.com" # optional
 export PROMPTSEC_TZ="America/New_York"
 export PROMPTSEC_HOST_LABEL="prod-server-01"
 
@@ -80,7 +100,7 @@ export PROMPTSEC_HOST_LABEL="prod-server-01"
 /openclaw-audit-watchdog
 ```
 
-The skill will automatically configure and create the cron job without prompts.
+The skill will automatically configure and create the cron job without prompts. If `PROMPTSEC_EMAIL_TO` is omitted, the job remains DM-only.
 
 ### Example 2: Interactive Setup
 
@@ -96,12 +116,15 @@ User: telegram
 Agent: What's the recipient ID or handle?
 User: @myhandle
 
+Agent: Optional email recipient? (leave blank to disable email)
+User: security@yourcompany.com
+
 Agent: Which timezone for the 23:00 daily run? (default: UTC)
 User: America/Los_Angeles
 
 Agent: ✓ Created cron job "Daily security audit (Prompt Security)"
        Schedule: Daily at 23:00 America/Los_Angeles
-       Delivery: telegram → @myhandle
+       Delivery: telegram → @myhandle, email → security@yourcompany.com
 ```
 
 ### Example 3: Updating Existing Job
@@ -266,10 +289,14 @@ Required env:
 - `PROMPTSEC_DM_TO` (recipient id)
 
 Optional env:
+- `PROMPTSEC_EMAIL_TO` (email recipient; if unset, email delivery stays disabled)
 - `PROMPTSEC_TZ` (IANA timezone; default `UTC`)
 - `PROMPTSEC_HOST_LABEL` (label included in report; default uses `hostname`)
 - `PROMPTSEC_INSTALL_DIR` (stable path used by cron payload to `cd` before running runner; default: `~/.config/security-checkup`)
 - `PROMPTSEC_GIT_PULL=1` (runner will `git pull --ff-only` if installed from git)
+- `OPENCLAW_AUDIT_CONFIG` (suppression config path to persist into the cron payload)
+- `PROMPTSEC_SENDMAIL_BIN` (explicit sendmail path)
+- `PROMPTSEC_SMTP_HOST`, `PROMPTSEC_SMTP_PORT`, `PROMPTSEC_SMTP_HELO`, `PROMPTSEC_SMTP_FROM` (SMTP relay settings)
 
 Path expansion rules (important):
 - In `bash`/`zsh`, use `PROMPTSEC_INSTALL_DIR="$HOME/.config/security-checkup"` (or absolute path).
@@ -277,9 +304,7 @@ Path expansion rules (important):
 - On PowerShell, prefer: `$env:PROMPTSEC_INSTALL_DIR = Join-Path $HOME ".config/security-checkup"`.
 - If path resolution fails, setup now exits with a clear error instead of creating a literal `$HOME` directory segment.
 
-Interactive install is last resort if env vars or defaults are not set.
-
-even in that case keep prompts minimalistic the watchdog tool is pretty straight up configured out of the box.
+Interactive install is last resort if env vars or defaults are not set. Keep prompts minimal: DM target is required, email is optional, and the user should see a concise preflight review before persistence is enabled.
 
 ## Create the cron job
 
@@ -292,6 +317,13 @@ Use the `cron` tool to create a job with:
 - `wakeMode="now"`
 - `payload.kind="agentTurn"`
 - `payload.deliver=true`
+
+Before creating or updating the job, print a preflight review that explicitly states:
+- this action creates or updates an unattended recurring job,
+- the required runtime (`openclaw`, `node`, `bash`),
+- the configured DM target,
+- whether email is enabled and to which recipient,
+- the install directory and timezone used for execution.
 
 ### Payload message template (agentTurn)
 
@@ -317,16 +349,22 @@ Include:
 
 ### Email delivery requirement
 
-Attempt email delivery in this priority order:
+Email delivery is optional. Only promise or attempt it when `PROMPTSEC_EMAIL_TO` is configured.
 
-A) If an email channel plugin exists in this deployment, use:
-- `message(action="send", channel="email", target="target@example.com", message=<report>)`
+If `PROMPTSEC_EMAIL_TO` is set, attempt delivery in this priority order:
 
-B) Otherwise, fallback to local sendmail if available:
-- `exec` with: `printf "%s" "$REPORT" | /usr/sbin/sendmail -t` (construct To/Subject headers)
+A) If a local sendmail-compatible binary is available, use it first.
+
+B) Otherwise, fallback to the configured SMTP relay:
+- `PROMPTSEC_SMTP_HOST`
+- `PROMPTSEC_SMTP_PORT`
+- optional `PROMPTSEC_SMTP_HELO`
+- optional `PROMPTSEC_SMTP_FROM`
 
 If neither path is possible, still DM the user and include a line:
-- `"NOTE: could not deliver to target@example.com (email channel not configured)"`
+- `"NOTE: could not deliver email to <PROMPTSEC_EMAIL_TO> via configured sendmail/SMTP path"`
+
+If `PROMPTSEC_EMAIL_TO` is not set, the cron payload must explicitly describe email as disabled rather than implying a default recipient.
 
 ## Idempotency / updates
 

@@ -4,6 +4,19 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 
+function printPreflightSummary({ suiteDir, checkerDir, hookLibDir }) {
+  const lines = [
+    "Preflight review:",
+    `- This setup will rewrite installed clawsec-suite integration files under ${suiteDir}.`,
+    `- It copies reputation helpers from ${checkerDir} and applies a string-based patch to handler.ts in ${hookLibDir}.`,
+    "- Required runtime for the integrated flow: node, clawhub, openclaw.",
+    "- After setup, reputation checks query ClawHub and may trigger remote metadata lookups; risky installs remain approval-gated with --confirm-reputation.",
+    "- Restart OpenClaw gateway for hook changes to take effect.",
+  ];
+
+  console.log(lines.join("\n") + "\n");
+}
+
 async function main() {
   console.log("Setting up ClawHub reputation checker integration...");
   
@@ -12,6 +25,8 @@ async function main() {
   const checkerDir = path.join(os.homedir(), ".openclaw", "skills", "clawsec-clawhub-checker");
   const hookLibDir = path.join(suiteDir, "hooks", "clawsec-advisory-guardian", "lib");
   const suiteScriptsDir = path.join(suiteDir, "scripts");
+
+  printPreflightSummary({ suiteDir, checkerDir, hookLibDir });
   
   try {
     // Check if clawsec-suite is installed

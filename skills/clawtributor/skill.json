@@ -1,6 +1,6 @@
 {
   "name": "clawtributor",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Community incident reporting for AI agents. Contribute to collective security by reporting threats.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -22,6 +22,11 @@
         "description": "Community reporting skill documentation"
       },
       {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
+      },
+      {
         "path": "reporting.md",
         "required": true,
         "description": "Incident report format and submission guide"
@@ -33,11 +38,24 @@
     "category": "security",
     "requires": {
       "bins": [
+        "bash",
         "curl",
-        "git",
+        "jq",
+        "shasum",
+        "unzip",
         "gh"
       ]
     },
+    "execution": {
+      "always": false,
+      "persistence": "Stores local report/state files only; no recurring automation is created by default.",
+      "network_egress": "Submits GitHub Issues to the Prompt Security repository only after explicit user approval."
+    },
+    "operator_review": [
+      "Reporting is opt-in and should remain approval-gated for every submission.",
+      "Review and sanitize report content before submitting because reports leave the host and become visible to maintainers.",
+      "GitHub CLI authentication is required for issue submission; do not reuse unrelated credentials."
+    ],
     "triggers": [
       "report vulnerability",
       "report attack",

@@ -4,7 +4,7 @@ set -euo pipefail
 # Sends report text (stdin) via local sendmail.
 #
 # Usage:
-#   ./sendmail_report.sh --to target@example.com [--subject "..."]
+#   ./sendmail_report.sh --to security@example.com [--subject "..."]
 
 TO=""
 SUBJECT="openclaw daily security audit"

@@ -1,15 +1,24 @@
 # OpenClaw Audit Watchdog 🔭
 
-Automated daily security audits for OpenClaw/Clawdbot agents with email reporting.
+Automated daily security audits for OpenClaw/Clawdbot agents with DM delivery and optional email reporting.
 
 ## Overview
 
 The Audit Watchdog provides automated security monitoring for your OpenClaw agent deployments:
 
-- **Daily Security Scans** - Scheduled via cron for continuous monitoring
+- **Daily Security Scans** - Scheduled via `openclaw cron` for continuous monitoring
 - **Deep Audit Mode** - Comprehensive analysis of agent configurations and behavior
-- **Email Reporting** - Formatted reports delivered to your security team
+- **DM Delivery** - Reports are posted to the configured delivery target
+- **Optional Email Reporting** - Email is only attempted when `PROMPTSEC_EMAIL_TO` is configured
 - **Git Integration** - Optionally syncs latest configurations before audit
+
+## Operational Notes
+
+- Required runtime: `openclaw`, `node`, `bash`
+- Optional runtime: `sendmail` or an SMTP relay configured with `PROMPTSEC_SMTP_*`
+- Persistence: `scripts/setup_cron.mjs` creates or updates an unattended recurring `openclaw cron` job
+- External delivery: reports go to the configured DM target and optionally to the configured email recipient, so review those recipients before enabling automation
+- Provenance: standalone installation downloads a release archive; verify the release source and integrity before installing on production hosts
 
 ## Quick Start
 
@@ -23,6 +32,8 @@ curl -sSL "https://github.com/prompt-security/clawsec/releases/download/$VERSION
 unzip watchdog.skill
 
 # Configure
+export PROMPTSEC_DM_CHANNEL="telegram"
+export PROMPTSEC_DM_TO="@security-team"
 export PROMPTSEC_EMAIL_TO="security@yourcompany.com"
 export PROMPTSEC_HOST_LABEL="prod-agent-1"
 
@@ -34,10 +45,19 @@ export PROMPTSEC_HOST_LABEL="prod-agent-1"
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PROMPTSEC_EMAIL_TO` | Email recipient for reports | `target@example.com` |
+| `PROMPTSEC_DM_CHANNEL` | DM delivery channel used by cron setup | Required for cron setup |
+| `PROMPTSEC_DM_TO` | DM recipient/handle used by cron setup | Required for cron setup |
+| `PROMPTSEC_EMAIL_TO` | Email recipient for reports | Disabled unless set |
+| `PROMPTSEC_TZ` | Timezone for cron setup | `UTC` |
 | `PROMPTSEC_HOST_LABEL` | Host identifier in reports | hostname |
+| `PROMPTSEC_INSTALL_DIR` | Path used by cron payload before running `runner.sh` | `~/.config/security-checkup` |
 | `PROMPTSEC_GIT_PULL` | Pull latest before audit (0/1) | `0` |
 | `OPENCLAW_AUDIT_CONFIG` | Path to suppression config file | Auto-detected |
+| `PROMPTSEC_SENDMAIL_BIN` | Explicit sendmail-compatible binary path | Auto-detected |
+| `PROMPTSEC_SMTP_HOST` | SMTP relay host for fallback delivery | Unset |
+| `PROMPTSEC_SMTP_PORT` | SMTP relay port for fallback delivery | `25` |
+| `PROMPTSEC_SMTP_HELO` | SMTP EHLO/HELO name | hostname |
+| `PROMPTSEC_SMTP_FROM` | SMTP sender address | `security-checkup@<hostname>` |
 
 ### Path Expansion and Quoting
 
@@ -170,9 +190,8 @@ See `examples/security-audit-config.example.json` for a complete template.
 
 ## Requirements
 
-- bash
-- curl
-- Optional: node (for SMTP/rendering), jq (for JSON), sendmail (for email)
+- Required: `bash`, `openclaw`, `node`
+- Optional: `curl` (download/install flow), `git` (`PROMPTSEC_GIT_PULL=1`), `sendmail`, or an SMTP relay (`PROMPTSEC_SMTP_*`)
 
 ## Cron Setup
 
@@ -186,6 +205,14 @@ Or use the setup script:
 ```bash
 node scripts/setup_cron.mjs
 ```
+
+The setup script now prints a preflight review before creating or updating the cron job so the operator can verify:
+
+- the unattended persistence model,
+- the required runtime on the host,
+- the DM target,
+- whether email is enabled and which recipient it will use,
+- the install directory and timezone that will be baked into the cron payload.
 
 ## License
 

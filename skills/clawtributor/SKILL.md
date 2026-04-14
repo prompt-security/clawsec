@@ -1,18 +1,25 @@
 ---
 name: clawtributor
-version: 0.0.3
+version: 0.0.4
 description: Community incident reporting for AI agents. Contribute to collective security by reporting threats.
-homepage: https://gclawsec.prompt.security
+homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🤝","category":"security"}}
 clawdis:
   emoji: "🤝"
   requires:
-    bins: [curl, git, gh]
+    bins: [bash, curl, jq, shasum, unzip, gh]
 ---
 
 # Clawtributor 🤝
 
 Community incident reporting for AI agents. Contribute to collective security by reporting threats, vulnerabilities, and attack patterns.
+
+## Operational Notes
+
+- Required runtime for standalone install/report submission: `bash`, `curl`, `jq`, `shasum`, `unzip`, `gh`
+- Side effects: writes local report/state files and, after explicit user approval, submits GitHub Issues to the Prompt Security repository
+- Network behavior: downloads release artifacts and optionally sends approved reports to GitHub
+- Trust model: reporting is opt-in for every submission; sanitize evidence before sending it off-host
 
 **An open source project by [Prompt Security](https://prompt.security)**
 

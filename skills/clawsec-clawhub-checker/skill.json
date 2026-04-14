@@ -1,6 +1,6 @@
 {
   "name": "clawsec-clawhub-checker",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "ClawHub reputation checker for ClawSec suite. Enhances guarded skill installer with VirusTotal Code Insight reputation scores and additional safety checks.",
   "author": "abutbul",
   "license": "AGPL-3.0-or-later",
@@ -49,9 +49,19 @@
         "description": "Additional documentation and development guide"
       },
       {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
+      },
+      {
         "path": "test/reputation_check.test.mjs",
         "required": false,
         "description": "Test suite for reputation checking functionality"
+      },
+      {
+        "path": "test/setup_reputation_hook.test.mjs",
+        "required": false,
+        "description": "Regression coverage for setup preflight disclosure"
       }
     ]
   },
@@ -77,8 +87,24 @@
     "emoji": "🛡️",
     "category": "security",
     "requires": {
-      "bins": ["clawhub", "curl", "jq"]
+      "bins": ["node", "clawhub", "openclaw"]
     },
+    "runtime": {
+      "required_env": [],
+      "optional_env": [
+        "CLAWHUB_REPUTATION_THRESHOLD"
+      ]
+    },
+    "execution": {
+      "always": false,
+      "persistence": "The setup script rewrites installed clawsec-suite integration files and augments the advisory guardian hook until removed or replaced.",
+      "network_egress": "Reputation checks query ClawHub metadata and may trigger ClawHub install/inspect flows that contact remote services."
+    },
+    "operator_review": [
+      "Requires an installed clawsec-suite checkout because setup rewrites handler.ts and copies helper scripts into the suite.",
+      "Reputation results are heuristic and can produce false positives; installation still requires explicit user confirmation for risky skills.",
+      "Review the modified suite files and restart OpenClaw gateway after setup so the hook changes load intentionally."
+    ],
     "triggers": [
       "clawhub reputation",
       "skill reputation check",

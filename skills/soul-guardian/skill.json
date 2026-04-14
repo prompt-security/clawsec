@@ -1,6 +1,6 @@
 {
   "name": "soul-guardian",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Drift detection and baseline integrity guard for agent workspace prompt files. Auto-restore critical files with tamper-evident audit logging.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -21,6 +21,11 @@
         "path": "SKILL.md",
         "required": true,
         "description": "Soul guardian skill documentation"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
       },
       {
         "path": "scripts/soul_guardian.py",
@@ -47,6 +52,24 @@
         "python3"
       ]
     },
+    "runtime": {
+      "required_env": [],
+      "optional_bins": [
+        "clawdbot",
+        "launchctl",
+        "bash"
+      ]
+    },
+    "execution": {
+      "always": false,
+      "persistence": "No automation is installed by default, but the documented workflow supports heartbeat, Clawdbot cron, or launchd scheduling.",
+      "network_egress": "None by default; soul-guardian operates on local files and local state."
+    },
+    "operator_review": [
+      "Restore mode can overwrite protected workspace files back to their approved baseline.",
+      "The external state directory can contain sensitive snapshots, diffs, and quarantined copies; secure it with restrictive permissions.",
+      "Any launchd or cron scheduling is opt-in and should be reviewed before enabling."
+    ],
     "triggers": [
       "soul guardian",
       "integrity check",

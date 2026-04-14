@@ -1,6 +1,6 @@
 {
   "name": "claw-release",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -9,7 +9,8 @@
 
   "sbom": {
     "files": [
-      { "path": "SKILL.md", "required": true, "description": "Release workflow guide" }
+      { "path": "SKILL.md", "required": true, "description": "Release workflow guide" },
+      { "path": "CHANGELOG.md", "required": true, "description": "Version history and release notes" }
     ]
   },
 
@@ -17,7 +18,25 @@
     "emoji": "🚀",
     "category": "utility",
     "internal": true,
-    "requires": { "bins": ["git", "jq", "gh"] },
+    "requires": { "bins": ["bash", "git", "jq", "gh"] },
+    "runtime": {
+      "required_env": [
+        "GH_TOKEN or existing gh auth"
+      ],
+      "optional_bins": [
+        "git-lfs"
+      ]
+    },
+    "execution": {
+      "always": false,
+      "persistence": "No recurring automation; this is a maintainer-invoked release workflow.",
+      "network_egress": "Pushes git commits/tags and creates GitHub Releases when the maintainer runs the documented release flow."
+    },
+    "operator_review": [
+      "Internal maintainer tool only; it mutates git state, tags, and GitHub release metadata.",
+      "Run it only from a trusted checkout with maintainer credentials and a clean working tree.",
+      "Prefer non-destructive rollback steps; avoid rewriting history unless you explicitly intend to."
+    ],
     "triggers": [
       "release skill",
       "create release",

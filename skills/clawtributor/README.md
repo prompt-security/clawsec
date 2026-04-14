@@ -2,6 +2,13 @@
 
 Community incident reporting for AI agents. Contribute to collective security by reporting threats, vulnerabilities, and attack patterns.
 
+## Operational Notes
+
+- Reporting is opt-in for every submission
+- Required runtime for full standalone flow: `bash`, `curl`, `jq`, `shasum`, `unzip`, `gh`
+- External submission target: Prompt Security GitHub Issues, only after user approval
+- Review and sanitize report content before submission because evidence leaves the local host
+
 ## Features
 
 - **Opt-in Reporting** - All submissions require explicit user approval

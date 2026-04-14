@@ -2,6 +2,14 @@
 
 A small, dependency-free integrity guard for Clawdbot agent workspaces.
 
+## Operational Notes
+
+- Required runtime: `python3`
+- Optional runtime: `clawdbot` for gateway cron integration, `launchctl` for macOS scheduling
+- Side effects: can restore protected files to approved baselines and stores sensitive snapshots/audit data in the guardian state directory
+- Network behavior: none by default
+- Any cron/launchd scheduling is opt-in and should be reviewed before enabling
+
 It helps you detect (and optionally auto-undo) unexpected edits to the workspace markdown files that an agent auto-loads (e.g., `SOUL.md`, `AGENTS.md`). It also records a **tamper-evident** audit trail of changes.
 
 ## Why this exists

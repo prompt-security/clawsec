@@ -3,7 +3,7 @@
  * Setup: create/update a daily 23:00 cron job that
  * - runs openclaw security audits
  * - DMs a chosen recipient (channel+id)
- * - emails target@example.com via local sendmail
+ * - optionally emails a configured recipient via sendmail/SMTP
  *
  * Uses the `openclaw cron` CLI so it can run on a host without direct Gateway RPC access.
  */
@@ -16,9 +16,18 @@ import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const JOB_NAME = "Daily security audit (Prompt Security)";
-const COMPANY_EMAIL = "target@example.com";
 const DEFAULT_TZ = "UTC";
 const DEFAULT_EXPR = "0 23 * * *"; // 23:00 daily
+const PERSISTED_ENV_KEYS = [
+  "PROMPTSEC_EMAIL_TO",
+  "PROMPTSEC_GIT_PULL",
+  "OPENCLAW_AUDIT_CONFIG",
+  "PROMPTSEC_SENDMAIL_BIN",
+  "PROMPTSEC_SMTP_HOST",
+  "PROMPTSEC_SMTP_PORT",
+  "PROMPTSEC_SMTP_HELO",
+  "PROMPTSEC_SMTP_FROM",
+];
 
 const SCRIPT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const UNEXPANDED_HOME_TOKEN_PATTERN =
@@ -115,6 +124,65 @@ function escapeForShellEnvVar(v) {
     .trim();
 }
 
+function buildRunnerEnv({ hostLabel, emailTo }) {
+  const envVars = {
+    PROMPTSEC_HOST_LABEL: hostLabel,
+  };
+
+  if (emailTo) {
+    envVars.PROMPTSEC_EMAIL_TO = emailTo;
+  }
+
+  for (const key of PERSISTED_ENV_KEYS) {
+    const value = envOrEmpty(key);
+    if (value) {
+      envVars[key] = value;
+    }
+  }
+
+  return envVars;
+}
+
+function buildRunnerCommand({ installDir, hostLabel, emailTo }) {
+  const envVars = buildRunnerEnv({ hostLabel, emailTo });
+  const exports = Object.entries(envVars)
+    .filter(([, value]) => String(value ?? "").trim() !== "")
+    .map(([key, value]) => `${key}="${escapeForShellEnvVar(value)}"`);
+
+  const exportPrefix = exports.length ? `${exports.join(" ")} ` : "";
+  return `cd "${escapeForShellEnvVar(installDir || "")}" && ${exportPrefix}./scripts/runner.sh`;
+}
+
+function printPreflightSummary({ dmChannel, dmTo, emailTo, installDir, tz, hostLabel }) {
+  const emailSummary = emailTo || "disabled (set PROMPTSEC_EMAIL_TO to enable)";
+  const persistedKeys = Array.from(new Set([
+    "PROMPTSEC_HOST_LABEL",
+    emailTo ? "PROMPTSEC_EMAIL_TO" : null,
+    ...PERSISTED_ENV_KEYS.filter((key) => envOrEmpty(key)),
+  ].filter(Boolean)));
+
+  const lines = [
+    "Preflight review:",
+    "- This setup creates or updates an unattended openclaw cron job.",
+    "- Required runtime: openclaw CLI, node, bash.",
+    "- Optional email runtime: local sendmail or PROMPTSEC_SMTP_HOST/PROMPTSEC_SMTP_PORT relay.",
+    `- DM target: ${oneline(dmChannel)}:${oneline(dmTo)}`,
+    `- Email target: ${oneline(emailSummary)}`,
+    `- Schedule: ${DEFAULT_EXPR} (${oneline(tz)})`,
+    `- Install dir: ${oneline(installDir)}`,
+  ];
+
+  if (hostLabel) {
+    lines.push(`- Host label: ${oneline(hostLabel)}`);
+  }
+
+  if (persistedKeys.length) {
+    lines.push(`- Cron payload persists env: ${persistedKeys.join(", ")}`);
+  }
+
+  process.stdout.write(lines.join("\n") + "\n\n");
+}
+
 function defaultInstallDir() {
   const env = envOrEmpty("PROMPTSEC_INSTALL_DIR");
   if (env) return resolveUserPath(env, "PROMPTSEC_INSTALL_DIR");
@@ -123,24 +191,36 @@ function defaultInstallDir() {
   return resolveUserPath(SCRIPT_ROOT, "script root");
 }
 
-function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir }) {
-  const safeDir = escapeForShellEnvVar(installDir || "");
-  const escapedHostLabel = escapeForShellEnvVar(hostLabel);
+function buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir, emailTo }) {
+  const runnerCommand = buildRunnerCommand({ installDir, hostLabel, emailTo });
+  const emailLine = emailTo
+    ? `Email: ${oneline(emailTo)} (sendmail first, SMTP fallback if configured)`
+    : "Email: disabled unless PROMPTSEC_EMAIL_TO is set";
 
   return [
-    "Run daily openclaw security audits and deliver report (DM + email).",
+    "Run daily openclaw security audits and deliver report to the configured recipients.",
     "",
+    "Dependencies:",
+    "- Required runtime: openclaw CLI, node, bash.",
+    "- Optional email runtime: local sendmail or PROMPTSEC_SMTP_HOST/PROMPTSEC_SMTP_PORT relay.",
+    "",
+    "Configured delivery:",
     `Delivery DM: ${oneline(dmChannel)}:${oneline(dmTo)}`,
-    `Email: ${COMPANY_EMAIL} (local sendmail)`,
+    emailLine,
     "",
     "Execute:",
-    `- Run via exec: cd "${safeDir}" && PROMPTSEC_HOST_LABEL="${escapedHostLabel}" ./scripts/runner.sh`,
+    `- Run via exec: ${runnerCommand}`,
     "",
     "Output requirements:",
     "- Print the report to stdout (cron deliver will DM it).",
-    `- Also email the same report to ${COMPANY_EMAIL}; if email fails, append a NOTE line to stdout.`,
+    "- If PROMPTSEC_EMAIL_TO is set, email the same report to that address; if email fails, append a NOTE line to stdout.",
     "- Do not apply fixes automatically.",
   ].join("\n");
+}
+
+function buildDescription({ dmChannel, dmTo, emailTo }) {
+  const emailPart = emailTo ? `; email ${emailTo}` : "; email disabled unless configured";
+  return `Runs openclaw security audit daily and delivers to ${dmChannel}:${dmTo}${emailPart}.`;
 }
 
 function findExistingJobId(listJson) {
@@ -155,6 +235,7 @@ async function run() {
   const dmChannelEnv = envOrEmpty("PROMPTSEC_DM_CHANNEL");
   const dmToEnv = envOrEmpty("PROMPTSEC_DM_TO");
   const hostLabelEnv = envOrEmpty("PROMPTSEC_HOST_LABEL");
+  const emailToEnv = envOrEmpty("PROMPTSEC_EMAIL_TO");
 
   const interactive = !(tzEnv && dmChannelEnv && dmToEnv);
 
@@ -173,6 +254,9 @@ async function run() {
   const hostLabel = interactive
     ? await prompt("Optional host label to include in report", { defaultValue: hostLabelEnv })
     : hostLabelEnv;
+  const emailTo = interactive
+    ? await prompt("Optional email recipient (leave empty to disable email)", { defaultValue: emailToEnv })
+    : emailToEnv;
 
   const installDirDefault = defaultInstallDir();
   const installDirInput = interactive
@@ -189,12 +273,14 @@ async function run() {
     throw new Error(`runner.sh not found at ${runnerPath}; set PROMPTSEC_INSTALL_DIR to the deployed path`);
   }
 
+  printPreflightSummary({ dmChannel, dmTo, emailTo, installDir, tz, hostLabel });
+
   const listOut = sh("openclaw", ["cron", "list", "--json"]);
   const listJson = JSON.parse(listOut);
   const existingId = findExistingJobId(listJson);
 
-  const agentMessage = buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir });
-  const description = `Runs openclaw security audit daily and delivers to ${dmChannel}:${dmTo} + ${COMPANY_EMAIL}.`;
+  const agentMessage = buildAgentMessage({ dmChannel, dmTo, hostLabel, installDir, emailTo });
+  const description = buildDescription({ dmChannel, dmTo, emailTo });
 
   if (!existingId) {
     const args = [

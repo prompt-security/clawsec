@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -47,18 +47,18 @@
       },
       {
         "path": "advisories/feed.json.sig",
-        "required": true,
-        "description": "Detached Ed25519 signature for advisory feed"
+        "required": false,
+        "description": "Detached Ed25519 signature for advisory feed when bundled with the local suite seed"
       },
       {
         "path": "advisories/checksums.json",
-        "required": true,
-        "description": "SHA-256 checksum manifest for advisory artifacts"
+        "required": false,
+        "description": "SHA-256 checksum manifest for advisory artifacts when bundled with the local suite seed"
       },
       {
         "path": "advisories/checksums.json.sig",
-        "required": true,
-        "description": "Detached Ed25519 signature for checksum manifest"
+        "required": false,
+        "description": "Detached Ed25519 signature for checksum manifest when bundled with the local suite seed"
       },
       {
         "path": "advisories/feed-signing-public.pem",
@@ -182,7 +182,7 @@
         ]
       },
       "openclaw-audit-watchdog": {
-        "description": "Automated daily audits with email reporting",
+        "description": "Automated daily audits with DM delivery and optional email reporting",
         "default_install": true,
         "compatible": [
           "openclaw",
@@ -219,12 +219,45 @@
     "category": "security",
     "requires": {
       "bins": [
+        "node",
+        "npx",
+        "openclaw",
         "curl",
         "jq",
         "shasum",
-        "openssl"
+        "openssl",
+        "unzip"
       ]
     },
+    "runtime": {
+      "required_env": [],
+      "optional_env": [
+        "CLAWSEC_FEED_URL",
+        "CLAWSEC_FEED_SIG_URL",
+        "CLAWSEC_FEED_CHECKSUMS_URL",
+        "CLAWSEC_FEED_CHECKSUMS_SIG_URL",
+        "CLAWSEC_LOCAL_FEED",
+        "CLAWSEC_LOCAL_FEED_SIG",
+        "CLAWSEC_LOCAL_FEED_CHECKSUMS",
+        "CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG",
+        "CLAWSEC_FEED_PUBLIC_KEY",
+        "CLAWSEC_ALLOW_UNSIGNED_FEED",
+        "CLAWSEC_VERIFY_CHECKSUM_MANIFEST",
+        "CLAWSEC_HOOK_INTERVAL_SECONDS",
+        "CLAWSEC_ADVISORY_CRON_NAME",
+        "CLAWSEC_ADVISORY_CRON_EVERY"
+      ]
+    },
+    "execution": {
+      "always": false,
+      "persistence": "Setup scripts install and enable an OpenClaw advisory hook, and can optionally create a recurring openclaw cron job.",
+      "network_egress": "Fetches signed advisory feed artifacts and uses npx/clawhub for guarded skill install flows."
+    },
+    "operator_review": [
+      "Review the advisory hook and optional cron setup before enabling them because they create persistent host-side automation.",
+      "The suite may recommend removal of risky skills, but destructive actions remain approval-gated.",
+      "Verify feed signing keys and any CLAWSEC_* URL overrides before relying on remote feed data."
+    ],
     "triggers": [
       "clawsec suite",
       "security suite",

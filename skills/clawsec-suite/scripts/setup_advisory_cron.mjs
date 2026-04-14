@@ -92,8 +92,21 @@ function editJob(jobId) {
   ]);
 }
 
+function printPreflightSummary() {
+  const lines = [
+    "Preflight review:",
+    "- This setup creates or updates an unattended openclaw cron job in the main session.",
+    "- Required runtime: openclaw CLI, node.",
+    `- Schedule: every ${JOB_EVERY}`,
+    "- The system event triggers an advisory scan and must request explicit approval before any removal.",
+  ];
+
+  process.stdout.write(lines.join("\n") + "\n\n");
+}
+
 function main() {
   requireOpenClawCli();
+  printPreflightSummary();
 
   const jobsOut = sh("openclaw", ["cron", "list", "--json"]);
   const jobsPayload = JSON.parse(jobsOut);

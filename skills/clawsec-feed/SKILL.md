@@ -1,13 +1,13 @@
 ---
 name: clawsec-feed
-version: 0.0.5
-description: Security advisory feed with automated NVD CVE polling for OpenClaw-related vulnerabilities. Updated daily.
+version: 0.0.6
+description: Security advisory feed package for OpenClaw-related threats and vulnerabilities. The upstream feed is updated daily; local automation is handled by clawsec-suite or the operator.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
 clawdis:
   emoji: "📡"
   requires:
-    bins: [curl, jq]
+    bins: [bash, curl, jq, shasum, unzip]
 ---
 
 # ClawSec Feed 📡
@@ -15,6 +15,13 @@ clawdis:
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
 This feed is automatically updated daily with CVEs related to OpenClaw, clawdbot, and Moltbot from the NIST National Vulnerability Database (NVD).
+
+## Operational Notes
+
+- Required runtime for standalone installation: `bash`, `curl`, `jq`, `shasum`, `unzip`
+- Side effects: standalone install only writes local skill files
+- Network behavior: downloads release metadata/artifacts and, if you choose to poll manually, fetches the advisory feed
+- Trust model: this package does not itself create cron jobs or submit data externally; automation is delegated to `clawsec-suite` or your own scheduler
 
 **An open source project by [Prompt Security](https://prompt.security)**
 
@@ -51,6 +58,8 @@ Install clawsec-feed independently without the full suite.
 - Direct control over installation process
 
 Continue below for standalone installation instructions.
+
+Standalone installation is a network download workflow. Verify the release source and the provided checksums before installing it on production hosts.
 
 ---
 

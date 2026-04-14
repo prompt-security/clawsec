@@ -599,6 +599,62 @@ async function testSkillNameExtractionFromTitle() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: Skill name matching is case-insensitive
+// -----------------------------------------------------------------------------
+async function testSkillNameMatchingIsCaseInsensitive() {
+  const testName = "render_report: suppression skill matching is case-insensitive";
+  try {
+    const auditFile = path.join(tempDir, "audit.json");
+    const deepFile = path.join(tempDir, "deep.json");
+    const configFile = path.join(tempDir, "config.json");
+
+    const findings = [
+      {
+        severity: "critical",
+        checkId: "skills.code_safety",
+        skill: "ClawSec-Suite",
+        title: "dangerous-exec detected",
+      },
+    ];
+
+    const suppressions = [
+      {
+        checkId: "skills.code_safety",
+        skill: "clawsec-suite",
+        reason: "First-party security tooling",
+        suppressedAt: "2026-02-13",
+      },
+    ];
+
+    await fs.writeFile(auditFile, createAuditJson(findings));
+    await fs.writeFile(deepFile, createAuditJson([]));
+    await fs.writeFile(configFile, createConfigJson(suppressions));
+
+    const result = await runRenderReport([
+      "--audit",
+      auditFile,
+      "--deep",
+      deepFile,
+      "--enable-suppressions",
+      "--config",
+      configFile,
+    ]);
+
+    if (
+      result.stdout.includes("Summary: 0 critical") &&
+      result.stdout.includes("INFO-SUPPRESSED:") &&
+      result.stdout.includes("[ClawSec-Suite]")
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, `Case-insensitive skill matching failed: ${result.stdout}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Test: Empty suppressions array works (no suppressions applied)
 // -----------------------------------------------------------------------------
 async function testEmptySuppressions() {
@@ -720,6 +776,7 @@ async function runAllTests() {
     await testMultipleSuppressions();
     await testSkillNameExtractionFromPath();
     await testSkillNameExtractionFromTitle();
+    await testSkillNameMatchingIsCaseInsensitive();
     await testEmptySuppressions();
     await testConfigWithoutEnableFlagDoesNotSuppress();
   } finally {

@@ -2,6 +2,13 @@
 
 A ClawSec suite skill that enhances the guarded skill installer with ClawHub reputation checks and VirusTotal Code Insight integration.
 
+## Operational Notes
+
+- Required runtime: `node`, `clawhub`, `openclaw`
+- Dependency: installed `clawsec-suite`
+- Setup mutates the installed suite in place by copying helper scripts and rewriting the advisory guardian hook handler
+- Reputation checks contact ClawHub and can surface heuristic false positives; risky installs still require explicit user confirmation
+
 ## Purpose
 
 Adds a second layer of security to skill installation by:
@@ -36,6 +43,8 @@ node scripts/setup_reputation_hook.mjs
 # Restart OpenClaw gateway
 openclaw gateway restart
 ```
+
+The setup script prints a preflight review before it mutates the installed suite files.
 
 Setup installs these scripts into `clawsec-suite/scripts`:
 - `enhanced_guarded_install.mjs`

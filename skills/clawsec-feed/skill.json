@@ -1,6 +1,6 @@
 {
   "name": "clawsec-feed",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -39,10 +39,23 @@
     "feed_url": "https://api.github.com/repos/prompt-security/ClawSec/releases?skill=clawsec-feed",
     "requires": {
       "bins": [
+        "bash",
         "curl",
-        "jq"
+        "jq",
+        "shasum",
+        "unzip"
       ]
     },
+    "execution": {
+      "always": false,
+      "persistence": "No local persistence or automation is created by the standalone feed package; recurring polling is handled by clawsec-suite or the operator.",
+      "network_egress": "Standalone installation downloads release artifacts and optional feed updates from Prompt Security GitHub/website endpoints."
+    },
+    "operator_review": [
+      "This package is primarily signed advisory data plus install instructions; it does not itself create cron jobs or send data outward.",
+      "Verify release provenance and checksums before installing on production hosts.",
+      "If you need automated polling or host-side enforcement, use clawsec-suite which owns that automation layer."
+    ],
     "triggers": [
       "security advisories",
       "check advisories",

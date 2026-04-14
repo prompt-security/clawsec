@@ -1,15 +1,22 @@
 ---
 name: clawsec-suite
-version: 0.1.5
+version: 0.1.6
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "📦"
   requires:
-    bins: [curl, jq, shasum, openssl]
+    bins: [node, npx, openclaw, curl, jq, shasum, openssl, unzip]
 ---
 
 # ClawSec Suite
+
+## Operational Notes
+
+- Required runtime: `node`, `npx`, `openclaw`, `curl`, `jq`, `shasum`, `openssl`, `unzip`
+- Side effects: setup scripts install an advisory hook under `~/.openclaw/hooks`, optionally create an unattended `openclaw cron` job, and use `npx clawhub@latest install` for guarded installs
+- Network behavior: fetches signed advisory feed artifacts and remote catalog metadata unless you pin local paths
+- Trust model: the suite can recommend removal or block risky installs, but removal/install overrides stay approval-gated
 
 This means `clawsec-suite` can:
 - monitor the ClawSec advisory feed,
@@ -146,12 +153,16 @@ SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
 node "$SUITE_DIR/scripts/setup_advisory_hook.mjs"
 ```
 
+The setup script prints a preflight review before it installs and enables the persistent hook.
+
 Optional: create/update a periodic cron nudge (default every `6h`) that triggers a main-session advisory scan:
 
 ```bash
 SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
 node "$SUITE_DIR/scripts/setup_advisory_cron.mjs"
 ```
+
+The cron setup script prints a preflight review before it creates or updates the unattended job.
 
 What this adds:
 - scan on `agent:bootstrap` and `/new` (`command:new`),

@@ -1,18 +1,26 @@
 ---
 name: clawsec-clawhub-checker
-version: 0.0.1
+version: 0.0.2
 description: ClawHub reputation checker for ClawSec suite. Enhances guarded skill installer with VirusTotal Code Insight reputation scores and additional safety checks.
 homepage: https://clawsec.prompt.security
 clawdis:
   emoji: "🛡️"
   requires:
-    bins: [clawhub, curl, jq]
+    bins: [node, clawhub, openclaw]
   depends_on: [clawsec-suite]
 ---
 
 # ClawSec ClawHub Checker
 
 Enhances the ClawSec suite's guarded skill installer with ClawHub reputation checks. Adds a second layer of security by checking VirusTotal Code Insight scores and other reputation signals before allowing skill installation.
+
+## Operational Notes
+
+- Required runtime: `node`, `clawhub`, `openclaw`
+- Depends on: installed `clawsec-suite`
+- Side effects: `setup_reputation_hook.mjs` copies files into the installed suite and rewrites `hooks/clawsec-advisory-guardian/handler.ts`
+- Network behavior: reputation checks query ClawHub and may trigger remote metadata lookups during `inspect`/declined `install` flows
+- Trust model: reputation scores are heuristic, not authoritative; keep the double-confirmation flow enabled
 
 ## What It Does
 
@@ -40,9 +48,13 @@ node ~/.openclaw/skills/clawsec-clawhub-checker/scripts/setup_reputation_hook.mj
 openclaw gateway restart
 ```
 
+The setup script prints a preflight review before it mutates the installed suite files.
+
 After setup, the checker adds `enhanced_guarded_install.mjs` and
 `guarded_skill_install_wrapper.mjs` under `clawsec-suite/scripts` and updates the advisory
 guardian hook. The original `guarded_skill_install.mjs` is not replaced.
+
+Review the printed preflight summary before running setup. The script intentionally modifies the installed suite in place rather than operating on a temporary copy.
 
 ## How It Works
 

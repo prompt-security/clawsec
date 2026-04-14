@@ -5,6 +5,22 @@ All notable changes to the ClawSec Feed skill will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2026-04-14
+
+### Added
+
+- Operational notes in the skill docs that distinguish standalone feed installation from `clawsec-suite` automation responsibilities.
+- Metadata describing required standalone install tooling and operator review expectations.
+
+### Changed
+
+- Clarified that the standalone feed package does not itself create persistence, hooks, or cron jobs.
+- Declared checksum/extraction tooling used by the documented install flow (`bash`, `shasum`, `unzip`) in skill metadata.
+
+### Security
+
+- Made release-provenance and checksum verification expectations explicit for standalone installations on production hosts.
+
 ## [0.0.5] - 2026-02-28
 
 ### Added

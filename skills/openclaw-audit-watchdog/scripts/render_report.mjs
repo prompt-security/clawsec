@@ -60,9 +60,15 @@ function extractSkillName(finding) {
   return null;
 }
 
+function normalizeSkillName(value) {
+  const normalized = String(value ?? "").trim();
+  return normalized ? normalized.toLowerCase() : "";
+}
+
 /**
  * Filter findings into active and suppressed based on suppression config.
- * Matches require BOTH checkId AND skill name to match (exact match).
+ * Matches require BOTH checkId AND skill name to match.
+ * checkId remains exact; skill name is normalized case-insensitively.
  *
  * @param {Array} findings - Array of finding objects
  * @param {Array} suppressions - Array of suppression rules
@@ -83,17 +89,17 @@ function filterFindings(findings, suppressions) {
   for (const finding of findings) {
     const checkId = finding?.checkId ?? "";
     const skillName = extractSkillName(finding);
+    const normalizedSkillName = normalizeSkillName(skillName);
 
     // Check if this finding matches any suppression rule
     const isSuppressed = suppressions.some((rule) => {
-      // BOTH checkId AND skill must match (exact match, case-sensitive)
-      return rule.checkId === checkId && rule.skill === skillName;
+      return rule.checkId === checkId && normalizeSkillName(rule.skill) === normalizedSkillName;
     });
 
     if (isSuppressed) {
       // Find the matching rule to attach suppression metadata
       const matchingRule = suppressions.find(
-        (rule) => rule.checkId === checkId && rule.skill === skillName
+        (rule) => rule.checkId === checkId && normalizeSkillName(rule.skill) === normalizedSkillName
       );
       suppressed.push({
         ...finding,

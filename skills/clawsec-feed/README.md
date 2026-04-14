@@ -2,6 +2,13 @@
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
+## Operational Notes
+
+- Required runtime for standalone installation: `bash`, `curl`, `jq`, `shasum`, `unzip`
+- This package is advisory data plus install/update guidance; it does not create local persistence by itself
+- Automated polling, installed-skill cross-referencing, and hook/cron behavior live in `clawsec-suite`
+- Verify release provenance and checksums before installing the standalone artifact on production hosts
+
 ## Features
 
 - **Real-time Advisories** - Get notified about malicious skills, vulnerabilities, and attack patterns

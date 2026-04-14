@@ -1,7 +1,7 @@
 {
   "name": "openclaw-audit-watchdog",
-  "version": "0.1.1",
-  "description": "Automated daily security audits for OpenClaw agents with email reporting. Runs deep audits and sends formatted reports.",
+  "version": "0.1.2",
+  "description": "Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Creates or updates an unattended cron job and sends formatted reports to configured recipients.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security",
@@ -65,9 +65,53 @@
     "requires": {
       "bins": [
         "bash",
-        "curl"
+        "curl",
+        "openclaw",
+        "node"
       ]
     },
+    "runtime": {
+      "required_env": [
+        "PROMPTSEC_DM_CHANNEL",
+        "PROMPTSEC_DM_TO"
+      ],
+      "optional_env": [
+        "PROMPTSEC_EMAIL_TO",
+        "PROMPTSEC_TZ",
+        "PROMPTSEC_HOST_LABEL",
+        "PROMPTSEC_INSTALL_DIR",
+        "PROMPTSEC_GIT_PULL",
+        "OPENCLAW_AUDIT_CONFIG",
+        "PROMPTSEC_SENDMAIL_BIN",
+        "PROMPTSEC_SMTP_HOST",
+        "PROMPTSEC_SMTP_PORT",
+        "PROMPTSEC_SMTP_HELO",
+        "PROMPTSEC_SMTP_FROM"
+      ],
+      "optional_bins": [
+        "git",
+        "sendmail"
+      ]
+    },
+    "delivery": {
+      "dm": "required",
+      "email": "optional via PROMPTSEC_EMAIL_TO",
+      "email_transport": [
+        "local sendmail",
+        "SMTP relay configured with PROMPTSEC_SMTP_*"
+      ]
+    },
+    "execution": {
+      "always": false,
+      "persistence": "Creates or updates a recurring openclaw cron job when setup is run.",
+      "network_egress": "Reports are delivered to the configured DM target and optionally to the configured email recipient."
+    },
+    "operator_review": [
+      "Verify the openclaw CLI and node runtime on the host before enabling the cron job.",
+      "Review DM and email recipients before installing because reports are delivered externally.",
+      "If email is enabled, verify the local sendmail binary or PROMPTSEC_SMTP_* relay settings.",
+      "Suppressions require both --enable-suppressions and enabledFor: [\"audit\"] in config."
+    ],
     "triggers": [
       "audit watchdog",
       "security audit",

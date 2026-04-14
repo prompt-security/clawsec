@@ -1,13 +1,13 @@
 ---
 name: claw-release
-version: 0.0.1
+version: 0.0.2
 description: Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"🚀","category":"utility","internal":true}}
 clawdis:
   emoji: "🚀"
   requires:
-    bins: [git, jq, gh]
+    bins: [bash, git, jq, gh]
 ---
 
 # Claw Release
@@ -17,6 +17,14 @@ Internal tool for releasing skills and managing the ClawSec catalog.
 **An internal tool by [Prompt Security](https://prompt.security)**
 
 ---
+
+## Operational Notes
+
+- Internal maintainer workflow only.
+- Required runtime: `bash`, `git`, `jq`, `gh`
+- Required credentials: authenticated GitHub CLI with permission to create releases
+- Side effects: creates commits, tags, pushes to remote, and publishes GitHub Releases
+- Trust model: run only from a trusted checkout with a clean working tree and maintainer approval
 
 ## Quick Reference
 
@@ -93,8 +101,11 @@ Verify at:
 If you need to undo before pushing:
 
 ```bash
-git reset --hard HEAD~1 && git tag -d <skill-name>-v<version>
+git tag -d <skill-name>-v<version>
+git reset --soft HEAD~1
 ```
+
+`git reset --soft` preserves the release changes in your working tree so you can inspect or amend them without discarding data.
 
 ---
 
