@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Declared optional integration runtimes used by the documented workflows (`clawdbot`, `launchctl`, `bash`) alongside the required `python3` runtime.
+- Declared optional integration runtimes used by the documented workflows (`openclaw`, `launchctl`, `bash`) alongside the required `python3` runtime.
+- Normalized the documented product/runtime naming to OpenClaw, including cron examples, default external state paths, and launchd labels.
 
 ### Security
 

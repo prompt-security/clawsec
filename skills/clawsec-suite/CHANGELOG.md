@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Declared `node`, `npx`, `openclaw`, and `unzip` in the suite runtime metadata to match the documented setup and install flows.
 - Updated catalog messaging for `openclaw-audit-watchdog` to reflect DM delivery with optional email instead of implying email-only reporting.
 - Marked local advisory signature/checksum SBOM entries as optional until those companion artifacts are bundled in the repository.
+- Removed legacy pre-OpenClaw naming from the suite catalog compatibility metadata.
 
 ### Security
 

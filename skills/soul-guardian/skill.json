@@ -55,14 +55,14 @@
     "runtime": {
       "required_env": [],
       "optional_bins": [
-        "clawdbot",
+        "openclaw",
         "launchctl",
         "bash"
       ]
     },
     "execution": {
       "always": false,
-      "persistence": "No automation is installed by default, but the documented workflow supports heartbeat, Clawdbot cron, or launchd scheduling.",
+      "persistence": "No automation is installed by default, but the documented workflow supports heartbeat, OpenClaw cron, or launchd scheduling.",
       "network_egress": "None by default; soul-guardian operates on local files and local state."
     },
     "operator_review": [

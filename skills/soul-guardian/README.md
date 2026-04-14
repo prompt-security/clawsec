@@ -1,11 +1,11 @@
 # soul-guardian
 
-A small, dependency-free integrity guard for Clawdbot agent workspaces.
+A small, dependency-free integrity guard for OpenClaw agent workspaces.
 
 ## Operational Notes
 
 - Required runtime: `python3`
-- Optional runtime: `clawdbot` for gateway cron integration, `launchctl` for macOS scheduling
+- Optional runtime: `openclaw` for cron integration, `launchctl` for macOS scheduling
 - Side effects: can restore protected files to approved baselines and stores sensitive snapshots/audit data in the guardian state directory
 - Network behavior: none by default
 - Any cron/launchd scheduling is opt-in and should be reviewed before enabling
@@ -14,7 +14,7 @@ It helps you detect (and optionally auto-undo) unexpected edits to the workspace
 
 ## Why this exists
 
-In many Clawdbot setups, the agent reads certain markdown files every session (identity, instructions, memory, tools, etc.). If those files drift unexpectedly (accidental edits, bad merges, unwanted automation, etc.), you want:
+In many OpenClaw setups, the agent reads certain markdown files every session (identity, instructions, memory, tools, etc.). If those files drift unexpectedly (accidental edits, bad merges, unwanted automation, etc.), you want:
 
 - detection (sha256 mismatch)
 - a diff/patch artifact for review
@@ -80,7 +80,7 @@ python3 skills/soul-guardian/scripts/onboard_state_dir.py --agent-id <agentId>
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   init --actor sam --note "first baseline"
 ```
 
@@ -88,7 +88,7 @@ python3 skills/soul-guardian/scripts/soul_guardian.py \
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   check --actor system --note "first check"
 ```
 
@@ -98,7 +98,7 @@ Status (summary):
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   status
 ```
 
@@ -106,7 +106,7 @@ Check for drift (default: restores restore-mode files):
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   check --actor system --note cron
 ```
 
@@ -114,7 +114,7 @@ Alert-only check (never restore):
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   check --no-restore
 ```
 
@@ -122,7 +122,7 @@ Approve intentional edits (one file):
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   approve --file SOUL.md --actor sam --note "intentional update"
 ```
 
@@ -130,7 +130,7 @@ Approve all policy targets (except ignored ones):
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   approve --all --actor sam --note "bulk approve"
 ```
 
@@ -138,7 +138,7 @@ Restore (only restore-mode files):
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   restore --file SOUL.md --actor system --note "manual restore"
 ```
 
@@ -146,7 +146,7 @@ Verify audit log tamper-evidence:
 
 ```bash
 python3 skills/soul-guardian/scripts/soul_guardian.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   verify-audit
 ```
 
@@ -181,7 +181,7 @@ python3 skills/soul-guardian/scripts/onboard_state_dir.py
 ```
 
 It will:
-- create an external state dir (**recommended default:** `~/.clawdbot/soul-guardian/<agentId>/`)
+- create an external state dir (**recommended default:** `~/.openclaw/soul-guardian/<agentId>/`)
 - copy (or move with `--move`) existing state from `memory/soul-guardian/`
 - write a default `policy.json` if missing
 - print scheduling snippets
@@ -194,35 +194,35 @@ Notes:
 Then include `--state-dir` in all commands (run from the workspace root), e.g.:
 
 ```bash
-cd <workspace> && python3 skills/soul-guardian/scripts/soul_guardian.py --state-dir ~/.clawdbot/soul-guardian/<agentId> check
+cd <workspace> && python3 skills/soul-guardian/scripts/soul_guardian.py --state-dir ~/.openclaw/soul-guardian/<agentId> check
 ```
 
 ## Scheduling (cron)
 
-### A) Clawdbot Gateway Cron (recommended)
+### A) OpenClaw Cron (recommended)
 
-This is the default pattern when you want drift notifications to flow through Clawdbot.
+This is the default pattern when you want drift notifications to flow through OpenClaw.
 
-Note: even when there is **no drift**, Clawdbot cron runs typically show an **OK summary** in the main session.
+Note: even when there is **no drift**, OpenClaw cron runs typically show an **OK summary** in the main session.
 
 Example (edit paths + schedule):
 
 ```bash
-clawdbot cron add \
+openclaw cron add \
   --name "soul-guardian: check workspace" \
   --description "Run soul-guardian check; alert when drift detected." \
   --session isolated \
   --wake now \
   --cron "*/10 * * * *" \
   --tz UTC \
-  --message "Run:\ncd '<workspace>'\npython3 skills/soul-guardian/scripts/soul_guardian.py --state-dir ~/.clawdbot/soul-guardian/<agentId> check --actor cron --note 'gateway-cron'\n\nIf the command prints a line starting with 'SOUL_GUARDIAN_DRIFT', treat it as an alert. If it prints nothing, reply HEARTBEAT_OK." \
+  --message "Run:\ncd '<workspace>'\npython3 skills/soul-guardian/scripts/soul_guardian.py --state-dir ~/.openclaw/soul-guardian/<agentId> check --actor cron --note 'gateway-cron'\n\nIf the command prints a line starting with 'SOUL_GUARDIAN_DRIFT', treat it as an alert. If it prints nothing, reply HEARTBEAT_OK." \
   --post-prefix "[soul-guardian]" \
   --post-mode summary
 ```
 
 ### B) macOS launchd (optional, silent-on-OK)
 
-If you want **system scheduling** without Clawdbot posting OK summaries, use `launchd`.
+If you want **system scheduling** without OpenClaw posting OK summaries, use `launchd`.
 
 Because `soul_guardian.py check` prints **nothing** on OK and prints a single-line `SOUL_GUARDIAN_DRIFT ...` summary on drift, this tends to be silent unless something changed.
 
@@ -230,7 +230,7 @@ Generate + (optionally) install a LaunchAgent plist (run from the workspace root
 
 ```bash
 python3 skills/soul-guardian/scripts/install_launchd_plist.py \
-  --state-dir ~/.clawdbot/soul-guardian/<agentId> \
+  --state-dir ~/.openclaw/soul-guardian/<agentId> \
   --interval-seconds 600 \
   --install
 ```

@@ -177,7 +177,6 @@
         "compatible": [
           "openclaw",
           "moltbot",
-          "clawdbot",
           "other"
         ]
       },
@@ -186,8 +185,7 @@
         "default_install": true,
         "compatible": [
           "openclaw",
-          "moltbot",
-          "clawdbot"
+          "moltbot"
         ],
         "note": "Tailored for OpenClaw/MoltBot family"
       },
@@ -197,7 +195,6 @@
         "compatible": [
           "openclaw",
           "moltbot",
-          "clawdbot",
           "other"
         ]
       },
@@ -208,7 +205,6 @@
         "compatible": [
           "openclaw",
           "moltbot",
-          "clawdbot",
           "other"
         ]
       }

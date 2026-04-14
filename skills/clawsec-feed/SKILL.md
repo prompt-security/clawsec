@@ -14,7 +14,7 @@ clawdis:
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
-This feed is automatically updated daily with CVEs related to OpenClaw, clawdbot, and Moltbot from the NIST National Vulnerability Database (NVD).
+This feed is automatically updated daily with CVEs related to OpenClaw and Moltbot from the NIST National Vulnerability Database (NVD).
 
 ## Operational Notes
 

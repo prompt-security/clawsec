@@ -6,10 +6,10 @@ Why:
 - Moving state to an external directory improves resilience and makes tampering harder.
 
 What this script does:
-- Creates an external state directory (default: ~/.clawdbot/soul-guardian/<agentId>/)
+- Creates an external state directory (default: ~/.openclaw/soul-guardian/<agentId>/)
 - Copies (or moves) existing in-workspace state from memory/soul-guardian/
 - Writes a default policy.json if missing
-- Prints recommended cron snippets (Clawdbot gateway cron and optional launchd)
+- Prints recommended cron snippets (OpenClaw cron and optional launchd)
 
 This script does NOT modify your cron jobs automatically.
 """
@@ -76,7 +76,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument(
         "--state-dir",
         default=None,
-        help="External state directory to create/use (default: ~/.clawdbot/soul-guardian/<agentId>/).",
+        help="External state directory to create/use (default: ~/.openclaw/soul-guardian/<agentId>/).",
     )
     ap.add_argument("--move", action="store_true", help="Move instead of copy (WARNING: deletes the old in-workspace state dir).")
     ap.add_argument("--no-copy", action="store_true", help="Do not copy/move existing in-workspace state.")
@@ -85,7 +85,7 @@ def main(argv: list[str]) -> int:
     if args.state_dir:
         external = Path(args.state_dir).expanduser()
     else:
-        external = (Path("~/.clawdbot/soul-guardian").expanduser() / args.agent_id)
+        external = (Path("~/.openclaw/soul-guardian").expanduser() / args.agent_id)
 
     ensure_dir(external)
 
@@ -117,14 +117,14 @@ def main(argv: list[str]) -> int:
     )
 
     print("2) Update your cron/check runner to include --state-dir.")
-    print("\nClawdbot gateway cron (recommended; does not require system cron):")
+    print("\nOpenClaw cron (recommended; does not require system cron):")
     print("- In your cron spec, run something like:")
     print(
         f"  cd '{WORKSPACE_ROOT}' && python3 skills/soul-guardian/scripts/soul_guardian.py --state-dir '{external}' check --actor system --note cron"
     )
 
     print("\nOptional: system cron / launchd (macOS) example (NOT installed automatically):")
-    label = f"com.clawdbot.soul-guardian.{args.agent_id}"
+    label = f"com.openclaw.soul-guardian.{args.agent_id}"
     print(f"- Launchd label: {label}")
     print(f"- WorkingDirectory (recommended): {WORKSPACE_ROOT}")
     print("- ProgramArguments (example):")

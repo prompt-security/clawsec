@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Email delivery is now explicit and opt-in: `scripts/runner.sh` only attempts email delivery when `PROMPTSEC_EMAIL_TO` is configured.
 - `scripts/setup_cron.mjs` now carries configured runtime/delivery environment variables into the cron payload so the scheduled job is more self-describing and less dependent on ambient host state.
 - Suppression matching in `scripts/render_report.mjs` is now case-insensitive for skill names, matching the documented behavior and normalized config loader.
+- Documentation now consistently refers to the current OpenClaw product name.
 
 ### Security
 

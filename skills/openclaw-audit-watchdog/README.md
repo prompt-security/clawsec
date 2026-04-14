@@ -1,6 +1,6 @@
 # OpenClaw Audit Watchdog 🔭
 
-Automated daily security audits for OpenClaw/Clawdbot agents with DM delivery and optional email reporting.
+Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting.
 
 ## Overview
 

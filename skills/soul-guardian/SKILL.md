@@ -17,7 +17,7 @@ Protects your agent's core files (SOUL.md, AGENTS.md, etc.) from unauthorized ch
 ## Operational Notes
 
 - Required runtime: `python3`
-- Optional runtime: `clawdbot` for gateway cron integration, `launchctl` for macOS scheduling, `bash` for the demo helper
+- Optional runtime: `openclaw` for cron integration, `launchctl` for macOS scheduling, `bash` for the demo helper
 - Side effects: can auto-restore protected files to their approved baseline and writes audit/quarantine state locally
 - Network behavior: none by default
 - Trust model: any scheduling is opt-in, but restore mode intentionally overwrites drifted files

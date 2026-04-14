@@ -13,7 +13,7 @@ Instead it:
 - writes logs to the state dir (so drift output is preserved)
 - relies on you to wire notifications however you prefer
 
-If you want Clawdbot-side delivery, use Clawdbot Gateway Cron.
+If you want OpenClaw-side delivery, use OpenClaw cron.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ def agent_id_default(workspace_root: Path) -> str:
 
 
 def default_external_state_dir(agent_id: str) -> Path:
-    return Path("~/.clawdbot/soul-guardian").expanduser() / agent_id
+    return Path("~/.openclaw/soul-guardian").expanduser() / agent_id
 
 
 def run_launchctl(args: list[str]) -> None:
@@ -53,12 +53,12 @@ def main(argv: list[str]) -> int:
     ap.add_argument(
         "--state-dir",
         default=None,
-        help="External state directory (recommended). Default: ~/.clawdbot/soul-guardian/<agentId>/",
+        help="External state directory (recommended). Default: ~/.openclaw/soul-guardian/<agentId>/",
     )
     ap.add_argument(
         "--label",
         default=None,
-        help="launchd label (default: com.clawdbot.soul-guardian.<agentId>)",
+        help="launchd label (default: com.openclaw.soul-guardian.<agentId>)",
     )
     ap.add_argument(
         "--interval-seconds",
@@ -86,7 +86,7 @@ def main(argv: list[str]) -> int:
     agent_id = args.agent_id or agent_id_default(workspace_root)
     state_dir = Path(args.state_dir).expanduser().resolve() if args.state_dir else default_external_state_dir(agent_id)
 
-    label = args.label or f"com.clawdbot.soul-guardian.{agent_id}"
+    label = args.label or f"com.openclaw.soul-guardian.{agent_id}"
     plist_path = Path(args.out).expanduser().resolve() if args.out else (Path("~/Library/LaunchAgents").expanduser() / f"{label}.plist")
 
     script_path = workspace_root / "skills" / "soul-guardian" / "scripts" / "soul_guardian.py"

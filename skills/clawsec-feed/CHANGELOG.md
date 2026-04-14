@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Clarified that the standalone feed package does not itself create persistence, hooks, or cron jobs.
 - Declared checksum/extraction tooling used by the documented install flow (`bash`, `shasum`, `unzip`) in skill metadata.
+- Normalized product naming in the skill docs to use OpenClaw terminology.
 
 ### Security
 
