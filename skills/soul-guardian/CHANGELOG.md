@@ -5,6 +5,21 @@ All notable changes to soul-guardian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2026-04-14
+
+### Added
+
+- Regression coverage for launchd label migration so the installer documents and cleans up the previous Clawdbot-era label before starting the new default label.
+
+### Changed
+
+- `scripts/install_launchd_plist.py` now documents the legacy launchd label/plist in dry-run output and attempts a best-effort disable/bootout of `com.clawdbot.soul-guardian.<agentId>` before installing `com.openclaw.soul-guardian.<agentId>`.
+- The `--label` help now explains that non-legacy labels trigger legacy-job cleanup, while explicitly selecting the legacy label skips that migration path.
+
+### Security
+
+- Reduced the chance of duplicate launchd jobs or split monitoring state by making the old-label cleanup path explicit and warning the operator when manual launchd cleanup is still required.
+
 ## [0.0.4] - 2026-04-14
 
 ### Added
