@@ -26,12 +26,19 @@ import subprocess
 import sys
 
 
+LEGACY_STATE_ROOT = Path("~/.clawdbot/soul-guardian").expanduser()
+DEFAULT_STATE_ROOT = Path("~/.openclaw/soul-guardian").expanduser()
+
+
 def agent_id_default(workspace_root: Path) -> str:
     return workspace_root.name
 
 
-def default_external_state_dir(agent_id: str) -> Path:
-    return Path("~/.openclaw/soul-guardian").expanduser() / agent_id
+def default_external_state_dir(agent_id: str) -> tuple[Path, bool]:
+    legacy_state_dir = LEGACY_STATE_ROOT / agent_id
+    if legacy_state_dir.exists():
+        return legacy_state_dir, True
+    return DEFAULT_STATE_ROOT / agent_id, False
 
 
 def run_launchctl(args: list[str]) -> None:
@@ -53,7 +60,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument(
         "--state-dir",
         default=None,
-        help="External state directory (recommended). Default: ~/.openclaw/soul-guardian/<agentId>/",
+        help="External state directory (recommended). Default: ~/.openclaw/soul-guardian/<agentId>/; reuses ~/.clawdbot/soul-guardian/<agentId>/ if that legacy state dir already exists.",
     )
     ap.add_argument(
         "--label",
@@ -84,7 +91,20 @@ def main(argv: list[str]) -> int:
 
     workspace_root = Path(args.workspace_root).expanduser().resolve()
     agent_id = args.agent_id or agent_id_default(workspace_root)
-    state_dir = Path(args.state_dir).expanduser().resolve() if args.state_dir else default_external_state_dir(agent_id)
+    if args.state_dir:
+        state_dir = Path(args.state_dir).expanduser().resolve()
+    else:
+        state_dir, using_legacy_state_dir = default_external_state_dir(agent_id)
+        state_dir = state_dir.resolve()
+        if using_legacy_state_dir:
+            migration_target = (DEFAULT_STATE_ROOT / agent_id).resolve()
+            print(
+                "WARNING: Detected legacy soul-guardian state dir at "
+                f"{state_dir}. Using it for backward compatibility. "
+                "To switch to the new default location, rerun this script with "
+                f"--state-dir {migration_target}",
+                file=sys.stderr,
+            )
 
     label = args.label or f"com.openclaw.soul-guardian.{agent_id}"
     plist_path = Path(args.out).expanduser().resolve() if args.out else (Path("~/Library/LaunchAgents").expanduser() / f"{label}.plist")
