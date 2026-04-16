@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
+import { spawnSync as runProcessSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -146,7 +146,7 @@ async function runOriginalGuardedInstall(args) {
 
   // Pass through environment without modification
   // The original guarded_skill_install.mjs handles --confirm-advisory properly
-  const child = spawnSync(
+  const child = runProcessSync(
     "node",
     [originalScript, ...args.originalArgs],
     {

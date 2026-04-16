@@ -43,8 +43,8 @@ async function stageInstalledSkill(tempHome, skillName) {
   return destDir;
 }
 
-async function testPreflightSummaryAndMutation() {
-  const testName = "setup_reputation_hook: prints preflight review before mutating installed suite files";
+async function testPreflightSummaryNoMutation() {
+  const testName = "setup_reputation_hook: prints preflight review without mutating installed suite files";
   const tmp = await createTempDir();
   const homeDir = path.join(tmp.path, "home");
 
@@ -80,15 +80,22 @@ async function testPreflightSummaryAndMutation() {
       "lib",
       "reputation.mjs",
     );
-
-    await fs.access(wrapperPath);
-    await fs.access(reputationModulePath);
+    const wrapperExists = await fs
+      .access(wrapperPath)
+      .then(() => true)
+      .catch(() => false);
+    const reputationModuleExists = await fs
+      .access(reputationModulePath)
+      .then(() => true)
+      .catch(() => false);
 
     if (
       result.stdout.includes("Preflight review:") &&
-      result.stdout.includes("rewrite installed clawsec-suite integration files") &&
-      result.stdout.includes("string-based patch to handler.ts") &&
-      result.stdout.includes("Restart OpenClaw gateway for hook changes to take effect")
+      result.stdout.includes("does not rewrite files in other skills") &&
+      result.stdout.includes("Recommended command:") &&
+      result.stdout.includes("alias clawsec-guarded-install") &&
+      wrapperExists === false &&
+      reputationModuleExists === false
     ) {
       pass(testName);
     } else {
@@ -102,7 +109,7 @@ async function testPreflightSummaryAndMutation() {
 }
 
 async function runAllTests() {
-  await testPreflightSummaryAndMutation();
+  await testPreflightSummaryNoMutation();
   report();
   exitWithResults();
 }

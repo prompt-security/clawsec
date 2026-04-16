@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnSync as runProcessSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -26,7 +26,7 @@ export async function checkReputation(skillName, version) {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const checkerDir = path.resolve(__dirname, '../../..');
     
-    const reputationCheck = spawnSync(
+    const reputationCheck = runProcessSync(
       "node",
       [
         `${checkerDir}/scripts/check_clawhub_reputation.mjs`,
