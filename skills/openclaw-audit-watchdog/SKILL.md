@@ -1,13 +1,30 @@
 ---
 name: openclaw-audit-watchdog
-version: 0.1.3
+version: 0.1.4
 description: Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Runs deep audits, creates or updates a recurring cron job, and sends formatted reports to configured recipients.
 homepage: https://clawsec.prompt.security
-metadata: {"openclaw":{"emoji":"🔭","category":"security"}}
+metadata:
+  openclaw:
+    emoji: "🔭"
+    category: "security"
+    requires:
+      bins: [bash, openclaw, node]
+      env: [PROMPTSEC_DM_CHANNEL, PROMPTSEC_DM_TO]
+    envVars:
+      - name: PROMPTSEC_DM_CHANNEL
+        required: true
+        description: Delivery channel for cron output.
+      - name: PROMPTSEC_DM_TO
+        required: true
+        description: Delivery recipient id/handle.
+      - name: PROMPTSEC_EMAIL_TO
+        required: false
+        description: Optional email copy destination.
 clawdis:
   emoji: "🔭"
   requires:
-    bins: [bash, curl, openclaw, node]
+    bins: [bash, openclaw, node]
+    env: [PROMPTSEC_DM_CHANNEL, PROMPTSEC_DM_TO]
 ---
 
 # Prompt Security Audit (openclaw)
