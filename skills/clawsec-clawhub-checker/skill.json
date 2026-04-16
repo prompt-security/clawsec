@@ -71,7 +71,8 @@
   "integration": {
     "clawsec-suite": {
       "enhances": [
-        "guarded_skill_install.mjs via external wrapper invocation"
+        "guarded_skill_install.mjs via external wrapper invocation",
+        "optional manual advisory-guardian hook wiring for reputation annotations"
       ],
       "adds_exit_codes": {
         "43": "Reputation warning - requires --confirm-reputation"
@@ -105,6 +106,7 @@
     },
     "operator_review": [
       "Requires an installed clawsec-suite checkout because the enhanced installer delegates to suite guarded install flow.",
+      "This release does not auto-wire advisory-guardian hook annotations; if needed, wire hooks/clawsec-advisory-guardian/lib/reputation.mjs manually into the suite hook.",
       "Reputation results are heuristic and can produce false positives; installation still requires explicit user confirmation for risky skills.",
       "Run the setup helper to confirm local paths before using the enhanced installer command."
     ],

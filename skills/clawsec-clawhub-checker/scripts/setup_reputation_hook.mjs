@@ -21,6 +21,8 @@ function printSummary({ suiteDir, checkerDir, enhancedInstaller }) {
     "- This setup does not rewrite files in other skills.",
     `- It validates expected install paths: ${suiteDir} and ${checkerDir}.`,
     "- Required runtime for reputation checks: node + clawhub.",
+    "- Advisory-hook reputation annotations are manual only in this release.",
+    "- If you want hook alert annotations, wire checker lib/reputation.mjs into suite handler.ts yourself.",
     "- Reputation scoring is heuristic and must remain confirmation-gated.",
     "",
     "Recommended command:",

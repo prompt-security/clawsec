@@ -8,6 +8,33 @@ function runClawhub(args) {
   return runProcessSync("clawhub", args, { encoding: "utf-8" });
 }
 
+function toPublicResult(result) {
+  return {
+    safe: result.safe,
+    score: result.score,
+    warnings: result.warnings,
+    virustotal: result.virustotal,
+  };
+}
+
+function finalizeResult(result, threshold) {
+  result.score = Math.max(0, Math.min(100, result.score));
+  result.safe = !result.blocked && result.score >= threshold;
+  if (!result.safe) {
+    const thresholdWarning = `Reputation score ${result.score}/100 below threshold ${threshold}/100`;
+    if (!result.warnings.includes(thresholdWarning)) {
+      result.warnings.unshift(thresholdWarning);
+    }
+  }
+  return toPublicResult(result);
+}
+
+function blockOnMissingScannerData(result, warning) {
+  result.warnings.push(warning);
+  result.score = Math.min(result.score, 60);
+  result.blocked = true;
+}
+
 function parseJson(raw, label, warnings) {
   try {
     return JSON.parse(raw);
@@ -21,15 +48,13 @@ function parseJson(raw, label, warnings) {
 
 function maybeApplyVersionSecuritySignals(result, versionDetails) {
   if (!versionDetails || typeof versionDetails !== "object") {
-    result.warnings.push("ClawHub version security details are unavailable");
-    result.score = Math.min(result.score, 85);
+    blockOnMissingScannerData(result, "ClawHub version security details are unavailable");
     return;
   }
 
   const security = versionDetails.security;
   if (!security || typeof security !== "object") {
-    result.warnings.push("ClawHub version record does not include security scanner output");
-    result.score = Math.min(result.score, 85);
+    blockOnMissingScannerData(result, "ClawHub version record does not include security scanner output");
     return;
   }
 
@@ -40,15 +65,13 @@ function maybeApplyVersionSecuritySignals(result, versionDetails) {
 
   const scanners = security.scanners;
   if (!scanners || typeof scanners !== "object") {
-    result.warnings.push("ClawHub scanner breakdown is missing from version metadata");
-    result.score = Math.min(result.score, 85);
+    blockOnMissingScannerData(result, "ClawHub scanner breakdown is missing from version metadata");
     return;
   }
 
   const vt = scanners.vt;
   if (!vt || typeof vt !== "object") {
-    result.warnings.push("VirusTotal scanner data was not returned by ClawHub");
-    result.score = Math.min(result.score, 85);
+    blockOnMissingScannerData(result, "VirusTotal scanner data was not returned by ClawHub");
     return;
   }
 
@@ -91,20 +114,23 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
     score: 100,
     warnings: [],
     virustotal: [],
+    blocked: false,
   };
 
   if (!/^[a-z0-9][a-z0-9-]*$/.test(skillSlug)) {
     result.warnings.push(`Invalid skill slug: ${skillSlug}`);
     result.score = 0;
     result.safe = false;
-    return result;
+    result.blocked = true;
+    return toPublicResult(result);
   }
 
   if (version && !/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?(?:\+[a-zA-Z0-9.-]+)?$/.test(version)) {
     result.warnings.push(`Invalid version format: ${version}`);
     result.score = 0;
     result.safe = false;
-    return result;
+    result.blocked = true;
+    return toPublicResult(result);
   }
 
   try {
@@ -115,15 +141,15 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
     if (inspectResult.status !== 0) {
       result.warnings.push(`Skill "${skillSlug}" not found or cannot be inspected`);
       result.score = Math.min(result.score, 40);
-      result.safe = false;
-      return result;
+      result.blocked = true;
+      return finalizeResult(result, threshold);
     }
 
     const skillInfo = parseJson(inspectResult.stdout, "skill inspection payload", result.warnings);
     if (!skillInfo) {
       result.score = Math.min(result.score, 40);
-      result.safe = false;
-      return result;
+      result.blocked = true;
+      return finalizeResult(result, threshold);
     }
 
     if (skillInfo.skill?.createdAt) {
@@ -203,20 +229,13 @@ export async function checkClawhubReputation(skillSlug, version, threshold = 70)
     }
 
     maybeApplyVersionSecuritySignals(result, versionDetails);
-
-    result.score = Math.max(0, Math.min(100, result.score));
-    result.safe = result.score >= threshold;
-
-    if (!result.safe) {
-      result.warnings.unshift(`Reputation score ${result.score}/100 below threshold ${threshold}/100`);
-    }
+    return finalizeResult(result, threshold);
   } catch (error) {
     result.warnings.push(`Reputation check error: ${error instanceof Error ? error.message : String(error)}`);
     result.score = 50;
-    result.safe = result.score >= threshold;
+    result.blocked = true;
+    return finalizeResult(result, threshold);
   }
-
-  return result;
 }
 
 const isCliEntrypoint =

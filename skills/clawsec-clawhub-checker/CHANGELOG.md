@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Converted setup flow to non-mutating preflight validation; the skill no longer rewrites or copies files into installed `clawsec-suite` directories.
 - Updated reputation collection to rely on `clawhub inspect --json` security metadata instead of probing `clawhub install` output.
 - Updated documentation and metadata to describe standalone wrapper usage for guarded install checks.
+- Added explicit documentation for optional manual advisory-hook wiring when operators want `reputationWarning` fields in advisory alert rendering.
 
 ### Security
 
 - Removed in-place cross-skill source mutation behavior from setup.
 - Removed install-output scraping behavior used only to infer VirusTotal status.
+- Reputation scoring now fails closed when scanner metadata is missing, and hook-level reputation subprocess execution failures are treated as unsafe results.
 
 ## [0.0.2] - 2026-04-14
 

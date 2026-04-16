@@ -19,6 +19,7 @@ Adds a reputation gate on top of the `clawsec-suite` guarded installer.
 - Required runtime: `node`, `clawhub`, `openclaw`
 - Depends on: installed `clawsec-suite`
 - Side effects: none on other skills; this package does not rewrite installed suite files
+- Advisory-hook wiring is optional and manual in this release
 - Network behavior: reputation checks call ClawHub inspect/search endpoints
 - Trust model: scores are heuristic and confirmation-gated
 
@@ -62,6 +63,16 @@ node ~/.openclaw/skills/clawsec-clawhub-checker/scripts/enhanced_guarded_install
   --version 1.0.0 \
   --confirm-reputation
 ```
+
+## Optional Advisory-Hook Wiring (Manual)
+
+This release does not auto-patch `clawsec-suite` hook files.  
+If you rely on advisory alerts that include `reputationWarning` / `reputationWarnings`, wire the checker module manually:
+
+- Source module: `~/.openclaw/skills/clawsec-clawhub-checker/hooks/clawsec-advisory-guardian/lib/reputation.mjs`
+- Target hook file: `~/.openclaw/skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
+
+Treat that wiring as a deliberate local customization and review it before enabling.
 
 ## Exit Codes
 

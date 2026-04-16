@@ -37,6 +37,20 @@ export async function checkReputation(skillName, version) {
       { encoding: "utf-8", cwd: checkerDir }
     );
 
+    if (reputationCheck.error) {
+      result.safe = false;
+      result.score = 0;
+      result.warnings.push(`Reputation check execution error: ${reputationCheck.error.message}`);
+      return result;
+    }
+
+    if (typeof reputationCheck.status !== "number") {
+      result.safe = false;
+      result.score = 0;
+      result.warnings.push("Reputation check did not return a process exit status");
+      return result;
+    }
+
     if (reputationCheck.status === 0) {
       try {
         const repResult = JSON.parse(reputationCheck.stdout);
@@ -61,10 +75,16 @@ export async function checkReputation(skillName, version) {
         result.warnings.push("Skill flagged by reputation check");
       }
     } else {
-      // Error running check
-      result.warnings.push(`Reputation check failed: ${reputationCheck.stderr || 'Unknown error'}`);
-      result.score = 60;
-      result.safe = result.score >= 70;
+      const stderr = (reputationCheck.stderr || "").trim();
+      const stdout = (reputationCheck.stdout || "").trim();
+      const output = [stderr, stdout].filter((entry) => entry).join(" | ");
+      result.warnings.push(
+        `Reputation check failed with exit code ${reputationCheck.status}${
+          output ? `: ${output}` : ""
+        }`,
+      );
+      result.score = 0;
+      result.safe = false;
     }
   } catch (error) {
     result.warnings.push(`Reputation check error: ${error.message}`);
