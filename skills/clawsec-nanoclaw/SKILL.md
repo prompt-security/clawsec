@@ -1,6 +1,6 @@
 ---
 name: clawsec-nanoclaw
-version: 0.0.3
+version: 0.0.4
 description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
 ---
 

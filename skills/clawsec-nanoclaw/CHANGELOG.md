@@ -5,6 +5,16 @@ All notable changes to the ClawSec NanoClaw compatibility skill will be document
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] - 2026-04-16
+
+### Changed
+
+- Moved signature-related local file reads into `lib/local_file_io.ts` and kept network fetch logic isolated in `lib/signatures.ts`.
+
+### Security
+
+- Reduced static false-positive exfiltration signals by separating local file I/O and remote fetch code paths.
+
 ## [0.0.3] - 2026-03-09
 
 ### Security

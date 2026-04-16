@@ -4,9 +4,9 @@
  */
 
 import crypto from 'crypto';
-import fs from 'fs';
 import https from 'https';
 import { ChecksumsManifest } from './types.js';
+import { fileExists, loadBinaryFile, loadUtf8File } from './local_file_io.js';
 
 /**
  * Allowed domains for feed/signature fetching.
@@ -153,7 +153,7 @@ export function sha256Hex(content: string | Buffer): string {
  * Convenience wrapper for file-based integrity monitoring and package verification.
  */
 export function sha256File(filePath: string): string {
-  const data = fs.readFileSync(filePath);
+  const data = loadBinaryFile(filePath);
   return sha256Hex(data);
 }
 
@@ -191,8 +191,8 @@ export function verifyDetachedSignature(
   publicKeyPem: string
 ): boolean {
   try {
-    const data = fs.readFileSync(dataPath);
-    const signatureRaw = fs.readFileSync(signaturePath, 'utf8');
+    const data = loadBinaryFile(dataPath);
+    const signatureRaw = loadUtf8File(signaturePath);
     const signature = decodeSignature(signatureRaw);
 
     if (!signature) return false;
@@ -219,15 +219,15 @@ export function verifyDetachedSignatureWithDetails(
   publicKeyPem: string
 ): { valid: boolean; error?: string } {
   try {
-    if (!fs.existsSync(dataPath)) {
+    if (!fileExists(dataPath)) {
       return { valid: false, error: 'Data file not found' };
     }
-    if (!fs.existsSync(signaturePath)) {
+    if (!fileExists(signaturePath)) {
       return { valid: false, error: 'Signature file not found' };
     }
 
-    const data = fs.readFileSync(dataPath);
-    const signatureRaw = fs.readFileSync(signaturePath, 'utf8');
+    const data = loadBinaryFile(dataPath);
+    const signatureRaw = loadUtf8File(signaturePath);
     const signature = decodeSignature(signatureRaw);
 
     if (!signature) {
