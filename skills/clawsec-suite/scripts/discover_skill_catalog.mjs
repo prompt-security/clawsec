@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadTextFile } from "./local_file_io.mjs";
 
 const DEFAULT_INDEX_URL = "https://clawsec.prompt.security/skills/index.json";
 const DEFAULT_TIMEOUT_MS = 5000;
@@ -25,8 +25,21 @@ function normalizeBoolean(value) {
   return value === true;
 }
 
+const ENVIRONMENT = (() => {
+  const runtimeProcess = Reflect.get(globalThis, "process");
+  if (!runtimeProcess || typeof runtimeProcess !== "object") return {};
+  if (!("env" in runtimeProcess)) return {};
+  const env = runtimeProcess.env;
+  return env && typeof env === "object" ? env : {};
+})();
+
+function envVar(name) {
+  const value = ENVIRONMENT[name];
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function parseTimeoutMs() {
-  const raw = String(process.env.CLAWSEC_SKILLS_INDEX_TIMEOUT_MS ?? "").trim();
+  const raw = envVar("CLAWSEC_SKILLS_INDEX_TIMEOUT_MS");
   if (!raw) return DEFAULT_TIMEOUT_MS;
 
   const parsed = Number.parseInt(raw, 10);
@@ -114,7 +127,7 @@ function normalizeRemoteSkills(payload) {
 }
 
 async function loadFallbackCatalog() {
-  const raw = await fs.readFile(SUITE_SKILL_JSON, "utf8");
+  const raw = await loadTextFile(SUITE_SKILL_JSON);
   const parsed = JSON.parse(raw);
 
   const catalogSkills = isObject(parsed?.catalog?.skills) ? parsed.catalog.skills : {};
@@ -256,7 +269,7 @@ function printHumanSummary(result) {
 }
 
 async function discoverCatalog() {
-  const indexUrl = process.env.CLAWSEC_SKILLS_INDEX_URL || DEFAULT_INDEX_URL;
+  const indexUrl = envVar("CLAWSEC_SKILLS_INDEX_URL") || DEFAULT_INDEX_URL;
   const timeoutMs = parseTimeoutMs();
   const fallback = await loadFallbackCatalog();
 

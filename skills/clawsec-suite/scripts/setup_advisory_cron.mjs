@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
+import { spawnSync as runProcessSync } from "node:child_process";
 
 const JOB_NAME = process.env.CLAWSEC_ADVISORY_CRON_NAME?.trim() || "ClawSec Advisory Scan";
 const JOB_EVERY = process.env.CLAWSEC_ADVISORY_CRON_EVERY?.trim() || "6h";
@@ -10,7 +10,7 @@ const SYSTEM_EVENT =
   "Run ClawSec advisory scan. If installed skills are flagged as malicious or removal is recommended, notify the user and request explicit approval before any removal.";
 
 function sh(cmd, args) {
-  const result = spawnSync(cmd, args, {
+  const result = runProcessSync(cmd, args, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });

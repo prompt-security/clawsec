@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
-import fs from "node:fs/promises";
 import https from "node:https";
 import path from "node:path";
+import { loadTextFile } from "./local_file_io.mjs";
 import { isObject } from "./utils.mjs";
 
 /**
@@ -442,17 +442,17 @@ export async function loadLocalFeed(feedPath, options = {}) {
   const allowUnsigned = options.allowUnsigned === true;
   const verifyChecksumManifest = options.verifyChecksumManifest !== false;
 
-  const payloadRaw = await fs.readFile(feedPath, "utf8");
+  const payloadRaw = await loadTextFile(feedPath);
 
   if (!allowUnsigned) {
-    const signatureRaw = await fs.readFile(signaturePath, "utf8");
+    const signatureRaw = await loadTextFile(signaturePath);
     if (!verifySignedPayload(payloadRaw, signatureRaw, publicKeyPem)) {
       throw new Error(`Feed signature verification failed for local feed: ${feedPath}`);
     }
 
     if (verifyChecksumManifest) {
-      const checksumsRaw = await fs.readFile(checksumsPath, "utf8");
-      const checksumsSignatureRaw = await fs.readFile(checksumsSignaturePath, "utf8");
+      const checksumsRaw = await loadTextFile(checksumsPath);
+      const checksumsSignatureRaw = await loadTextFile(checksumsSignaturePath);
 
       if (!verifySignedPayload(checksumsRaw, checksumsSignatureRaw, checksumsPublicKeyPem)) {
         throw new Error(`Checksum manifest signature verification failed: ${checksumsPath}`);

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
+import { spawnSync as runProcessSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -14,7 +14,7 @@ const HOOKS_ROOT = path.join(os.homedir(), ".openclaw", "hooks");
 const TARGET_HOOK_DIR = path.join(HOOKS_ROOT, HOOK_NAME);
 
 function sh(cmd, args) {
-  const result = spawnSync(cmd, args, {
+  const result = runProcessSync(cmd, args, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });

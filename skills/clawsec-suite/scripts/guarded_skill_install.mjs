@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
+import { spawnSync as runProcessSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -217,7 +217,7 @@ function runInstall(skillName, version) {
   const target = version ? `${skillName}@${version}` : skillName;
   process.stdout.write(`Install target: ${target}\n`);
 
-  const result = spawnSync("npx", ["clawhub@latest", "install", target], {
+  const result = runProcessSync("npx", ["clawhub@latest", "install", target], {
     stdio: "inherit",
   });
 

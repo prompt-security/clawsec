@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -91,6 +91,11 @@
         "description": "Advisory feed loading with Ed25519 signature and checksum manifest verification"
       },
       {
+        "path": "hooks/clawsec-advisory-guardian/lib/local_file_io.mjs",
+        "required": true,
+        "description": "Feed-local file access helpers used by advisory loading"
+      },
+      {
         "path": "hooks/clawsec-advisory-guardian/lib/types.ts",
         "required": true,
         "description": "TypeScript type definitions for hook and feed structures"
@@ -124,6 +129,11 @@
         "path": "scripts/discover_skill_catalog.mjs",
         "required": true,
         "description": "Dynamic skill-catalog discovery with remote index fetch and suite-local fallback metadata"
+      },
+      {
+        "path": "scripts/local_file_io.mjs",
+        "required": true,
+        "description": "Script-local file access helpers used by catalog discovery"
       },
       {
         "path": "scripts/sign_detached_ed25519.mjs",
