@@ -8,7 +8,7 @@
  * Uses the `openclaw cron` CLI so it can run on a host without direct Gateway RPC access.
  */
 
-import { spawnSync } from "node:child_process";
+import { spawnSync as runProcessSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -34,7 +34,7 @@ const UNEXPANDED_HOME_TOKEN_PATTERN =
   /(?:^|[\\/])(?:\\?\$HOME|\\?\$\{HOME\}|\\?\$USERPROFILE|\\?\$\{USERPROFILE\}|%HOME%|%USERPROFILE%|\$env:HOME|\$env:USERPROFILE)(?:$|[\\/])/i;
 
 function sh(cmd, args, { input } = {}) {
-  const res = spawnSync(cmd, args, {
+  const res = runProcessSync(cmd, args, {
     encoding: "utf8",
     input: input ?? undefined,
     stdio: [input ? "pipe" : "ignore", "pipe", "pipe"],

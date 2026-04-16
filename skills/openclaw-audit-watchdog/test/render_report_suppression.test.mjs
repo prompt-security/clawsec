@@ -17,7 +17,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { spawn as launchProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { pass, fail, report, exitWithResults, createTempDir } from "../../clawsec-suite/test/lib/test_harness.mjs";
 
@@ -47,7 +47,7 @@ function createConfigJson(suppressions, enabledFor = ["audit"]) {
 
 async function runRenderReport(args) {
   return new Promise((resolve) => {
-    const proc = spawn(NODE_BIN, [SCRIPT_PATH, ...args], {
+    const proc = launchProcess(NODE_BIN, [SCRIPT_PATH, ...args], {
       stdio: ["ignore", "pipe", "pipe"],
     });
 

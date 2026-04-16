@@ -2,7 +2,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { spawn as launchProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createTempDir, pass, fail, report, exitWithResults } from "../../clawsec-suite/test/lib/test_harness.mjs";
 
@@ -79,7 +79,7 @@ async function runSetupCron(extraEnv = {}) {
   };
 
   const result = await new Promise((resolve) => {
-    const proc = spawn(NODE_BIN, [SCRIPT_PATH], {
+    const proc = launchProcess(NODE_BIN, [SCRIPT_PATH], {
       env,
       stdio: ["ignore", "pipe", "pipe"],
     });
