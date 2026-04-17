@@ -1135,6 +1135,36 @@ jobs:
           CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
 
+      - name: Guard duplicate ClawHub version
+        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
+          VERSION="${{ needs.release-tag.outputs.version }}"
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+
+          set +e
+          CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
+            clawhub inspect "$SKILL_NAME" --version "$VERSION" --json \
+            > /tmp/clawhub-existing-version.json 2> /tmp/clawhub-existing-version.err
+          STATUS=$?
+          set -e
+
+          if [ "$STATUS" -eq 0 ]; then
+            echo "::error::ClawHub already contains ${SKILL_NAME}@${VERSION}. Bump the version before tagging."
+            exit 1
+          fi
+
+          if grep -Eqi "Version not found|Skill not found" /tmp/clawhub-existing-version.err; then
+            echo "No existing ${SKILL_NAME}@${VERSION} detected in ClawHub. Proceeding."
+          else
+            echo "::error::Failed to verify ClawHub version precondition."
+            cat /tmp/clawhub-existing-version.err
+            exit 1
+          fi
+
       - name: Publish to ClawHub
         if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
@@ -1149,7 +1179,6 @@ jobs:
 
           export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
 
-          # Publish with idempotent retry handling
           if ! CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub publish "$SKILL_PATH" \
               --slug "$SKILL_NAME" \
@@ -1158,15 +1187,8 @@ jobs:
               --changelog "$CHANGELOG" \
               --tags "latest" \
               --no-input 2>&1 | tee /tmp/clawhub-publish.log; then
-
-            # Check if it's a "version already exists" error (which means previous run partially succeeded)
-            if grep -qi "version already exists" /tmp/clawhub-publish.log; then
-              echo "::warning::Version $VERSION already published to ClawHub (from previous run)"
-              exit 0
-            else
-              echo "::error::ClawHub publish failed. Check logs above for details."
-              exit 1
-            fi
+            echo "::error::ClawHub publish failed. Check logs above for details."
+            exit 1
           fi
 
           echo "✓ Successfully published $SKILL_NAME@$VERSION to ClawHub"

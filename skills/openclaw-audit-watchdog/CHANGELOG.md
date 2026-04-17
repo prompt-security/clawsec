@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-04-17
+
+### Changed
+
+- Re-released metadata and docs updates under a new version after detecting that `0.1.3` was already present in ClawHub with older artifact content.
+- No runtime behavior changes to audit execution, cron setup, or report delivery logic.
+
 ## [0.1.3] - 2026-04-16
 
 ### Changed
