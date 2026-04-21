@@ -436,14 +436,21 @@ jobs:
                   end
               );
 
+            def preferred_description:
+              (
+                (.cve.descriptions[]? | select(.lang == "en") | .value)
+                // .cve.descriptions[0]?.value
+                // "No description provided by NVD."
+              );
+
             [.[] | {
               id: .cve.id,
               severity: (get_cvss_score | map_severity),
               type: nvd_category_name,
               nvd_category_id: nvd_category_raw,
               cvss_score: get_cvss_score,
-              description: (.cve.descriptions[] | select(.lang == "en") | .value),
-              title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
+              description: preferred_description,
+              title: (preferred_description | .[0:100] + (if length > 100 then "..." else "" end)),
               affected: normalized_affected,
               platforms: normalized_platforms,
               references: [.cve.references[]?.url // empty] | unique | .[0:3],
@@ -516,16 +523,16 @@ jobs:
       - name: Transform CVEs to advisories
         id: transform
         run: |
-          # Read existing IDs into a jq-friendly format
+          # Read existing IDs into a jq-friendly file for jq (avoids huge CLI args on full scans).
           if [ "${{ inputs.force_full_scan }}" = "true" ]; then
             echo "Full scan mode enabled: rebuilding CVE advisories from scratch."
-            EXISTING_IDS='[]'
+            echo '[]' > tmp/existing_ids.json
           else
-            EXISTING_IDS=$(cat tmp/existing_ids.txt | jq -R -s 'split("\n") | map(select(length > 0))')
+            jq -R -s 'split("\n") | map(select(length > 0))' < tmp/existing_ids.txt > tmp/existing_ids.json
           fi
           
           # Transform NVD CVEs to our advisory format
-          jq --argjson existing "$EXISTING_IDS" '
+          jq --slurpfile existing tmp/existing_ids.json '
             def map_severity:
               if . == null then "medium"
               elif . >= 9.0 then "critical"
@@ -668,16 +675,23 @@ jobs:
                     | if ($from_targets | length) > 0 then $from_targets else ["openclaw", "nanoclaw", "hermes"] end
                   end
               );
+
+            def preferred_description:
+              (
+                (.cve.descriptions[]? | select(.lang == "en") | .value)
+                // .cve.descriptions[0]?.value
+                // "No description provided by NVD."
+              );
             
             [.[] |
-              select(.cve.id as $id | $existing | index($id) | not) |
+              select(.cve.id as $id | (($existing[0] // []) | index($id) | not)) |
               {
                 id: .cve.id,
                 severity: (get_cvss_score | map_severity),
                 type: nvd_category_name,
                 nvd_category_id: nvd_category_raw,
-                title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
-                description: (.cve.descriptions[] | select(.lang == "en") | .value),
+                title: (preferred_description | .[0:100] + (if length > 100 then "..." else "" end)),
+                description: preferred_description,
                 affected: normalized_affected,
                 platforms: normalized_platforms,
                 action: "Review and update affected components. See NVD for remediation details.",
@@ -694,6 +708,14 @@ jobs:
           NEW_COUNT=$(jq 'length' tmp/new_advisories.json)
           echo "New advisories to add: $NEW_COUNT"
           echo "new_count=$NEW_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+            FILTERED_COUNT="${{ steps.process.outputs.filtered_count }}"
+            if [ "$NEW_COUNT" -ne "$FILTERED_COUNT" ]; then
+              echo "::error::Full scan transform mismatch: filtered CVEs=$FILTERED_COUNT transformed advisories=$NEW_COUNT"
+              exit 1
+            fi
+          fi
           
           if [ "$NEW_COUNT" -gt 0 ]; then
             echo "=== New advisories ==="
@@ -747,11 +769,11 @@ jobs:
 
           if [ -f "$FEED_PATH" ] && [ "$FORCE_FULL_SCAN" = "true" ]; then
             # Full scan mode: replace all CVE advisories with rebuilt set and keep non-CVE entries.
-            jq --argjson rebuilt "$(cat tmp/new_advisories.json)" --arg now "$NOW" '
+            jq --slurpfile rebuilt tmp/new_advisories.json --arg now "$NOW" '
               .updated = $now |
               .advisories = (
                 ((.advisories // []) | map(select((.id // "") | startswith("CVE-") | not)))
-                + $rebuilt
+                + ($rebuilt[0] // [])
                 | sort_by(.published)
                 | reverse
               )
@@ -773,16 +795,16 @@ jobs:
             ' "$FEED_PATH" > tmp/feed_with_updates.json
 
             # Step 2: Add new advisories
-            jq --argjson new "$(cat tmp/new_advisories.json)" --arg now "$NOW" '
+            jq --slurpfile new tmp/new_advisories.json --arg now "$NOW" '
               .updated = $now |
-              .advisories = (.advisories + $new | sort_by(.published) | reverse)
+              .advisories = (.advisories + ($new[0] // []) | sort_by(.published) | reverse)
             ' tmp/feed_with_updates.json > tmp/updated_feed.json
           else
-            jq -n --argjson advisories "$(cat tmp/new_advisories.json)" --arg now "$NOW" '{
+            jq -n --slurpfile advisories tmp/new_advisories.json --arg now "$NOW" '{
               version: "1.0.0",
               updated: $now,
               description: "Community-driven security advisory feed for ClawSec",
-              advisories: ($advisories | sort_by(.published) | reverse)
+              advisories: (($advisories[0] // []) | sort_by(.published) | reverse)
             }' > tmp/updated_feed.json
           fi
 

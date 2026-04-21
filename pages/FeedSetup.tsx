@@ -24,6 +24,7 @@ const PLATFORM_TABS = [
   { value: 'all',      label: 'All Platforms', active: 'bg-clawd-accent text-white',                                         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
   { value: 'openclaw', label: 'OpenClaw',      active: 'bg-clawd-accent/20 text-clawd-accent border-2 border-clawd-accent',  inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
   { value: 'nanoclaw', label: 'NanoClaw',      active: 'bg-clawd-secondary/20 text-clawd-secondary border-2 border-clawd-secondary', inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-secondary/50' },
+  { value: 'hermes',   label: 'Hermes',        active: 'bg-emerald-500/20 text-emerald-300 border-2 border-emerald-400',      inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-emerald-400/50' },
 ] as const;
 
 const FilterTabs: React.FC<{
@@ -132,7 +133,7 @@ export const FeedSetup: React.FC = () => {
         <h1 className="text-3xl md:text-4xl text-white">Security Hardening Feed</h1>
         <p className="text-gray-400 max-w-2xl mx-auto">
           A continuous stream of security advisories from NVD CVE data and staff-approved community reports. 
-          This feed is automatically updated with OpenClaw and NanoClaw-related vulnerabilities and verified security incidents.
+          This feed is automatically updated with OpenClaw, NanoClaw, and Hermes-related vulnerabilities and verified security incidents.
         </p>
         {lastUpdated && (
           <p className="text-xs text-gray-500">

@@ -158,17 +158,16 @@ echo "Filtered CVEs (matching criteria): $FILTERED"
 # Get existing advisory IDs (unless force mode)
 if [ "$FORCE" = "true" ]; then
   echo "Force mode: ignoring existing advisory IDs during transform"
-  EXISTING_IDS=""
+  echo '[]' > "$TEMP_DIR/existing_ids.json"
 elif [ -f "$FEED_PATH" ]; then
-  EXISTING_IDS=$(jq -r '.advisories[]?.id // empty' "$FEED_PATH" | sort -u)
+  jq -r '.advisories[]?.id // empty' "$FEED_PATH" | sort -u | \
+    jq -R -s 'split("\n") | map(select(length > 0))' > "$TEMP_DIR/existing_ids.json"
 else
-  EXISTING_IDS=""
+  echo '[]' > "$TEMP_DIR/existing_ids.json"
 fi
 
 # Transform CVEs to our advisory format (same logic as pipeline)
-EXISTING_JSON=$(echo "$EXISTING_IDS" | jq -R -s 'split("\n") | map(select(length > 0))')
-
-jq --argjson existing "$EXISTING_JSON" '
+jq --slurpfile existing "$TEMP_DIR/existing_ids.json" '
   def map_severity:
     if . == null then "medium"
     elif . >= 9.0 then "critical"
@@ -308,16 +307,23 @@ jq --argjson existing "$EXISTING_JSON" '
           | if ($from_targets | length) > 0 then $from_targets else ["openclaw", "nanoclaw", "hermes"] end
         end
     );
+
+  def preferred_description:
+    (
+      (.cve.descriptions[]? | select(.lang == "en") | .value)
+      // .cve.descriptions[0]?.value
+      // "No description provided by NVD."
+    );
   
   [.[] |
-    select(.cve.id as $id | $existing | index($id) | not) |
+    select(.cve.id as $id | (($existing[0] // []) | index($id) | not)) |
     {
       id: .cve.id,
       severity: (get_cvss_score | map_severity),
       type: nvd_category_name,
       nvd_category_id: nvd_category_raw,
-      title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
-      description: (.cve.descriptions[] | select(.lang == "en") | .value),
+      title: (preferred_description | .[0:100] + (if length > 100 then "..." else "" end)),
+      description: preferred_description,
       affected: normalized_affected,
       platforms: normalized_platforms,
       action: "Review and update affected components. See NVD for remediation details.",
@@ -333,6 +339,11 @@ jq --argjson existing "$EXISTING_JSON" '
 
 NEW_COUNT=$(jq 'length' "$TEMP_DIR/new_advisories.json")
 echo "New advisories to add: $NEW_COUNT"
+
+if [ "$FORCE" = "true" ] && [ "$NEW_COUNT" -ne "$FILTERED" ]; then
+  echo "Error: full rebuild transform mismatch (filtered=$FILTERED, transformed=$NEW_COUNT)"
+  exit 1
+fi
 
 if [ "$NEW_COUNT" -eq 0 ]; then
   echo ""
@@ -374,11 +385,11 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # Merge new advisories into existing feed
 if [ -f "$FEED_PATH" ]; then
-  jq --argjson new "$(cat "$TEMP_DIR/new_advisories.json")" --arg now "$NOW" '
+  jq --slurpfile new "$TEMP_DIR/new_advisories.json" --arg now "$NOW" '
     .updated = $now |
     # Merge by advisory ID so force mode can refresh existing CVEs without duplicates
     .advisories = (
-      reduce (.advisories + $new)[] as $adv
+      reduce ((.advisories // []) + ($new[0] // []))[] as $adv
         ({};
           if ($adv.id // "") == "" then
             .
@@ -392,11 +403,11 @@ if [ -f "$FEED_PATH" ]; then
     )
   ' "$FEED_PATH" > "$TEMP_DIR/updated_feed.json"
 else
-  jq -n --argjson advisories "$(cat "$TEMP_DIR/new_advisories.json")" --arg now "$NOW" '{
+  jq -n --slurpfile advisories "$TEMP_DIR/new_advisories.json" --arg now "$NOW" '{
     version: "1.0.0",
     updated: $now,
     description: "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw, NanoClaw, and Hermes-related CVEs from NVD.",
-    advisories: ($advisories | sort_by(.published) | reverse)
+    advisories: (($advisories[0] // []) | sort_by(.published) | reverse)
   }' > "$TEMP_DIR/updated_feed.json"
 fi
 

@@ -41,6 +41,32 @@ export const AdvisoryCard: React.FC<AdvisoryCardProps> = ({ advisory, formatDate
     }
   };
 
+  const getPlatformLabel = (platform: string) => {
+    switch (platform) {
+      case 'openclaw':
+        return 'OpenClaw';
+      case 'nanoclaw':
+        return 'NanoClaw';
+      case 'hermes':
+        return 'Hermes';
+      default:
+        return platform;
+    }
+  };
+
+  const getPlatformClasses = (platform: string) => {
+    switch (platform) {
+      case 'openclaw':
+        return 'bg-clawd-accent/20 text-clawd-accent border border-clawd-accent/40';
+      case 'nanoclaw':
+        return 'bg-clawd-secondary/20 text-clawd-secondary border border-clawd-secondary/40';
+      case 'hermes':
+        return 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+      default:
+        return 'bg-clawd-700 text-gray-300 border border-clawd-600';
+    }
+  };
+
   // Determine if this is a community report (has github_issue_url) or NVD/staff advisory
   const isCommunityReport = !!advisory.github_issue_url;
 
@@ -65,6 +91,19 @@ export const AdvisoryCard: React.FC<AdvisoryCardProps> = ({ advisory, formatDate
         {advisory.id}
       </h3>
       <p className="text-sm text-gray-400 line-clamp-3 mb-3">{advisory.title}</p>
+
+      {advisory.platforms && advisory.platforms.length > 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {advisory.platforms.map((platform) => (
+            <span
+              key={`${advisory.id}-${platform}`}
+              className={`text-[11px] px-2 py-0.5 rounded uppercase tracking-wide ${getPlatformClasses(platform)}`}
+            >
+              {getPlatformLabel(platform)}
+            </span>
+          ))}
+        </div>
+      )}
       
       {/* External link - stop propagation to allow clicking without navigating to detail */}
       {isCommunityReport && advisory.github_issue_url ? (
