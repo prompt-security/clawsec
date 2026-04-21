@@ -16,8 +16,10 @@ source "$SCRIPT_DIR/feed-utils.sh"
 
 # Configuration - same as pipeline
 init_feed_paths "$PROJECT_ROOT"
-KEYWORDS="OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
-GITHUB_REF_PATTERN="github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
+NVD_QUERY_SPECS="$(nvd_query_specs)"
+KEYWORDS_PATTERN="$(nvd_keyword_pattern)"
+GITHUB_REF_PATTERN="$(nvd_github_ref_pattern)"
+CPE_PATTERN="$(nvd_cpe_pattern)"
 ENRICH_SCRIPT="$PROJECT_ROOT/scripts/ci/enrich_exploitability.sh"
 
 # Parse args
@@ -86,16 +88,19 @@ END_ENC=${END_DATE//:/%3A}
 
 echo "=== Fetching CVEs from NVD ==="
 
-for KEYWORD in $KEYWORDS; do
-  echo "Fetching keyword: $KEYWORD"
-  
-  URL="https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${KEYWORD}&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}"
-  
+while IFS='|' read -r QUERY_KIND QUERY_VALUE; do
+  [ -n "$QUERY_KIND" ] || continue
+
+  QUERY_SLUG=$(nvd_query_slug "$QUERY_KIND" "$QUERY_VALUE")
+  echo "Fetching $QUERY_KIND query: $QUERY_VALUE"
+
+  URL=$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}")
+
   # Fetch with retry logic
   for i in 1 2 3; do
-    HTTP_CODE=$(curl -s -w "%{http_code}" -o "$TEMP_DIR/nvd_${KEYWORD}.json" "$URL")
+    HTTP_CODE=$(curl -s -w "%{http_code}" -o "$TEMP_DIR/nvd_${QUERY_SLUG}.json" "$URL")
     if [ "$HTTP_CODE" = "200" ]; then
-      COUNT=$(jq '.vulnerabilities | length // 0' "$TEMP_DIR/nvd_${KEYWORD}.json" 2>/dev/null || echo 0)
+      COUNT=$(jq '.vulnerabilities | length // 0' "$TEMP_DIR/nvd_${QUERY_SLUG}.json" 2>/dev/null || echo 0)
       echo "  ✓ Found $COUNT CVEs"
       break
     elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
@@ -110,7 +115,7 @@ for KEYWORD in $KEYWORDS; do
   # NVD recommends 6 second delay between requests
   echo "  Waiting 6s (NVD rate limit)..."
   sleep 6
-done
+done <<< "$NVD_QUERY_SPECS"
 
 echo ""
 echo "=== Processing CVEs ==="
@@ -118,8 +123,10 @@ echo "=== Processing CVEs ==="
 # Combine all fetched CVEs
 echo '{"vulnerabilities":[]}' > "$TEMP_DIR/combined.json"
 
-for KEYWORD in $KEYWORDS; do
-  FILE="$TEMP_DIR/nvd_${KEYWORD}.json"
+while IFS='|' read -r QUERY_KIND QUERY_VALUE; do
+  [ -n "$QUERY_KIND" ] || continue
+  QUERY_SLUG=$(nvd_query_slug "$QUERY_KIND" "$QUERY_VALUE")
+  FILE="$TEMP_DIR/nvd_${QUERY_SLUG}.json"
   if [ -f "$FILE" ] && [ -s "$FILE" ]; then
     if jq -e '.vulnerabilities' "$FILE" > /dev/null 2>&1; then
       jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
@@ -127,7 +134,7 @@ for KEYWORD in $KEYWORDS; do
       mv "$TEMP_DIR/combined_new.json" "$TEMP_DIR/combined.json"
     fi
   fi
-done
+done <<< "$NVD_QUERY_SPECS"
 
 # Deduplicate by CVE ID
 jq '.vulnerabilities | unique_by(.cve.id)' "$TEMP_DIR/combined.json" > "$TEMP_DIR/unique_cves.json"
@@ -135,13 +142,13 @@ TOTAL=$(jq 'length' "$TEMP_DIR/unique_cves.json")
 echo "Total unique CVEs from NVD: $TOTAL"
 
 # Post-filter: keep only CVEs matching our criteria
-KEYWORDS_PATTERN="OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys"
-
-jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_REF_PATTERN" '
+jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_REF_PATTERN" --arg cpe "$CPE_PATTERN" '
   [.[] | select(
     (.cve.descriptions[]? | select(.lang == "en") | .value | test($kw; "i"))
     or
     (.cve.references[]? | .url | test($gh; "i"))
+    or
+    ([.cve.configurations[]? | .. | objects | .criteria? | strings | test($cpe; "i")] | any)
   )]
 ' "$TEMP_DIR/unique_cves.json" > "$TEMP_DIR/filtered_cves.json"
 
@@ -255,7 +262,8 @@ jq --argjson existing "$EXISTING_JSON" '
       (
         [
           (.cve.descriptions[]? | select(.lang == "en") | .value),
-          (.cve.references[]?.url // empty)
+          (.cve.references[]?.url // empty),
+          (.cve.configurations[]? | .. | objects | .criteria? // empty)
         ]
         | map(strings | ascii_downcase)
         | join(" ")
@@ -263,6 +271,7 @@ jq --argjson existing "$EXISTING_JSON" '
       | (
           (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
           + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
+          + (if ($blob | test("github\\.com/softwarepub/hermes|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
         )
     );
 
@@ -271,7 +280,18 @@ jq --argjson existing "$EXISTING_JSON" '
       (cpe_criteria + inferred_targets)
       | unique
       | .[0:5]
-      | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
+      | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*"] else . end
+    );
+
+  def normalized_platforms:
+    (
+      inferred_targets as $targets
+      | [
+          (if ($targets | map(select(startswith("openclaw@"))) | length > 0) then "openclaw" else empty end),
+          (if ($targets | map(select(startswith("nanoclaw@"))) | length > 0) then "nanoclaw" else empty end),
+          (if ($targets | map(select(startswith("hermes@"))) | length > 0) then "hermes" else empty end)
+        ]
+      | if length == 0 then ["openclaw", "nanoclaw", "hermes"] else . end
     );
   
   [.[] |
@@ -284,6 +304,7 @@ jq --argjson existing "$EXISTING_JSON" '
       title: (.cve.descriptions[] | select(.lang == "en") | .value | .[0:100] + (if length > 100 then "..." else "" end)),
       description: (.cve.descriptions[] | select(.lang == "en") | .value),
       affected: normalized_affected,
+      platforms: normalized_platforms,
       action: "Review and update affected components. See NVD for remediation details.",
       published: .cve.published,
       references: [.cve.references[]?.url // empty] | unique | .[0:3],
@@ -359,7 +380,7 @@ else
   jq -n --argjson advisories "$(cat "$TEMP_DIR/new_advisories.json")" --arg now "$NOW" '{
     version: "1.0.0",
     updated: $now,
-    description: "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw and NanoClaw-related CVEs from NVD.",
+    description: "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw, NanoClaw, and Hermes-related CVEs from NVD.",
     advisories: ($advisories | sort_by(.published) | reverse)
   }' > "$TEMP_DIR/updated_feed.json"
 fi

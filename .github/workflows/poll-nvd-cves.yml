@@ -23,8 +23,6 @@ env:
   FEED_SIG_PATH: advisories/feed.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
   SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
-  KEYWORDS: "OpenClaw clawdbot Moltbot NanoClaw WhatsApp-bot baileys"
-  GITHUB_REF_PATTERN: "github.com/openclaw/openclaw github.com/qwibitai/NanoClaw"
 
 jobs:
   poll-and-update:
@@ -85,8 +83,10 @@ jobs:
         id: fetch
         run: |
           set -euo pipefail
+          source scripts/feed-utils.sh
           mkdir -p tmp
           FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
+          NVD_QUERY_SPECS="$(nvd_query_specs)"
           
           START_DATE="${{ steps.dates.outputs.start_date }}"
           END_DATE="${{ steps.dates.outputs.end_date }}"
@@ -97,24 +97,26 @@ jobs:
           
           echo "=== Fetching CVEs from NVD ==="
 
-          FAILED_KEYWORDS=()
+          FAILED_QUERIES=()
           
-          # Fetch for each keyword
-          for KEYWORD in $KEYWORDS; do
-            echo "Fetching keyword: $KEYWORD"
+          while IFS='|' read -r QUERY_KIND QUERY_VALUE; do
+            [ -n "$QUERY_KIND" ] || continue
+
+            QUERY_SLUG="$(nvd_query_slug "$QUERY_KIND" "$QUERY_VALUE")"
+            echo "Fetching $QUERY_KIND query: $QUERY_VALUE"
 
             keyword_ok=false
             last_http_code=""
 
             if [ "$FORCE_FULL_SCAN" = "true" ]; then
-              echo "Full scan mode enabled: paginating complete NVD history for keyword '$KEYWORD'"
-              echo '{"vulnerabilities":[]}' > "tmp/nvd_${KEYWORD}.json"
+              echo "Full scan mode enabled: paginating complete NVD history for '$QUERY_KIND:$QUERY_VALUE'"
+              echo '{"vulnerabilities":[]}' > "tmp/nvd_${QUERY_SLUG}.json"
               START_INDEX=0
               RESULTS_PER_PAGE=2000
 
               while true; do
-                URL="https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${KEYWORD}&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}"
-                PAGE_FILE="tmp/nvd_${KEYWORD}_${START_INDEX}.json"
+                URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}")"
+                PAGE_FILE="tmp/nvd_${QUERY_SLUG}_${START_INDEX}.json"
                 echo "URL: $URL"
 
                 page_ok=false
@@ -129,13 +131,13 @@ jobs:
                       page_ok=true
                       break
                     fi
-                    echo "Invalid JSON for $KEYWORD page $START_INDEX, retry $i..."
+                    echo "Invalid JSON for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
                     sleep 5
                   elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
                     echo "Rate limited, waiting 30s before retry $i..."
                     sleep 30
                   else
-                    echo "HTTP $HTTP_CODE for $KEYWORD page $START_INDEX, retry $i..."
+                    echo "HTTP $HTTP_CODE for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
                     sleep 5
                   fi
                 done
@@ -145,8 +147,8 @@ jobs:
                 fi
 
                 jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
-                  "tmp/nvd_${KEYWORD}.json" "$PAGE_FILE" > "tmp/nvd_${KEYWORD}_merged.json"
-                mv "tmp/nvd_${KEYWORD}_merged.json" "tmp/nvd_${KEYWORD}.json"
+                  "tmp/nvd_${QUERY_SLUG}.json" "$PAGE_FILE" > "tmp/nvd_${QUERY_SLUG}_merged.json"
+                mv "tmp/nvd_${QUERY_SLUG}_merged.json" "tmp/nvd_${QUERY_SLUG}.json"
 
                 PAGE_COUNT=$(jq '.vulnerabilities | length' "$PAGE_FILE")
                 TOTAL_RESULTS=$(jq '.totalResults // 0' "$PAGE_FILE")
@@ -162,45 +164,45 @@ jobs:
                 sleep 6
               done
             else
-              URL="https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${KEYWORD}&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}"
+              URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}")"
               echo "URL: $URL"
 
               # Fetch with retry logic
               for i in 1 2 3; do
-                HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${KEYWORD}.json" "$URL" || true)
+                HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${QUERY_SLUG}.json" "$URL" || true)
                 if [ -z "$HTTP_CODE" ]; then
                   HTTP_CODE="000"
                 fi
                 last_http_code="$HTTP_CODE"
                 if [ "$HTTP_CODE" = "200" ]; then
-                  if jq -e . "tmp/nvd_${KEYWORD}.json" >/dev/null 2>&1; then
-                    echo "Success for $KEYWORD"
+                  if jq -e . "tmp/nvd_${QUERY_SLUG}.json" >/dev/null 2>&1; then
+                    echo "Success for $QUERY_KIND:$QUERY_VALUE"
                     keyword_ok=true
                     break
                   fi
-                  echo "Invalid JSON for $KEYWORD, retry $i..."
+                  echo "Invalid JSON for $QUERY_KIND:$QUERY_VALUE, retry $i..."
                   sleep 5
                 elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
                   echo "Rate limited, waiting 30s before retry $i..."
                   sleep 30
                 else
-                  echo "HTTP $HTTP_CODE for $KEYWORD, retry $i..."
+                  echo "HTTP $HTTP_CODE for $QUERY_KIND:$QUERY_VALUE, retry $i..."
                   sleep 5
                 fi
               done
             fi
 
             if [ "$keyword_ok" != "true" ]; then
-              echo "::error::Failed to fetch valid NVD response for keyword '$KEYWORD' (last HTTP code: ${last_http_code:-unknown})."
-              FAILED_KEYWORDS+=("$KEYWORD")
+              echo "::error::Failed to fetch valid NVD response for '$QUERY_KIND:$QUERY_VALUE' (last HTTP code: ${last_http_code:-unknown})."
+              FAILED_QUERIES+=("${QUERY_KIND}:${QUERY_VALUE}")
             fi
             
             # NVD recommends 6 second delay between requests
             sleep 6
-          done
+          done <<< "$NVD_QUERY_SPECS"
           
-          if [ "${#FAILED_KEYWORDS[@]}" -gt 0 ]; then
-            echo "::error::NVD fetch failed for keyword(s): ${FAILED_KEYWORDS[*]}"
+          if [ "${#FAILED_QUERIES[@]}" -gt 0 ]; then
+            echo "::error::NVD fetch failed for query spec(s): ${FAILED_QUERIES[*]}"
             exit 1
           fi
 
@@ -210,11 +212,19 @@ jobs:
       - name: Merge and filter CVEs
         id: process
         run: |
+          source scripts/feed-utils.sh
+          NVD_QUERY_SPECS="$(nvd_query_specs)"
+          KEYWORDS_PATTERN="$(nvd_keyword_pattern)"
+          GITHUB_PATTERN="$(nvd_github_ref_pattern)"
+          CPE_PATTERN="$(nvd_cpe_pattern)"
+
           # Combine all fetched CVEs
           echo '{"vulnerabilities":[]}' > tmp/combined.json
           
-          for KEYWORD in $KEYWORDS; do
-            FILE="tmp/nvd_${KEYWORD}.json"
+          while IFS='|' read -r QUERY_KIND QUERY_VALUE; do
+            [ -n "$QUERY_KIND" ] || continue
+            QUERY_SLUG="$(nvd_query_slug "$QUERY_KIND" "$QUERY_VALUE")"
+            FILE="tmp/nvd_${QUERY_SLUG}.json"
             if [ -f "$FILE" ] && [ -s "$FILE" ]; then
               # Check if file has vulnerabilities array
               if jq -e '.vulnerabilities' "$FILE" > /dev/null 2>&1; then
@@ -227,7 +237,7 @@ jobs:
                 mv tmp/combined_new.json tmp/combined.json
               fi
             fi
-          done
+          done <<< "$NVD_QUERY_SPECS"
           
           # Deduplicate by CVE ID
           jq '.vulnerabilities | unique_by(.cve.id)' tmp/combined.json > tmp/unique_cves.json
@@ -235,16 +245,16 @@ jobs:
           echo "Total unique CVEs from NVD: $TOTAL"
           
           # Post-filter: keep only CVEs where description contains keywords OR references contain github pattern
-          KEYWORDS_PATTERN="OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys"
-          GITHUB_PATTERN="${GITHUB_REF_PATTERN}"
-          
-          jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_PATTERN" '
+          jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_PATTERN" --arg cpe "$CPE_PATTERN" '
             [.[] | select(
               # Check if any description contains keywords (case insensitive)
               (.cve.descriptions[]? | select(.lang == "en") | .value | test($kw; "i"))
               or
               # Check if any reference URL contains the github pattern
               (.cve.references[]? | .url | test($gh; "i"))
+              or
+              # Check if any CPE criteria contain the Hermes product identifier
+              ([.cve.configurations[]? | .. | objects | .criteria? | strings | test($cpe; "i")] | any)
             )]
           ' tmp/unique_cves.json > tmp/filtered_cves.json
           
@@ -371,11 +381,12 @@ jobs:
                 | unique
               );
 
-            def context_blob:
+            def detection_blob:
               (
                 [
                   (.cve.descriptions[]? | select(.lang == "en") | .value),
-                  (.cve.references[]?.url // empty)
+                  (.cve.references[]?.url // empty),
+                  (.cve.configurations[]? | .. | objects | .criteria? // empty)
                 ]
                 | map(strings | ascii_downcase)
                 | join(" ")
@@ -383,10 +394,11 @@ jobs:
 
             def inferred_targets:
               (
-                context_blob as $blob
+                detection_blob as $blob
                 | (
                     (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
                     + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
+                    + (if ($blob | test("github\\.com/softwarepub/hermes|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
                   )
               );
 
@@ -395,19 +407,18 @@ jobs:
                 (cpe_criteria + inferred_targets)
                 | unique
                 | .[0:5]
-                | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
+                | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*"] else . end
               );
 
             def normalized_platforms:
               (
                 inferred_targets as $targets
-                | ($targets | map(select(startswith("openclaw@"))) | length > 0) as $has_openclaw
-                | ($targets | map(select(startswith("nanoclaw@"))) | length > 0) as $has_nanoclaw
-                | if $has_openclaw and $has_nanoclaw then ["openclaw", "nanoclaw"]
-                  elif $has_openclaw then ["openclaw"]
-                  elif $has_nanoclaw then ["nanoclaw"]
-                  else ["openclaw", "nanoclaw"]
-                  end
+                | [
+                    (if ($targets | map(select(startswith("openclaw@"))) | length > 0) then "openclaw" else empty end),
+                    (if ($targets | map(select(startswith("nanoclaw@"))) | length > 0) then "nanoclaw" else empty end),
+                    (if ($targets | map(select(startswith("hermes@"))) | length > 0) then "hermes" else empty end)
+                  ]
+                | if length == 0 then ["openclaw", "nanoclaw", "hermes"] else . end
               );
 
             [.[] | {
@@ -588,11 +599,12 @@ jobs:
                 | unique
               );
 
-            def context_blob:
+            def detection_blob:
               (
                 [
                   (.cve.descriptions[]? | select(.lang == "en") | .value),
-                  (.cve.references[]?.url // empty)
+                  (.cve.references[]?.url // empty),
+                  (.cve.configurations[]? | .. | objects | .criteria? // empty)
                 ]
                 | map(strings | ascii_downcase)
                 | join(" ")
@@ -600,10 +612,11 @@ jobs:
 
             def inferred_targets:
               (
-                context_blob as $blob
+                detection_blob as $blob
                 | (
                     (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
                     + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
+                    + (if ($blob | test("github\\.com/softwarepub/hermes|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
                   )
               );
 
@@ -612,19 +625,18 @@ jobs:
                 (cpe_criteria + inferred_targets)
                 | unique
                 | .[0:5]
-                | if length == 0 then ["openclaw@*", "nanoclaw@*"] else . end
+                | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*"] else . end
               );
 
             def normalized_platforms:
               (
                 inferred_targets as $targets
-                | ($targets | map(select(startswith("openclaw@"))) | length > 0) as $has_openclaw
-                | ($targets | map(select(startswith("nanoclaw@"))) | length > 0) as $has_nanoclaw
-                | if $has_openclaw and $has_nanoclaw then ["openclaw", "nanoclaw"]
-                  elif $has_openclaw then ["openclaw"]
-                  elif $has_nanoclaw then ["nanoclaw"]
-                  else ["openclaw", "nanoclaw"]
-                  end
+                | [
+                    (if ($targets | map(select(startswith("openclaw@"))) | length > 0) then "openclaw" else empty end),
+                    (if ($targets | map(select(startswith("nanoclaw@"))) | length > 0) then "nanoclaw" else empty end),
+                    (if ($targets | map(select(startswith("hermes@"))) | length > 0) then "hermes" else empty end)
+                  ]
+                | if length == 0 then ["openclaw", "nanoclaw", "hermes"] else . end
               );
             
             [.[] |
