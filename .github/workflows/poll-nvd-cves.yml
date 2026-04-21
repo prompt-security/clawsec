@@ -402,23 +402,38 @@ jobs:
                   )
               );
 
-            def normalized_affected:
+            def matched_targets:
               (
                 (cpe_criteria + inferred_targets)
                 | unique
                 | .[0:5]
+              );
+
+            def platforms_from_targets($targets):
+              (
+                [
+                  (if ($targets | map(strings | ascii_downcase | select(startswith("openclaw@") or test("^cpe:2\\.3:[aho]:openclaw:openclaw(?::|$)"))) | length > 0) then "openclaw" else empty end),
+                  (if ($targets | map(strings | ascii_downcase | select(startswith("nanoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:nanoclaw(?::|$)"))) | length > 0) then "nanoclaw" else empty end),
+                  (if ($targets | map(strings | ascii_downcase | select(startswith("hermes@") or test("^cpe:2\\.3:[aho]:software-metadata\\.pub:hermes(?::|$)"))) | length > 0) then "hermes" else empty end)
+                ]
+              );
+
+            def normalized_affected:
+              (
+                matched_targets
                 | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*"] else . end
               );
 
             def normalized_platforms:
               (
-                inferred_targets as $targets
-                | [
-                    (if ($targets | map(select(startswith("openclaw@"))) | length > 0) then "openclaw" else empty end),
-                    (if ($targets | map(select(startswith("nanoclaw@"))) | length > 0) then "nanoclaw" else empty end),
-                    (if ($targets | map(select(startswith("hermes@"))) | length > 0) then "hermes" else empty end)
-                  ]
-                | if length == 0 then ["openclaw", "nanoclaw", "hermes"] else . end
+                inferred_targets as $inferred
+                | platforms_from_targets($inferred) as $from_inferred
+                | if ($from_inferred | length) > 0 then $from_inferred
+                  else
+                    matched_targets as $targets
+                    | platforms_from_targets($targets) as $from_targets
+                    | if ($from_targets | length) > 0 then $from_targets else ["openclaw", "nanoclaw", "hermes"] end
+                  end
               );
 
             [.[] | {
@@ -620,23 +635,38 @@ jobs:
                   )
               );
 
-            def normalized_affected:
+            def matched_targets:
               (
                 (cpe_criteria + inferred_targets)
                 | unique
                 | .[0:5]
+              );
+
+            def platforms_from_targets($targets):
+              (
+                [
+                  (if ($targets | map(strings | ascii_downcase | select(startswith("openclaw@") or test("^cpe:2\\.3:[aho]:openclaw:openclaw(?::|$)"))) | length > 0) then "openclaw" else empty end),
+                  (if ($targets | map(strings | ascii_downcase | select(startswith("nanoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:nanoclaw(?::|$)"))) | length > 0) then "nanoclaw" else empty end),
+                  (if ($targets | map(strings | ascii_downcase | select(startswith("hermes@") or test("^cpe:2\\.3:[aho]:software-metadata\\.pub:hermes(?::|$)"))) | length > 0) then "hermes" else empty end)
+                ]
+              );
+
+            def normalized_affected:
+              (
+                matched_targets
                 | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*"] else . end
               );
 
             def normalized_platforms:
               (
-                inferred_targets as $targets
-                | [
-                    (if ($targets | map(select(startswith("openclaw@"))) | length > 0) then "openclaw" else empty end),
-                    (if ($targets | map(select(startswith("nanoclaw@"))) | length > 0) then "nanoclaw" else empty end),
-                    (if ($targets | map(select(startswith("hermes@"))) | length > 0) then "hermes" else empty end)
-                  ]
-                | if length == 0 then ["openclaw", "nanoclaw", "hermes"] else . end
+                inferred_targets as $inferred
+                | platforms_from_targets($inferred) as $from_inferred
+                | if ($from_inferred | length) > 0 then $from_inferred
+                  else
+                    matched_targets as $targets
+                    | platforms_from_targets($targets) as $from_targets
+                    | if ($from_targets | length) > 0 then $from_targets else ["openclaw", "nanoclaw", "hermes"] end
+                  end
               );
             
             [.[] |
