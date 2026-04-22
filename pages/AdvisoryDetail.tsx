@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Shield, AlertTriangle, Github, User, Bot } from 'lucide-react';
+import { AdvisoryPlatformBadge, getPlatformDescriptor } from '../components/AdvisoryPlatformBadge';
 import { Footer } from '../components/Footer';
 import { Advisory, AdvisoryFeed } from '../types';
 import {
@@ -100,32 +101,6 @@ export const AdvisoryDetail: React.FC = () => {
     }
   };
 
-  const getPlatformLabel = (platform: string) => {
-    switch (platform) {
-      case 'openclaw':
-        return 'OpenClaw';
-      case 'nanoclaw':
-        return 'NanoClaw';
-      case 'hermes':
-        return 'Hermes';
-      default:
-        return platform;
-    }
-  };
-
-  const getPlatformClasses = (platform: string) => {
-    switch (platform) {
-      case 'openclaw':
-        return 'bg-clawd-accent/20 text-clawd-accent border border-clawd-accent/40';
-      case 'nanoclaw':
-        return 'bg-clawd-secondary/20 text-clawd-secondary border border-clawd-secondary/40';
-      case 'hermes':
-        return 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
-      default:
-        return 'bg-clawd-700 text-gray-300 border border-clawd-600';
-    }
-  };
-
   // Determine source - defaults to "Prompt Security Staff" when absent
   const getSource = (adv: Advisory) => {
     return adv.source || 'Prompt Security Staff';
@@ -181,12 +156,11 @@ export const AdvisoryDetail: React.FC = () => {
             Published {formatDate(advisory.published)}
           </span>
           {advisory.platforms?.map((platform) => (
-            <span
+            <AdvisoryPlatformBadge
               key={`${advisory.id}-platform-${platform}`}
-              className={`text-xs px-2 py-1 rounded uppercase tracking-wide ${getPlatformClasses(platform)}`}
-            >
-              {getPlatformLabel(platform)}
-            </span>
+              platform={platform}
+              className="text-xs px-2 py-1 rounded"
+            />
           ))}
         </div>
 
@@ -296,7 +270,7 @@ export const AdvisoryDetail: React.FC = () => {
           {advisory.platforms && advisory.platforms.length > 0 && (
             <div className="flex justify-between md:block">
               <dt className="text-gray-500 mb-1">Platforms</dt>
-              <dd className="text-white">{advisory.platforms.map(getPlatformLabel).join(', ')}</dd>
+              <dd className="text-white">{advisory.platforms.map((platform) => getPlatformDescriptor(platform).label).join(', ')}</dd>
             </div>
           )}
           {/* Reporter info - subtle display for community reports */}
