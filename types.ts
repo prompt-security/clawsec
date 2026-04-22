@@ -28,6 +28,11 @@ export type AdvisoryType =
   // Keep this open for new categories without requiring type updates.
   | string;
 
+export const CORE_PLATFORM_SLUGS = ['openclaw', 'nanoclaw', 'hermes'] as const;
+export type CorePlatformSlug = (typeof CORE_PLATFORM_SLUGS)[number];
+export type AdvisoryPlatformSlug = CorePlatformSlug | (string & {});
+export type AdvisoryPlatformFilter = 'all' | CorePlatformSlug | 'other';
+
 // Full advisory type from NVD CVE feed or community reports
 export interface Advisory {
   id: string;
@@ -41,7 +46,7 @@ export interface Advisory {
   references?: string[];
   cvss_score?: number | null;
   nvd_url?: string;
-  platforms?: string[];
+  platforms?: AdvisoryPlatformSlug[];
   // Community report fields (source defaults to "Prompt Security Staff" when absent)
   source?: string;
   github_issue_url?: string;
