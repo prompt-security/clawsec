@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Shield, AlertTriangle, Github, User, Bot } from 'lucide-react';
-import { AdvisoryPlatformBadge, getPlatformDescriptor } from '../components/AdvisoryPlatformBadge';
+import { AdvisoryPlatformBadge } from '../components/AdvisoryPlatformBadge';
 import { Footer } from '../components/Footer';
 import { Advisory, AdvisoryFeed } from '../types';
+import { getPlatformDescriptor } from '../utils/advisoryPlatforms';
 import {
   ADVISORY_FEED_URL,
   LEGACY_ADVISORY_FEED_URL,

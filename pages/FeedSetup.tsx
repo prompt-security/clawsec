@@ -3,7 +3,8 @@ import { Rss, RefreshCw, Loader2, AlertTriangle, ChevronLeft, ChevronRight, Down
 import { Link } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
-import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter, CORE_PLATFORM_SLUGS } from '../types';
+import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter } from '../types';
+import { isCorePlatformSlug, normalizePlatformSlug } from '../utils/advisoryPlatforms';
 import {
   ADVISORY_FEED_URL,
   LEGACY_ADVISORY_FEED_URL,
@@ -14,9 +15,6 @@ const ITEMS_PER_PAGE = 9;
 
 type SeverityFilter = 'all' | Advisory['severity'];
 type FilterTabOption<T extends string> = { value: T; label: string; active: string; inactive: string };
-
-const KNOWN_PLATFORM_SET = new Set<string>(CORE_PLATFORM_SLUGS);
-const normalizePlatformSlug = (platform: string) => platform.trim().toLowerCase();
 
 const SEVERITY_TABS = [
   { value: 'all',      label: 'All',      active: 'bg-clawd-accent text-white',                                    inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
@@ -118,7 +116,7 @@ export const FeedSetup: React.FC = () => {
         .filter(Boolean);
 
       if (selectedPlatform === 'other') {
-        return advisoryPlatforms.some((platform) => !KNOWN_PLATFORM_SET.has(platform));
+        return advisoryPlatforms.some((platform) => !isCorePlatformSlug(platform));
       }
 
       return advisoryPlatforms.length === 0 || advisoryPlatforms.includes(selectedPlatform);
@@ -169,8 +167,16 @@ export const FeedSetup: React.FC = () => {
       </section>
 
       <section>
-        <FilterTabs tabs={SEVERITY_TABS} selected={selectedSeverity} onSelect={setSelectedSeverity} />
-        <FilterTabs tabs={PLATFORM_TABS} selected={selectedPlatform} onSelect={setSelectedPlatform} />
+        <FilterTabs
+          tabs={SEVERITY_TABS}
+          selected={selectedSeverity}
+          onSelect={(value) => setSelectedSeverity(value as SeverityFilter)}
+        />
+        <FilterTabs
+          tabs={PLATFORM_TABS}
+          selected={selectedPlatform}
+          onSelect={(value) => setSelectedPlatform(value as AdvisoryPlatformFilter)}
+        />
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
