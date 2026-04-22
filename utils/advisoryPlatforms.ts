@@ -29,13 +29,7 @@ export const isCorePlatformSlug = (platform: string) =>
 
 export const getPlatformDescriptor = (platform: string): PlatformDescriptor => {
   const normalized = normalizePlatformSlug(platform);
-  const descriptor = PLATFORM_DESCRIPTOR_BY_SLUG[normalized];
-
-  if (descriptor) {
-    return descriptor;
-  }
-
-  return {
+  return PLATFORM_DESCRIPTOR_BY_SLUG[normalized] ?? {
     label: platform.trim() || platform,
     classes: 'bg-clawd-700 text-gray-300 border border-clawd-600',
   };
