@@ -1,8 +1,43 @@
 {
   "version": "0.0.3",
-  "updated": "2026-04-24T06:36:58Z",
+  "updated": "2026-04-26T11:27:34Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-6987",
+      "severity": "high",
+      "type": "unknown_cwe_74",
+      "nvd_category_id": "CWE-74",
+      "title": "A vulnerability was detected in PicoClaw up to 0.2.4. Impacted is an unknown function of the file /a...",
+      "description": "A vulnerability was detected in PicoClaw up to 0.2.4. Impacted is an unknown function of the file /api/gateway/restart of the component Web Launcher Management Plane. Performing a manipulation results in command injection. It is possible to initiate the attack remotely. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "picoclaw@*"
+      ],
+      "platforms": [
+        "picoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-25T17:16:33.870",
+      "references": [
+        "https://github.com/sipeed/picoclaw/issues/2307",
+        "https://vuldb.com/submit/796336",
+        "https://vuldb.com/vuln/359530"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-6987",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-41361",
       "severity": "high",
@@ -1544,6 +1579,7 @@
       "title": "OpenClaw before 2026.4.2 accepts non-loopback cleartext ws:// gateway endpoints and transmits stored...",
       "description": "OpenClaw before 2026.4.2 accepts non-loopback cleartext ws:// gateway endpoints and transmits stored gateway credentials over unencrypted connections. Attackers can forge discovery results or craft setup codes to redirect clients to malicious endpoints, disclosing plaintext gateway credentials.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
