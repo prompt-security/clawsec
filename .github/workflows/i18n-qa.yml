@@ -23,3 +23,6 @@ jobs:
           python-version: '3.12'
       - name: Run i18n QA
         run: python scripts/i18n/qa_check.py
+
+      - name: Check markdown links (README/wiki)
+        run: python scripts/i18n/link_check.py

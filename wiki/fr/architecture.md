@@ -49,7 +49,7 @@ flowchart TD
   F --> G["Agent advisory alerts / gated install"]
 ```
 
-![Prompt Line Motif](assets/architecture_img_01_prompt-line.svg)
+![Prompt Line Motif](../assets/architecture_img_01_prompt-line.svg)
 
 ## Interfaces and Contracts
 | Interface | Contract Form | Validation |

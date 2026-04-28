@@ -10,8 +10,8 @@ Review status: draft
 - The codebase supports three delivery paths at once: static website publishing, signed advisory distribution, and per-skill GitHub release packaging.
 - Primary users are agent operators, skill developers, and maintainers running CI-based security automation.
 
-![Prompt Security Logo](assets/overview_img_01_prompt-security-logo.png)
-![ClawSec Mascot](assets/overview_img_02_clawsec-mascot.png)
+![Prompt Security Logo](../assets/overview_img_01_prompt-security-logo.png)
+![ClawSec Mascot](../assets/overview_img_02_clawsec-mascot.png)
 
 ## Repo Layout
 | Path | Role | Notes |
