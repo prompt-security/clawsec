@@ -33,11 +33,9 @@
 
 ## 🌍 Translations
 
-- Español: [README.es.md](README.es.md)
-- 한국어: [README.ko.md](README.ko.md)
-- Français (draft scaffold): [README.fr.md](README.fr.md)
-- Deutsch (draft scaffold): [README.de.md](README.de.md)
-- 日本語 (draft scaffold): [README.ja.md](README.ja.md)
+[Deutsch](README.de.md) | [Español](README.es.md) | [Français](README.fr.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | **English**
+
+Wiki indexes: [DE](wiki/de/INDEX.md) · [ES](wiki/es/INDEX.md) · [FR](wiki/fr/INDEX.md) · [JA](wiki/ja/INDEX.md) · [KO](wiki/ko/INDEX.md) · [EN](wiki/INDEX.md)
 
 ## 🦞 What is ClawSec?
 
