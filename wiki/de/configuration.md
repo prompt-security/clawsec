@@ -3,54 +3,54 @@ Source: ../configuration.md
 Review status: draft
 -->
 
-# Configuration
+# Konfiguration
 
-## Scope
-- Configuration spans frontend build settings, runtime feed paths, workflow triggers, and skill metadata contracts.
-- Most runtime-sensitive controls are environment variables prefixed with `CLAWSEC_` or `OPENCLAW_`.
-- Path normalization is security-sensitive and intentionally rejects unresolved home-token literals.
+Anwendungsbereich
+- Konfiguration erstreckt sich über Frontend Build-Einstellungen, Laufzeit-Feed-Pfade, Workflow-Trigger und Kompetenz-Metadaten-Verträge.
+- Die meisten Runtime-sensitiven Steuerungen sind Umgebungsvariablen, die mit `CLAWSEC_` oder `OPENCLAW_` vorgegeben sind.
+- Die Path-Normalisierung ist sicherheitsempfindlich und lehnt absichtlich ungelöste Heim-Token-Literaturen ab.
 
-## Core Runtime Variables
-| Variable | Default | Used By |
-| --- | --- | --- |
-| `CLAWSEC_FEED_URL` | Hosted advisory URL | Suite hook and guarded installer feed loading. |
-| `CLAWSEC_FEED_SIG_URL` | `<feed>.sig` | Detached signature source. |
-| `CLAWSEC_FEED_CHECKSUMS_URL` | `checksums.json` near feed URL | Optional checksum-manifest source. |
-| `CLAWSEC_FEED_PUBLIC_KEY` | Suite-local PEM file | Feed signature verification. |
-| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Temporary migration bypass flag. |
-| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Enables checksum-manifest verification. |
-| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Advisory hook scan throttle. |
+Variablen Core Runtime
+| Variable | Default | Wird von | verwendet
+--- | --- | ---
+| `CLAWSEC_FEED_URL` | Hosted Advisory URL | Suite Haken und bewachte Installations-Feed-Ladung. |
+| `CLAWSEC_FEED_SIG_URL` | `<feed>.sig` | Gelöschte Signaturquelle. |
+| `CLAWSEC_FEED_CHECKSUMS_URL` | __TOK_1_ in der Nähe der Feed-URL | Optionale Prüfsumme-manifest-Quelle. |
+| `CLAWSEC_FEED_PUBLIC_KEY` | Suite-local PEM-Datei | Signaturverifikation füttern. |
+| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Temporäre Migrationsbypass-Flagge. |
+| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Ermöglicht die Überprüfung von Prüfsummen-Manifest. |
+| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Beratende Haken-Scandrossel. |
 
-## Path Resolution Rules
-| Rule | Behavior | Enforcement Location |
-| --- | --- | --- |
-| `~` expansion | Resolved to detected home directory | Shared path utility functions in suite/watchdog scripts. |
-| `$HOME` / `${HOME}` expansion | Resolved when unescaped | Same utilities. |
-| Windows home tokens | `%USERPROFILE%`, `$env:USERPROFILE` normalized | Same utilities. |
-| Escaped tokens (`\$HOME`) | Rejected with explicit error | Prevents accidental literal directory creation. |
-| Invalid explicit path | Can fallback to default path with warning | `resolveConfiguredPath` helpers. |
+/ Wegeauflösungsregeln
+| Regel | Verhalten | Durchsetzung Standort |
+--- | --- | ---
+| __TOK_0_ Erweiterung | Aufgelöst auf erkanntes Home-Verzeichnis | Geteilte Pfad-Dienstfunktionen in Suite/watchdog-Skripten. |
+| __TOK_0_ / __TOK_1_ Erweiterung | Aufgelöst, wenn nicht | Gleiche Dienstprogramme. |
+| Windows home tokens | __TOK_0_, __TOK_1_ normalisiert | Gleiche Dienstprogramme. |
+| Escaped tokens (`\$HOME`) | Ausgestoßen mit explizitem Fehler | Verhindert die zufällige buchstäbliche Verzeichnis-Erstellung. |
+| Ungültiger expliziter Pfad | Kann mit Warnung auf Standardpfad zurückfallen . `resolveConfiguredPath` Helfer. |
 
-## Frontend and Build Configuration
-- `vite.config.ts` defines port (`3000`), host (`0.0.0.0`), and path alias (`@`).
-- `index.html` provides Tailwind runtime config, custom fonts, and base color tokens.
-- `tsconfig.json` uses bundler module resolution, `noEmit`, and JSX runtime configuration.
-- `eslint.config.js` applies TS, React, hooks, and script-specific lint rules.
+Frontend und Build Konfiguration
+- `vite.config.ts` definiert Port (_TOK_1__), Host (`0.0.0.0`) und Pfad-Alias (`@`_).
+- __TOK_0_ bietet Tailwind Runtime config, benutzerdefinierte Schriften, und Grundfarbe Tokens.
+- __TOK_0_ verwendet die Paketermodulauflösung __TOK_1_ und die JSX Laufzeitkonfiguration.
+- __TOK_0_ TS, React, Haken und Script-spezifische Lint Regeln.
 
-## Skill Metadata Configuration
-| Field Group | Location | Function |
-| --- | --- | --- |
-| Core skill identity | `skills/*/skill.json` | Name/version/author/license/description metadata. |
-| SBOM file list | `skill.json -> sbom.files` | Declares release-required artifacts. |
-| Platform metadata | `openclaw` or `nanoclaw` blocks | CLI requirements, triggers, platform capability hints. |
-| Suite catalog metadata | `skills/clawsec-suite/skill.json -> catalog` | Integrated/default/consent behavior for suite members. |
+Metadaten der Fähigkeiten Konfiguration
+| Feldgruppe | Standort | Funktion |
+--- | --- | ---
+| Kernkompetenzidentität | __TOK_0_ | Name/Version/Autor/Lizenz/Beschreibung Metadaten. |
+| SBOM-Dateiliste | __TOK_0_ | Erklärt Release-erforderliche Artefakte. |
+| Platform metadata | __TOK_0_ oder `nanoclaw` Blöcke | CLI Anforderungen, Trigger, Plattformfähigkeitshinweise. |
+| Suite Katalog Metadaten | `skills/clawsec-suite/skill.json -> catalog` | Integriertes/Standard/consent Verhalten für Suite-Mitglieder. |
 
-## Workflow Configuration
-- Schedule configuration exists in workflow `cron` entries (`poll-nvd-cves`, `codeql`, `scorecard`).
-- Release workflow expects tag naming pattern `<skill>-v<semver>`.
-- Deployment workflow is triggered by successful CI/release `workflow_run` events and manual dispatch.
-- Composite signing action requires private key inputs and verifies signatures immediately after signing.
+Â Workflow Konfiguration
+- Die Schedule-Konfiguration existiert im Workflow `cron` Einträge (`poll-nvd-cves`, __TOK_2_, `scorecard`.
+- Release Workflow erwartet Tag Benming-Muster `<skill>-v<semver>`.
+- Der Arbeitsablauf wird durch erfolgreiche CI/Release __TOK_0_ Ereignisse und manuelle Versendung ausgelöst.
+- Composite Signing Aktion erfordert private Schlüsseleingänge und überprüft Signaturen unmittelbar nach der Unterzeichnung.
 
-## Example Snippets
+Beispiel Snippets
 ```bash
 # run guarded install with explicit local signed feed paths
 CLAWSEC_LOCAL_FEED="$HOME/.openclaw/skills/clawsec-suite/advisories/feed.json" \
@@ -71,23 +71,23 @@ node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill clawtributor
 }
 ```
 
-## Operational Notes
-- Keep signing keys outside the repository and inject via GitHub Secrets only.
-- Prefer absolute paths or unescaped home expressions in local environment variable overrides.
-- Treat unsigned feed mode as temporary migration support, not normal operation.
-- Re-run release-link validation when editing `SKILL.md` URLs to avoid broken artifact references.
+Betriebshinweise
+- Halten Sie die Zeichentasten vor dem Repository und injizieren Sie nur über GitHub Secrets.
+- Bestimmen Sie absolute Pfade oder unescaped Home Expressions in lokalen Umgebungsvariablen übergeordnet.
+- Behandeln Sie den nicht zugewiesenen Feed-Modus als temporäre Migrationsunterstützung, nicht normaler Betrieb.
+- Re-run release-link Validierung bei der Bearbeitung `SKILL.md`_ URLs, um gebrochene Artefakte Referenzen zu vermeiden.
 
-## Source References
+Quellenangaben
 - vite.config.ts
 - index.html
 - tsconfig.json
 - eslint.config.js
-- skills/clawsec-suite/skill.json
-- skills/clawsec-nanoclaw/skill.json
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/utils.mjs
-- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- scripts/validate-release-links.sh
+- Fähigkeiten/Clawsec-suite/skill.json
+- Fertigkeiten/Klausel-Nanoclaw/skill.json
+- Fertigkeiten/Clawsec-suite/hooks/clawsec-advisory-guardian/lib/utils.mjs
+- Fertigkeiten/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- Fertigkeiten/Clawsec-suite/scripts/guarded_skill_install.mjs
+- Skripte/validate-release-links.sh
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/skill-release.yml
 - .github/actions/sign-and-verify/action.yml

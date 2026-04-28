@@ -38,32 +38,32 @@ Define a repeatable docs localization pipeline for ClawSec README and wiki pages
 2. **Record delta**
    - Note changed English pages in `wiki/i18n/translation-tracker.md`.
 3. **Translate changed pages**
-   - Preserve markdown structure and heading levels.
-   - Keep command blocks untouched.
+- Präservieren Sie die Struktur und die Rubriken.
+- Halten Sie Befehlsblöcke unberührt.
 4. **QA pass**
-   - Verify links resolve.
-   - Verify code blocks and inline commands are unchanged.
-   - Verify terminology consistency using `terminology-en-es.md`.
+- Verifizieren Sie die Links.
+- Überprüfen Sie Codeblöcke und Inline-Befehle sind unverändert.
+- Verifizieren Sie die Terminologiekonsistenz mit `terminology-en-es.md`.
 5. **Regenerate exports**
-   - Run `npm run gen:wiki-llms`.
+- Laufen `npm run gen:wiki-llms`.
 6. **Review and PR**
-   - Include summary of translated pages and remaining gaps.
+- Inklusive Zusammenfassung der übersetzten Seiten und Restlücken.
 
-## Translation QA Checklist
-- [ ] Heading hierarchy preserved.
-- [ ] Command snippets unchanged and runnable.
-- [ ] File paths and URLs unchanged.
-- [ ] Skill and platform names unchanged.
-- [ ] Security terminology consistent.
-- [ ] `wiki/INDEX.md` has translation link entries.
-- [ ] `wiki/<lang>/INDEX.md` links back to key English pages when untranslated.
+Übersetzung QA Checkliste
+- [ ] Die Rubrik Hierarchie erhalten.
+- Kommandoschnipsel unverändert und lauffähig.
+- [ ] Dateipfade und URLs unverändert.
+- [ ] Geschicklichkeit und Plattformnamen unverändert.
+- Sicherheitsterminologie konsistent.
+- [ ] `wiki/INDEX.md` hat Übersetzungslinkeinträge.
+- [ ] `wiki/<lang>/INDEX.md` verlinkt zurück zu den wichtigsten englischen Seiten, wenn nicht übersetzt.
 
-## Suggested Language Rollout
-1. Spanish (`es`) – done in phase 1 baseline.
-2. French (`fr`) and German (`de`) for broad technical audience.
-3. Japanese (`ja`) for high-fidelity platform docs.
+Sprache Rollout vorschlagen
+1. Spanisch (_TOK_0__) – in Phase 1 Basislinie.
+2. Französisch (_TOK_0__) und Deutsch (_TOK_1__) für breites technisches Publikum.
+3. Japanisch (_TOK_0__) für High-Fidelity-Plattformen.
 
-## Source References
+Quellenangaben
 - README.md
 - README.es.md
 - wiki/INDEX.md

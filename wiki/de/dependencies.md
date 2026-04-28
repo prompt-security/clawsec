@@ -3,56 +3,56 @@ Source: ../dependencies.md
 Review status: draft
 -->
 
-# Dependencies
+# Abhängigkeiten
 
-## Build and Runtime
-| Layer | Primary Dependencies | Why It Exists |
-| --- | --- | --- |
-| Frontend runtime | `react`, `react-dom`, `react-router-dom`, `lucide-react` | UI rendering, routing, iconography. |
-| Markdown rendering | `react-markdown`, `remark-gfm` | Render skill docs/readmes and in-app wiki markdown pages. |
-| Build tooling | `vite`, `@vitejs/plugin-react`, `typescript` | Fast TS/TSX bundling and production builds. |
-| Python utilities | stdlib + `ruff`/`bandit` policy from `pyproject.toml` | Validate/package skills and run static checks. |
-| Shell automation | `bash`, `jq`, `curl`, `openssl`, `sha256sum`/`shasum` | Feed polling, signing, checksum generation, release checks. |
+Aufbau und Laufzeit
+| Ebene | Primärabhängigkeiten | Warum es existiert |
+--- | --- | ---
+| Frontend Laufzeit | __TOK_0_, `react-dom`, `react-router-dom`, `lucide-react` | UI Rendering, Routing, Iconographie. |
+| Markdown Rendering | __TOK_0_, `remark-gfm` | Render Skill-Docs/readmes und in-app Wiki-Markdown-Seiten. |
+| Werkzeugbau | __TOK_0_, __TOK_1_, `typescript` | Fast TS/TSX Bündelung und Produktion baut. |
+| Python utilities | stdlib + `ruff`/_TOK_1_ Policy from `pyproject.toml` | Gültige/Paketfähigkeiten und führen statische Überprüfungen durch. |
+| Shell Automation | `bash`, `jq`, `curl`, __TOK_3_, `sha256sum`_`shasum` | Fütterung, Signierung, Prüfsummenerzeugung, Freigabeprüfungen. |
 
-## Dependency Details
-| Package | Version Constraint | Scope |
-| --- | --- | --- |
-| `react` / `react-dom` | `^19.2.4` | Frontend runtime |
-| `react-router-dom` | `^7.13.1` | Frontend routing |
-| `lucide-react` | `^0.575.0` | UI icon set |
-| `vite` | `^7.3.1` | Dev server + build |
-| `typescript` | `~5.8.2` | Type checking |
-| `eslint` | `^9.39.2` | JS/TS linting |
-| `@typescript-eslint/*` | `^8.55.0` / `^8.56.0` | TS lint parser/rules |
-| `fast-check` | `^4.5.3` | Property/fuzz style tests |
+Abhängige Details
+| Paket | Version Constraint | Scope |
+--- | --- | ---
+| `react` / `react-dom` | `^19.2.4` | Vorneige Laufzeit |
+| `react-router-dom` | __TOK_1_ | Frontend Routing |
+| `lucide-react`_ | `^0.575.0` | UI Symbolsatz |
+| `vite` | __TOK_1_ | Dev Server + build |
+| `typescript` | `~5.8.2` | Typkontrolle |
+|
+| `@typescript-eslint/*` | __TOK_1_ / `^8.56.0` | TS lint parser/rules |
+| `fast-check` | `^4.5.3` | Immobilien/Fuss-Style-Tests |
 
 | Override | Pinned Version | Rationale |
-| --- | --- | --- |
-| `ajv` | `6.14.0` | Security and compatibility stabilization. |
-| `balanced-match` | `4.0.3` | Transitive vulnerability control. |
-| `brace-expansion` | `5.0.2` | Transitive dependency hardening. |
-| `minimatch` | `10.2.1` | Deterministic dependency behavior. |
+--- | --- | ---
+| `ajv` | `6.14.0` | Sicherheit und Kompatibilitätsstabilisierung. |
+| `balanced-match` | `4.0.3` | Transitive Sicherheitskontrolle. |
+| `brace-expansion` | `5.0.2` | Übergangsabhängigkeitsverfestigung. |
+| `minimatch` | `10.2.1` | Deterministische Abhängigkeitsverhalten. |
 
-## External Services
-| Service | Used By | Function |
-| --- | --- | --- |
-| NVD API (`services.nvd.nist.gov`) | `poll-nvd-cves` workflow + local feed script | Pull CVEs by keyword/date window. |
-| GitHub API | Deploy/release workflows | Discover releases, download assets, publish outputs. |
-| GitHub Pages | Deploy workflow | Serve static site and mirrored artifacts. |
-| ClawHub CLI/registry | Install scripts + optional publish jobs | Install and publish skills. |
-| Optional local SMTP/sendmail | `openclaw-audit-watchdog` scripts | Deliver audit reports by email. |
+Externe Dienste
+| Service | Gebraucht von | Funktion |
+--- | --- | ---
+| NVD API (`services.nvd.nist.gov`) | `poll-nvd-cves` Workflow + lokales Feed-Skript | Pull CVEs nach Schlüsselwort/Datumsfenster. |
+| GitHub API | Workflows bereitstellen/erleichtern | Releases entdecken, Assets herunterladen, Outputs veröffentlichen. |
+| GitHub Pages | Workflow bereitstellen | statische Seite und gespiegelte Artefakte bedienen. |
+| ClawHub CLI/Registry | Installieren Sie Skripte + optionale Jobs | Installieren und veröffentlichen Sie Fähigkeiten. |
+| Optional lokale SMTP/sendmail | `openclaw-audit-watchdog` Scripts | Auditberichte per E-Mail liefern. |
 
-## Development Tools
+/ Entwicklungswerkzeuge
 | Tool | Invocation | Coverage |
-| --- | --- | --- |
-| ESLint | `npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings 0` | Frontend and script linting. |
-| TypeScript | `npx tsc --noEmit` | Compile-time TS contract checks. |
-| Ruff | `ruff check utils/` | Python style and bug pattern checks. |
-| Bandit | `bandit -r utils/ -ll` | Python security checks. |
-| Trivy | Workflow + optional local run | FS/config vulnerability scans. |
-| Gitleaks | `scripts/prepare-to-push.sh` optional local run | Secret leak detection before push. |
+--- | --- | ---
+| ESLint | __TOK_0_ | Frontend und Skriptlinting. |
+| TypeScript | `npx tsc --noEmit` | Laufzeit TS Vertragsüberprüfungen. |
+| Ruff | `ruff check utils/` | Python-Stil und Bug-Muster überprüfen. |
+| Bandit | __TOK_0_ | Python Sicherheitskontrollen. |
+| Trivy | Workflow + optionaler lokaler Run | FS/config Sicherheitsscans. |
+| Gitleaks | __TOK_0_ optionaler lokaler Run | Secret Leck Erkennung vor dem Push. |
 
-## Example Snippets
+Beispiel Snippets
 ```json
 {
   "scripts": {
@@ -77,27 +77,27 @@ exclude_dirs = ["__pycache__", ".venv"]
 skips = ["B101"]
 ```
 
-## Compatibility Notes
-- Local scripts account for macOS vs Linux differences in `date` and `stat` usage.
-- Some workflows/scripts require OpenSSL features used with Ed25519 and `pkeyutl -rawin`.
-- Windows support is strongest for Node-based tooling; POSIX shell paths may require WSL/Git Bash.
-- Feed consumers include compatibility bypasses for migration phases, but signed mode is the intended steady state.
+In den Warenkorb
+- Lokale Skripte Konto für macOS vs Linux Unterschiede in __TOK_0_ und __TOK_1_ Nutzung.
+- Einige Workflows/scripts erfordern OpenSSL-Funktionen, die mit Ed25519 und `pkeyutl -rawin` verwendet werden.
+- Windows-Unterstützung ist am stärksten für Node-basierte Tooling; POSIX Shell-Pfade kann WSL / Git Bash benötigen.
+- Zu den Futtermittelverbrauchern gehören Kompatibilitätsbypasses für Migrationsphasen, aber der unterzeichnete Modus ist der beabsichtigte stationäre Zustand.
 
-## Versioning Notes
-- Skill release tags follow `<skill>-v<semver>` and are parsed by CI/deploy automation.
-- PR validation enforces version parity between `skill.json` and `SKILL.md` frontmatter for bumped skills.
-- The public skills index keeps latest discovered version per skill for UI display.
-- Signed artifact manifests (`checksums.json`) are versioned per release and include file hashes and URLs.
+In den Warenkorb
+- Skill Release-Tags folgen __TOK_0_ und werden von CI/Deploy Automation parsed.
+- Die PR-Validierung erzwingt die Versionsparität zwischen __TOK_0_ und `SKILL.md` Frontmatter für sprunghafte Fähigkeiten.
+- Ja. Der Public Skill Index hält die neueste entdeckte Version pro Geschick für UI-Display.
+- Signierte Artefakte Manifeste (`checksums.json`) werden pro Veröffentlichung veröffentlicht und beinhalten File Hashes und URLs.
 
-## Source References
-- package.json
-- package-lock.json
+Quellenangaben
+- Paket.json
+- Paket-lock.json
 - pyproject.toml
 - eslint.config.js
 - tsconfig.json
-- scripts/prepare-to-push.sh
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
+- Skripte/Präpare-to-push.sh
+- Skripte/Popula-lokal-feed.sh
+- Skripte/Popula-lokal-skills.sh
 - .github/workflows/ci.yml
 - .github/workflows/codeql.yml
 - .github/workflows/scorecard.yml

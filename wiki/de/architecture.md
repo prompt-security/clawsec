@@ -3,42 +3,42 @@ Source: ../architecture.md
 Review status: draft
 -->
 
-# Architecture
+# Architektur
 
-## System Context
-- This page appears under the `Start Here` section in `INDEX.md`.
-- ClawSec sits between upstream intelligence sources (NVD + community issues), GitHub automation, and runtime agent environments.
-- The repository publishes both static site content and signed artifacts that runtime skills verify before using.
-- External actor groups:
-  - GitHub Actions runners executing CI, release, and feed workflows.
-  - OpenClaw/NanoClaw agents consuming skills, advisories, and verification scripts.
-  - Repository maintainers approving advisory issues and merging release/tag changes.
+• Systemkontext
+- Ja. Diese Seite erscheint unter dem `Start Here` Abschnitt in `INDEX.md`.
+- ClawSec sitzt zwischen vorgelagerten Nachrichtenquellen (NVD + Community-Probleme), GitHub Automation und Laufzeit Agent-Umgebungen.
+- Ja. Das Repository veröffentlicht sowohl statische Website-Inhalte als auch unterzeichnete Artefakte, die Laufzeitfähigkeiten vor der Verwendung überprüfen.
+- Externe Schauspielergruppen:
+- GitHub Actions Läufer, die CI-, Release- und Feed-Workflows ausführen.
+- OpenClaw/NanoClaw Agenten verbrauchen Fähigkeiten, Berater und Verifikationsskripte.
+- Repository-Betreuer, die beratende Fragen und die Verschmelzung von Release/Tag-Änderungen anerkennen.
 
-## Components
-| Component | Location | Responsibility |
-| --- | --- | --- |
-| Web UI | `App.tsx`, `pages/`, `components/` | Renders skills catalog and advisory detail experiences. |
-| Advisory Feed Core | `advisories/feed.json*`, `skills/clawsec-suite/.../feed.mjs` | Stores, verifies, and parses advisories with detached signatures/checksums. |
-| Skill Packages | `skills/*/` | Distributes installable security capabilities with SBOM metadata. |
-| Local Automation Scripts | `scripts/*.sh` | Build local mirrors, pre-push checks, and manual release helpers. |
-| CI/CD Workflows | `.github/workflows/*.yml` | Linting, tests, NVD polling, release packaging, and Pages deploy. |
-| Python Utility Layer | `utils/*.py` | Skill metadata validation and checksum generation. |
+Komponenten
+| Komponente | Standort | Verantwortung |
+--- | --- | ---
+| Web UI | __TOK_0_, `pages/`, `components/` | Renders-Katalog und Beratungs-Detail-Erfahrungen. |
+| Advisory Feed Core | __TOK_0_, `skills/clawsec-suite/.../feed.mjs` | Stores, überprüft und parses Advisories mit abgelösten Signaturen/Checksums. |
+| Skill Packages | `skills/*/` | Verteilt installierbare Sicherheitsfunktionen mit SBOM-Metadaten. |
+| Local Automation Scripts | `scripts/*.sh` | Lokale Spiegel, Pre-Push-Checks und manuelle Release-Helfer erstellen. |
+| CI/CD Workflows | `.github/workflows/*.yml` | Linting, Tests, NVD-Verschmutzung, Release-Verpackung und Pages bereitstellen. |
+| Python Utility Layer | __TOK_0_ | Skill Metadatenvalidierung und Prüfsummengenerierung. |
 
-## Key Flows
-- Skill catalog flow:
-  1. Release/tag workflows publish skill assets.
-  2. Deploy workflow discovers release assets and builds `public/skills/index.json`.
-  3. UI fetches `public/skills/index.json` and skill docs for `/skills` pages.
-- Advisory feed flow:
-  1. `poll-nvd-cves.yml` and `community-advisory.yml` update `advisories/feed.json`.
-  2. Feed is signed and mirrored to public paths.
-  3. Runtime hooks/scripts load remote feed and fallback to local signed copies.
-- Guarded install flow:
-  1. Installer requests target skill + version.
-  2. Advisory matcher checks affected specifiers and severity/risk hints.
-  3. Exit code 42 enforces second confirmation when advisories match.
+oder Schlüsselflüsse
+- Skill Katalogfluss:
+1. Release/tag Workflows veröffentlichen Fähigkeiten Assets.
+2. Deploy Workflow entdeckt Freigabevermögen und baut `public/skills/index.json`.
+3. UI fetches __TOK_0_ und Skill-Docs für `/skills` Seiten.
+- Beratender Förderstrom:
+1. __TOK_0_ und `community-advisory.yml` update `advisories/feed.json`.
+2. Fütterung wird unterschrieben und auf öffentliche Wege gespiegelt.
+3. Runtime Haken / Schriften laden Remote Feed und Rückfall auf lokale signierte Kopien.
+- Bewachter Installationsfluss:
+1. Installer fordert Zielfähigkeit + Version.
+2. Beitragsüberprüfungen betroffener Spektifizierer und Schwere-/Risikohinweise.
+3. Exit-Code 42 erzwingt die zweite Bestätigung, wenn Berater übereinstimmen.
 
-## Diagrams
+(Diagramme)
 ```mermaid
 flowchart TD
   A["NVD + Community Inputs"] --> B["Feed Workflows\n(poll/community)"]
@@ -51,33 +51,33 @@ flowchart TD
 
 ![Prompt Line Motif](../assets/architecture_img_01_prompt-line.svg)
 
-## Interfaces and Contracts
-| Interface | Contract Form | Validation |
-| --- | --- | --- |
-| Skill metadata | `skills/*/skill.json` | Validated by Python utility + CI version-parity checks. |
-| Advisory feed | JSON + Ed25519 detached signature | Verified by `feed.mjs` and NanoClaw signature utilities. |
-| Checksums manifest | `checksums.json` (+ optional `.sig`) | Parsed and hash-matched before trusting payloads. |
-| Hook event interface | `HookEvent` (`type`, `action`, `messages`) | Runtime handler only processes selected event names. |
-| Workflow release naming | Tag pattern `<skill>-vX.Y.Z` | Parsed in release/deploy workflows to discover skills. |
+Schnittstellen und Verträge
+| Schnittstelle | Vertragsformular | Validierung |
+--- | --- | ---
+| Skill metadata | `skills/*/skill.json` | Gültig durch Python Dienstprogramm + CI-Versionsparitätsprüfungen. |
+| Beratender Feed | JSON + Ed25519 abgelöste Signatur | Verifiziert durch __TOK_0_ und NanoClaw Signaturenprogramme. |
+| Checksums manifest | __TOK_0_ (+ optional `.sig`) | Parsed and hash-matched before trusting payloads. |
+| Hook event interface | __TOK_0_ (_TOK_1_, __TOK_2_, `messages`) | Runtime-Handler verarbeitet nur ausgewählte Ereignisnamen. |
+| Workflow Release Benennung | Tag-Muster `<skill>-vX.Y.Z` | Parsed in Release/Deploy Workflows, um Fähigkeiten zu entdecken. |
 
-## Key Parameters
-| Parameter | Default | Effect |
-| --- | --- | --- |
-| `CLAWSEC_FEED_URL` | `https://clawsec.prompt.security/advisories/feed.json` | Remote advisory source for suite scripts/hooks. |
-| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Enables temporary unsigned fallback compatibility. |
-| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Requires checksum manifest verification where available. |
-| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Scan throttling window for advisory hook. |
-| `CLAWSEC_SKILLS_INDEX_TIMEOUT_MS` | `5000` | Remote skill index fetch timeout for catalog discovery. |
-| `PROMPTSEC_GIT_PULL` | `0` | Optional auto-pull before watchdog audit runs. |
+oder Schlüsselparameter
+| Parameter | Default | Effekt |
+--- | --- | ---
+| `CLAWSEC_FEED_URL` | `https://clawsec.prompt.security/advisories/feed.json` | Remote Advisory source for suite scripts/hooks. |
+| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Ermöglicht temporäre unsignierte Fallback-Kompatibilität. |
+| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Erfordert die Überprüfung der Prüfsumme, wo verfügbar. |
+| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Das Drosselfenster für den Beratenden Haken scannen. |
+| `CLAWSEC_SKILLS_INDEX_TIMEOUT_MS` | `5000` | Remote Skill Index fetch timeout for Catalog Discovery. |
+| `PROMPTSEC_GIT_PULL` | `0` | Optionales Autopull, bevor das Watchdog Audit läuft. |
 
-## Error Handling and Reliability
-- Feed fetching is fail-closed for invalid signatures and malformed manifests.
-- Remote fetch failures gracefully fall back to local signed feeds.
-- Hook state uses atomic file writes with strict mode where supported.
-- UI pages detect HTML fallbacks served as JSON and avoid rendering corrupted data.
-- Workflow steps enforce key-fingerprint consistency to avoid split-key drift.
+Fehlerbehandlung und Zuverlässigkeit
+- Fütterung wird für ungültige Unterschriften und fehlerhafte Manifeste nicht geschlossen.
+- Remote-Fetch-Ausfälle fallen anmutig zurück zu lokalen signierten Feeds.
+- Hook state verwendet Atomdatei schreibt mit strengem Modus, wo unterstützt.
+- UI-Seiten erkennen HTML-Rückschläge als JSON und vermeiden, beschädigte Daten zu machen.
+- Workflow-Schritte durchsetzen Key-Fingerprint-Konsistenz, um Split-key Drift zu vermeiden.
 
-## Example Snippets
+Beispiel Snippets
 ```tsx
 // Route topology in the web app
 <Routes>
@@ -103,33 +103,33 @@ const remoteFeed = await loadRemoteFeed(feedUrl, {
 });
 ```
 
-## Runtime and Deployment
-| Runtime Surface | Execution Model | Output |
-| --- | --- | --- |
-| Vite app (`npm run dev`) | Local frontend server | Interactive web app for feed/skills. |
-| GitHub CI | Multi-OS matrix + dedicated jobs | Lint/type/build/security and test confidence. |
-| Skill release workflow | Tag-driven publish + PR dry-run checks | Release assets, signed checksums, optional ClawHub publish. |
-| Pages deploy workflow | Triggered by CI/Release success | Static site + mirrored advisories/releases. |
-| Runtime hooks | OpenClaw event hooks / NanoClaw IPC | Advisory alerts, gating decisions, integrity checks. |
+Laufzeit und Bereitstellung
+| Laufzeit Oberfläche | Ausführungsmodell | Ausgabe |
+--- | --- | ---
+| Vite App (`npm run dev`) | Lokaler Frontendserver | Interaktive Web-App für Feed/Skills. |
+| GitHub CI | Multi-OS-Matrix + dedizierte Jobs | Lint/Typ/Bau/Sicherheit und Testvertrauen. |
+| Skill release workflow | Tag-getriebene veröffentlichen + PR-Trocken-run-Checks | Freigabevermögen, unterzeichnete Prüfsummen, optional ClawHub veröffentlichen. |
+| Seiten bereitstellen Workflow | Ausgelöst von CI/Release Erfolg | Statische Website + gespiegelte Berater/Releases. |
+| Runtime Haken | OpenClaw Event Haken / NanoClaw IPC | Beratende Alarme, Gating Entscheidungen, Integritätskontrollen. |
 
-## Scaling Notes
-- Advisory volume scales with keyword set in NVD polling; dedupe and post-filtering control noise.
-- Deploy workflow processes release lists and keeps newest skill versions in index output.
-- Module boundaries by skill folder allow adding new security capabilities without changing frontend structure.
-- Signature verification paths remain lightweight because payload sizes (feed/manifests) are small.
+Skalierungshinweise
+- Beratende Volumenwaagen mit Schlüsselwort in NVD-Abfrage; Dedupe und Nachfilterung Steuergeräusche.
+- Bereitstellung von Workflow-Prozessen Release-Listen und hält neueste Qualifikationsversionen in Indexausgabe.
+- Modulgrenzen nach Fachordner ermöglichen es, neue Sicherheitsfunktionen hinzuzufügen, ohne Frontendstruktur zu ändern.
+- Unterschriftsverifikationspfade bleiben leicht, da die Nutzlastgrößen (Feed/Manifests) klein sind.
 
-## Source References
+Quellenangaben
 - App.tsx
-- pages/SkillsCatalog.tsx
-- pages/FeedSetup.tsx
-- pages/AdvisoryDetail.tsx
-- pages/WikiBrowser.tsx
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-suite/scripts/discover_skill_catalog.mjs
-- skills/clawsec-nanoclaw/lib/advisories.ts
-- skills/clawsec-nanoclaw/lib/signatures.ts
+- Seiten/SkillsCatalog.tsx
+- Seiten/FeedSetup.tsx
+- Seiten/AdvisoryDetail.tsx
+- Seiten/WikiBrowser.tsx
+- Fertigkeiten/Clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- Fertigkeiten/Clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- Fertigkeiten/Clawsec-suite/scripts/guarded_skill_install.mjs
+- Fertigkeiten/Clawsec-suite/scripts/discover_skill_catalog.mjs
+- Fertigkeiten/Clawsec-nanoclaw/lib/advisories.ts
+- Fertigkeiten/Clawsec-nanoclaw/lib/signatures.ts
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
