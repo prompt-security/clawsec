@@ -141,25 +141,34 @@ def _check_pair(pair: Pair) -> tuple[list[str], list[str]]:
                 errors.append(f"code fence #{idx} command lines differ from source")
 
     source_inline = {tok for tok in _extract_inline_code(source_text) if _is_technical_inline_token(tok)}
-    if not partial_pair:
-        missing_inline = sorted(tok for tok in source_inline if tok not in target_text)
-        if missing_inline:
-            preview = ", ".join(missing_inline[:8])
-            extra = "" if len(missing_inline) <= 8 else f" (+{len(missing_inline) - 8} more)"
-            warnings.append(f"missing inline technical tokens: {preview}{extra}")
+    missing_inline = sorted(tok for tok in source_inline if tok not in target_text)
+    if missing_inline:
+        preview = ", ".join(missing_inline[:8])
+        extra = "" if len(missing_inline) <= 8 else f" (+{len(missing_inline) - 8} more)"
+        msg = f"missing inline technical tokens: {preview}{extra}"
+        if partial_pair:
+            warnings.append(f"{msg} (partial pair)")
+        else:
+            warnings.append(msg)
 
     source_urls = _extract_absolute_urls(source_text)
-    if not partial_pair:
-        missing_urls = sorted(url for url in source_urls if url not in target_text)
-        if missing_urls:
-            preview = ", ".join(missing_urls[:5])
-            extra = "" if len(missing_urls) <= 5 else f" (+{len(missing_urls) - 5} more)"
-            warnings.append(f"missing absolute URLs: {preview}{extra}")
+    missing_urls = sorted(url for url in source_urls if url not in target_text)
+    if missing_urls:
+        preview = ", ".join(missing_urls[:5])
+        extra = "" if len(missing_urls) <= 5 else f" (+{len(missing_urls) - 5} more)"
+        msg = f"missing absolute URLs: {preview}{extra}"
+        if partial_pair:
+            warnings.append(f"{msg} (partial pair)")
+        else:
+            warnings.append(msg)
 
-    if not partial_pair:
-        for term in NON_TRANSLATABLE_TERMS:
-            if term in source_text and term not in target_text:
-                errors.append(f"non-translatable term missing: {term}")
+    for term in NON_TRANSLATABLE_TERMS:
+        if term in source_text and term not in target_text:
+            msg = f"non-translatable term missing: {term}"
+            if partial_pair:
+                warnings.append(f"{msg} (partial pair)")
+            else:
+                errors.append(msg)
 
     return errors, warnings
 

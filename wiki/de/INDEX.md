@@ -17,8 +17,8 @@ Review status: draft
 - [Architecture](architecture.md)
 
 ## Translations
-- [Español](es/INDEX.md)
-- [한국어](ko/INDEX.md)
+- [Español](../es/INDEX.md)
+- [한국어](../ko/INDEX.md)
 
 ## Guides
 - [Localization Workflow](localization.md)
@@ -36,16 +36,16 @@ Review status: draft
 - [Cross-Platform Remediation Plan](remediation-plan.md)
 
 ## Modules
-- [Frontend Web App](modules/frontend-web.md)
-- [ClawSec Suite Core](modules/clawsec-suite.md)
-- [ClawSec Scanner](modules/clawsec-scanner.md)
-- [Hermes Attestation Guardian](modules/hermes-attestation-guardian.md)
-- [Hermes Attestation Guardian Draft History (Archived)](modules/hermes-attestation-guardian-draft-history.md)
-- [NanoClaw Integration](modules/nanoclaw-integration.md)
-- [Picoclaw Security Guardian](modules/picoclaw-security-guardian.md)
-- [Picoclaw Self Pen Testing](modules/picoclaw-self-pen-testing.md)
-- [Automation and Release Pipelines](modules/automation-release.md)
-- [Local Validation and Packaging Tools](modules/local-tooling.md)
+- [Frontend Web App](../modules/frontend-web.md)
+- [ClawSec Suite Core](../modules/clawsec-suite.md)
+- [ClawSec Scanner](../modules/clawsec-scanner.md)
+- [Hermes Attestation Guardian](../modules/hermes-attestation-guardian.md)
+- [Hermes Attestation Guardian Draft History (Archived)](../modules/hermes-attestation-guardian-draft-history.md)
+- [NanoClaw Integration](../modules/nanoclaw-integration.md)
+- [Picoclaw Security Guardian](../modules/picoclaw-security-guardian.md)
+- [Picoclaw Self Pen Testing](../modules/picoclaw-self-pen-testing.md)
+- [Automation and Release Pipelines](../modules/automation-release.md)
+- [Local Validation and Packaging Tools](../modules/local-tooling.md)
 
 ## Glossary
 - [Glossary](glossary.md)
