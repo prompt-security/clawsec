@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
@@ -25,4 +27,9 @@ jobs:
         run: python scripts/i18n/qa_check.py
 
       - name: Check markdown links (README/wiki)
-        run: python scripts/i18n/link_check.py
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python scripts/i18n/link_check.py --changed-only --base-ref "origin/${{ github.base_ref }}"
+          else
+            python scripts/i18n/link_check.py
+          fi
