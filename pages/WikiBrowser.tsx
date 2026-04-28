@@ -139,6 +139,26 @@ const wikiAssetByPath = new Map<string, string>(
 
 const defaultDoc = wikiDocBySlug.get('index') ?? wikiDocs[0] ?? null;
 
+const languageLabelByCode: Record<string, string> = {
+  en: 'English',
+  es: 'Español',
+  ko: '한국어',
+  fr: 'Français',
+  de: 'Deutsch',
+  ja: '日本語',
+};
+
+const languageIndexByCode = new Map<string, WikiDoc>(
+  wikiDocs
+    .map((doc) => {
+      const match = doc.slug.match(/^([^/]+)\/index$/i);
+      if (!match) return null;
+      const code = match[1].toLowerCase();
+      return [code, doc] as const;
+    })
+    .filter((entry): entry is readonly [string, WikiDoc] => entry !== null),
+);
+
 const toGroupName = (filePath: string): string => {
   if (!filePath.includes('/')) return 'Core';
   if (filePath.startsWith('modules/')) return 'Modules';
@@ -160,11 +180,16 @@ export const WikiBrowser: React.FC = () => {
     requested = '';
   }
   const requestedSlug = requested || 'INDEX';
+  const requestedSlugLower = requestedSlug.toLowerCase();
+  const languageIndexFallback = languageIndexByCode.get(requestedSlugLower);
 
-  const selectedDoc = wikiDocBySlug.get(requestedSlug.toLowerCase()) ?? defaultDoc;
+  const selectedDoc =
+    wikiDocBySlug.get(requestedSlugLower) ??
+    languageIndexFallback ??
+    defaultDoc;
   const notFound =
     (decodeFailed && normalizedWildcard.length > 0) ||
-    (requested.length > 0 && !wikiDocBySlug.has(requestedSlug.toLowerCase()));
+    (requested.length > 0 && !wikiDocBySlug.has(requestedSlugLower) && !languageIndexFallback);
 
   const groupedDocs = useMemo(() => {
     const map = new Map<string, WikiDoc[]>();
@@ -208,6 +233,34 @@ export const WikiBrowser: React.FC = () => {
   const activeSlug = selectedDoc.slug.toLowerCase();
   const pageLlmsPath = toWikiLlmsPath(activeSlug);
   const showWikiLlmsIndexLink = !isWikiIndexSlug(activeSlug);
+
+  const localizedPrefix = Array.from(languageIndexByCode.keys()).find((code) =>
+    activeSlug.startsWith(`${code}/`),
+  );
+  const currentLanguageCode = localizedPrefix ?? 'en';
+  const activeBaseSlug = localizedPrefix
+    ? activeSlug.slice(localizedPrefix.length + 1)
+    : activeSlug;
+
+  const languageOptions = [
+    { code: 'en', label: languageLabelByCode.en ?? 'English' },
+    ...Array.from(languageIndexByCode.keys())
+      .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
+      .map((code) => ({
+        code,
+        label: languageLabelByCode[code] ?? code.toUpperCase(),
+      })),
+  ].map((option) => {
+    const targetSlug = option.code === 'en' ? activeBaseSlug : `${option.code}/${activeBaseSlug}`;
+    const fallbackSlug = option.code === 'en' ? 'index' : `${option.code}/index`;
+    const resolvedSlug = wikiDocBySlug.has(targetSlug) ? targetSlug : fallbackSlug;
+    const translated = wikiDocBySlug.has(targetSlug);
+    return {
+      ...option,
+      route: toWikiRoute(resolvedSlug),
+      translated,
+    };
+  });
 
   const resolveWikiRouteFromHref = (href: string): string | null => {
     if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
@@ -291,6 +344,35 @@ export const WikiBrowser: React.FC = () => {
           Full repository wiki rendered from markdown in <code className="text-gray-300">wiki/</code>.
           This is the same source synced to GitHub Wiki.
         </p>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-300">
+          <span className="text-gray-400">Language:</span>
+          {languageOptions.map((option) => {
+            const isActiveLanguage = option.code === currentLanguageCode;
+            return isActiveLanguage ? (
+              <span
+                key={option.code}
+                className="px-2 py-1 rounded bg-clawd-700 text-white border border-clawd-600"
+              >
+                {option.label}
+              </span>
+            ) : (
+              <Link
+                key={option.code}
+                to={option.route}
+                className="px-2 py-1 rounded border border-clawd-700 hover:border-clawd-accent hover:text-white transition-colors"
+                title={option.translated ? `Open ${option.label} translation` : `Open ${option.label} index fallback`}
+              >
+                {option.label}
+                {option.translated ? (
+                  <span className="text-gray-500"> · translated</span>
+                ) : (
+                  <span className="text-gray-500"> · index fallback</span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
         <div className="flex flex-wrap gap-3">
           <a
             href={pageLlmsPath}

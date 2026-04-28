@@ -10,6 +10,11 @@
     "predev": "npm run gen:wiki-llms",
     "dev": "vite",
     "prebuild": "npm run gen:wiki-llms",
+    "i18n:qa": "python scripts/i18n/qa_check.py",
+    "i18n:bootstrap:ko": "python scripts/i18n/bootstrap_language_from_en.py --lang ko",
+    "i18n:bootstrap:fr": "python scripts/i18n/bootstrap_language_from_en.py --lang fr",
+    "i18n:bootstrap:de": "python scripts/i18n/bootstrap_language_from_en.py --lang de",
+    "i18n:bootstrap:ja": "python scripts/i18n/bootstrap_language_from_en.py --lang ja",
     "build": "vite build",
     "preview": "vite preview"
   },

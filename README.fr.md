@@ -1,3 +1,12 @@
+<!-- AUTO-GENERATED TRANSLATION SCAFFOLD (fr)
+Source: README.md
+Review status: draft
+-->
+
+# Français Translation Scaffold
+
+This file is currently a draft scaffold. Use README.md as the canonical source.
+
 <h1 align="center">
   <img src="./img/prompt-icon.svg" alt="prompt-icon" width="40">
   ClawSec: Security Skill Suite for AI Agents
@@ -35,9 +44,6 @@
 
 - Español: [README.es.md](README.es.md)
 - 한국어: [README.ko.md](README.ko.md)
-- Français (draft scaffold): [README.fr.md](README.fr.md)
-- Deutsch (draft scaffold): [README.de.md](README.de.md)
-- 日本語 (draft scaffold): [README.ja.md](README.ja.md)
 
 ## 🦞 What is ClawSec?
 

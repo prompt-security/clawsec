@@ -1,3 +1,8 @@
+<!-- AUTO-GENERATED TRANSLATION SCAFFOLD (fr)
+Source: ../INDEX.md
+Review status: draft
+-->
+
 # Wiki Index
 
 ## Summary
@@ -14,9 +19,6 @@
 ## Translations
 - [Español](es/INDEX.md)
 - [한국어](ko/INDEX.md)
-- [Français (draft scaffold)](fr/INDEX.md)
-- [Deutsch (draft scaffold)](de/INDEX.md)
-- [日本語 (draft scaffold)](ja/INDEX.md)
 
 ## Guides
 - [Localization Workflow](localization.md)
