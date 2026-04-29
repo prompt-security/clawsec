@@ -6,39 +6,39 @@ Review status: draft
 # Architecture
 
 ## System Context
-- This page appears under the `Start Here` section in `INDEX.md`.
-- ClawSec sits between upstream intelligence sources (NVD + community issues), GitHub automation, and runtime agent environments.
-- The repository publishes both static site content and signed artifacts that runtime skills verify before using.
-- External actor groups:
-  - GitHub Actions runners executing CI, release, and feed workflows.
-  - OpenClaw/NanoClaw agents consuming skills, advisories, and verification scripts.
-  - Repository maintainers approving advisory issues and merging release/tag changes.
+- Esta página aparece en la sección `Start Here` en `INDEX.md`.
+- ClawSec se encuentra entre fuentes de inteligencia aguas arriba (NVD + problemas comunitarios), automatización GitHub y entornos de agente de tiempo de ejecución.
+- El repositorio publica tanto el contenido del sitio estático como los artefactos firmados que las habilidades de ejecución verifican antes de usar.
+- Grupos de actores externos:
+- GitHub Acciones corredores ejecutando CI, liberando y alimentando flujos de trabajo.
+- Agentes OpenClaw/NanoClaw que consumen habilidades, asesorías y scripts de verificación.
+- Mantenedores de depósitos que aprueban cuestiones de asesoramiento y fusionan cambios de liberación/tag.
 
-## Components
-| Component | Location | Responsibility |
-| --- | --- | --- |
-| Web UI | `App.tsx`, `pages/`, `components/` | Renders skills catalog and advisory detail experiences. |
-| Advisory Feed Core | `advisories/feed.json*`, `skills/clawsec-suite/.../feed.mjs` | Stores, verifies, and parses advisories with detached signatures/checksums. |
-| Skill Packages | `skills/*/` | Distributes installable security capabilities with SBOM metadata. |
-| Local Automation Scripts | `scripts/*.sh` | Build local mirrors, pre-push checks, and manual release helpers. |
-| CI/CD Workflows | `.github/workflows/*.yml` | Linting, tests, NVD polling, release packaging, and Pages deploy. |
-| Python Utility Layer | `utils/*.py` | Skill metadata validation and checksum generation. |
+## Componentes
+Silencio Componente Silencio Ubicación Silencioso
+Silencio.
+TEN Web UI TENIDO `App.tsx`, `pages/`, `components/` ANTE Renders skills catalog and advisory detail experiences. Silencio
+Silencioso asesor Feed Core Silencio `advisories/feed.json*`, `skills/clawsec-suite/.../feed.mjs` TENIDO Tiendas, verifica y analiza asesorías con firmas/consultos desprendidos. Silencio
+← Paquetes de Habilidad Silencio `skills/*/` ← Distribuye capacidades de seguridad instalables con metadatos SBOM. Silencio
+Scripts de Automatización Local ← `scripts/*.sh` ← Construir espejos locales, cheques pre-push y ayudantes manuales de liberación. Silencio
+TEN CI/CD Workflows ANTE `.github/workflows/*.yml` ANTE Linting, tests, encuestas NVD, embalaje de lanzamiento y páginas implementadas. Silencio
+TEN Python Utility Layer ANTE `utils/*.py` ← validación de metadatos de habilidad y generación de checksum. Silencio
 
-## Key Flows
-- Skill catalog flow:
-  1. Release/tag workflows publish skill assets.
-  2. Deploy workflow discovers release assets and builds `public/skills/index.json`.
-  3. UI fetches `public/skills/index.json` and skill docs for `/skills` pages.
-- Advisory feed flow:
-  1. `poll-nvd-cves.yml` and `community-advisory.yml` update `advisories/feed.json`.
-  2. Feed is signed and mirrored to public paths.
-  3. Runtime hooks/scripts load remote feed and fallback to local signed copies.
-- Guarded install flow:
-  1. Installer requests target skill + version.
-  2. Advisory matcher checks affected specifiers and severity/risk hints.
-  3. Exit code 42 enforces second confirmation when advisories match.
+## Flujos clave
+- Flujo de catálogo de habilidad:
+1. Los flujos de trabajo de lanzamiento/tag publican activos de habilidad.
+2. Deploy workflow discovers release assets and builds `public/skills/index.json`.
+3. UI fetches `public/skills/index.json` y docs de habilidad para las páginas `/skills`.
+- Flujo de alimentación:
+1. `poll-nvd-cves.yml` y `community-advisory.yml` actualizan `advisories/feed.json`.
+2. La alimentación está firmada y reflejada en caminos públicos.
+3. Ganchos/scriptos de tiempo de ejecución cargan alimentación remota y retroceso a copias firmadas locales.
+- Flujo de instalación vigilado:
+1. Installer solicita habilidad objetivo + versión.
+2. Consultas del matcher afectan a los especificadores e indicaciones de gravedad/riesgo.
+3. Código de salida 42 hace cumplir la segunda confirmación cuando las advertencias coinciden.
 
-## Diagrams
+## Diagramas
 ```mermaid
 flowchart TD
   A["NVD + Community Inputs"] --> B["Feed Workflows\n(poll/community)"]
@@ -52,32 +52,32 @@ flowchart TD
 ![Prompt Line Motif](../assets/architecture_img_01_prompt-line.svg)
 
 ## Interfaces and Contracts
-| Interface | Contract Form | Validation |
-| --- | --- | --- |
-| Skill metadata | `skills/*/skill.json` | Validated by Python utility + CI version-parity checks. |
-| Advisory feed | JSON + Ed25519 detached signature | Verified by `feed.mjs` and NanoClaw signature utilities. |
-| Checksums manifest | `checksums.json` (+ optional `.sig`) | Parsed and hash-matched before trusting payloads. |
-| Hook event interface | `HookEvent` (`type`, `action`, `messages`) | Runtime handler only processes selected event names. |
-| Workflow release naming | Tag pattern `<skill>-vX.Y.Z` | Parsed in release/deploy workflows to discover skills. |
+Silencioso Interfaz Silencioso Formulario de Contrato
+Silencio.
+← Metadatos de Habilidad Silencio `skills/*/skill.json` Silencio Validado por utilidad Python + cheques de paridad de la versión CI. Silencio
+← Alimentación de asesoramiento Silencio JSON + Ed25519 firma despreocupada Silencio Verificada por `feed.mjs` y NanoClaw utilidades de firma. Silencio
+Silenciosos Checksums manifiesto ← `checksums.json` (+ opcional `.sig`) Silencio Parsed and hash-matched antes de confiar en las cargas de pago. Silencio
+Silencio Interfaz de evento de gancho ¦ `HookEvent` (`type`, `action`, `messages`) Silencio El controlador Runtime solo procesa nombres de eventos seleccionados. Silencio
+etiqueta: patrón `<skill>-vX.Y.Z` Silencio Parsed in release/deploy workflows to discover skills. Silencio
 
-## Key Parameters
-| Parameter | Default | Effect |
-| --- | --- | --- |
-| `CLAWSEC_FEED_URL` | `https://clawsec.prompt.security/advisories/feed.json` | Remote advisory source for suite scripts/hooks. |
-| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Enables temporary unsigned fallback compatibility. |
-| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Requires checksum manifest verification where available. |
-| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Scan throttling window for advisory hook. |
-| `CLAWSEC_SKILLS_INDEX_TIMEOUT_MS` | `5000` | Remote skill index fetch timeout for catalog discovery. |
-| `PROMPTSEC_GIT_PULL` | `0` | Optional auto-pull before watchdog audit runs. |
+## Parámetros clave
+Silencio parametro Silencioso prefecto Silencioso
+Silencio.
+Silencio `CLAWSEC_FEED_URL` Silencio `https://clawsec.prompt.security/advisories/feed.json` Silencio Fuente de asesoramiento remota para scripts/hooks de suite. Silencio
+Silencio `CLAWSEC_ALLOW_UNSIGNED_FEED` Silencio `0` Silencio Permite una compatibilidad temporal sin firmar. Silencio
+Silencio `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` Silencio `1` Silencio Requiere verificación de manifiesto de checksum cuando esté disponible. Silencio
+Silencio `CLAWSEC_HOOK_INTERVAL_SECONDS` Silencio `300` Silencioso ventana de escaneo para gancho asesor. Silencio
+Silencio `CLAWSEC_SKILLS_INDEX_TIMEOUT_MS` Silencio `5000` Silencio Índice de habilidad remota buscar tiempo libre para el descubrimiento del catálogo. Silencio
+Silencio `PROMPTSEC_GIT_PULL` Silencio `0` ← Auto-pull opcional antes de ejecutar la auditoría de relojes. Silencio
 
-## Error Handling and Reliability
-- Feed fetching is fail-closed for invalid signatures and malformed manifests.
-- Remote fetch failures gracefully fall back to local signed feeds.
-- Hook state uses atomic file writes with strict mode where supported.
-- UI pages detect HTML fallbacks served as JSON and avoid rendering corrupted data.
-- Workflow steps enforce key-fingerprint consistency to avoid split-key drift.
+## Manejo de errores y fiabilidad
+- Feed fetching está bloqueado para firmas inválidas y manifiestos malformados.
+- Las fallas remotas de la embrague caen con gracia a los alimentos firmados localmente.
+- El estado de gancho utiliza el archivo atómico escribe con el modo estricto donde se apoya.
+- Las páginas UI detectan retrocesos HTML servidos como JSON y evitan renderizar datos corruptos.
+- Los pasos de flujo de trabajo refuerzan la consistencia de la marca clave para evitar la deriva de la llave dividida.
 
-## Example Snippets
+## Ejemplos Snippets
 ```tsx
 // Route topology in the web app
 <Routes>
@@ -104,32 +104,32 @@ const remoteFeed = await loadRemoteFeed(feedUrl, {
 ```
 
 ## Runtime and Deployment
-| Runtime Surface | Execution Model | Output |
-| --- | --- | --- |
-| Vite app (`npm run dev`) | Local frontend server | Interactive web app for feed/skills. |
-| GitHub CI | Multi-OS matrix + dedicated jobs | Lint/type/build/security and test confidence. |
-| Skill release workflow | Tag-driven publish + PR dry-run checks | Release assets, signed checksums, optional ClawHub publish. |
-| Pages deploy workflow | Triggered by CI/Release success | Static site + mirrored advisories/releases. |
-| Runtime hooks | OpenClaw event hooks / NanoClaw IPC | Advisory alerts, gating decisions, integrity checks. |
+← Runtime Surface Silencioso Modelo de Ejecución
+Silencio.
+← Aplicación Vite (`npm run dev`) Silencio Servidor de frontend local Silencio Aplicación interactiva web para feed/skills. Silencio
+Silencio GitHub CI tención Matriz multi-OS + trabajos dedicados ← Lint/type/build/security and test confidence. Silencio
+Silencio Flujo de trabajo de liberación de la piel ← Publicación de la etiqueta + cheques de funcionamiento seco de PR tención Activo de lanzamiento, cheques firmados, publicación opcional ClawHub. Silencio
+Silencio Páginas desplegando flujo de trabajo Silencio Triggered by CI/Release success tención Static site + retrovisored advisories/releases. Silencio
+← Ganchos de Runtime ← Ganchos de eventos OpenClaw / NanoClaw IPC Silencio Alertas de asesoramiento, decisiones de juego, controles de integridad. Silencio
 
 ## Scaling Notes
-- Advisory volume scales with keyword set in NVD polling; dedupe and post-filtering control noise.
-- Deploy workflow processes release lists and keeps newest skill versions in index output.
-- Module boundaries by skill folder allow adding new security capabilities without changing frontend structure.
-- Signature verification paths remain lightweight because payload sizes (feed/manifests) are small.
+- Escalas de volumen de asesoramiento con palabras clave establecidas en encuestas NVD; ruido de control de dedupe y post-filtering.
+- Implementar listas de lanzamiento de procesos de flujo de trabajo y mantiene nuevas versiones de habilidad en la salida de índice.
+- Los límites del módulo por carpeta de habilidad permiten añadir nuevas capacidades de seguridad sin cambiar la estructura de frontend.
+- Los caminos de verificación de firmas siguen siendo ligeros porque los tamaños de la carga útil (feed/manifests) son pequeños.
 
-## Source References
+## Referencias Fuente
 - App.tsx
-- pages/SkillsCatalog.tsx
-- pages/FeedSetup.tsx
-- pages/AdvisoryDetail.tsx
-- pages/WikiBrowser.tsx
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-suite/scripts/discover_skill_catalog.mjs
-- skills/clawsec-nanoclaw/lib/advisories.ts
-- skills/clawsec-nanoclaw/lib/signatures.ts
+- páginas/SkillsCatalog.tsx
+- páginas/FeedSetup.tsx
+- páginas/AdvisoryDetail.tsx
+- páginas/WikiBrowser.tsx
+- habilidades/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- habilidades/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- habilidades/clawsec-suite/scripts/guarded_skill_install.mjs
+- habilidades/clawsec-suite/scripts/discover_skill_catalog.mjs
+- habilidades/clawsec-nanoclaw/lib/advisories.ts
+- habilidades/clawsec-nanoclaw/lib/signatures.ts
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml

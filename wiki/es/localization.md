@@ -16,14 +16,14 @@ Definir un pipeline repetible para localización de documentación (README y wik
 
 ## Convenciones de carpetas
 - Traducciones README:
-  - `README.es.md`
+- `README.es.md`
   - Futuro: `README.fr.md`, `README.de.md`, `README.ja.md`
 - Traducciones wiki:
-  - `wiki/es/INDEX.md`
-  - `wiki/es/<page>.md`
+- `wiki/es/INDEX.md`
+- `wiki/es/<page>.md`
 - Assets de localización:
-  - `wiki/i18n/terminology-en-es.md`
-  - `wiki/i18n/translation-tracker.md`
+- `wiki/i18n/terminology-en-es.md`
+- `wiki/i18n/translation-tracker.md`
 
 ## Flujo de actualización
 1. Normalizar docs fuente en inglés.

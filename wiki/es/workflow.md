@@ -6,49 +6,49 @@ Review status: draft
 # Workflow
 
 ## End-to-End Lifecycle
-- Development starts with local coding + local data population for realistic UI preview.
-- PR CI validates quality/security and skill test suites.
-- PR Pages-verify validates production build/signing behavior without publishing.
-- Tag-driven release workflow packages and signs skill artifacts.
-- Pages deploy workflow mirrors release/advisory artifacts and publishes the static site.
-- Wiki-sync workflow publishes repo `wiki/` docs to GitHub Wiki on `main`.
-- Scheduled workflows continuously enrich advisory feed and supply-chain visibility.
+- El desarrollo comienza con la codificación local + la población de datos locales para una presentación realista de la interfaz de usuario.
+- PR CI valida suites de calidad/seguridad y pruebas de habilidad.
+- PR Pages-verify validates production build/signing behaviour without publishing.
+- Paquetes de flujo de trabajo de liberación impulsados por la etiqueta y signos artifactos de habilidad.
+- Páginas desplegando espejos de flujo de trabajo liberación / artefactos advisorios y publica el sitio estático.
+- Wiki-sync workflow publica repo `wiki/` docs to GitHub Wiki on `main`.
+- Los flujos de trabajo programados enriquecen continuamente la visibilidad de la fuente de asesoramiento y la cadena de suministro.
 
-## Primary Workflow Map
-| Workflow | Trigger | Main Steps |
-| --- | --- | --- |
-| CI | PR/push to `main` | Lint, typecheck, build, Python checks, security scans, skill tests. |
-| Pages Verify | PRs to `main` | Build Pages artifact and validate signing outputs (no publish). |
-| Poll NVD CVEs | Daily cron + manual dispatch | Fetch CVEs, transform/dedupe, update feed, sign artifacts, PR changes. |
-| Process Community Advisory | Issue label `advisory-approved` | Parse issue form, create advisory, sign feed, open PR, comment issue. |
-| Skill Release | Skill tags + metadata PR changes | PR: version-parity + dry-run checks; tags: package/sign/publish release assets. |
-| Deploy Pages | Successful CI/Release or manual dispatch | Discover releases, mirror assets, sign public advisories/checksums, deploy site. |
-| Sync Wiki | Pushes to `main` touching `wiki/**` + manual dispatch | Sync `wiki/` into `<repo>.wiki.git` and generate `Home.md` from `INDEX.md`. |
+Mapa de flujo de trabajo primario
+Silencioso de trabajo Silencioso de la lucha
+Silencio.
+← CI Silencio PR/push to `main` tención Lint, tipocheck, build, Python checks, security scans, skill tests. Silencio
+Silencio Pages Verify TENIDO PRs a `main` ANTE Build Pages artefacto y validar salidas de firma (no publicar). Silencio
+← Encuesta NVD CVEs Silencio Cron diario + despacho manual ← Fetch CVEs, transform/dedupe, feed de actualización, artefactos de firma, cambios de PR. Silencio
+← Procesamiento Comunidad Asesoramiento TENIDO Etiqueta `advisory-approved` Silencio Forma de emisión Parse, crear asesoría, feed de firma, PR abierto, cuestión de comentarios. Silencio
+← Skill Release Silencio Etiquetas de la habilidad + metadatos PR cambios Silencio PR: versión-paridad + cheques de funcionamiento seco; etiquetas: paquete/sign/publicar activos de liberación. Silencio
+Silencio Páginas de Despliegue Silencio Exitosa CI/Libertad o envío manual Silencio Discover releases, mirror assets, sign public advisories/checksums, deployment site. Silencio
+← Sincronización Wiki tención Empuja a `main` tocando `wiki/**` + despacho manual  Sync `wiki/` en `<repo>.wiki.git` y generar `Home.md` de `INDEX.md`. Silencio
 
 ## Local Operator Workflow
-| Step | Command | Outcome |
-| --- | --- | --- |
-| Install deps | `npm install` | Ready local environment. |
-| Populate local catalog | `./scripts/populate-local-skills.sh` | `public/skills/index.json` and file checksums. |
-| Populate local feed | `./scripts/populate-local-feed.sh --days 120` | Updated local advisory feed copy. |
-| Generate wiki llms exports | `npm run gen:wiki-llms` | Updates `public/wiki/llms.txt` and per-page exports. |
-| Run local gate | `./scripts/prepare-to-push.sh` | CI-like pass/fail signal. |
-| Start dev UI | `npm run dev` | Browser preview at local Vite endpoint. |
+TEN TERRITORIO TERRITORIO ANTERIOR ANTERIOR
+Silencio.
+Silencio Install deps Silencio `npm install` ← Entorno local listo. Silencio
+tención Populate local catalog Silencio `./scripts/populate-local-skills.sh` Silencioso `public/skills/index.json` y checksums de archivos. Silencio
+Silencio Populate local feed Silencio `./scripts/populate-local-feed.sh --days 120` tención Actualizado local advisory feed copy. Silencio
+¦ Generate wiki llms exports Silencio `npm run gen:wiki-llms` Silencio Actualizaciones `public/wiki/llms.txt` y exportaciones por página. Silencio
+Silencio Ejecute la puerta local Silencio `./scripts/prepare-to-push.sh` TENIENDO CI-como la señal de paso/fail. Silencio
+Silencio Inicio dev UI Silencio `npm run dev` Silencio Vista previa del navegador en el punto final local Vite. Silencio
 
-## Release Workflow Details
-- Version bump and docs parity are enforced for PR/tag paths.
-- Skill packaging includes SBOM-declared files and integrity manifests.
-- `checksums.json` is signed and immediately verified in workflow execution.
-- Optional publish-to-ClawHub job runs after successful GitHub release when configured.
-- Older releases within same major line can be superseded/deleted by automation.
+## Detalles del flujo de trabajo de liberación
+- La paridad de versiones y docs se aplican para las vías PR/tag.
+- Embalaje de habilidad incluye archivos declarados por SBOM y manifiestos de integridad.
+- `checksums.json` está firmado e inmediatamente verificado en ejecución de flujo de trabajo.
+- El trabajo opcional public-to-ClawHub funciona después de la exitosa publicación GitHub cuando está configurado.
+- Las versiones más antiguas dentro de la misma línea principal pueden ser superadas o eliminadas por la automatización.
 
 ## Advisory Workflow Details
-- NVD workflow determines incremental window from previous feed `updated` timestamp.
-- Transform phase maps CVE metrics to severity/type and normalizes affected targets.
-- Community advisory workflow creates deterministic IDs (`CLAW-YYYY-NNNN`) from issue metadata.
-- Both advisory workflows update skill feed copies and signature companions.
+- El flujo de trabajo NVD determina la ventana incremental de la alimentación anterior `updated` timetamp.
+- Transformar mapas de fase CVE métricas a la gravedad/tipo y normalizar objetivos afectados.
+- El flujo de trabajo de asesoramiento comunitario crea identificaciones deterministas (`CLAW-YYYY-NNNN`) de metadatos de emisión.
+- Ambos flujos de trabajo de asesoramiento actualizan copias de alimentación y compañeros de firma.
 
-## Example Snippets
+## Ejemplos Snippets
 ```bash
 # manual release prep for a skill
 ./scripts/release-skill.sh clawsec-feed 0.0.5
@@ -64,12 +64,12 @@ on:
 ```
 
 ## Operational Risks
-- Workflow permissions and secret scope misconfiguration can block signing/publishing.
-- NVD/API transient failures may delay advisory freshness.
-- Invalid tag naming or version mismatches halt release automation.
-- Local scripts and CI can diverge if operator machine lacks expected binaries (`jq`, `openssl`, `clawhub`).
+- Los permisos de flujo de trabajo y la inconfiguración de alcance secreto pueden bloquear la firma / publicación.
+- Los fallos transitorios NVD/API pueden retrasar la frescura asesora.
+- Nombramiento de etiquetas inválidos o desajustes de versiones detienen la automatización de liberación.
+- Los scripts locales y el CI pueden divergir si la máquina del operador carece de binarios esperados (`jq`, `openssl`, `clawhub`).
 
-## Source References
+## Referencias Fuente
 - scripts/release-skill.sh
 - scripts/prepare-to-push.sh
 - scripts/populate-local-feed.sh

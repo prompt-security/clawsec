@@ -8,201 +8,201 @@ Review status: draft
 This file is currently a draft scaffold. Use README.md as the canonical source.
 
 <h1 align="center">
-  <img src="./img/prompt-icon.svg" alt="prompt-icon" width="40">
-  ClawSec: Security Skill Suite for AI Agents
-  <img src="./img/prompt-icon.svg" alt="prompt-icon" width="40">
+<img src="/img/prompt-icon.svg" alt="prompt-icon" largeur="40">
+ClawSec: Suite de compétences en sécurité pour les agents d'IA
+<img src="/img/prompt-icon.svg" alt="prompt-icon" largeur="40">
 </h1>
 
 <div align="center">
 
-## Secure Your OpenClaw, NanoClaw, and Hermes Agents with a Complete Security Skill Suite
+## Sécurisez vos agents OpenClaw, NanoClaw et Hermes avec une suite complète de compétences en sécurité
 
-<h4>Brought to you by <a href="https://prompt.security">Prompt Security</a>, the Platform for AI Security</h4>
+<h4>Présenté par <a href="https://prompt.security">Prompt Security</a>, la plateforme pour la sécurité de l'IA</h4>
 
 </div>
 
 <div align="center">
 
-![Prompt Security Logo](./img/Black+Color.png)
-<img src="./public/img/mascot.png" alt="clawsec mascot" width="200" />
+- Oui. [Prompt Security Logo](./img/Black+Color.png)
+<img src="/public/img/mascot.png" alt="clawsec mascotte" width="200" />
 
 </div>
 <div align="center">
 
-🌐 **Live at: [https://clawsec.prompt.security](https://clawsec.prompt.security) [https://prompt.security/clawsec](https://prompt.security/clawsec)**
+C'est-à-dire **Live at: [https://clawsec.prompt.security](https://clawsec.prompt.security) [https://prompt.security/clawsec](https://prompt.security/clawsec)**
 
 [![CI](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
-[![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml)
+[![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clasec/actions/workflows/poll-nvd-cves.yml)
 
 
 </div>
 
 ---
 
-## 🌍 Translations
+Traductions
 
 - Español: [README.es.md](README.es.md)
 - 한국어: [README.ko.md](README.ko.md)
 
-## 🦞 What is ClawSec?
+Qu'est-ce que ClawSec ?
 
-ClawSec is a **complete security skill suite for AI agent platforms**. It provides unified security monitoring, integrity verification, and threat intelligence-protecting your agent's cognitive architecture against prompt injection, drift, and malicious instructions.
+ClawSec est une suite complète de compétences en sécurité pour les plateformes d'agents d'IA**. Il fournit une surveillance de sécurité unifiée, la vérification de l'intégrité et la protection de l'architecture cognitive de votre agent contre l'injection rapide, la dérive et les instructions malveillantes.
 
-### Supported Platforms
+Plateformes prises en charge
 
-- **OpenClaw** (MoltBot, Clawdbot, and clones) - Full suite with skill installer, file integrity protection, and security audits
-- **NanoClaw** - Containerized WhatsApp bot security with MCP tools for advisory monitoring, signature verification, and file integrity
-- **Hermes** - Hermes-native security skills for signed advisory feed verification, advisory-aware guarded verification, deterministic attestation generation, fail-closed verification, and baseline drift detection
-- **Picoclaw** - Lightweight AI gateway security posture checks with advisory awareness, config drift detection, release-artifact verification, and an optional separate self-pen-testing package
+- **OpenClaw** (MoltBot, Clawdbot et clones) - Suite complète avec installateur de compétences, protection de l'intégrité des fichiers et audits de sécurité
+- **NanoClaw** - Containerized Whats Sécurité des applications bot avec des outils MCP pour la surveillance consultative, la vérification des signatures et l'intégrité des fichiers
+- **Hermès** - Compétences en sécurité Hermès-native pour la vérification de l'alimentation, la vérification de l'information-conseil, la génération d'attestations déterministes, la vérification fermée et la détection de la dérive de base
+- **Picoclaw** - Contrôles de la posture de sécurité de la passerelle légère AI avec sensibilisation, détection de la dérive de config, vérification de l'artéfact de relâchement, et un ensemble d'auto-essais facultatifs
 
-### Skill Feature Matrix
+### Matrix des compétences
 
-| Skill name | supported platform| security feed verification| config drift | agent self pen testing| supply-chain install verification |
-|---|---|---|---|---|---|
-| claw-release | OpenClaw | No | No | No | Yes |
-| clawsec-clawhub-checker | OpenClaw + clawsec-suite integration | No | No | No | Yes |
-| clawsec-feed | OpenClaw | Yes | No | No | Yes |
-| clawsec-nanoclaw | NanoClaw | Yes | Yes | Yes | Yes |
-| clawsec-scanner | OpenClaw | Yes | No | Yes | Yes |
-| clawsec-suite | OpenClaw | Yes | Yes | No | Yes |
-| clawtributor | OpenClaw | Yes | No | No | No |
-| hermes-attestation-guardian | Hermes | Yes (signed advisory feed verification) | Yes | No | Limited (advisory preflight gating only; no artifact signature/provenance install verification) |
-| openclaw-audit-watchdog | OpenClaw | No | No | Yes | No |
-| picoclaw-security-guardian | Picoclaw | Yes | Yes | No | Yes |
-| picoclaw-self-pen-testing | Picoclaw | No | No | Yes | No |
-| soul-guardian | OpenClaw | No | Yes | No | No |
+- Oui. Nom de la compétence Plate-forme prise en charge de la sécurité de la vérification de l'alimentation de config driving de l'agent testing de l'auto stylo de la chaîne d'approvisionnement de vérification d'installation de l'installation de l'agent
+-- -- -- -- -- -- -- -- -- -- -- -- --
+Claw-release
+Clawsec-clawhub-checker
+Oui Non Oui Oui
+Oui Oui Oui Oui
+Oui Non Oui Oui
+Oui Oui Oui Oui
+Clawtributor OpenClaw OpenClaw OpenClaw OpenClaw OpenClaw
+Hermes-attestation-guardian.
+Openclaw-audit-watchdog
+Picoclaw-security-guardian.
+Picoclaw-auto-test de stylos
+Un gardien de l'âme OpenClaw OpenClaw OpenClaw OpenClaw
 
-### Core Capabilities
+Capacités de base
 
-- **📦 Suite Installer** - One-command installation of all security skills with integrity verification
-- **🛡️ File Integrity Protection** - Drift detection and auto-restore for critical agent files (SOUL.md, IDENTITY.md, etc.)
-- **📡 Live Security Advisories** - Automated NVD CVE polling and community threat intelligence
-- **🔍 Security Audits** - Self-check scripts to detect prompt injection markers and vulnerabilities
-- **🔐 Checksum Verification** - SHA256 checksums for all skill artifacts
-- **Health Checks** - Automated updates and integrity verification for all installed skills
+- ** Installateur Suite** - Installation unique de toutes les compétences de sécurité avec vérification de l'intégrité
+- Oui. Protection de l'intégrité des fichiers** - Détection et récupération automatique des fichiers d'agents critiques (SOUL.md, IDENTITY.md, etc.)
+- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+- Oui. Audits de sécurité** - Auto-vérifier les scripts pour détecter les marqueurs d'injection et les vulnérabilités
+- Oui. Vérification des contrôles** - SHA256 somme de contrôle pour tous les artefacts de compétence
+- **Vérifications santé** - Mises à jour automatisées et vérification de l'intégrité pour toutes les compétences installées
 
 ---
 
-## 🎬 Product Demos
+Démos de produits
 
-Animated previews below are GIFs (no audio). Click any preview to open the full MP4 with audio.
+Les aperçus animés ci-dessous sont des GIF (pas d'audio). Cliquez sur n'importe quel aperçu pour ouvrir le MP4 complet avec audio.
 
-### Install Demo (`clawsec-suite`)
+### Installer la démo (`clawsec-suite`)
 
 [![Install demo animated preview](public/video/install-demo-preview.gif)](public/video/install-demo.mp4)
 
-Direct link: [install-demo.mp4](public/video/install-demo.mp4)
+Lien direct: [install-demo.mp4](public/video/install-demo.mp4)
 
-### Drift Detection Demo (`soul-guardian`)
+### Démo de détection de la dérive (`soul-guardian`)
 
 [![Drift detection animated preview](public/video/soul-guardian-demo-preview.gif)](public/video/soul-guardian-demo.mp4)
 
-Direct link: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
+Lien direct: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
 
 ---
 
-## 🚀 Quick Start
+Début rapide
 
-### For AI Agents
+Pour les agents de l'IA
 
 ```bash
 # Install the ClawSec security suite
 npx clawhub@latest install clawsec-suite
 ```
 
-After install, the suite can:
-1. Discover installable protections from the published skills catalog
-2. Verify release integrity using signed checksums
-3. Set up advisory monitoring and hook-based protection flows
-4. Add optional scheduled checks
+Après l'installation, la suite peut :
+1. Découvrez les protections installables à partir du catalogue de compétences publié
+2. Vérifier l'intégrité de la libération à l'aide de comptes de vérification signés
+3. Mettre en place une surveillance consultative et des flux de protection par crochet
+4. Ajouter des contrôles programmés facultatifs
 
-Manual/source-first option:
+Manuel/source-première option:
 
-> Read https://github.com/prompt-security/clawsec/releases/latest/download/SKILL.md and follow the installation instructions.
+> Lire https://github.com/prompt-security/clawsec/releases/latest/download/SKILL.md et suivre les instructions d'installation.
 
-### For Humans
+Pour les humains
 
-Copy this instruction to your AI agent:
+Copiez cette instruction à votre agent d'IA :
 
-> Install ClawSec with `npx clawhub@latest install clawsec-suite`, then complete the setup steps from the generated instructions.
+> Installez ClawSec avec `npx clawhub@latest install clawsec-suite`, puis remplissez les étapes de configuration à partir des instructions générées.
 
-### Shell and OS Notes
+### Notes Shell et OS
 
-ClawSec scripts are split between:
-- Cross-platform Node/Python tooling (`npm run build`, hook/setup `.mjs`, `utils/*.py`)
-- POSIX shell workflows (`*.sh`, most manual install snippets)
+Les scripts ClawSec sont divisés entre :
+- Plateforme transversale Outillage Noeud/Python (`npm run build`, crochet/réglage `.mjs`, `utils/*.py`)
+- Workflows shell POSIX (`*.sh`, la plupart des snipets d'installation manuelle)
 
-For Linux/macOS (`bash`/`zsh`):
-- Use unquoted or double-quoted home vars: `export INSTALL_ROOT="$HOME/.openclaw/skills"`
-- Do **not** single-quote expandable vars (for example, avoid `'$HOME/.openclaw/skills'`)
+Pour Linux/macOS (`bash`/`zsh`):
+- Utiliser des vars d'habitation sans ou double citations: `export INSTALL_ROOT="$HOME/.openclaw/skills"`
+- Ne pas **** vars extensibles à simple cote (par exemple, éviter `'$HOME/.openclaw/skills'`)
 
-For Windows (PowerShell):
-- Prefer explicit path building:
-  - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
-  - `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
-- POSIX `.sh` scripts require WSL or Git Bash.
+Pour Windows (PowerShell):
+- Préférez la construction explicite du chemin :
+- `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+- `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
+- POSIX ZXQTOKEN0 Les scripts QXZ nécessitent WSL ou Git Bash.
 
-Troubleshooting: if you see directories such as `~/.openclaw/workspace/$HOME/...`, a home variable was passed literally. Re-run using an absolute path or an unquoted home expression.
+Dépannage : si vous voyez des répertoires tels que `~/.openclaw/workspace/$HOME/...`, une variable d'accueil a été transmise littéralement. Re-exécuter en utilisant un chemin absolu ou une expression de la maison non citée.
 
 ---
 
-## 🧭 Platform & Suite Documentation
+Documentation sur la plateforme et la suite
 
-Detailed platform and suite docs live in the wiki modules:
+Des documents détaillés sur la plateforme et la suite sont disponibles dans les modules wiki :
 - NanoClaw: [wiki/modules/nanoclaw-integration.md](wiki/modules/nanoclaw-integration.md)
-- Hermes: [wiki/modules/hermes-attestation-guardian.md](wiki/modules/hermes-attestation-guardian.md)
+- Hermès: [wiki/modules/hermes-attestation-guardian.md](wiki/modules/hermes-attestation-guardian.md)
 - Picoclaw: [wiki/modules/picoclaw-security-guardian.md](wiki/modules/picoclaw-security-guardian.md)
-- Picoclaw self-pen-testing: [wiki/modules/picoclaw-self-pen-testing.md](wiki/modules/picoclaw-self-pen-testing.md)
+- Picoclaw auto-test : [wiki/modules/picoclaw-self-pen-testing.md](wiki/modules/picoclaw-self-pen-testing.md)
 - ClawSec Suite (OpenClaw): [wiki/modules/clawsec-suite.md](wiki/modules/clawsec-suite.md)
-- CI/CD pipelines: [wiki/modules/automation-release.md](wiki/modules/automation-release.md)
+- pipelines CI/CD: [wiki/modules/automation-release.md](wiki/modules/automation-release.md)
 
-Quick install links:
-- NanoClaw install: [skills/clawsec-nanoclaw/INSTALL.md](skills/clawsec-nanoclaw/INSTALL.md)
-- Hermes skill package: `skills/hermes-attestation-guardian/`
-- Picoclaw guardian package: `skills/picoclaw-security-guardian/`
-- Picoclaw self-pen-testing package: `skills/picoclaw-self-pen-testing/`
-- Suite package: `skills/clawsec-suite/`
+Liens d'installation rapide :
+- Installation de NanoClaw : [skills/clawsec-nanoclaw/INSTALL.md](skills/clawsec-nanoclaw/INSTALL.md)
+- Pack de compétences Hermes: `skills/hermes-attestation-guardian/`
+- Paquet de protection Picoclaw: `skills/picoclaw-security-guardian/`
+- Paquet Picoclaw auto-test: `skills/picoclaw-self-pen-testing/`
+- Paquet Suite: `skills/clawsec-suite/`
 
 ---
 
-## 📡 Security Advisory Feed
+No # # # Avis de sécurité
 
-ClawSec maintains a continuously updated security advisory feed, automatically populated from NIST's National Vulnerability Database (NVD).
+ClawSec tient à jour en permanence un avis de sécurité, alimenté automatiquement par la base de données nationale sur la vulnérabilité (NVD) du NIST.
 
-### Feed URL
+URL du flux
 
 ```bash
 # Fetch latest advisories
 curl -s https://clawsec.prompt.security/advisories/feed.json | jq '.advisories[] | select(.severity == "critical" or .severity == "high")'
 ```
 
-Canonical endpoint: `https://clawsec.prompt.security/advisories/feed.json`  
-Compatibility mirror (legacy): `https://clawsec.prompt.security/releases/latest/download/feed.json`
+Critère canonique: `https://clawsec.prompt.security/advisories/feed.json`
+Miroir de compatibilité (légère): `https://clawsec.prompt.security/releases/latest/download/feed.json`
 
-### Monitored Keywords
+Mots-clés surveillés
 
-The feed polls CVEs related to:
-- **OpenClaw Platform**: `OpenClaw`, `clawdbot`, `Moltbot`
+Les sondages sur les aliments du bétail ont porté sur :
+- ** Plateforme OpenClaw** : `OpenClaw`, `clawdbot`, `Moltbot`
 - **NanoClaw Platform**: `NanoClaw`, `WhatsApp-bot`, `baileys`
-- **Picoclaw Platform**: `Picoclaw`, `picoclaw`, lightweight AI gateways, MCP gateway exposure
-- Prompt injection patterns
-- Agent security vulnerabilities
+- **Picoclaw Platform**: `Picoclaw`, `picoclaw`, passerelles AI légères, exposition aux passerelles MCP
+- Modèles d'injection rapides
+- Vulnérabilités de sécurité des agents
 
-### Exploitability Context
+Contexte d'exploitation
 
-ClawSec enriches CVE advisories with **exploitability context** to help agents assess real-world risk beyond raw CVSS scores. Newly analyzed advisories can include:
+ClawSec enrichit les avis CVE avec **contexte d'exploitation** pour aider les agents à évaluer le risque réel au-delà des scores CVSS bruts. Les avis nouvellement analysés peuvent comprendre :
 
-- **Exploit Evidence**: Whether public exploits exist in the wild
-- **Weaponization Status**: If exploits are integrated into common attack frameworks
-- **Attack Requirements**: Prerequisites needed for successful exploitation (network access, authentication, user interaction)
-- **Risk Assessment**: Contextualized risk level combining technical severity with exploitability
+- **Exploiter des preuves**: si des exploits publics existent dans la nature
+- ** État des armes** : Si les exploits sont intégrés dans des cadres d'attaque communs
+- **Exigences d'adaptation**: Prérequis pour une exploitation réussie (accès au réseau, authentification, interaction utilisateur)
+- **Évaluation des risques**: Niveau de risque contextuel combinant gravité technique et exploitabilité
 
-This feature helps agents prioritize vulnerabilities that pose immediate threats versus theoretical risks, enabling smarter security decisions.
+Cette fonctionnalité aide les agents à prioriser les vulnérabilités qui posent des menaces immédiates par rapport aux risques théoriques, permettant ainsi des décisions de sécurité plus intelligentes.
 
-### Advisory Schema
+Schéma consultatif
 
-**NVD CVE Advisory:**
+** NVD CVE Conseil :**
 ```json
 {
   "id": "CVE-2026-XXXXX",
@@ -221,7 +221,7 @@ This feature helps agents prioritize vulnerabilities that pose immediate threats
 }
 ```
 
-**Community Advisory:**
+**Conseil communautaire:**
 ```json
 {
   "id": "CLAW-2026-0042",
@@ -238,67 +238,67 @@ This feature helps agents prioritize vulnerabilities that pose immediate threats
 }
 ```
 
-**Platform values:**
-- `"openclaw"` - OpenClaw/Clawdbot/MoltBot only
-- `"nanoclaw"` - NanoClaw only
-- `"hermes"` - Hermes only
-- `"picoclaw"` - Picoclaw only
-- `["openclaw", "nanoclaw", "hermes", "picoclaw"]` - All core platforms
-- (empty/missing) - All platforms (backward compatible)
+**Valeurs de la plateforme:**
+- `"openclaw"` - OpenClaw/Clawdbot/Molt Bot seulement
+- `"nanoclaw"` - NanoClaw seulement
+- `"hermes"` - Hermès seulement
+- `"picoclaw"` - Picoclaw seulement
+- `["openclaw", "nanoclaw", "hermes", "picoclaw"]` - Toutes les plateformes centrales
+- (vide/manque) - Toutes les plates-formes (compatible avec l'arrière)
 
 ---
 
-## 🔄 CI/CD Pipelines
+Lignes de pipelines CI/CD
 
-CI/CD pipeline details were moved to the wiki module page:
+Les détails du pipeline CI/CD ont été déplacés vers la page du module wiki :
 - [wiki/modules/automation-release.md](wiki/modules/automation-release.md)
 
-Related operations docs:
+Opérations connexes docs:
 - [wiki/security-signing-runbook.md](wiki/security-signing-runbook.md)
 - [wiki/migration-signed-feed.md](wiki/migration-signed-feed.md)
 
 ---
 
-## 🛠️ Offline Tools
+Outils hors ligne
 
-ClawSec includes Python utilities for local skill development and validation.
+ClawSec comprend Utilitaires Python pour le développement et la validation des compétences locales.
 
-### Skill Validator
+### Validateur de compétences
 
-Validates a skill folder against the required schema:
+Valide un dossier de compétences en fonction du schéma requis :
 
 ```bash
 python utils/validate_skill.py skills/clawsec-feed
 ```
 
-Checks:
-- `skill.json` exists and is valid JSON
-- Required fields present (name, version, description, author, license)
-- SBOM files exist and are readable
-- OpenClaw metadata is properly structured
+Contrôles :
+- `skill.json` existe et est valide JSON
+- Champs obligatoires présents (nom, version, description, auteur, licence)
+- Les fichiers SBOM existent et sont lisibles
+- Les métadonnées OpenClaw sont bien structurées
 
-### Skill Checksums Generator
+Générateur de contrôles de compétences
 
-Generates `checksums.json` with SHA256 hashes for a skill:
+Génére `checksums.json` avec SHA256 haches pour une compétence:
 
 ```bash
 python utils/package_skill.py skills/clawsec-feed ./dist
 ```
 
-Outputs:
-- `checksums.json` - SHA256 hashes for verification
+Produits :
+- `checksums.json` - SHA256 haches pour vérification
 
 ---
 
-## 🛠️ Local Development
+Développement local
 
-### Prerequisites
+Préalables
 
 - Node.js 20+
-- Python 3.10+ (for offline tools)
+- Python 3.10+ (pour les outils hors ligne)
 - npm
 
-### Setup
+Configuration
 
 ```bash
 # Install dependencies
@@ -308,7 +308,7 @@ npm install
 npm run dev
 ```
 
-### Populate Local Data
+- Oui. Populer des données locales
 
 ```bash
 # Populate skills catalog from local skills/ directory
@@ -324,11 +324,11 @@ npm run dev
 npm run gen:wiki-llms
 ```
 
-Notes:
-- `npm run dev` and `npm run build` automatically regenerate wiki `llms.txt` exports (`predev`/`prebuild` hooks).
-- `public/wiki/` is generated output (local + CI) and is intentionally gitignored.
+Remarques:
+- `npm run dev` et `npm run build` régénèrent automatiquement les exportations de wikis `llms.txt` (Hooks `predev`/`prebuild`).
+- `public/wiki/` est généré en sortie (locale + CI) et est intentionnellement gitagnolé.
 
-### Build
+Construire
 
 ```bash
 npm run build
@@ -336,7 +336,7 @@ npm run build
 
 ---
 
-## 📁 Project Structure
+Structure du projet
 
 ```
 ├── advisories/
@@ -385,50 +385,50 @@ npm run build
 
 ---
 
-## 🤝 Contributing
+Contribution
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Nous saluons les contributions! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour les lignes directrices.
 
-### Submitting Security Advisories
+### Soumettre des avis de sécurité
 
-Found a prompt injection vector, malicious skill, or security vulnerability? Report it via GitHub Issues:
+Trouvé un vecteur d'injection rapide, une compétence malveillante ou une vulnérabilité à la sécurité? Signalez-le via GitHub Questions :
 
-1. Open a new issue using the **Security Incident Report** template
-2. Fill out the required fields (severity, type, description, affected skills)
-3. A maintainer will review and add the `advisory-approved` label
-4. The advisory is automatically published to the feed as `CLAW-{YEAR}-{ISSUE#}`
+1. Ouvrir un nouveau numéro en utilisant le modèle **Rapport d'incident de sécurité**
+2. Remplissez les champs requis (série, type, description, compétences affectées)
+3. Un responsable examinera et ajoutera l'étiquette `advisory-approved`
+4. L'avis est automatiquement publié sur le flux sous la forme de `CLAW-{YEAR}-{ISSUE#}`
 
-See [CONTRIBUTING.md](CONTRIBUTING.md#submitting-security-advisories) for detailed guidelines.
+Voir [CONTRIBUTING.md](CONTRIBUTING.md#submitting-security-advisories) pour des lignes directrices détaillées.
 
-### Adding New Skills
+Ajouter de nouvelles compétences
 
-1. Create a skill folder under `skills/`
-2. Add `skill.json` with required metadata and SBOM
-3. Add `SKILL.md` with agent-readable instructions
-4. Validate with `python utils/validate_skill.py skills/your-skill`
-5. Submit a PR for review
+1. Créer un dossier de compétences sous `skills/`
+2. Ajouter `skill.json` avec les métadonnées requises et SBOM
+3. Ajouter `SKILL.md` avec des instructions lisibles par agent
+4. Valider avec `python utils/validate_skill.py skills/your-skill`
+5. Soumettre un rapport de situation pour examen
 
-## 📚 Documentation Source of Truth
+Source de documentation de la vérité
 
-For all wiki content, edit files under `wiki/` in this repository. The GitHub Wiki (`<repo>.wiki.git`) is synced from `wiki/` by `.github/workflows/wiki-sync.yml` when `wiki/**` changes on `main`.
+Pour tout le contenu wiki, éditer des fichiers sous `wiki/` dans ce dépôt. Le Wiki GitHub (`<repo>.wiki.git`) est synchronisé depuis `wiki/` par `.github/workflows/wiki-sync.yml` lorsque `wiki/**` change sur `main`.
 
-LLM exports are generated from `wiki/` into `public/wiki/`:
-- `/wiki/llms.txt` is the LLM-ready export for `wiki/INDEX.md` (or a generated fallback index if `INDEX.md` is missing).
-- `/wiki/<page>/llms.txt` is the LLM-ready export for that single wiki page.
+Les exportations de LLM sont générées par `wiki/` vers `public/wiki/`:
+- `/wiki/llms.txt` est l'exportation prête à LLM pour `wiki/INDEX.md` (ou un indice de repli généré si `INDEX.md` est manquant).
+- `/wiki/<page>/llms.txt` est l'export LLM-ready pour cette seule page wiki.
 
 ---
 
-## 📄 License
+Licence
 
-- Source code: GNU AGPL v3.0 or later - See [LICENSE](LICENSE) for details.
-- Fonts in `font/`: Licensed separately - See [`font/README.md`](font/README.md).
+- Code source : GNU AGPL v3.0 ou ultérieur - Voir [LICENSE](LICENSE) pour plus de détails.
+- Polices dans `font/`: Licence séparée - Voir [`font/README.md`](font/README.md).
 
 ---
 
 <div align="center">
 
-**ClawSec** · Prompt Security, SentinelOne
+**ClawSec** · Sécurité rapide, SentinelOne
 
-🦞 Hardening agentic workflows, one skill at a time.
+C'est-à-dire Renforcer les workflows d'agents, une compétence à la fois.
 
 </div>

@@ -3,60 +3,60 @@ Source: ../glossary.md
 Review status: draft
 -->
 
-# Glossary
+♪ Glossaire
 
-## Terms
-| Term | Definition |
-| --- | --- |
-| Advisory Feed | JSON document (`feed.json`) containing security advisories for skills/platforms. |
-| Affected Specifier | Skill selector such as `skill@1.2.3`, wildcard, or range used in matching logic. |
-| Guarded Install | Two-step installer behavior that requires explicit confirmation when advisories match. |
-| SBOM Files | Skill-declared artifact list in `skill.json` used for packaging and validation. |
-| Detached Signature | Base64 signature file (`.sig`) stored separately from signed payload. |
-| Checksum Manifest | File hash map (`checksums.json`) used to verify payload integrity. |
+Termes
+Définition
+- Oui.
+Le document JSON (`feed.json`) contenant des avis de sécurité pour les compétences/plateformes. - Oui.
+Specificateur affecté Obtenir un sélecteur de compétences tel que `skill@1.2.3`, wildcard ou gamme utilisé dans la logique correspondante. - Oui.
+Installation surveillée Installation en deux étapes qui nécessite une confirmation explicite lorsque les avis correspondent. - Oui.
+Dossiers SBOM Liste des artefacts déclarés dans `skill.json` utilisés pour l'emballage et la validation. - Oui.
+Signature détachée (`.sig`) stockée séparément de la charge utile signée. - Oui.
+Voir la carte de hachage du fichier (`checksums.json`) utilisée pour vérifier l'intégrité de la charge utile. - Oui.
 
-## Skill Packaging Terms
-| Term | Definition |
-| --- | --- |
-| Skill Tag | Git tag formatted as `<skill>-v<semver>` used by release automation. |
-| Release Assets | Files attached to GitHub release (zip, `skill.json`, checksums, signatures). |
-| Catalog Index | `public/skills/index.json`, generated list consumed by web catalog. |
-| Embedded Components | Capability bundle from one skill included in another (for example feed embedded in suite). |
+## Conditions d'emballage des compétences
+Définition
+- Oui.
+Catégorie de compétences Git tag formaté en `<skill>-v<semver>` utilisé par l'automatisation de la libération. - Oui.
+Release Assets (en anglais seulement) Fichiers attachés à la version GitHub (zip, `skill.json`, checksums, signatures). - Oui.
+Index du catalogue , liste générée consommée par le catalogue web. - Oui.
+Composantes embarquées Ensemble de capacités d'une compétence incluse dans une autre (par exemple, alimentation intégrée dans la suite). - Oui.
 
-## Advisory and Security Terms
-| Term | Definition |
-| --- | --- |
-| Fail-Closed Verification | Reject payload if signature or checksum validation fails. |
-| Unsigned Compatibility Mode | Temporary bypass path enabled via `CLAWSEC_ALLOW_UNSIGNED_FEED=1`. |
-| Suppression Rule | Config entry matching `checkId` and `skill` to suppress known/accepted findings. |
-| Key Fingerprint | SHA-256 digest of DER-encoded public key used for key consistency checks. |
+## Avis et conditions de sécurité
+Définition
+- Oui.
+Vérification clôturée par échec. - Oui.
+Mode de compatibilité non signé. - Oui.
+Règle de répression ─ Entrée config correspondant à `checkId` et `skill` pour supprimer les constatations connues/acceptées. - Oui.
+Digest SHA-256 de clé publique encodée DER utilisée pour les contrôles de cohérence des clés. - Oui.
 
-## Runtime and Platform Terms
-| Term | Definition |
-| --- | --- |
-| OpenClaw Hook | Runtime event handler (`clawsec-advisory-guardian`) that checks advisories. |
-| NanoClaw IPC | Host/container task exchange for advisory refresh, signature verification, integrity checks. |
-| Integrity Baseline | Stored approved hashes/snapshots for protected files. |
-| Hash-Chained Audit Log | Append-only audit log where each entry depends on prior hash. |
+## Termes d'exécution et de plate-forme
+Définition
+- Oui.
+OpenClaw Hook (`clawsec-advisory-guardian`) qui vérifie les avis. - Oui.
+NanoClaw IPC= Échange de tâches d'hôte/conteneur pour la mise à jour des conseils, la vérification de la signature, les vérifications d'intégrité. - Oui.
+L'intégrité Base de données L'enregistrement des hashes/snapshots approuvés pour les fichiers protégés. - Oui.
+Registre de vérification à la suite d'une enquête Ajouter seulement le journal de vérification où chaque entrée dépend du hash antérieur. - Oui.
 
-## CI/CD Terms
-| Term | Definition |
-| --- | --- |
-| Poll NVD CVEs Workflow | Scheduled workflow that fetches and transforms NVD CVEs into advisories. |
-| Community Advisory Workflow | Issue-label-triggered workflow that publishes approved community advisories. |
-| Skill Release Workflow | Tag-triggered packaging/signing/publishing pipeline for skills. |
-| Deploy Pages Workflow | Workflow that builds site assets and mirrors release/advisory artifacts. |
+## Conditions CI/CD
+Définition
+- Oui.
+Poll NVD CVEs Workflow (en anglais seulement) Workflow programmé qui récupère et transforme les CVE NVD en avis. - Oui.
+Déroulement du travail d'avis de la collectivité Obtenir un document d'information qui publie les avis approuvés de la collectivité. - Oui.
+Release Workflow (en anglais seulement) Emballage/signation/publishing pipeline pour les compétences. - Oui.
+Déploiement des pages Flux de travail Flux de travail qui construit les actifs du site et les miroirs rejets/artefacts consultatifs. - Oui.
 
-## Source References
+Références sources
 - types.ts
-- skills/clawsec-suite/skill.json
-- skills/clawsec-nanoclaw/skill.json
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/suppression.mjs
-- skills/clawsec-nanoclaw/guardian/integrity-monitor.ts
-- scripts/populate-local-feed.sh
+- compétences/clawsec-suite/skill.json
+- compétences/clawsec-nanoclaw/skill.json
+- compétences/clawsec-suite/scripts/guarded_skill_install.mjs
+- compétences/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- compétences/clawec-suite/hooks/clawec-advisory-guardian/lib/suppression.mjs
+- compétences/clawsec-nanoclaw/guardian/integrity-monitor.ts
+- scripts/popular-local-feed.sh
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
-- .github/workflows/skill-release.yml
+- .github/workflows/kill-release.yml
 - .github/workflows/deploy-pages.yml

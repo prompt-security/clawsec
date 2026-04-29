@@ -3,42 +3,42 @@ Source: ../architecture.md
 Review status: draft
 -->
 
-# Architecture
+Architecture
 
-## System Context
-- This page appears under the `Start Here` section in `INDEX.md`.
-- ClawSec sits between upstream intelligence sources (NVD + community issues), GitHub automation, and runtime agent environments.
-- The repository publishes both static site content and signed artifacts that runtime skills verify before using.
-- External actor groups:
-  - GitHub Actions runners executing CI, release, and feed workflows.
-  - OpenClaw/NanoClaw agents consuming skills, advisories, and verification scripts.
-  - Repository maintainers approving advisory issues and merging release/tag changes.
+## Contexte du système
+- Oui. Cette page apparaît dans la section `Start Here` dans `INDEX.md`.
+- ClawSec se situe entre les sources d'intelligence amont (NVD + problèmes communautaires), l'automatisation GitHub, et les environnements d'agents d'exécution.
+- Oui. Le dépôt publie à la fois le contenu statique du site et les artefacts signés que les compétences d'exécution vérifient avant d'utiliser.
+- Groupes d'acteurs extérieurs :
+- Les coureurs GitHub Actions exécutent des flux de travail de CI, release et feed.
+- Les agents OpenClaw/NanoClaw consomment des compétences, des avis et des scripts de vérification.
+- Les responsables du dépôt approuvent les questions d'avis et fusionnent les modifications de diffusion/d'étiquette.
 
-## Components
-| Component | Location | Responsibility |
-| --- | --- | --- |
-| Web UI | `App.tsx`, `pages/`, `components/` | Renders skills catalog and advisory detail experiences. |
-| Advisory Feed Core | `advisories/feed.json*`, `skills/clawsec-suite/.../feed.mjs` | Stores, verifies, and parses advisories with detached signatures/checksums. |
-| Skill Packages | `skills/*/` | Distributes installable security capabilities with SBOM metadata. |
-| Local Automation Scripts | `scripts/*.sh` | Build local mirrors, pre-push checks, and manual release helpers. |
-| CI/CD Workflows | `.github/workflows/*.yml` | Linting, tests, NVD polling, release packaging, and Pages deploy. |
-| Python Utility Layer | `utils/*.py` | Skill metadata validation and checksum generation. |
+Composantes
+Composante Lieu Responsabilité
+- Oui.
+USI Web de `App.tsx`, `pages/`, `components/`. - Oui.
+Voir la fiche d'information. - Oui.
+Des packs de compétences `skills/*/`?Distribue des capacités de sécurité installables avec des métadonnées SBOM. - Oui.
+Scripts d'automatisation locale `scripts/*.sh`=Construisez des miroirs locaux, des vérifications pré-poussières et des aides à la libération manuelle. - Oui.
+IC/CD Workflows (en anglais seulement) `.github/workflows/*.yml` (en anglais seulement) Doublure, tests, sondage NVD, emballage de libération et déploiement des pages. - Oui.
+Python Utility Layer (Python Utility Layer) `utils/*.py` (Python Utility Layer) Validation des métadonnées des compétences et génération de bilans. - Oui.
 
-## Key Flows
-- Skill catalog flow:
-  1. Release/tag workflows publish skill assets.
-  2. Deploy workflow discovers release assets and builds `public/skills/index.json`.
-  3. UI fetches `public/skills/index.json` and skill docs for `/skills` pages.
-- Advisory feed flow:
-  1. `poll-nvd-cves.yml` and `community-advisory.yml` update `advisories/feed.json`.
-  2. Feed is signed and mirrored to public paths.
-  3. Runtime hooks/scripts load remote feed and fallback to local signed copies.
-- Guarded install flow:
-  1. Installer requests target skill + version.
-  2. Advisory matcher checks affected specifiers and severity/risk hints.
-  3. Exit code 42 enforces second confirmation when advisories match.
+Oui. Flux clés
+- Flux de catalogue des compétences :
+1. Les workflows de publication/d'étiquetage publient les compétences.
+2. Déployer workflow découvre les actifs de libération et construit `public/skills/index.json`.
+3. L'interface utilisateur récupère `public/skills/index.json` et les documents de compétences pour les pages `/skills`.
+- Débit d'alimentation consultatif :
+1. Mise à jour `poll-nvd-cves.yml` et `community-advisory.yml` `advisories/feed.json`.
+2. Les aliments pour animaux sont signés et reproduits sur les voies publiques.
+3. Les hameçons/scripts d'exécution chargent le flux à distance et le retour aux copies signées locales.
+- Débit d'installation surveillé:
+1. Installer demande compétence cible + version.
+2. Les contrôles de l'appariement consultatif ont affecté les spécifications et les indices de gravité/risque.
+3. Le code de sortie 42 impose une seconde confirmation lorsque les avis correspondent.
 
-## Diagrams
+Schémas
 ```mermaid
 flowchart TD
   A["NVD + Community Inputs"] --> B["Feed Workflows\n(poll/community)"]
@@ -51,33 +51,33 @@ flowchart TD
 
 ![Prompt Line Motif](../assets/architecture_img_01_prompt-line.svg)
 
-## Interfaces and Contracts
-| Interface | Contract Form | Validation |
-| --- | --- | --- |
-| Skill metadata | `skills/*/skill.json` | Validated by Python utility + CI version-parity checks. |
-| Advisory feed | JSON + Ed25519 detached signature | Verified by `feed.mjs` and NanoClaw signature utilities. |
-| Checksums manifest | `checksums.json` (+ optional `.sig`) | Parsed and hash-matched before trusting payloads. |
-| Hook event interface | `HookEvent` (`type`, `action`, `messages`) | Runtime handler only processes selected event names. |
-| Workflow release naming | Tag pattern `<skill>-vX.Y.Z` | Parsed in release/deploy workflows to discover skills. |
+## Interfaces et contrats
+Formulaire de contrat de validation
+- Oui.
+Validé par l'utilitaire Python + vérification de la parité des versions CI. - Oui.
+JSON + Ed25519 signature détachée. - Oui.
+Voir le manifeste des contrôles. - Oui.
+- Oui. Interface d'événement hook : `HookEvent` (`type`, `action`, `messages`) ► Le gestionnaire d'événements ne traite que les noms d'événement sélectionnés. - Oui.
+Motif d'étiquettes `<skill>-vX.Y.Z`.Parsed in release/deploy workflows to discover competences. - Oui.
 
-## Key Parameters
-| Parameter | Default | Effect |
-| --- | --- | --- |
-| `CLAWSEC_FEED_URL` | `https://clawsec.prompt.security/advisories/feed.json` | Remote advisory source for suite scripts/hooks. |
-| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Enables temporary unsigned fallback compatibility. |
-| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Requires checksum manifest verification where available. |
-| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Scan throttling window for advisory hook. |
-| `CLAWSEC_SKILLS_INDEX_TIMEOUT_MS` | `5000` | Remote skill index fetch timeout for catalog discovery. |
-| `PROMPTSEC_GIT_PULL` | `0` | Optional auto-pull before watchdog audit runs. |
+Oui. Paramètres clés
+Paramètre par défaut Effet
+- Oui.
+`CLAWSEC_FEED_URL`= `https://clawsec.prompt.security/advisories/feed.json`= Source d'avis à distance pour les scripts/hooks de suite. - Oui.
+`CLAWSEC_ALLOW_UNSIGNED_FEED`=2 `0`=2 Permet une compatibilité temporaire non signée. - Oui.
+`CLAWSEC_VERIFY_CHECKSUM_MANIFEST`.`1`.U. Nécessite une vérification de manifeste de somme de contrôle lorsque disponible. - Oui.
+`CLAWSEC_HOOK_INTERVAL_SECONDS`.`300`.Scanner la fenêtre de griffage pour le crochet de conseil. - Oui.
+`CLAWSEC_SKILLS_INDEX_TIMEOUT_MS`.`5000`= Indice de compétence à distance récupérer le temps de sortie pour la découverte du catalogue. - Oui.
+`PROMPTSEC_GIT_PULL`.`0` en option avant les audits de chien de garde. - Oui.
 
-## Error Handling and Reliability
-- Feed fetching is fail-closed for invalid signatures and malformed manifests.
-- Remote fetch failures gracefully fall back to local signed feeds.
-- Hook state uses atomic file writes with strict mode where supported.
-- UI pages detect HTML fallbacks served as JSON and avoid rendering corrupted data.
-- Workflow steps enforce key-fingerprint consistency to avoid split-key drift.
+## Gestion des erreurs et fiabilité
+- La récupération du flux est fermée par défaut pour les signatures invalides et les manifestes malformés.
+- Remote récupérer les échecs gracieusement revenir aux flux signés locaux.
+- Hook state utilise le fichier atomique écrit en mode strict où supporté.
+- Les pages d'interface utilisateur détectent les replis HTML utilisés comme JSON et évitent de rendre les données corrompues.
+- Les étapes de flux de travail font en sorte que l'empreinte des clés soit cohérente pour éviter la dérive des clés fractionnées.
 
-## Example Snippets
+## Exemples d'extraits
 ```tsx
 // Route topology in the web app
 <Routes>
@@ -103,34 +103,34 @@ const remoteFeed = await loadRemoteFeed(feedUrl, {
 });
 ```
 
-## Runtime and Deployment
-| Runtime Surface | Execution Model | Output |
-| --- | --- | --- |
-| Vite app (`npm run dev`) | Local frontend server | Interactive web app for feed/skills. |
-| GitHub CI | Multi-OS matrix + dedicated jobs | Lint/type/build/security and test confidence. |
-| Skill release workflow | Tag-driven publish + PR dry-run checks | Release assets, signed checksums, optional ClawHub publish. |
-| Pages deploy workflow | Triggered by CI/Release success | Static site + mirrored advisories/releases. |
-| Runtime hooks | OpenClaw event hooks / NanoClaw IPC | Advisory alerts, gating decisions, integrity checks. |
+Temps d'exécution et déploiement
+Modèle d'exécution
+- Oui.
+Variez l'application (`npm run dev`) - Oui.
+Matrice multi-OS + emplois dédiés. - Oui.
+- Oui. Workflow de sortie de compétences ► Publication guidée par l'étiquette + Vérifications de sortie à sec de la RP. - Oui.
+- Oui. Déploiement des pages Déclenchement par CI/Succcès de la libération. - Oui.
+IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IPC IG IPC IPC IPC IPC IPC IPC IPC IPC IPC , IPC IPC , IPC STAT STAT STAT STAT STAT STAT STAT - Oui.
 
-## Scaling Notes
-- Advisory volume scales with keyword set in NVD polling; dedupe and post-filtering control noise.
-- Deploy workflow processes release lists and keeps newest skill versions in index output.
-- Module boundaries by skill folder allow adding new security capabilities without changing frontend structure.
-- Signature verification paths remain lightweight because payload sizes (feed/manifests) are small.
+Remarques supplémentaires
+- Échelles de volume de consultation avec mot-clé fixé dans le sondage NVD; bruit de dédoublement et de contrôle post-filtrage.
+- Déployer les processus de flux de travail publie des listes et conserve les nouvelles versions de compétences dans la sortie index.
+- Les limites des modules par dossier de compétences permettent d'ajouter de nouvelles capacités de sécurité sans changer la structure de frontend.
+- Les voies de vérification des signatures restent légères car les tailles de charge utile (feed/manifestes) sont petites.
 
-## Source References
+Références sources
 - App.tsx
-- pages/SkillsCatalog.tsx
+- pages / SkillsCatalog.tsx
 - pages/FeedSetup.tsx
-- pages/AdvisoryDetail.tsx
+- pages/conseilDétail.tsx
 - pages/WikiBrowser.tsx
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-suite/scripts/discover_skill_catalog.mjs
-- skills/clawsec-nanoclaw/lib/advisories.ts
-- skills/clawsec-nanoclaw/lib/signatures.ts
+- compétences/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- compétences/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- compétences/clawsec-suite/scripts/guarded_skill_install.mjs
+- compétences/clawsec-suite/scripts/discover_skill_catalog.mjs
+- compétences/clawsec-nanoclaw/lib/advisories.ts
+- compétences/clawsec-nanoclaw/lib/signatures.ts
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
-- .github/workflows/skill-release.yml
+- .github/workflows/kill-release.yml

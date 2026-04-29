@@ -3,69 +3,69 @@ Source: ../localization.md
 Review status: draft
 -->
 
-# Localization Workflow
+# Flux de travail de localisation
 
-## Purpose
-Define a repeatable docs localization pipeline for ClawSec README and wiki pages.
+Objet
+Définir un pipeline de localisation des docs répétables pour les pages de ClawSec README et wiki.
 
-## Scope
-- Source language: English (`README.md`, `wiki/*.md`)
-- Current translated language: Spanish (`README.es.md`, `wiki/es/*.md`)
-- Korean pilot language: Korean (`README.ko.md`, `wiki/ko/*.md`)
-- Future languages: `wiki/<lang>/...` and `README.<lang>.md`
+Portée
+- Langue source: anglais (`README.md`, `wiki/*.md`)
+- Langue traduite actuelle: espagnol (`README.es.md`, `wiki/es/*.md`)
+- Langue pilote coréenne: coréen (`README.ko.md`, `wiki/ko/*.md`)
+- Langues futures: `wiki/<lang>/...` et `README.<lang>.md`
 
-## Source of Truth Rules
-1. English files are canonical.
-2. Translations must preserve commands, file paths, code blocks, and identifiers exactly.
-3. Product names and skill names stay untranslated (`ClawSec`, `OpenClaw`, `NanoClaw`, `Hermes`, `Picoclaw`, skill package names).
-4. When translation coverage is partial, translated files must state scope explicitly.
+Source des règles de vérité
+1. Les fichiers anglais sont canoniques.
+2. Les traductions doivent préserver les commandes, les chemins de fichiers, les blocs de code et les identifiants exactement.
+3. Les noms de produits et les noms de compétences restent non traduits (`ClawSec`, `OpenClaw`, `NanoClaw`, `Hermes`, `Picoclaw`, noms de paquets de compétences).
+4. Lorsque la couverture de traduction est partielle, les fichiers traduits doivent indiquer explicitement la portée.
 
-## Folder Conventions
-- README translations:
-  - `README.es.md`
-  - Future: `README.fr.md`, `README.de.md`, `README.ja.md`, etc.
-- Wiki translations:
-  - `wiki/es/INDEX.md`
-  - `wiki/es/<page>.md`
-  - Future: `wiki/fr/<page>.md`, `wiki/de/<page>.md`, etc.
-- Localization assets:
-  - `wiki/i18n/terminology-en-es.md`
-  - `wiki/i18n/translation-tracker.md`
+## Dossier Conventions
+- Traductions README :
+- `README.es.md`
+- Futur: `README.fr.md`, `README.de.md`, `README.ja.md`, etc.
+- Traductions Wiki :
+- `wiki/es/INDEX.md`
+- `wiki/es/<page>.md`
+- Avenir: `wiki/fr/<page>.md`, `wiki/de/<page>.md`, etc.
+- Actifs de localisation :
+- `wiki/i18n/terminology-en-es.md`
+- `wiki/i18n/translation-tracker.md`
 
-## Update Workflow
-1. **Normalize source docs first**
-   - Update English source docs for clarity and structure before translation.
-2. **Record delta**
-   - Note changed English pages in `wiki/i18n/translation-tracker.md`.
+## Mettre à jour le flux de travail
+1. **Normaliser les documents sources d'abord* *
+- Mettre à jour les documents source en anglais pour plus de clarté et de structure avant la traduction.
+2. **Enregistrement delta**
+- Note modifiée pages en anglais dans `wiki/i18n/translation-tracker.md`.
 3. **Translate changed pages**
-   - Preserve markdown structure and heading levels.
-   - Keep command blocks untouched.
+- Préserver la structure de balisage et les niveaux de cap.
+- Gardez les blocs de commande intacts.
 4. **QA pass**
-   - Verify links resolve.
-   - Verify code blocks and inline commands are unchanged.
-   - Verify terminology consistency using `terminology-en-es.md`.
+- Vérifier si les liens sont résolus.
+- Vérifier que les blocs de code et les commandes en ligne sont inchangés.
+- Vérifier la cohérence terminologique en utilisant `terminology-en-es.md`.
 5. **Regenerate exports**
-   - Run `npm run gen:wiki-llms`.
+- Exécutez `npm run gen:wiki-llms`.
 6. **Review and PR**
-   - Include summary of translated pages and remaining gaps.
+- Inclure un résumé des pages traduites et des lacunes restantes.
 
-## Translation QA Checklist
-- [ ] Heading hierarchy preserved.
-- [ ] Command snippets unchanged and runnable.
-- [ ] File paths and URLs unchanged.
-- [ ] Skill and platform names unchanged.
-- [ ] Security terminology consistent.
-- [ ] `wiki/INDEX.md` has translation link entries.
-- [ ] `wiki/<lang>/INDEX.md` links back to key English pages when untranslated.
+## Liste de contrôle de l'AQ pour la traduction
+- [ ] Hiérarchie de cap conservée.
+- Le commandement n'a pas changé.
+- [ ] Chemins de fichiers et URLs inchangés.
+- [ ] Compétence et noms de plate-forme inchangés.
+- La terminologie de la sécurité est cohérente.
+- [ ] `wiki/INDEX.md` a des entrées de lien de traduction.
+- [ ] `wiki/<lang>/INDEX.md` renvoie à des pages anglaises clés lorsqu'elles ne sont pas traduites.
 
-## Suggested Language Rollout
-1. Spanish (`es`) – done in phase 1 baseline.
-2. French (`fr`) and German (`de`) for broad technical audience.
-3. Japanese (`ja`) for high-fidelity platform docs.
+## Suggestion de déploiement du langage
+1. Espagnol (`es`) – effectué au niveau de la phase 1.
+2. Français (`fr`) et allemand (`de`) pour un large public technique.
+3. Japonais (`ja`) pour les documents de plate-forme haute fidélité.
 
-## Source References
-- README.md
-- README.es.md
+Références sources
+- PRÊT.md
+- LECTME.es.md
 - wiki/INDEX.md
 - wiki/es/INDEX.md
 - wiki/es/overview.md

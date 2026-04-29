@@ -1,4 +1,4 @@
-# Security
+# Seguridad
 
 ## Resumen del modelo de seguridad
 - ClawSec protege tanto la distribución de contenido (artefactos firmados) como el comportamiento en runtime (advisory gating, monitoreo de integridad).
@@ -7,7 +7,7 @@
 
 ## Controles criptográficos
 | Control | Mecanismo | Ubicación |
-| --- | --- | --- |
+Silencio.
 | Autenticidad del feed | Firmas detached Ed25519 (`feed.json.sig`) | Workflows de advisories + librerías de verificación del consumidor. |
 | Integridad de artefactos | Manifiestos de checksum SHA-256 (`checksums.json`) | Workflows de release de skill y deploy de pages. |
 | Consistencia de claves | Comparación de fingerprint entre docs + PEM canónicos | `scripts/ci/verify_signing_key_consistency.sh`. |
@@ -15,7 +15,7 @@
 
 ## Controles de enforcement en runtime
 | Control | Componente | Efecto |
-| --- | --- | --- |
+Silencio.
 | Advisory hook gating | `clawsec-advisory-guardian` | Alertas y guía cautelosa según advisories coincidentes. |
 | Instalador con doble confirmación | `guarded_skill_install.mjs` | Sale con código `42` hasta recibir confirmación explícita en advisories coincidentes. |
 | Extensión de reputación | `clawsec-clawhub-checker` | Scoring de riesgo adicional antes de instalar. |

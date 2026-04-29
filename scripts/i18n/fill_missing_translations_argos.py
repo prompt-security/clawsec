@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import argparse
+
 from argostranslate import translate
 
 RE_INLINE_CODE = re.compile(r"`[^`]*`")
@@ -19,7 +21,7 @@ def _protect_tokens(line: str) -> tuple[str, dict[str, str]]:
 
         def _r(m: re.Match[str]) -> str:
             nonlocal idx
-            key = f"__TOK_{idx}__"
+            key = f"ZXQTOKEN{idx}QXZ"
             idx += 1
             mapping[key] = m.group(0)
             return key
@@ -86,26 +88,30 @@ def _process_pair(source: Path, target: Path, tr) -> int:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--lang", required=True, choices=["de", "es", "fr", "ja", "ko"])
+    args = parser.parse_args()
+
     repo = Path(__file__).resolve().parents[2]
-    tr = translate.get_translation_from_codes("en", "de")
+    tr = translate.get_translation_from_codes("en", args.lang)
     if tr is None:
-        raise SystemExit("Missing Argos en->de model. Install first.")
+        raise SystemExit(f"Missing Argos en->{args.lang} model. Install first.")
 
     total = 0
 
     # README
-    total += _process_pair(repo / "README.md", repo / "README.de.md", tr)
+    total += _process_pair(repo / "README.md", repo / f"README.{args.lang}.md", tr)
 
     # wiki/de
-    de_root = repo / "wiki" / "de"
-    for de_file in sorted(de_root.glob("*.md")):
-        if de_file.name in {"INDEX.md", "GENERATION.md"}:
+    lang_root = repo / "wiki" / args.lang
+    for lang_file in sorted(lang_root.glob("*.md")):
+        if lang_file.name in {"INDEX.md", "GENERATION.md"}:
             continue
-        src = repo / "wiki" / de_file.name
+        src = repo / "wiki" / lang_file.name
         if src.exists():
-            total += _process_pair(src, de_file, tr)
+            total += _process_pair(src, lang_file, tr)
 
-    print(f"Updated translated lines: {total}")
+    print(f"Updated translated lines for {args.lang}: {total}")
     return 0
 
 

@@ -3,101 +3,101 @@ Source: ../platform-verification.md
 Review status: draft
 -->
 
-# Platform Verification Checklist
+Lista de verificación de la plataforma
 
-Use this checklist to validate portability and path-handling behavior after changes.
+Utilice esta lista de verificación para validar la portabilidad y el comportamiento de manejo de caminos después de cambios.
 
 ## Linux Verification
 
-1. Run core Node tests:
+1. Ejecutar las pruebas del núcleo del nodo:
    ```bash
    node skills/clawsec-suite/test/path_resolution.test.mjs
    node skills/clawsec-suite/test/guarded_install.test.mjs
    node skills/clawsec-suite/test/advisory_suppression.test.mjs
    node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
    ```
-   Expected: all tests pass.
+Se espera: todas las pruebas pasan.
 
-2. Verify no literal `$HOME` path acceptance:
+2. No verifique ninguna aceptación literal del camino `$HOME`:
    ```bash
    CLAWSEC_LOCAL_FEED='\$HOME/advisories/feed.json' \
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: exits non-zero with `Unexpanded home token` error.
+Se espera: salidas no cero con error `Unexpanded home token`.
 
-3. Verify `$HOME` expansion works:
+3. Verificar las obras de expansión `$HOME`:
    ```bash
    HOME=/tmp/clawsec-home node skills/clawsec-suite/test/path_resolution.test.mjs
    ```
-   Expected: `$HOME` expansion tests pass.
+Se espera: las pruebas de expansión `$HOME` pasan.
 
-## macOS Verification
+## MacOS Verification
 
-1. Run the same Node test suite as Linux.
-2. Confirm OpenSSL tooling path assumptions are documented:
-   - If using LibreSSL/OpenSSL variations, ensure checks use tested command forms from docs.
-3. Verify tilde expansion in config path:
+1. Ejecute la misma suite de pruebas Node que Linux.
+2. Confirme que se documentan los supuestos de la ruta de la herramienta OpenSSL:
+- Si utilizas las variaciones LibreSSL/OpenSSL, asegúrate de utilizar formularios de comando probados de los docs.
+3. Verificar la expansión de inclinación en el camino de config:
    ```bash
    OPENCLAW_AUDIT_CONFIG=~/.openclaw/security-audit.json \
    node skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs --enable-suppressions
    ```
-   Expected: path resolves correctly (or clear file-not-found error at expanded location).
+Se espera: la ruta resuelve correctamente (o el error de archivo claro no encontrado en la ubicación ampliada).
 
-## Windows Verification (PowerShell)
+## Verificación de Windows (PowerShell)
 
-1. Run Node tests:
+1. Ejecutar pruebas de Nodo:
    ```powershell
    node skills/clawsec-suite/test/path_resolution.test.mjs
    node skills/clawsec-suite/test/guarded_install.test.mjs
    node skills/clawsec-suite/test/advisory_suppression.test.mjs
    ```
-   Expected: all pass.
+Se espera: pasen todos.
 
-2. Verify PowerShell env path expansion behavior:
+2. Verificar el poder Shell env ruta comportamiento de expansión:
    ```powershell
    $env:CLAWSEC_LOCAL_FEED = '$env:USERPROFILE\advisories\feed.json'
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: path token is expanded/normalized or fails with a clear error if target files are missing.
+Se espera: el token de ruta se expande/normaliza o falla con un error claro si faltan los archivos de destino.
 
-3. Verify escaped literal token rejection:
+3. Verify escape literal token rejection:
    ```powershell
    $env:CLAWSEC_LOCAL_FEED = '\$HOME\advisories\feed.json'
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: `Unexpanded home token` error; no directory creation with literal `$HOME`.
+Se espera: error `Unexpanded home token`; no creación de directorio con literal `$HOME`.
 
 ## Line Endings Sanity
 
-1. Confirm LF policy is present:
+1. La política de confirmación está presente:
    ```bash
    test -f .gitattributes && grep -n "eol=lf" .gitattributes
    ```
-   Expected: script/config file patterns enforce LF.
+Se espera: script/config patrones de archivo ejecuten LF.
 
-2. After a CRLF-prone checkout, verify scripts still parse:
+2. Después de un checkout prono CRLF, verifique los scripts todavía parse:
    ```bash
    bash -n scripts/populate-local-feed.sh
    bash -n scripts/populate-local-skills.sh
    ```
-   Expected: no `^M` shebang/parse errors.
+Se espera: ningún error `^M` shebang/parse.
 
-## Explicit Bug Check: No Literal `$HOME` Directory Creation
+## Explicit Bug Check: No Literal `$HOME` Creación del directorio
 
-1. Configure a path with a literal/escaped token.
-2. Run setup/install command.
+1. Configure un camino con un token literal/escaped.
+2. Ejecute el comando setup/install.
 3. Verify command fails early with token error.
-4. Confirm no `$HOME` segment directory was created under working directories.
+4. Confirmar no `$HOME` directorio de segmento fue creado bajo directorios de trabajo.
 
-Expected outcome: **no directories containing literal `$HOME` are created by supported setup scripts.**
+Resultado esperado: ** ningún directorio que contenga `$HOME` literal son creados por scripts de configuración compatibles. #
 
-## Source References
+## Referencias Fuente
 - .gitattributes
 - scripts/populate-local-feed.sh
 - scripts/populate-local-skills.sh
-- skills/clawsec-suite/test/path_resolution.test.mjs
-- skills/clawsec-suite/test/guarded_install.test.mjs
-- skills/clawsec-suite/test/advisory_suppression.test.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
-- skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
+- habilidades/clawsec-suite/test/path_ resolution.test.mjs
+- habilidades/clawsec-suite/test/guarded_install.test.mjs
+- habilidades/clawsec-suite/test/advisory_suppression.test.mjs
+- habilidades/clawsec-suite/scripts/guarded_skill_install.mjs
+- habilidades/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- habilidades/openclaw-audit-watchdog/test/suppression_config.test.mjs

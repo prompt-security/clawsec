@@ -1,4 +1,4 @@
-# Overview
+# Sinopsis
 
 ## Propósito
 - ClawSec es un repositorio orientado a seguridad que combina un catálogo web público con habilidades de seguridad instalables para entornos OpenClaw, NanoClaw, Hermes y Picoclaw.
@@ -10,7 +10,7 @@
 
 ## Layout del repositorio
 | Ruta | Rol | Notas |
-| --- | --- | --- |
+Silencio.
 | `pages/`, `components/`, `App.tsx`, `index.tsx` | UI Vite + React | Catálogo de skills, feed de advisories y páginas de detalle. |
 | `skills/` | Paquetes de skills de seguridad | Cada skill contiene `skill.json`, `SKILL.md` y opcionalmente scripts/tests/docs. |
 | `advisories/` | Canal de advisories del repositorio | `feed.json` firmado + `feed.json.sig` y material de claves. |
@@ -22,7 +22,7 @@
 
 ## Puntos de entrada
 | Entrada | Tipo | Propósito |
-| --- | --- | --- |
+Silencio.
 | `index.tsx` | Bootstrap frontend | Monta la app React en `#root`. |
 | `App.tsx` | Router frontend | Define rutas para home, skills, feed y wiki. |
 | `scripts/prepare-to-push.sh` | Flujo dev | Ejecuta checks de lint/type/build/security antes de push. |
@@ -34,7 +34,7 @@
 
 ## Artefactos clave
 | Artefacto | Producido por | Consumido por |
-| --- | --- | --- |
+Silencio.
 | `advisories/feed.json` | Poll NVD + workflows comunitarios | UI web, hook de clawsec-suite, instaladores. |
 | `advisories/feed.json.sig` | Pasos de firmado en workflow | Verificación de firma en tooling de suite/nanoclaw. |
 | `public/skills/index.json` | Workflow de deploy / script local | `pages/SkillsCatalog.tsx` y `pages/SkillDetail.tsx`. |

@@ -3,47 +3,47 @@ Source: ../data-flow.md
 Review status: draft
 -->
 
-# Data Flow
+# Flujo de datos
 
 ## Primary Flows
-- `Advisory ingestion`: NVD/community inputs are transformed into a normalized advisory feed, signed, then mirrored for clients.
-- `Skill catalog publication`: release assets are discovered and converted into `public/skills/index.json` plus per-skill docs/checksums.
-- `Runtime enforcement`: suite and nanoclaw consumers load advisory data, match against skills, and emit alerts or confirmation gates.
-- This page appears under the `Guides` section in `INDEX.md`.
+- `Advisory ingestion`: Las entradas de NVD/community se transforman en una alimentación de asesoramiento normalizada, firmada, luego reflejada para clientes.
+- `Skill catalog publication`: activos de liberación son descubiertos y convertidos en `public/skills/index.json` más docs/checksums per-skill.
+- `Runtime enforcement`: Los consumidores de suite y nanoclaw cargan datos de asesoramiento, coinciden con las habilidades y emiten alertas o puertas de confirmación.
+- Esta página aparece en la sección `Guides` en `INDEX.md`.
 
-## Step-by-Step
-1. Feed producer workflow/script fetches source data (`NVD API` or issue payload).
-2. JSON transform logic normalizes severity/type/affected fields and deduplicates by advisory ID.
+Paso a paso
+1. Datos fuente de flujo de trabajo/script fetches (`NVD API` o payload de emisión).
+2. JSON transforma lógica normaliza la severidad/tipo/ campos afectados y deduplica por ID de asesoramiento.
 3. Signature/checksum steps generate detached signatures and checksum manifests.
 4. Deploy workflow mirrors signed artifacts under `public/` and `public/releases/latest/download/`.
-5. UI consumers validate JSON shape/content; runtime consumers additionally verify signatures/checksums before trusting feed data.
-6. Matchers compare `affected` specifiers to skill names/versions and emit alerts or enforce confirmation.
+5. Los consumidores de UI validan la forma/contenido de JSON; los consumidores de tiempo de ejecución verifican adicionalmente firmas/consultos antes de confiar en datos de alimentación.
+6. Los Matchers comparan los especificadores `affected` con nombres de habilidad/versiones y emiten alertas o imponen confirmación.
 
 ## Inputs and Outputs
-Inputs/outputs are summarized in the table below.
+En el cuadro que figura a continuación se resumen los insumos y los productos.
 
-| Type | Name | Location | Description |
-| --- | --- | --- | --- |
-| Input | CVE payloads | `services.nvd.nist.gov/rest/json/cves/2.0` | Source vulnerabilities filtered by ClawSec keywords. |
-| Input | Community advisory issue | `.github/workflows/community-advisory.yml` event payload | Maintainer-approved issue transformed into advisory record. |
-| Input | Skill release assets | GitHub Releases API + assets | Used to build web catalog and mirror downloads. |
-| Input | Local config/env | `OPENCLAW_AUDIT_CONFIG`, `CLAWSEC_*` vars | Controls feed pathing, suppression, and verification behavior. |
-| Output | Advisory feed | `advisories/feed.json` | Canonical repository feed. |
-| Output | Advisory signature | `advisories/feed.json.sig` | Detached signature for feed authenticity. |
-| Output | Skill catalog index | `public/skills/index.json` | Runtime web catalog used by `/skills` pages. |
-| Output | Release checksums/signatures | `release-assets/checksums.json(.sig)` | Integrity manifest for release consumers. |
-| Output | Hook state | `~/.openclaw/clawsec-suite-feed-state.json` | Tracks scan timing and notified matches. |
+Silencio Tipo TENIDO Nombre TENIDO Ubicación Silencio Descripción
+Silencio --- Silencio ---
+← Input Silencio CVE payloads TEN `services.nvd.nist.gov/rest/json/cves/2.0` TEN Fuente vulnerabilidades filtradas por ClawSec keywords. Silencio
+Silencio Input Silencio Community advisory issue Silencio `.github/workflows/community-advisory.yml` event payload Silencio Tema aprobado por Maintainer transformado en registro consultivo. Silencio
+← Input ← activos de liberación de Habilidad Silencio GitHub Releases API + activos TEN Utilizado para construir catálogo web y descargas de espejo. Silencio
+← Input Silencio Local config/env Silencio `OPENCLAW_AUDIT_CONFIG`, `CLAWSEC_*` vars Silencio Controls alimentan caminos, supresión y comportamiento de verificación. Silencio
+TENCIÓN TENIDO ANTERIENDA ALIMENTAR TENIDO `advisories/feed.json` TENIDO Alimento de repositorio canónico. Silencio
+TENCIÓN ANTERIENTE Firma asesora ANTERI `advisories/feed.json.sig` TENIDO Firma adjunta para la autenticidad del alimento. Silencio
+Índice de catálogo de Habilidad Silencioso `public/skills/index.json` Silencioso Catálogo web usado por páginas de `/skills`. Silencio
+TENCIÓN ANTERIOR ANTERIENDIENTE Compruebas/signaturas ANTE `release-assets/checksums.json(.sig)` ANTE Integrity manifest for release consumers. Silencio
+TENCIÓN ANTERIENTE Hook state ANTE `~/.openclaw/clawsec-suite-feed-state.json` TENIDO Pistas de escaneo y coincidencias notificadas. Silencio
 
-## Data Structures
-| Structure | Key Fields | Purpose |
-| --- | --- | --- |
-| Advisory feed record | `id`, `severity`, `type`, `affected[]`, `published` | Unit of risk data used by UI and installers. |
-| Skill metadata record | `id`, `name`, `version`, `emoji`, `tag` | Catalog row for web browsing and install commands. |
-| Checksums manifest | `schema_version`, `algorithm`, `files` | Maps file names to expected digests. |
-| Advisory state | `known_advisories`, `last_hook_scan`, `notified_matches` | Prevents repeated alerts and throttles scans. |
-| Suppression config | `enabledFor[]`, `suppressions[]` | Targeted skip list by `checkId` + `skill`. |
+## Estructuras de datos
+tención Estructura TENIDO Key Fields
+Silencio.
+tención Registro de alimentación de mantenimiento de `id`, `severity`, `type`, `affected[]`, `published` TENIDO Unidad de datos de riesgo usados por UI e instaladores. Silencio
+← Metadatos de Habilidad Silencio `id`, `name`, `version`, `emoji`, `tag` Silencioso Catálogo fila para navegar por la web e instalar comandos. Silencio
+tención Checksums manifiesto Silencioso `schema_version`, `algorithm`, `files` Silencio Mapas nombres de archivos a los digestos esperados. Silencio
+tención Estado asesor Silencioso `known_advisories`, `last_hook_scan`, `notified_matches` Silencio Impide las alertas repetidas y los escaneos de aceleradores. Silencio
+confidencialidad de la supresión permanente `enabledFor[]`, `suppressions[]` TENIDO Lista de saltos apuntado por `checkId` + `skill`. Silencio
 
-## Diagrams
+## Diagramas
 ```mermaid
 flowchart LR
   A["NVD + Issue Inputs"] --> B["Transform + Deduplicate"]
@@ -56,16 +56,16 @@ flowchart LR
 ```
 
 ## State and Storage
-| Store | Path/Scope | Write Path |
-| --- | --- | --- |
-| Canonical advisories | `advisories/` | NVD + community workflows and local populate script. |
-| Embedded advisory copies | `skills/clawsec-feed/advisories/` and `skills/clawsec-suite/advisories/` | Sync/packaging processes and release workflow. |
-| Public mirrors | `public/advisories/`, `public/releases/` | Deploy workflow. |
-| Runtime state | `~/.openclaw/clawsec-suite-feed-state.json` | Advisory hook state persistence. |
-| NanoClaw cache | `/workspace/project/data/clawsec-advisory-cache.json` | Host-side advisory cache manager. |
-| Integrity state | `/workspace/project/data/soul-guardian/` (NanoClaw) | Integrity monitor baseline/audit storage. |
+← Tienda Silenciosos Sendero/Escopo Silencioso
+Silencio.
+← Asesorías canónicas Silencio `advisories/` TENIDO NVD + flujos de trabajo comunitarios y script populate local. Silencio
+Silencio Copias de asesoramiento incrustadas Silencio `skills/clawsec-feed/advisories/` y `skills/clawsec-suite/advisories/` Silencio Procesos de sincronización/envasado y flujo de trabajo de liberación. Silencio
+tención Espejos públicos Silenciosos `public/advisories/`, `public/releases/` ANTE Deploy workflow. Silencio
+tención Runtime state ← `~/.openclaw/clawsec-suite-feed-state.json` tención Asesoramiento estado persistencia. Silencio
+Silencio NanoClaw cache Silencio `/workspace/project/data/clawsec-advisory-cache.json` Silencio Director de caché de asesoramiento lado anfitrión. Silencio
+Silencio Integrity state ← `/workspace/project/data/soul-guardian/` (NanoClaw) TEN Integrity monitor baseline/audit storage. Silencio
 
-## Example Snippets
+## Ejemplos Snippets
 ```bash
 # Local feed flow (NVD fetch -> transform -> sync)
 ./scripts/populate-local-feed.sh --days 120
@@ -80,24 +80,24 @@ node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill -
 ```
 
 ## Failure Modes
-- NVD rate limits (`403/429`) can delay feed refresh and require retries/backoff.
-- Missing or invalid detached signatures cause feed rejection in fail-closed mode.
-- HTML fallback responses for JSON endpoints can produce false positives unless explicitly filtered.
-- Path-token misconfiguration (`\$HOME`) can break local fallback path resolution.
-- Mismatched public key fingerprints in workflows trigger hard CI failure.
+- Los límites de la tasa NVD (`403/429`) pueden retrasar el refresco de alimentación y requerir retries/backoff.
+- Las firmas desvinculadas o inválidas causan rechazo de la alimentación en modo cerrado.
+- Las respuestas de retroceso HTML para los puntos finales de JSON pueden producir falsos positivos a menos que se filtra explícitamente.
+- La malconfiguración token (`\$HOME`) puede romper la resolución de la ruta de retroceso local.
+- Las huellas dactilares de clave pública en los flujos de trabajo provocan un duro fallo de la CI.
 
-## Source References
-- advisories/feed.json
-- advisories/feed.json.sig
+## Referencias Fuente
+- asesorías/feed.json
+- asesorías/feed.json.sig
 - scripts/populate-local-feed.sh
 - scripts/populate-local-skills.sh
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
 - .github/workflows/skill-release.yml
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/state.ts
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/matching.ts
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-nanoclaw/lib/advisories.ts
-- skills/clawsec-nanoclaw/host-services/advisory-cache.ts
+- habilidades/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- habilidades/clawsec-suite/hooks/clawsec-advisory-guardian/lib/state.ts
+- habilidades/clawsec-suite/hooks/clawsec-advisory-guardian/lib/matching.ts
+- habilidades/clawsec-suite/scripts/guarded_skill_install.mjs
+- habilidades/clawsec-nanoclaw/lib/advisories.ts
+- habilidades/clawsec-nanoclaw/host-services/advisory-cache.ts

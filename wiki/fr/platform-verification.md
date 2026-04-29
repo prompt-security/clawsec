@@ -3,101 +3,101 @@ Source: ../platform-verification.md
 Review status: draft
 -->
 
-# Platform Verification Checklist
+# Liste de vérification de la plateforme
 
-Use this checklist to validate portability and path-handling behavior after changes.
+Utilisez cette liste de contrôle pour valider la portabilité et le comportement de manipulation du chemin après les changements.
 
-## Linux Verification
+## Vérification Linux
 
-1. Run core Node tests:
+1. Exécuter les essais de Noyau:
    ```bash
    node skills/clawsec-suite/test/path_resolution.test.mjs
    node skills/clawsec-suite/test/guarded_install.test.mjs
    node skills/clawsec-suite/test/advisory_suppression.test.mjs
    node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
    ```
-   Expected: all tests pass.
+Prévue : tous les tests sont réussis.
 
-2. Verify no literal `$HOME` path acceptance:
+2. Vérifier que le chemin `$HOME` n'est pas accepté au sens littéral :
    ```bash
    CLAWSEC_LOCAL_FEED='\$HOME/advisories/feed.json' \
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: exits non-zero with `Unexpanded home token` error.
+Attendu : sort non-zéro avec l'erreur `Unexpanded home token`.
 
-3. Verify `$HOME` expansion works:
+3. Vérifier que `$HOME` fonctionne :
    ```bash
    HOME=/tmp/clawsec-home node skills/clawsec-suite/test/path_resolution.test.mjs
    ```
-   Expected: `$HOME` expansion tests pass.
+Prévu: `$HOME` tests d'extension réussi.
 
-## macOS Verification
+## MacOS Vérification
 
-1. Run the same Node test suite as Linux.
-2. Confirm OpenSSL tooling path assumptions are documented:
-   - If using LibreSSL/OpenSSL variations, ensure checks use tested command forms from docs.
-3. Verify tilde expansion in config path:
+1. Exécutez la même suite de test Node que Linux.
+2. Confirmer que les hypothèses de chemin d'outillage OpenSSL sont documentées :
+- Si vous utilisez des variations LibreSSL/OpenSSL, assurez-vous d'utiliser les formulaires de commande testés des docs.
+3. Vérifier l'expansion de tilde dans le chemin de configuration :
    ```bash
    OPENCLAW_AUDIT_CONFIG=~/.openclaw/security-audit.json \
    node skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs --enable-suppressions
    ```
-   Expected: path resolves correctly (or clear file-not-found error at expanded location).
+Attente : le chemin résout correctement (ou efface l'erreur de fichier non trouvée à l'emplacement élargi).
 
-## Windows Verification (PowerShell)
+## Vérification de Windows (PowerShell)
 
-1. Run Node tests:
+1. Essais des nœuds de course:
    ```powershell
    node skills/clawsec-suite/test/path_resolution.test.mjs
    node skills/clawsec-suite/test/guarded_install.test.mjs
    node skills/clawsec-suite/test/advisory_suppression.test.mjs
    ```
-   Expected: all pass.
+Attendu : tous passent.
 
-2. Verify PowerShell env path expansion behavior:
+2. Vérifier la puissance Comportement d'extension du chemin Shell env :
    ```powershell
    $env:CLAWSEC_LOCAL_FEED = '$env:USERPROFILE\advisories\feed.json'
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: path token is expanded/normalized or fails with a clear error if target files are missing.
+Attendu : le jeton de chemin est élargi/normalisé ou échoue avec une erreur claire si les fichiers cibles sont manquants.
 
-3. Verify escaped literal token rejection:
+3. Vérifier le rejet littéral des jetons échappés :
    ```powershell
    $env:CLAWSEC_LOCAL_FEED = '\$HOME\advisories\feed.json'
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: `Unexpanded home token` error; no directory creation with literal `$HOME`.
+Prévue : erreur `Unexpanded home token` ; aucune création de répertoire avec `$HOME` littérale.
 
-## Line Endings Sanity
+Oui. Sanité des extrémités de ligne
 
-1. Confirm LF policy is present:
+1. Confirmer que la politique de LF est présente :
    ```bash
    test -f .gitattributes && grep -n "eol=lf" .gitattributes
    ```
-   Expected: script/config file patterns enforce LF.
+Attendu : les modèles de fichiers script/config font appliquer LF.
 
-2. After a CRLF-prone checkout, verify scripts still parse:
+2. Après une commande CRLF-prone, vérifier les scripts toujours analyse:
    ```bash
    bash -n scripts/populate-local-feed.sh
    bash -n scripts/populate-local-skills.sh
    ```
-   Expected: no `^M` shebang/parse errors.
+Prévue : pas d'erreurs `^M` shebang/parse.
 
-## Explicit Bug Check: No Literal `$HOME` Directory Creation
+## Vérification explicite du bogue: Pas de `$HOME` Création de répertoires
 
-1. Configure a path with a literal/escaped token.
-2. Run setup/install command.
-3. Verify command fails early with token error.
-4. Confirm no `$HOME` segment directory was created under working directories.
+1. Configurer un chemin avec un jeton littéral/échapé.
+2. Exécutez la commande configuration/installation.
+3. Vérifier la commande échoue tôt avec l'erreur symbolique.
+4. Confirmer qu'aucun répertoire de segment `$HOME` n'a été créé sous les répertoires de travail.
 
-Expected outcome: **no directories containing literal `$HOME` are created by supported setup scripts.**
+Résultat attendu : ** aucun répertoire contenant `$HOME` littéral n'est créé par des scripts de configuration supportés. **
 
-## Source References
+Références sources
 - .gitattributes
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
-- skills/clawsec-suite/test/path_resolution.test.mjs
-- skills/clawsec-suite/test/guarded_install.test.mjs
-- skills/clawsec-suite/test/advisory_suppression.test.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
-- skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
+- scripts/popular-local-feed.sh
+- scripts/popular-local-skills.sh
+- compétences/clawsec-suite/test/path_resolution.test.mjs
+- compétences/clawsec-suite/test/guarded_install.test.mjs
+- compétences/clawsec-suite/test/advisory_suppression.test.mjs
+- compétences/clawsec-suite/scripts/guarded_skill_install.mjs
+- compétences/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- compétences/openclaw-audit-watchdog/test/suppression_config.test.mjs

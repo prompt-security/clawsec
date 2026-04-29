@@ -3,59 +3,59 @@ Source: ../overview.md
 Review status: draft
 -->
 
-# Overview
+♪ Aperçu général
 
-## Purpose
-- ClawSec is a security-focused repository that combines a public web catalog with installable security skills for OpenClaw and NanoClaw environments.
-- The codebase supports three delivery paths at once: static website publishing, signed advisory distribution, and per-skill GitHub release packaging.
-- Primary users are agent operators, skill developers, and maintainers running CI-based security automation.
+Objet
+- ClawSec est un dépôt axé sur la sécurité qui combine un catalogue web public avec des compétences de sécurité installables pour les environnements OpenClaw et NanoClaw.
+- Oui. La base de codes prend en charge trois modes de livraison à la fois : l'édition statique du site Web, la distribution de conseils signée et l'emballage de libération par compétence GitHub.
+- Les principaux utilisateurs sont les opérateurs d'agents, les développeurs de compétences et les responsables de l'automatisation de la sécurité basée sur l'IC.
 
 ![Prompt Security Logo](../assets/overview_img_01_prompt-security-logo.png)
 ![ClawSec Mascot](../assets/overview_img_02_clawsec-mascot.png)
 
-## Repo Layout
-| Path | Role | Notes |
-| --- | --- | --- |
-| `pages/`, `components/`, `App.tsx`, `index.tsx` | Vite + React UI | Skill catalog, advisory feed, and detail pages. |
-| `skills/` | Security skill packages | Each skill has `skill.json`, `SKILL.md`, optional scripts/tests/docs. |
-| `advisories/` | Repository advisory channel | Signed `feed.json` + `feed.json.sig` and key material. |
-| `scripts/` | Local automation | Populate feed/skills, pre-push checks, release helpers. |
-| `.github/workflows/` | CI/CD pipelines | CI, releases, NVD polling, community advisory ingestion, pages deploy. |
-| `utils/` | Python utilities | Skill validation and checksum packaging helpers. |
-| `public/` | Published static assets | Site media, mirrored advisories, and generated skill artifacts. |
-| `wiki/` | Documentation hub | Architecture, operations runbooks, compatibility, and verification guides. |
+Oui. Mise en page
+Rôle Remarques
+- Oui.
+`pages/`, `components/`, `App.tsx`, `index.tsx`.Vite + React UI. - Oui.
+Chaque compétence a `skill.json`, `SKILL.md`, scripts/tests/docs optionnels. - Oui.
+`advisories/` Assemblage d'avis de dépôt Signé `feed.json` + `feed.json.sig` et matériel clé. - Oui.
+`scripts/`= Automatisation locale= Popular feed/skills, pré-push checks, aide à la libération. - Oui.
+`.github/workflows/`=1 pipelines CI/CD=1 IC, rejets, sondage NVD, ingestion de conseils communautaires, pages déployées. - Oui.
+Utilitaires de Python de `utils/` de ZXTOKEN. - Oui.
+`public/`S Actifs statiques publiés. - Oui.
+`wiki/`=Moyeu de documentation= Architecture, opérations, guides d'exécution, compatibilité et guides de vérification. - Oui.
 
-## Entry Points
-| Entry | Type | Purpose |
-| --- | --- | --- |
-| `index.tsx` | Frontend bootstrap | Mounts React app into `#root`. |
-| `App.tsx` | Frontend router | Defines route map for home, skills, feed, and wiki pages. |
-| `scripts/prepare-to-push.sh` | Dev workflow | Runs lint/type/build/security checks before push. |
-| `scripts/populate-local-feed.sh` | Data bootstrap | Pulls CVEs from NVD and updates local advisory feeds. |
-| `scripts/populate-local-skills.sh` | Data bootstrap | Builds `public/skills/index.json` and per-skill checksums. |
-| `scripts/generate-wiki-llms.mjs` | Docs export | Generates `public/wiki/llms.txt` and per-page wiki exports. |
-| `.github/workflows/skill-release.yml` | Release entry | Handles PR version-parity/dry-run checks and tag-based packaging/signing/release. |
-| `.github/workflows/poll-nvd-cves.yml` | Scheduled feed updates | Polls NVD and updates advisories. |
+Points d'entrée
+Entrée Type Objet
+- Oui.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . - Oui.
+ZXQTOKEN0QXXZ=Définit la carte de route pour les pages home, kills, feed et wiki. - Oui.
+`scripts/prepare-to-push.sh` Obtenir le flux de travail Dev Exécute les contrôles de lint/type/build/security avant de pousser. - Oui.
+`scripts/populate-local-feed.sh`= Données bootstrap=Pulls CVEs de NVD et met à jour les flux de conseils locaux. - Oui.
+`scripts/populate-local-skills.sh`=_____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ - Oui.
+`scripts/generate-wiki-llms.mjs`=Exportation de Docs=Génère `public/wiki/llms.txt` et des exportations wiki par page. - Oui.
+`.github/workflows/skill-release.yml`= Entrée de la mainlevée. - Oui.
+`.github/workflows/poll-nvd-cves.yml`= Mises à jour des flux programmés= Polls NVD et mises à jour des avis. - Oui.
 
-## Key Artifacts
-| Artifact | Produced By | Consumed By |
-| --- | --- | --- |
-| `advisories/feed.json` | NVD poll + community advisory workflows | Web UI, clawsec-suite hook, installers. |
-| `advisories/feed.json.sig` | Signing workflow steps | Signature verification in suite/nanoclaw tooling. |
-| `public/skills/index.json` | Deploy workflow / local populate script | `pages/SkillsCatalog.tsx` and `pages/SkillDetail.tsx`. |
-| `public/wiki/llms.txt` + `public/wiki/**/llms.txt` | Wiki generator script + build hooks | LLM-ready wiki exports linked from the wiki UI. |
-| `public/checksums.json` + `public/checksums.sig` | Deploy workflow | Published integrity artifacts for operators and runtime clients. |
-| `release-assets/checksums.json` | Skill release workflow | Release consumers verifying zip integrity. |
-| `skills/*/skill.json` | Skill authors | Site catalog generation, validators, and release pipelines. |
+Les principaux objets
+Artefact Produit par Consommé par
+- Oui.
+`advisories/feed.json` Exclusivité du sondage NVD + flux de travail de conseil communautaire Exclusivité de l'interface Web, crochet clawsec-suite, installateurs. - Oui.
+`advisories/feed.json.sig`=Signing workflow steps=Vérification de signature dans l'outil suite/nanoclaw. - Oui.
+`public/skills/index.json`=Déployer le workflow / popular local script=`pages/SkillsCatalog.tsx` et `pages/SkillDetail.tsx`. - Oui.
+`public/wiki/llms.txt` + `public/wiki/**/llms.txt`= script de générateur de Wiki + build hooks= Exportations de wikis LLM-ready liées depuis l'interface utilisateur wiki. - Oui.
+`public/checksums.json` + `public/checksums.sig`.Déployer le flux de travail. - Oui.
+`release-assets/checksums.json`=Skill release workflow Release consumers verified zip integrity. - Oui.
+`skills/*/skill.json`= Auteurs qualifiés= Génération de catalogue de site, validateurs et pipelines de libération. - Oui.
 
-## Key Workflows
-- Local web development: `npm install` then `npm run dev`.
-- Local security data preview: run `./scripts/populate-local-skills.sh` and `./scripts/populate-local-feed.sh` before loading `/skills` and `/feed` pages.
-- Pre-push quality gate: run `./scripts/prepare-to-push.sh` (optionally `--fix`).
-- Skill lifecycle: edit `skills/<name>/`, validate with `python utils/validate_skill.py`, then tag `<skill>-vX.Y.Z` to trigger release workflow.
-- Advisory lifecycle: scheduled NVD poll and issue-label-based community ingestion both merge into the same signed feed.
+Oui. Principaux flux de travail
+- Développement web local : `npm install` puis `npm run dev`.
+- Aperçu des données de sécurité locale: exécutez `./scripts/populate-local-skills.sh` et `./scripts/populate-local-feed.sh` avant de charger les pages `/skills` et `/feed`.
+- Porte de qualité prépush: exécuter `./scripts/prepare-to-push.sh` (en option `--fix`).
+- Cycle de vie des compétences : éditer `skills/<name>/`, valider avec `python utils/validate_skill.py`, puis marquer `<skill>-vX.Y.Z` pour déclencher le flux de travail de libération.
+- Cycle de vie consultatif : le sondage prévu sur la DNV et l'ingestion communautaire fondée sur l'étiquetage des émissions fusionnent dans le même aliment signé.
 
-## Example Snippets
+## Exemples d'extraits
 ```bash
 # local UI + locally populated data
 npm install
@@ -71,44 +71,44 @@ npx tsc --noEmit
 npm run build
 ```
 
-## Where to Start
-- Read `README.md` for product positioning and install paths.
-- Open `App.tsx` and `pages/` to understand user-facing behavior.
-- Open `skills/clawsec-suite/skill.json` to understand the suite contract and embedded components.
-- Review `.github/workflows/ci.yml`, `.github/workflows/pages-verify.yml`, `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml`, and `.github/workflows/wiki-sync.yml` for production behavior.
+Oui. Par où commencer
+- Lire ZXQTOKEN0 QXZ pour le positionnement des produits et l'installation des chemins.
+- Ouvrez `App.tsx` et `pages/` pour comprendre le comportement orienté vers l'utilisateur.
+- Ouvrez `skills/clawsec-suite/skill.json` pour comprendre le contrat de suite et les composants intégrés.
+- Examiner `.github/workflows/ci.yml`, `.github/workflows/pages-verify.yml`, `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml` et `.github/workflows/wiki-sync.yml` pour le comportement de production.
 
-## How to Navigate
-- UI behavior is centered in `pages/`; visual wrappers sit in `components/`.
-- Skill-specific logic is isolated by folder under `skills/`; each folder includes its own scripts/tests/docs.
-- Feed handling appears in three layers: repository feed files, workflow updates, and runtime consumers (`clawsec-suite`/`clawsec-nanoclaw`).
-- Operational quality gates live in `scripts/` and workflow YAML files.
-- For generation traces and update baselines, start from `wiki/GENERATION.md` and then branch into module pages.
+Oui. Comment naviguer
+- Le comportement de l'interface utilisateur est centré sur `pages/`; les enveloppes visuelles sont placées dans `components/`.
+- La logique spécifique à la compétence est isolée par dossier sous `skills/` ; chaque dossier comprend ses propres scripts/tests/docs.
+- La gestion des flux apparaît en trois couches : fichiers de flux de dépôt, mises à jour de flux de travail et consommateurs d'exécution (`clawsec-suite`/`clawsec-nanoclaw`).
+- Portes de qualité opérationnelle en direct dans les fichiers `scripts/` et YAML workflow.
+- Pour les traces de génération et la mise à jour des lignes de base, commencer à partir de `wiki/GENERATION.md` puis brancher dans les pages de module.
 
-## Common Pitfalls
-- Using literal home tokens (for example `\$HOME`) in config path env vars can trigger path validation failures.
-- Fetching JSON from SPA routes can return HTML with status 200; pages guard for this and treat it as empty-state.
-- Unsigned feed bypass mode (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`) exists for migration compatibility and should not be used in steady state.
-- Skill release automation expects version parity between `skill.json` and `SKILL.md` frontmatter.
-- Some scripts are POSIX shell oriented; Windows users should prefer PowerShell equivalents or WSL.
+Pièges communs
+- L'utilisation de jetons d'accueil littéraux (par exemple `\$HOME`) dans le chemin de configuration env vars peut déclencher des défaillances de validation de chemin.
+- La saisie de JSON à partir des routes SPA peut retourner HTML avec l'état 200; pages garde pour cela et le traiter comme vide-état.
+- Le mode de contournement d'alimentation non signé (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`) existe pour la compatibilité de migration et ne doit pas être utilisé en état d'équilibre.
+- L'automatisation des sorties de compétences prévoit la parité de version entre `skill.json` et `SKILL.md`.
+- Certains scripts sont orientés vers le shell POSIX ; les utilisateurs de Windows devraient préférer les équivalents PowerShell ou WSL.
 
-## Update Notes
-- 2026-02-26: Updated repo layout to point operational documentation at `wiki/` instead of the removed root `docs/` directory.
+## Mettre à jour les notes
+- 2026-02-26: Mise à jour de la mise en page pour pointer la documentation opérationnelle à `wiki/` au lieu du répertoire racine `docs/` supprimé.
 
-## Source References
-- README.md
-- package.json
+Références sources
+- PRÊT.md
+- paquet.json
 - App.tsx
 - index.tsx
 - pages/Home.tsx
-- pages/SkillsCatalog.tsx
+- pages / SkillsCatalog.tsx
 - pages/SkillDetail.tsx
 - pages/FeedSetup.tsx
-- scripts/prepare-to-push.sh
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
-- skills/clawsec-suite/skill.json
+- scripts/prepare-to-poush.sh
+- scripts/popular-local-feed.sh
+- scripts/popular-local-skills.sh
+- compétences/clawsec-suite/skill.json
 - .github/workflows/ci.yml
-- .github/workflows/pages-verify.yml
-- .github/workflows/skill-release.yml
+- .github/workflows/pages-vérify.yml
+- .github/workflows/kill-release.yml
 - .github/workflows/deploy-pages.yml
 - .github/workflows/wiki-sync.yml

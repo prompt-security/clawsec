@@ -3,183 +3,183 @@ Source: ../migration-signed-feed.md
 Review status: draft
 -->
 
-# Migration Record: Unsigned Feed → Signed Feed (Completed)
+# Enregistrement de migration: Nourriture non signée → Nourriture signée (Complété)
 
-## 1) Objective and Status
+Oui. 1) Objectif et statut
 
-Document how ClawSec advisory distribution moved from unsigned `feed.json` delivery to detached-signature verification, with compatibility preserved for legacy clients.
+Documentez comment la distribution de conseils ClawSec est passée de la livraison non signée `feed.json` à la vérification de la signature individuelle, la compatibilité étant préservée pour les anciens clients.
 
-Current status on `main`:
-- Signed feed publishing is active in advisory workflows and deploy workflow.
-- Suite and NanoClaw consumers default to signed feed endpoints.
-- Unsigned behavior exists only as explicit compatibility bypass (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`).
+Situation actuelle sur `main`:
+- La publication de flux signés est active dans les flux de travail de conseil et de déploiement.
+- Les consommateurs de Suite et NanoClaw sont par défaut sur les paramètres d'alimentation signés.
+- Le comportement non signé n'existe que sous forme de contournement de compatibilité explicite (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`).
 
-## 2) Baseline (today, post-migration)
+Oui. 2) Données de référence (aujourd ' hui, après la migration)
 
-Current feed paths in active use:
-- Source of truth: `advisories/feed.json`
-- Source signature: `advisories/feed.json.sig`
-- Skill copy: `skills/clawsec-feed/advisories/feed.json`
-- Skill copy signature: `skills/clawsec-feed/advisories/feed.json.sig`
-- Pages copy: `public/advisories/feed.json`
-- Pages signature: `public/advisories/feed.json.sig`
-- Latest mirror copy: `public/releases/latest/download/advisories/feed.json` (+ `.sig`)
+Voies d'alimentation actuelles en utilisation active:
+- Source de vérité: `advisories/feed.json`
+- Signature de la source: `advisories/feed.json.sig`
+- Copie des compétences : `skills/clawsec-feed/advisories/feed.json`
+- Signature de la copie de compétence: `skills/clawsec-feed/advisories/feed.json.sig`
+- Copie des pages : `public/advisories/feed.json`
+- Signature des pages : `public/advisories/feed.json.sig`
+- Dernière copie miroir: `public/releases/latest/download/advisories/feed.json` (+ `.sig`)
 
-Current consumer defaults:
+Par défaut du consommateur actuel :
 - `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
 - `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
 - `skills/clawsec-nanoclaw/lib/advisories.ts`
-- default URL: `https://clawsec.prompt.security/advisories/feed.json`
+- URL par défaut : `https://clawsec.prompt.security/advisories/feed.json`
 
-## 3) Migration principles
+Oui. 3) Principes migratoires
 
-- **Dual-publish first**: publish signatures before enforcing verification.
-- **Fail-open only during transition**: temporary compatibility period is explicit and time-bounded.
-- **Measured rollout**: enforce verification after telemetry confirms stable signed publishing.
-- **Fast rollback**: preserve a path back to unsigned behavior while root cause is investigated.
+- **Deuxième publication : publier les signatures avant de procéder à la vérification.
+- **Non ouvert seulement pendant la transition** : la période de compatibilité temporaire est explicite et limitée dans le temps.
+- **Mentions de déploiement**: faire appliquer la vérification après télémétrie confirme la stabilité de l'édition signée.
+- **Fast runback**: préserver un chemin de retour au comportement non signé pendant que la cause racine est étudiée.
 
-## 4) Phased timeline (historical)
+Oui. 4) Chronologie progressive (historique)
 
-### Phase 0 — Preparation (Completed)
+- Oui. Phase 0 — Préparation (achevée)
 
-Deliverables:
-- signing keys generated and fingerprints recorded
-- GitHub secrets created
-- public key(s) added in repo
-- runbooks approved (`security-signing-runbook.md`, this file)
+Produits livrables:
+- clés de signature générées et empreintes digitales enregistrées
+- Les secrets de GitHub créés
+- clé(s) publique(s) ajoutée(s) en repo
+- runbooks approuvés (`security-signing-runbook.md`, ce fichier)
 
-Exit criteria:
-- key fingerprints verified by reviewer
-- protected branch/workflow controls enabled
+Critères de sortie:
+- empreintes clés vérifiées par l'examinateur
+- contrôle des branches/flux de travail protégé activé
 
-### Phase 1 — CI signing enabled, no client enforcement (Completed)
+- Oui. Phase 1 — La signature de l'IC est activée, aucune exécution par le client (achevée)
 
-Implement:
-- add feed signing step/workflow to produce `advisories/feed.json.sig`
-- optionally produce `advisories/checksums.json` + `.sig`
-- ensure CI verifies signatures before publishing artifacts
+Mettre en œuvre :
+- ajouter l'étape de signature/le flux de travail pour produire `advisories/feed.json.sig`
+- produire en option `advisories/checksums.json` + `.sig`
+- s'assurer que l'IC vérifie les signatures avant la publication des artefacts
 
-Also update deployment:
-- copy `.sig` artifacts to `public/advisories/`
-- mirror `.sig` in `public/releases/latest/download/advisories/`
+Actualiser également le déploiement :
+- copier les artefacts `.sig` vers `public/advisories/`
+- miroir `.sig` en `public/releases/latest/download/advisories/`
 
-Exit criteria:
-- signatures generated successfully for all feed update paths
-- deploy artifacts contain both payload and signature companions
+Critères de sortie:
+- signatures générées avec succès pour tous les chemins de mise à jour de flux
+- les artefacts de déploiement contiennent à la fois la charge utile et les compagnons de signature
 
-### Phase 2 — Consumer dual-read/dual-verify support (Completed)
+- Oui. Phase 2 — Soutien à double lecture/vérification du consommateur (achevé)
 
-Implement in consumers:
-- read `feed.json` and `feed.json.sig`
-- verify with pinned public key
-- keep controlled temporary unsigned fallback during migration window
+Mettre en œuvre chez les consommateurs:
+- lire `feed.json` et `feed.json.sig`
+- vérifier avec la clé publique
+- garder le contrôle temporaire non signé retour pendant la fenêtre de migration
 
 Validation:
-- test remote signed path
-- test local signed fallback path
-- test invalid signature rejection
+- parcours d'essai à distance signé
+- tester le chemin de repli signé local
+- essai de refus de signature non valide
 
-Exit criteria:
-- verification logic released and tested
-- no false-positive verification failures in soak period
+Critères de sortie:
+- logique de vérification libérée et testée
+- aucune défaillance de vérification faussement positive pendant la période de stabilisation
 
-### Phase 3 — Enforcement (Completed)
-
-Actions:
-- disable temporary unsigned fallback behavior in default paths
-- add CI/publish gates that fail when `.sig` is missing
-- announce enforcement date in release notes and docs
-
-Exit criteria:
-- all production clients verify signatures by default
-- no unsigned feed dependency in standard installation flow
-
-### Phase 4 — Stabilization (Ongoing)
+- Oui. Phase 3 — Exécution (achevée)
 
 Actions:
-- run first key rotation tabletop drill
-- run rollback tabletop drill
-- close migration with post-implementation review
+- désactiver le comportement de repli temporaire non signé dans les chemins par défaut
+- ajouter des portes CI/publish qui échouent lorsque `.sig` est manquant
+- annoncer la date d'exécution dans les notes de diffusion et les documents
 
-## 5) Rollback plan
+Critères de sortie:
+- tous les clients de production vérifient les signatures par défaut
+- aucune dépendance d'alimentation non signée dans le débit d'installation standard
 
-### Rollback triggers
-
-Initiate rollback if any of the following occur:
-- sustained signature verification failures across clients
-- signing workflow cannot produce valid signatures
-- key compromise suspected but replacement key is not yet deployed
-- deployment path publishes mismatched payload/signature pairs
-
-### Rollback levels
-
-### Level 1 (preferred): Verification bypass window, keep signed publishing
-
-Use when: signing is healthy, client-side verifier has a defect.
+- Oui. Phase 4 — Stabilisation (en cours)
 
 Actions:
-1. Re-enable temporary unsigned-acceptance behavior in client release branch.
-2. Ship patch release with explicit expiry date for bypass.
-3. Keep signing pipeline active to avoid authenticity gap.
+- exécuter la première clé de rotation de la perceuse de table
+- perceuse de table en marche arrière
+- migration étroite avec examen post-mise en œuvre
 
-Recovery target: restore strict verification within 24–48h.
+Oui. 5) Plan de redressement
 
-### Level 2: Signed pipeline paused, unsigned feed temporarily authoritative
+### Déclencheurs arrière
 
-Use when: signing pipeline is unstable or producing inconsistent artifacts.
+Lancer un renversement si l'une des situations suivantes se produit:
+- défaillances persistantes de la vérification de la signature entre les clients
+- la signature de workflow ne peut pas produire de signatures valides
+- compromis clé suspecté mais la clé de remplacement n'est pas encore déployée
+- chemin de déploiement publie des paires de charge utile/signature erronées
 
-Actions:
-1. Disable signing workflow or signing step.
-2. Continue publishing unsigned `advisories/feed.json` via existing workflows.
-3. Revert deploy gates that require `.sig` artifacts.
-4. Open incident record and track time in unsigned mode.
+Niveau de recul
 
-Recovery target: restore signed publishing ASAP, ideally <72h.
+Niveau 1 (préféré): Fenêtre de contournement de vérification, publication signée
 
-### Level 3: Full release freeze
-
-Use when: compromise or integrity of repository/workflows is in doubt.
+Utilisation lorsque : la signature est saine, le vérificateur côté client a un défaut.
 
 Actions:
-1. Pause feed mutation and deployment workflows.
-2. Restore known-good commit for advisory files/workflows.
-3. Rotate keys and credentials.
-4. Resume pipeline only after security review sign-off.
+1. Réactiver le comportement temporaire non signé-acceptation dans la branche de libération du client.
+2. Sortie du patch du navire avec date d'expiration explicite pour le contournement.
+3. Continuez à signer le pipeline actif pour éviter les lacunes en matière d'authenticité.
 
-### Roll-forward after rollback
+Objectif de récupération: restaurer une vérification stricte dans les 24–48h.
 
-- identify root cause
-- add regression tests/gates
-- redeploy signed artifacts
-- publish incident + remediation summary
+Niveau 2 : pipeline signé interrompu, alimentation non signée faisant temporairement autorité
 
-## 6) Communication plan
+Utiliser lorsque : la signalisation est instable ou produit des artefacts incohérents.
 
-For enforcement and rollback events, communicate:
-- what changed
-- expected operator/client action
-- duration of temporary compatibility mode (if any)
-- verification commands for users
+Actions:
+1. Désactiver le workflow de signature ou l'étape de signature.
+2. Continuer à publier `advisories/feed.json` non signé via les workflows existants.
+3. Révertissez les portes de déploiement qui nécessitent des artefacts `.sig`.
+4. Ouvrir l'enregistrement des incidents et le temps de suivi en mode non signé.
 
-Recommended channels:
-- GitHub release notes
-- repository README/docs updates
-- issue/incident report in repository
+Objectif de récupération: restaurer l'édition signée ASAP, idéalement <72h.
 
-## 7) Go/No-Go checklist
+Niveau 3 : Gel complet
 
-Go only if all are true:
-- signing workflow success rate is stable
-- signatures are mirrored to all documented feed endpoints
-- consumer verification path tested for remote + local fallback
-- rollback owner is assigned and reachable
-- key rotation procedure has been dry-run at least once
+Utiliser quand: compromis ou intégrité du dépôt / flux de travail est en doute.
 
-## Source References
+Actions:
+1. Pas de mutation de flux d'alimentation et de déploiement.
+2. Restaurer le commit connu-bon pour les fichiers de conseil / flux de travail.
+3. Rotation des clés et des références.
+4. Reprendre le pipeline seulement après l'approbation de l'examen de la sécurité.
+
+Rouler après le retour
+
+- identifier la cause racine
+Ajouter les essais/portes de régression
+- redéployer les artefacts signés
+- publier un résumé de l'incident + des mesures correctives
+
+Oui. 6) Plan de communication
+
+Pour les événements d'exécution et de recul, communiquer :
+- ce qui a changé
+- action attendue de l'opérateur/client
+- durée du mode de compatibilité temporaire (le cas échéant)
+- commandes de vérification pour les utilisateurs
+
+Chaînes recommandées:
+- Notes de sortie de GitHub
+- mises à jour du dépôt README/docs
+- rapport d'incident dans le dépôt
+
+Oui. 7) Liste de contrôle aller/pas aller
+
+Allez seulement si tout est vrai:
+- le taux de réussite des processus de signature est stable
+- les signatures sont en miroir avec tous les paramètres d'alimentation documentés
+- Voie de vérification du consommateur testée pour la distance + recul local
+- le propriétaire de retour est assigné et accessible
+- la procédure de rotation clé a été à sec au moins une fois
+
+Références sources
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- advisories/feed.json
+- compétences/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
+- compétences/clawsec-suite/scripts/guarded_skill_install.mjs
+- avis/feed.json
 - wiki/security-signing-runbook.md

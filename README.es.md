@@ -1,25 +1,25 @@
-<h1 align="center">
-  <img src="./img/prompt-icon.svg" alt="prompt-icon" width="40">
+■h1 align="center"
+■img src="./img/prompt-icon.svg" alt="prompt-icon" ancho="40"
   ClawSec: Suite de habilidades de seguridad para agentes de IA
-  <img src="./img/prompt-icon.svg" alt="prompt-icon" width="40">
-</h1>
+■img src="./img/prompt-icon.svg" alt="prompt-icon" ancho="40"
+■/h1 título
 
-<div align="center">
+"Cierto"
 
 ## Protege tus agentes OpenClaw, NanoClaw, Hermes y Picoclaw con una suite de seguridad completa
 
 <h4>Traído por <a href="https://prompt.security">Prompt Security</a>, la plataforma de seguridad para IA</h4>
 
-</div>
+■/div titulada
 
-<div align="center">
+"Cierto"
 
-![Prompt Security Logo](./img/Black+Color.png)
-<img src="./public/img/mascot.png" alt="clawsec mascot" width="200" />
+! [Prompt Security Logo](./img/Black+Color.png)
+■img src="./public/img/mascot.png" alt="clawsec mascot" ancho="200" /
 
-</div>
+■/div titulada
 
-<div align="center">
+"Cierto"
 
 🌐 **En vivo en: [https://clawsec.prompt.security](https://clawsec.prompt.security) [https://prompt.security/clawsec](https://prompt.security/clawsec)**
 
@@ -27,9 +27,9 @@
 [![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
 [![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml)
 
-</div>
+■/div titulada
 
----
+-...
 
 ## 🌍 Traducciones
 
@@ -61,7 +61,7 @@ ClawSec es una **suite completa de habilidades de seguridad para plataformas de 
 - **🔐 Verificación por checksums**: hashes SHA256 para artefactos de habilidades
 - **Health checks**: actualizaciones y verificación de integridad automatizadas para habilidades instaladas
 
----
+-...
 
 ## 🚀 Inicio rápido
 
@@ -100,13 +100,13 @@ Para Linux/macOS (`bash`/`zsh`):
 
 Para Windows (PowerShell):
 - Prefiere construir rutas de forma explícita:
-  - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
-  - `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
+- `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+- `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
 - Los scripts POSIX `.sh` requieren WSL o Git Bash.
 
 Si ves rutas tipo `~/.openclaw/workspace/$HOME/...`, una variable home se pasó de forma literal. Re-ejecuta con ruta absoluta o con expresión home expandible.
 
----
+-...
 
 ## 🧭 Documentación por plataforma y suite
 
@@ -114,7 +114,7 @@ La documentación detallada vive en los módulos del wiki:
 - NanoClaw: [wiki/modules/nanoclaw-integration.md](wiki/modules/nanoclaw-integration.md)
 - Hermes: [wiki/modules/hermes-attestation-guardian.md](wiki/modules/hermes-attestation-guardian.md)
 - Picoclaw: [wiki/modules/picoclaw-security-guardian.md](wiki/modules/picoclaw-security-guardian.md)
-- Picoclaw self-pen-testing: [wiki/modules/picoclaw-self-pen-testing.md](wiki/modules/picoclaw-self-pen-testing.md)
+- Picoclaw auto-pen-testing: [wiki/modules/picoclaw-self-pen-testing.md](wiki/modules/picoclaw-self-pen-testing.md)
 - ClawSec Suite (OpenClaw): [wiki/modules/clawsec-suite.md](wiki/modules/clawsec-suite.md)
 - Pipelines CI/CD: [wiki/modules/automation-release.md](wiki/modules/automation-release.md)
 
@@ -125,7 +125,7 @@ Instalación rápida:
 - Picoclaw self-pen-testing: `skills/picoclaw-self-pen-testing/`
 - Suite: `skills/clawsec-suite/`
 
----
+-...
 
 ## 📡 Feed de advisories de seguridad
 
@@ -162,7 +162,7 @@ Puede incluir:
 
 Esto ayuda a priorizar vulnerabilidades de amenaza inmediata frente a riesgos teóricos.
 
----
+-...
 
 ## 🛠️ Desarrollo local
 
@@ -170,9 +170,9 @@ Esto ayuda a priorizar vulnerabilidades de amenaza inmediata frente a riesgos te
 
 - Node.js 20+
 - Python 3.10+ (herramientas offline)
-- npm
+- Npm
 
-### Setup
+#### Setup
 
 ```bash
 # Instala dependencias
@@ -208,7 +208,7 @@ Notas:
 npm run build
 ```
 
----
+-...
 
 ## 📁 Estructura del proyecto
 
@@ -226,7 +226,7 @@ npm run build
 
 Para la estructura detallada (scripts, workflows y paquetes de habilidades), consulta el README principal en inglés: [README.md](README.md).
 
----
+-...
 
 ## 🤝 Contribuir
 
@@ -259,19 +259,19 @@ Los exportes para LLM se generan desde `wiki/` hacia `public/wiki/`:
 - `/wiki/llms.txt` exporta `wiki/INDEX.md` (o índice fallback generado si falta `INDEX.md`)
 - `/wiki/<page>/llms.txt` exporta la página wiki individual
 
----
+-...
 
 ## 📄 Licencia
 
 - Código fuente: GNU AGPL v3.0 o posterior — ver [LICENSE](LICENSE)
 - Fuentes en `font/`: licencia separada — ver [`font/README.md`](font/README.md)
 
----
+-...
 
-<div align="center">
+"Cierto"
 
-**ClawSec** · Prompt Security, SentinelOne
+**ClawSec** · Seguridad Prompt, SentinelOne
 
 🦞 Fortaleciendo flujos agentic, skill por skill.
 
-</div>
+■/div titulada
