@@ -1,8 +1,1858 @@
 {
   "version": "0.0.3",
-  "updated": "2026-04-28T06:52:17Z",
+  "updated": "2026-04-29T06:48:08Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-42432",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired no...",
+      "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired nodes to reconnect with exec-capable commands without operator.admin scope requirement. Attackers can bypass re-pairing authentication to execute privileged commands on the local assistant system.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:47.190",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5wj5-87vq-39xm",
+        "https://www.vulncheck.com/advisories/openclaw-command-escalation-via-node-pairing-reconnect-bypass"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42432",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42431",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.4.8 contains a security bypass vulnerability in node.invoke(browser.proxy) that...",
+      "description": "OpenClaw before 2026.4.8 contains a security bypass vulnerability in node.invoke(browser.proxy) that allows mutation of persistent browser profiles. Attackers can exploit this path to circumvent the browser.request persistent profile-mutation guard and modify browser configurations.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:47.057",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cmfr-9m2r-xwhq",
+        "https://www.vulncheck.com/advisories/openclaw-persistent-profile-mutation-via-node-invoke-browser-proxy-bypass"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42431",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42430",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in Playwright redirect...",
+      "description": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in Playwright redirect handling that allows attackers to bypass strict SSRF checks. Attackers can exploit request-time navigation to reach private targets that should be restricted by browser SSRF protections.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.907",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w8g9-x8gx-crmm",
+        "https://www.vulncheck.com/advisories/openclaw-strict-browser-ssrf-bypass-via-playwright-redirect-handling"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42430",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42429",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP au...",
+      "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP authentication mechanism that widens identity-bearing operator.read requests into runtime operator.write permissions. Attackers can exploit this by sending read-scoped requests through the gateway auth route to gain unauthorized write access to runtime operations.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.773",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4f8g-77mw-3rxc",
+        "https://www.vulncheck.com/advisories/openclaw-privilege-escalation-via-gateway-plugin-http-authentication"
+      ],
+      "cvss_score": 7.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42429",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42428",
+      "severity": "high",
+      "type": "unknown_cwe_353",
+      "nvd_category_id": "CWE-353",
+      "title": "OpenClaw versions before 2026.4.8 fail to enforce integrity verification on downloaded plugin archiv...",
+      "description": "OpenClaw versions before 2026.4.8 fail to enforce integrity verification on downloaded plugin archives. Attackers can install malicious or tampered plugin packages without detection, compromising the local assistant environment.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.630",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3vvq-q2qc-7rmp",
+        "https://www.vulncheck.com/advisories/openclaw-missing-integrity-verification-in-package-downloads"
+      ],
+      "cvss_score": 7.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42428",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.1); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42427",
+      "severity": "medium",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw before 2026.4.8 contains a remote code execution vulnerability caused by missing environmen...",
+      "description": "OpenClaw before 2026.4.8 contains a remote code execution vulnerability caused by missing environment variable denylist entries for HGRCPATH, CARGO_BUILD_RUSTC_WRAPPER, RUSTC_WRAPPER, and MAKEFLAGS. Attackers can inject malicious build tool environment variables to influence host exec commands and achieve arbitrary code execution.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.493",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7437-7hg8-frrw",
+        "https://www.vulncheck.com/advisories/openclaw-remote-code-execution-via-build-tool-environment-variable-injection"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42427",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42426",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.4.8 contains an improper authorization vulnerability where the node.pair.approv...",
+      "description": "OpenClaw before 2026.4.8 contains an improper authorization vulnerability where the node.pair.approve method accepts operator.write scope instead of the narrower operator.pairing scope, allowing unprivileged users to approve node pairing. Attackers with operator.write permissions can bypass pairing approval restrictions to gain unauthorized access to exec-capable nodes.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.360",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-67mf-f936-ppxf",
+        "https://www.vulncheck.com/advisories/openclaw-improper-authorization-in-node-pair-approve-via-operator-write-scope"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42426",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42424",
+      "severity": "medium",
+      "type": "unknown_cwe_73",
+      "nvd_category_id": "CWE-73",
+      "title": "OpenClaw before 2026.4.8 treats shared reply MEDIA paths as trusted, allowing crafted references to ...",
+      "description": "OpenClaw before 2026.4.8 treats shared reply MEDIA paths as trusted, allowing crafted references to trigger cross-channel local file exfiltration. Attackers can exploit this by crafting malicious shared reply MEDIA references to cause another channel to read local file paths as trusted generated media.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.217",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qqq7-4hxc-x63c",
+        "https://www.vulncheck.com/advisories/openclaw-local-file-exfiltration-via-shared-reply-media-paths"
+      ],
+      "cvss_score": 5.7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42424",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.7); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42423",
+      "severity": "high",
+      "type": "unknown_cwe_636",
+      "nvd_category_id": "CWE-636",
+      "title": "OpenClaw before 2026.4.8 contains an approval-timeout fallback mechanism that bypasses strictInlineE...",
+      "description": "OpenClaw before 2026.4.8 contains an approval-timeout fallback mechanism that bypasses strictInlineEval explicit-approval requirements on gateway and node exec hosts. Attackers can exploit this timeout fallback to execute inline eval commands that should require explicit user approval, circumventing the intended security boundary.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:46.083",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-q2gc-xjqw-qp89",
+        "https://www.vulncheck.com/advisories/openclaw-strictinlineeval-approval-boundary-bypass-via-approval-timeout-fallback"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42423",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42422",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.4.8 contains a role bypass vulnerability in the device.token.rotate function th...",
+      "description": "OpenClaw before 2026.4.8 contains a role bypass vulnerability in the device.token.rotate function that allows minting tokens for unapproved roles. Attackers can bypass device role-upgrade pairing to preserve or mint roles and scopes that had not undergone intended approval.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.950",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-whf9-3hcx-gq54",
+        "https://www.vulncheck.com/advisories/openclaw-role-bypass-in-device-token-rotate-function"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42422",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42421",
+      "severity": "medium",
+      "type": "unknown_cwe_613",
+      "nvd_category_id": "CWE-613",
+      "title": "OpenClaw before 2026.4.8 contains a session management vulnerability where existing WebSocket sessio...",
+      "description": "OpenClaw before 2026.4.8 contains a session management vulnerability where existing WebSocket sessions survive shared gateway token rotation. Attackers can maintain unauthorized access to WebSocket connections after token rotation by exploiting the failure to disconnect existing shared-token sessions.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.820",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5h3f-885m-v22w",
+        "https://www.vulncheck.com/advisories/openclaw-websocket-session-persistence-via-shared-gateway-token-rotation"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42421",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-42420",
+      "severity": "medium",
+      "type": "unknown_cwe_770",
+      "nvd_category_id": "CWE-770",
+      "title": "OpenClaw before 2026.4.8 contains improper input validation in base64 decode paths that allocate mem...",
+      "description": "OpenClaw before 2026.4.8 contains improper input validation in base64 decode paths that allocate memory before enforcing decoded-size limits. Attackers can exploit multiple code paths to cause memory exhaustion or denial of service through crafted base64-encoded input.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.680",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-ccx3-fw7q-rr2r",
+        "https://www.vulncheck.com/advisories/openclaw-improper-base64-decoding-size-validation"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-42420",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41916",
+      "severity": "medium",
+      "type": "unknown_cwe_613",
+      "nvd_category_id": "CWE-613",
+      "title": "OpenClaw before 2026.4.8 contains an authentication state management vulnerability where the resolve...",
+      "description": "OpenClaw before 2026.4.8 contains an authentication state management vulnerability where the resolvedAuth closure becomes stale after configuration reload. Newly accepted gateway connections continue using outdated resolved auth state, allowing attackers to bypass authentication controls through config reload operations.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.540",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-68x5-xx89-w9mm",
+        "https://www.vulncheck.com/advisories/openclaw-stale-authentication-state-via-config-reload"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41916",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41915",
+      "severity": "medium",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw before 2026.4.8 fails to remove git plumbing environment variables from the execution envir...",
+      "description": "OpenClaw before 2026.4.8 fails to remove git plumbing environment variables from the execution environment before host exec operations. Attackers can exploit this by setting GIT_DIR and related variables to redirect git operations and compromise repository integrity.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.397",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cm8v-2vh9-cxf3",
+        "https://www.vulncheck.com/advisories/openclaw-git-environment-variable-injection-via-unfiltered-exec-environment"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41915",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41914",
+      "severity": "high",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in QQ Bot media downlo...",
+      "description": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in QQ Bot media download paths that bypass SSRF protection. Attackers can exploit unprotected media fetch endpoints to access internal resources and bypass allowlist policies.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.243",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3fv3-6p2v-gxwj",
+        "https://www.vulncheck.com/advisories/openclaw-server-side-request-forgery-in-qq-bot-media-fetch-paths"
+      ],
+      "cvss_score": 8.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41914",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.5); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41913",
+      "severity": "low",
+      "type": "race_condition",
+      "nvd_category_id": "CWE-362",
+      "title": "OpenClaw before 2026.4.4 contains a race condition vulnerability in shared-secret authentication tha...",
+      "description": "OpenClaw before 2026.4.4 contains a race condition vulnerability in shared-secret authentication that allows concurrent asynchronous requests to bypass the per-key rate-limit budget. Attackers can exploit this by sending multiple simultaneous authentication attempts to circumvent intended rate-limiting protections on Tailscale-capable paths.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:45.103",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-25wv-8phj-8p7r",
+        "https://www.vulncheck.com/advisories/openclaw-rate-limit-bypass-via-concurrent-async-authentication-attempts"
+      ],
+      "cvss_score": 3.7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41913",
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.7); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41912",
+      "severity": "high",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "OpenClaw before 2026.4.8 contains a server-side request forgery policy bypass vulnerability allowing...",
+      "description": "OpenClaw before 2026.4.8 contains a server-side request forgery policy bypass vulnerability allowing attackers to trigger navigations bypassing normal SSRF checks. Attackers can exploit browser interactions to bypass SSRF protections and access restricted resources.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.970",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-vr5g-mmx7-h897",
+        "https://www.vulncheck.com/advisories/openclaw-server-side-request-forgery-policy-bypass-via-interaction-triggered-navigation"
+      ],
+      "cvss_score": 7.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41912",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41911",
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "OpenClaw before 2026.4.8 contains a filesystem policy bypass vulnerability in docx upload processing...",
+      "description": "OpenClaw before 2026.4.8 contains a filesystem policy bypass vulnerability in docx upload processing that allows local file reads outside workspace boundaries. Attackers can exploit upload_file and upload_image endpoints to access files beyond the intended workspace-only filesystem policy.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.833",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5fc7-f62m-8983",
+        "https://www.vulncheck.com/advisories/openclaw-workspace-only-filesystem-policy-bypass-via-docx-upload-file-upload-image"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41911",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41910",
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.4.8 omits owner-only enforcement for cross-channel allowlist writes in the /all...",
+      "description": "OpenClaw before 2026.4.8 omits owner-only enforcement for cross-channel allowlist writes in the /allowlist endpoint. An authorized non-owner sender can bypass access controls to perform allowlist modifications against different channels, violating the intended trust model.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.697",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/d7c3210cd6f5fdfdc1beff4c9541673e814354d5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-vc32-h5mq-453v",
+        "https://www.vulncheck.com/advisories/openclaw-missing-owner-only-enforcement-in-allowlist-cross-channel-writes"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41910",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41408",
+      "severity": "medium",
+      "type": "unknown_cwe_770",
+      "nvd_category_id": "CWE-770",
+      "title": "OpenClaw before 2026.3.31 contains a resource exhaustion vulnerability in media downloads that bypas...",
+      "description": "OpenClaw before 2026.3.31 contains a resource exhaustion vulnerability in media downloads that bypasses core safety limits for file size, count, and cleanup operations. Attackers can exhaust disk space by downloading media files without triggering intended safety restrictions, causing availability impact.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.567",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/2194587d70d2aef863508b945319c5a7c88b12ce",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4g5x-2jfc-xm98",
+        "https://www.vulncheck.com/advisories/openclaw-disk-exhaustion-via-media-download-bypass"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41408",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41407",
+      "severity": "low",
+      "type": "unknown_cwe_208",
+      "nvd_category_id": "CWE-208",
+      "title": "OpenClaw before 2026.4.2 contains a timing side channel vulnerability in shared-secret comparison ca...",
+      "description": "OpenClaw before 2026.4.2 contains a timing side channel vulnerability in shared-secret comparison call sites that use early length-mismatch checks instead of fixed-length comparison helpers. Attackers can measure timing differences to leak secret-length information, weakening constant-time handling for shared secrets.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.433",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/be10ecef770a4654519869c3641bbb91087c8c7b",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jj6q-rrrf-h66h",
+        "https://www.vulncheck.com/advisories/openclaw-timing-side-channel-in-shared-secret-comparison"
+      ],
+      "cvss_score": 3.7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41407",
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.7); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41406",
+      "severity": "medium",
+      "type": "insecure_direct_object_reference",
+      "nvd_category_id": "CWE-639",
+      "title": "OpenClaw before 2026.3.31 contains a sender allowlist bypass vulnerability that allows remote attack...",
+      "description": "OpenClaw before 2026.3.31 contains a sender allowlist bypass vulnerability that allows remote attackers to access restricted messages. Attackers can exploit fetched quoted, root, and thread context messages to bypass sender allowlist restrictions and retrieve unauthorized content.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.280",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/f45e5a6569aab1d58cc6de25b19f1dc4c8779b85",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-877v-w3f5-3pcq",
+        "https://www.vulncheck.com/advisories/openclaw-sender-allowlist-bypass-via-thread-history-and-quoted-messages"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41406",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41405",
+      "severity": "high",
+      "type": "unknown_cwe_408",
+      "nvd_category_id": "CWE-408",
+      "title": "OpenClaw before 2026.3.31 parses MS Teams webhook request bodies before performing JWT validation, a...",
+      "description": "OpenClaw before 2026.3.31 parses MS Teams webhook request bodies before performing JWT validation, allowing unauthenticated attackers to trigger resource exhaustion. Remote attackers can send malicious Teams webhook payloads to exhaust server resources by bypassing authentication checks.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:44.090",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/3834d47099dd13c8244ed6de8b9ea9855c553623",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p464-m8x6-vhv8",
+        "https://www.vulncheck.com/advisories/openclaw-resource-exhaustion-via-unauthenticated-ms-teams-webhook-body-parsing"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41405",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41404",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.3.31 contains an incomplete scope-clearing vulnerability in trusted-proxy authe...",
+      "description": "OpenClaw before 2026.3.31 contains an incomplete scope-clearing vulnerability in trusted-proxy authentication mode that allows operator.admin privilege escalation. Attackers can exploit this by declaring operator scopes on non-Control-UI clients, allowing self-declared scopes to persist on identity-bearing authentication paths and escalate privileges.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.957",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/8b88b927cb0747ad24d95b07d35682bf85dc5b0e",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-g374-mggx-p6xc",
+        "https://www.vulncheck.com/advisories/openclaw-operator-admin-privilege-escalation-via-trusted-proxy-authentication"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41404",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41403",
+      "severity": "low",
+      "type": "unknown_cwe_807",
+      "nvd_category_id": "CWE-807",
+      "title": "OpenClaw before 2026.3.31 misclassifies proxied remote requests as loopback connections in the diffs...",
+      "description": "OpenClaw before 2026.3.31 misclassifies proxied remote requests as loopback connections in the diffs viewer when allowRemoteViewer is disabled, allowing unauthorized access. Attackers can bypass access controls by sending proxied requests that are incorrectly identified as local loopback traffic, circumventing intended remote viewer restrictions.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.823",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/30a1690323088fd291abd11643a264a6828a002c",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3xv9-89fm-7h4r",
+        "https://www.vulncheck.com/advisories/openclaw-access-control-bypass-via-proxied-remote-request-misclassification"
+      ],
+      "cvss_score": 2.9,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41403",
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (2.9); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41402",
+      "severity": "medium",
+      "type": "unknown_cwe_706",
+      "nvd_category_id": "CWE-706",
+      "title": "OpenClaw before 2026.3.31 contains a scope bypass vulnerability in webhook replay cache deduplicatio...",
+      "description": "OpenClaw before 2026.3.31 contains a scope bypass vulnerability in webhook replay cache deduplication that allows authenticated attackers to replay messages across sibling targets using the same messageId. Attackers can exploit overly broad cache keying to bypass replay protection and deliver duplicate webhook messages to unintended targets.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.690",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/4d038bb242c11f39e45f6a4bde400e5fd42e4ebf",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-hhq4-97c2-p447",
+        "https://www.vulncheck.com/advisories/openclaw-webhook-replay-cache-cross-target-messageid-scope-bypass"
+      ],
+      "cvss_score": 4.2,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41402",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.2); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41400",
+      "severity": "medium",
+      "type": "unknown_cwe_770",
+      "nvd_category_id": "CWE-770",
+      "title": "OpenClaw before 2026.3.31 contains an incomplete fix for CVE-2026-32062 where the voice-call compone...",
+      "description": "OpenClaw before 2026.3.31 contains an incomplete fix for CVE-2026-32062 where the voice-call component parses large WebSocket frames before start validation. Remote attackers can send oversized pre-start WebSocket frames to cause resource consumption and denial of service.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.553",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/9abcfdadf591bf266d85fbdfe14ae833e557a110",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2w79-r9g8-wmcr",
+        "https://www.vulncheck.com/advisories/openclaw-resource-consumption-via-oversized-websocket-frames-in-voice-call"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41400",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41399",
+      "severity": "high",
+      "type": "unknown_cwe_770",
+      "nvd_category_id": "CWE-770",
+      "title": "OpenClaw before 2026.3.28 accepts unbounded concurrent unauthenticated WebSocket upgrades without pr...",
+      "description": "OpenClaw before 2026.3.28 accepts unbounded concurrent unauthenticated WebSocket upgrades without pre-authentication budget allocation. Unauthenticated network attackers can exhaust socket and worker capacity to disrupt WebSocket availability for legitimate clients.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.420",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-f44p-c7w9-7xr7",
+        "https://www.vulncheck.com/advisories/openclaw-denial-of-service-via-unbounded-pre-auth-websocket-upgrades"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41399",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41398",
+      "severity": "medium",
+      "type": "unknown_cwe_346",
+      "nvd_category_id": "CWE-346",
+      "title": "OpenClaw before 2026.4.2 contains an improper access control vulnerability in the iOS A2UI bridge th...",
+      "description": "OpenClaw before 2026.4.2 contains an improper access control vulnerability in the iOS A2UI bridge that treats generic local-network pages as trusted origins. Attackers can inject unauthorized agent.request runs by loading attacker-controlled pages from local-network or tailnet hosts, polluting session state and consuming budget.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.287",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/49d08382a90f71dabe2877b3f6729ad85f808d57",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4p4f-fc8q-84m3",
+        "https://www.vulncheck.com/advisories/openclaw-unauthorized-agent-request-dispatch-via-untrusted-local-network-pages-in-ios-a2ui-bridge"
+      ],
+      "cvss_score": 4.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41398",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.6); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41397",
+      "severity": "medium",
+      "type": "unknown_cwe_59",
+      "nvd_category_id": "CWE-59",
+      "title": "OpenClaw before 2026.3.31 contains a sandbox escape vulnerability allowing attackers to traverse dir...",
+      "description": "OpenClaw before 2026.3.31 contains a sandbox escape vulnerability allowing attackers to traverse directory boundaries through symlink exploitation during file synchronization operations. Remote attackers can bypass sandbox restrictions by crafting malicious symlinks in mirror sync operations to access arbitrary files outside intended boundaries.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.153",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/3b9dab0ece4643a9643e6a45459f5c709d3ce320",
+        "https://github.com/openclaw/openclaw/commit/c02ee8a3a4cb390b23afdf21317aa8b2096854d1",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cwf8-44x6-32c2"
+      ],
+      "cvss_score": 6.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41397",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41396",
+      "severity": "high",
+      "type": "unknown_cwe_829",
+      "nvd_category_id": "CWE-829",
+      "title": "OpenClaw before 2026.3.31 allows workspace .env files to override the OPENCLAW_BUNDLED_PLUGINS_DIR e...",
+      "description": "OpenClaw before 2026.3.31 allows workspace .env files to override the OPENCLAW_BUNDLED_PLUGINS_DIR environment variable, compromising plugin trust verification. Attackers with control over workspace configuration can inject malicious plugins by overriding the bundled plugin trust root directory.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:43.013",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/330a9f98cb29c79b1c16a2117e03d6276a0d6289",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qcj9-wwgw-6gm8",
+        "https://www.vulncheck.com/advisories/openclaw-environment-variable-override-of-plugin-trust-root"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41396",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41395",
+      "severity": "high",
+      "type": "unknown_cwe_325",
+      "nvd_category_id": "CWE-325",
+      "title": "OpenClaw before 2026.3.28 contains a webhook replay vulnerability in Plivo V3 signature verification...",
+      "description": "OpenClaw before 2026.3.28 contains a webhook replay vulnerability in Plivo V3 signature verification that canonicalizes query ordering for signatures but hashes raw URLs for replay detection. Attackers can reorder query parameters to bypass replay cache detection and trigger duplicate voice-call processing with a captured valid signed webhook.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.880",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-8689-gm9g-jgr6",
+        "https://www.vulncheck.com/advisories/openclaw-webhook-replay-via-query-parameter-reordering-in-plivo-v3"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41395",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41394",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "OpenClaw before 2026.3.31 contains an authentication bypass vulnerability where unauthenticated plug...",
+      "description": "OpenClaw before 2026.3.31 contains an authentication bypass vulnerability where unauthenticated plugin-auth HTTP routes receive operator runtime write scopes. Attackers can access these routes without authentication to perform privileged runtime actions intended for authorized operators.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.737",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/2a1db0c0f1fa375004a95ba0ef030534790a6d47",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-mhgq-xpfq-6r66",
+        "https://www.vulncheck.com/advisories/openclaw-unauthorized-operator-scope-access-in-unauthenticated-plugin-auth-routes"
+      ],
+      "cvss_score": 8.2,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41394",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.2); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41393",
+      "severity": "medium",
+      "type": "unknown_cwe_346",
+      "nvd_category_id": "CWE-346",
+      "title": "OpenClaw before 2026.3.31 contains a wide-area discovery vulnerability allowing arbitrary tailnet pe...",
+      "description": "OpenClaw before 2026.3.31 contains a wide-area discovery vulnerability allowing arbitrary tailnet peers to be accepted as DNS authorities. Attackers with same-tailnet position and CA-trusted endpoint access can exfiltrate operator credentials through DNS steering manipulation.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.590",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/a23c33a681f8c1b22dc793995acc4c5c4b568346",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-q9w8-cf67-r238",
+        "https://www.vulncheck.com/advisories/openclaw-arbitrary-dns-authority-acceptance-and-credential-exfiltration-via-wide-area-discovery"
+      ],
+      "cvss_score": 4.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41393",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41392",
+      "severity": "medium",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw before 2026.3.31 contains an exec allowlist bypass vulnerability allowing attackers to inhe...",
+      "description": "OpenClaw before 2026.3.31 contains an exec allowlist bypass vulnerability allowing attackers to inherit allowlist trust via shell init-file wrapper invocations. Attackers can exploit shell options like --rcfile, --init-file, and --startup-file to load attacker-chosen initialization files while bypassing exec allowlist matching restrictions.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.447",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/0c8375424620e12777ef24c162eedc7e9fcfd7e3",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wpc6-37g7-8q4w",
+        "https://www.vulncheck.com/advisories/openclaw-exec-allowlist-bypass-via-shell-init-file-options"
+      ],
+      "cvss_score": 6.7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41392",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.7); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41391",
+      "severity": "medium",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw before 2026.3.31 fails to properly sanitize PIP_INDEX_URL and UV_INDEX_URL environment vari...",
+      "description": "OpenClaw before 2026.3.31 fails to properly sanitize PIP_INDEX_URL and UV_INDEX_URL environment variables in host execution contexts, allowing attackers to redirect Python package-index traffic. Attackers can exploit this bypass to intercept or manipulate package management operations by injecting malicious index URLs through unsanitized environment variables.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.310",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/7ae1bb0c7799fd0cbd2d4de7b0f5b8039837ab8d",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7ggg-pvrf-458v",
+        "https://www.vulncheck.com/advisories/openclaw-environment-variable-bypass-in-package-index-url-handling"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41391",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41390",
+      "severity": "high",
+      "type": "unknown_cwe_807",
+      "nvd_category_id": "CWE-807",
+      "title": "OpenClaw before 2026.3.28 contains an exec allowlist bypass vulnerability where allow-always persist...",
+      "description": "OpenClaw before 2026.3.28 contains an exec allowlist bypass vulnerability where allow-always persistence fails to unwrap /usr/bin/script and similar wrappers before storing trust decisions. Attackers can obtain user approval for one wrapped command to persist trust for wrapper binaries that execute different underlying programs.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.173",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-6pfc-6m7w-m8fx",
+        "https://www.vulncheck.com/advisories/openclaw-exec-allowlist-bypass-via-unregistered-usr-bin-script-wrapper"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41390",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41388",
+      "severity": "medium",
+      "type": "unknown_cwe_372",
+      "nvd_category_id": "CWE-372",
+      "title": "OpenClaw before 2026.3.31 contains a configuration management vulnerability where startup migration ...",
+      "description": "OpenClaw before 2026.3.31 contains a configuration management vulnerability where startup migration treats empty-array settings as missing values. Attackers can restart the application to rehydrate revoked Tlon configuration from file state, bypassing intended revocation controls.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:42.040",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/a4d72a83f01fedd35964c352e3473c7712a3511b",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3pm9-5j7m-59vc",
+        "https://www.vulncheck.com/advisories/openclaw-configuration-rehydration-via-empty-array-revocation-handling"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41388",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41387",
+      "severity": "high",
+      "type": "unknown_cwe_183",
+      "nvd_category_id": "CWE-183",
+      "title": "OpenClaw before 2026.3.22 contains an incomplete host environment variable sanitization vulnerabilit...",
+      "description": "OpenClaw before 2026.3.22 contains an incomplete host environment variable sanitization vulnerability in host-env-security-policy.json and host-env-security.ts that allows package-manager environment overrides. Attackers can exploit approved exec requests to redirect package resolution or runtime bootstrap to attacker-controlled infrastructure and execute trojanized content.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.910",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-j7p2-qcwm-94v4",
+        "https://www.vulncheck.com/advisories/openclaw-supply-chain-redirection-via-incomplete-host-environment-sanitization"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41387",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41386",
+      "severity": "critical",
+      "type": "unknown_cwe_648",
+      "nvd_category_id": "CWE-648",
+      "title": "OpenClaw before 2026.3.22 contains a privilege escalation vulnerability where bootstrap setup codes ...",
+      "description": "OpenClaw before 2026.3.22 contains a privilege escalation vulnerability where bootstrap setup codes are not bound to intended device roles and scopes during pairing. Attackers can exploit this during first-use device pairing to escalate privileges beyond their intended role and scope.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.770",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/a600c72ed7d0045a27f58bf031d2b36ecb0141c9",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-gg9v-mgcp-v6m7",
+        "https://www.vulncheck.com/advisories/openclaw-privilege-escalation-via-unbound-bootstrap-setup-codes"
+      ],
+      "cvss_score": 9.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41386",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.1); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41385",
+      "severity": "medium",
+      "type": "unknown_cwe_312",
+      "nvd_category_id": "CWE-312",
+      "title": "OpenClaw before 2026.3.31 stores Nostr privateKey as plaintext in configuration, allowing exposure t...",
+      "description": "OpenClaw before 2026.3.31 stores Nostr privateKey as plaintext in configuration, allowing exposure through config.get method calls that bypass redaction mechanisms. Attackers can retrieve unredacted configuration data to obtain plaintext signing keys used for Nostr protocol operations.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.630",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/57700d716f660591fb6e09727f3ca8041fa48b9d",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jjw7-3vjf-fg5j",
+        "https://www.vulncheck.com/advisories/openclaw-nostr-private-key-exposure-via-config-get-redaction-bypass"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41385",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41384",
+      "severity": "high",
+      "type": "unknown_cwe_15",
+      "nvd_category_id": "CWE-15",
+      "title": "OpenClaw before 2026.3.24 contains an environment variable injection vulnerability in the CLI backen...",
+      "description": "OpenClaw before 2026.3.24 contains an environment variable injection vulnerability in the CLI backend runner that allows attackers to inject malicious environment variables through workspace configuration. Attackers can craft malicious workspace configs to inject arbitrary environment variables into the backend process spawning, enabling code execution or sensitive data exposure.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.497",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/c2fb7f1948c3226732a630256b5179a60664ec24",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-vfw7-6rhc-6xxg",
+        "https://www.vulncheck.com/advisories/openclaw-environment-variable-injection-via-workspace-config-in-cli-backend"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41384",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41383",
+      "severity": "high",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "OpenClaw before 2026.4.2 contains an arbitrary directory deletion vulnerability in mirror mode that ...",
+      "description": "OpenClaw before 2026.4.2 contains an arbitrary directory deletion vulnerability in mirror mode that allows attackers to delete remote directories by influencing remoteWorkspaceDir and remoteAgentWorkspaceDir configuration values. Attackers can manipulate these OpenShell config paths to cause mirror sync operations to delete unintended remote directory contents and replace them with uploaded workspace data.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.360",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/b21c9840c2e38f4bb338d031511b479d5f07ca25",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-m34q-h93w-vg5x",
+        "https://www.vulncheck.com/advisories/openclaw-arbitrary-remote-directory-deletion-via-mis-scoped-mirror-mode-paths"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41383",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41382",
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "OpenClaw before 2026.3.31 contains an authorization bypass vulnerability in Discord voice ingress th...",
+      "description": "OpenClaw before 2026.3.31 contains an authorization bypass vulnerability in Discord voice ingress that allows attackers to bypass channel and member allowlist restrictions. Attackers can exploit stale-role validation gaps and improper channel name validation to gain unauthorized access to restricted voice channels.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.230",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/dba96e7507e0900f120e5e28e57755d69bf78759",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-x2m8-53h4-6hch",
+        "https://www.vulncheck.com/advisories/openclaw-discord-voice-ingress-authorization-bypass-via-channel-and-role-validation-gaps"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41382",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41381",
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.3.31 contains an access control bypass vulnerability in the Discord voice manag...",
+      "description": "OpenClaw before 2026.3.31 contains an access control bypass vulnerability in the Discord voice manager that allows attackers to bypass channel-level member access allowlist restrictions. Attackers can send Discord voice ingress requests before channel allowlist authorization is performed, gaining unauthorized access to restricted voice channels.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:41.097",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/dba96e7507e0900f120e5e28e57755d69bf78759",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cqgw-44wg-44rf",
+        "https://www.vulncheck.com/advisories/openclaw-access-control-bypass-in-discord-voice-manager-via-channel-allowlist"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41381",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41380",
+      "severity": "high",
+      "type": "unknown_cwe_807",
+      "nvd_category_id": "CWE-807",
+      "title": "OpenClaw before 2026.3.28 contains an execution approval vulnerability in exec-approvals-allowlist.t...",
+      "description": "OpenClaw before 2026.3.28 contains an execution approval vulnerability in exec-approvals-allowlist.ts that allows allow-always persistence to trust wrapper carrier executables instead of invoked targets. Attackers can exploit positional carrier executable routing through dispatch wrappers to establish broader allowlist entries than intended, weakening execution approval boundaries.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.957",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p4x4-2r7f-wjxg",
+        "https://www.vulncheck.com/advisories/openclaw-arbitrary-execution-allowlist-via-wrapper-carrier-executables"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41380",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41379",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability allowing authenticated opera...",
+      "description": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability allowing authenticated operators with write permissions to access admin-class Talk Voice configuration persistence. Attackers with operator.write privileges can exploit the chat.send endpoint to reach and modify sensitive voice configuration settings intended for administrators only.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.820",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/e34694733fc64931ed4a543c73d84ad3435d5df1",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3q42-xmxv-9vfr",
+        "https://www.vulncheck.com/advisories/openclaw-privilege-escalation-via-chat-send-to-admin-class-talk-voice-config"
+      ],
+      "cvss_score": 7.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41379",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41378",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "OpenClaw before 2026.3.31 contains a privilege escalation vulnerability allowing paired nodes with r...",
+      "description": "OpenClaw before 2026.3.31 contains a privilege escalation vulnerability allowing paired nodes with role=node to dispatch node.event agent requests with unrestricted gateway-side tool access. Attackers with trusted paired node credentials can escalate privileges by leveraging unrestricted agent.request dispatch to achieve remote code execution on the gateway.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.687",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/a77928b1087e90f2a8903f8e5aca6dec9237ac62",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-gjm7-hw8f-73rq",
+        "https://www.vulncheck.com/advisories/openclaw-privilege-escalation-to-remote-code-execution-via-unrestricted-node-event-agent-dispatch"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41378",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41377",
+      "severity": "medium",
+      "type": "unknown_cwe_636",
+      "nvd_category_id": "CWE-636",
+      "title": "OpenClaw before 2026.3.31 contains a fail-open vulnerability in the plugin installation flow where s...",
+      "description": "OpenClaw before 2026.3.31 contains a fail-open vulnerability in the plugin installation flow where security scan failures do not block installation. Attackers can exploit scan failures to install untrusted plugins when operators proceed despite visible scan warnings.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.550",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/0d7f1e2c84eca65df7dee890d9c30e2a841c030a",
+        "https://github.com/openclaw/openclaw/commit/44b993613601280d46a5b88190e46669fc13d669",
+        "https://github.com/openclaw/openclaw/commit/7a953a52271b9188a5fa830739a4366614ff9916"
+      ],
+      "cvss_score": 4.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41377",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.6); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41376",
+      "severity": "medium",
+      "type": "unknown_cwe_346",
+      "nvd_category_id": "CWE-346",
+      "title": "OpenClaw before 2026.3.31 contains an allowlist bypass vulnerability in Matrix thread root and reply...",
+      "description": "OpenClaw before 2026.3.31 contains an allowlist bypass vulnerability in Matrix thread root and reply context handling that fails to properly validate message senders. Attackers can fetch thread-root and reply context messages that should be filtered by sender allowlists, bypassing access controls.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.413",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/8a563d603b70ef6338915f0527bee87282c3bad5",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rg8m-3943-vm6q",
+        "https://www.vulncheck.com/advisories/openclaw-matrix-thread-context-allowlist-bypass-via-sender-validation"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41376",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41375",
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw before 2026.3.28 contains an authorization bypass vulnerability in the /phone arm and /phon...",
+      "description": "OpenClaw before 2026.3.28 contains an authorization bypass vulnerability in the /phone arm and /phone disarm endpoints that fails to properly enforce operator.admin scope checks for external channels. Attackers can bypass authentication restrictions to arm or disarm phone channels without proper administrative privileges.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.280",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/aa66ae1fc797d3298cc409ed2c5da69a89950a45",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-h2v7-xc88-xx8c",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-in-phone-arm-and-phone-disarm-endpoints"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41375",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41374",
+      "severity": "medium",
+      "type": "unknown_cwe_408",
+      "nvd_category_id": "CWE-408",
+      "title": "OpenClaw before 2026.3.31 performs Discord audio preflight transcription before validating member au...",
+      "description": "OpenClaw before 2026.3.31 performs Discord audio preflight transcription before validating member authorization, allowing unauthenticated attackers to consume resources. Remote attackers can trigger audio preflight processing without member allowlist validation to cause resource exhaustion.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:40.140",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/ee52f64226a03efadfdf1e3b759e13424a3d4e41",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-hhff-fj5f-qg48",
+        "https://www.vulncheck.com/advisories/openclaw-resource-consumption-via-discord-audio-preflight-before-member-authorization"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41374",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-41373",
+      "severity": "medium",
+      "type": "unknown_cwe_427",
+      "nvd_category_id": "CWE-427",
+      "title": "OpenClaw before 2026.3.31 contains an incomplete host-env-security-policy.json that fails to restric...",
+      "description": "OpenClaw before 2026.3.31 contains an incomplete host-env-security-policy.json that fails to restrict compiler binary environment variables, allowing untrusted models to substitute CC, CXX, CARGO_BUILD_RUSTC, and CMAKE_C_COMPILER via environment overrides. Attackers with approved host-exec requests can override compiler binaries to execute arbitrary code during build processes.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:37:39.993",
+      "references": [
+        "https://github.com/openclaw/openclaw/commit/e277a37f896b5011a1df06e6490c6630074d0afa",
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-g8xp-qx39-9jq9",
+        "https://www.vulncheck.com/advisories/openclaw-compiler-binary-substitution-via-environment-variable-override-in-host-execution-policy"
+      ],
+      "cvss_score": 6.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-41373",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.1); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-41372",
       "severity": "medium",
@@ -11,6 +1861,7 @@
       "title": "OpenClaw before 2026.4.2 fails to normalize trailing-dot localhost hosts in remote CDP discovery res...",
       "description": "OpenClaw before 2026.4.2 fails to normalize trailing-dot localhost hosts in remote CDP discovery responses, allowing bypass of loopback protections. Attackers can craft hostile discovery responses returning localhost. to retarget authenticated browser control toward localhost endpoints and expose browser state.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -46,6 +1897,7 @@
       "title": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability in chat.send that allows wri...",
       "description": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability in chat.send that allows write-scoped gateway callers to trigger admin-only session reset operations. Attackers can rotate target sessions, archive prior transcript state, and force new session IDs without requiring admin scope by exploiting improper authorization checks in the chat.send path.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -80,6 +1932,7 @@
       "title": "OpenClaw before 2026.3.31 contains a path traversal vulnerability in ACP dispatch that allows attack...",
       "description": "OpenClaw before 2026.3.31 contains a path traversal vulnerability in ACP dispatch that allows attackers to read arbitrary files by manipulating inbound channel attachment paths. Remote attackers can bypass attachment-cache and root directory checks to access files outside intended directories.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -115,6 +1968,7 @@
       "title": "OpenClaw before 2026.3.31 contains insufficient environment variable sanitization in host exec opera...",
       "description": "OpenClaw before 2026.3.31 contains insufficient environment variable sanitization in host exec operations, failing to filter package, registry, Docker, compiler, and TLS override variables. Attackers can exploit this by injecting malicious environment variables to override critical system configurations and compromise host execution integrity.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -150,6 +2004,7 @@
       "title": "OpenClaw before 2026.3.28 contains an environment variable disclosure vulnerability in the jq safe-b...",
       "description": "OpenClaw before 2026.3.28 contains an environment variable disclosure vulnerability in the jq safe-bin policy that fails to block the $ENV filter. Attackers can bypass safe-bin restrictions by using $ENV in jq programs to access sensitive environment variables that should be restricted.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -184,6 +2039,7 @@
       "title": "OpenClaw versions 2026.2.14 through 2026.3.24 fail to consistently apply guild and channel policy ga...",
       "description": "OpenClaw versions 2026.2.14 through 2026.3.24 fail to consistently apply guild and channel policy gates to Discord button and component interactions. Attackers can trigger privileged component actions from blocked contexts by bypassing channel policy enforcement.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -218,6 +2074,7 @@
       "title": "OpenClaw before 2026.3.31 contains a local roots self-whitelisting vulnerability in appendLocalMedia...",
       "description": "OpenClaw before 2026.3.31 contains a local roots self-whitelisting vulnerability in appendLocalMediaParentRoots that allows model-initiated arbitrary host file read. Attackers can exploit improper media parent directory validation to exfiltrate credentials and access sensitive files.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -253,6 +2110,7 @@
       "title": "OpenClaw before 2026.3.31 contains a sender allowlist bypass vulnerability in MS Teams thread histor...",
       "description": "OpenClaw before 2026.3.31 contains a sender allowlist bypass vulnerability in MS Teams thread history fetched via Graph API. Attackers can retrieve thread messages that should be filtered by sender allowlists, bypassing message filtering restrictions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -288,6 +2146,7 @@
       "title": "OpenClaw before 2026.3.31 contains a symlink following vulnerability in SSH sandbox tar upload that ...",
       "description": "OpenClaw before 2026.3.31 contains a symlink following vulnerability in SSH sandbox tar upload that allows remote attackers to write arbitrary files. Attackers can exploit this by uploading tar archives containing symlinks to escape the sandbox and overwrite files on the remote host.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -323,6 +2182,7 @@
       "title": "OpenClaw versions 2026.2.6 through 2026.3.24 contain a path traversal vulnerability in the Feishu ex...",
       "description": "OpenClaw versions 2026.2.6 through 2026.3.24 contain a path traversal vulnerability in the Feishu extension resolveUploadInput function that bypasses file-system sandbox restrictions. Attackers can exploit improper path resolution during upload_image operations to read arbitrary files outside configured localRoots boundaries.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -357,6 +2217,7 @@
       "title": "OpenClaw versions 2026.2.19 before 2026.3.31 contain an improper cache isolation vulnerability in th...",
       "description": "OpenClaw versions 2026.2.19 before 2026.3.31 contain an improper cache isolation vulnerability in the Zalo webhook replay-dedupe mechanism that is shared across authenticated webhook targets. Attackers controlling one authenticated Zalo webhook path in multi-account deployments can suppress legitimate events on different accounts by matching event_name and message_id parameters.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -706,6 +2567,7 @@
       "title": "OpenClaw before 2026.3.31 contains a remote code execution vulnerability where a device-paired node ...",
       "description": "OpenClaw before 2026.3.31 contains a remote code execution vulnerability where a device-paired node can bypass the node scope gate authentication mechanism. Attackers with device pairing credentials can execute arbitrary node commands on the host system without proper node pairing validation.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -741,6 +2603,7 @@
       "title": "OpenClaw before 2026.3.31 contains a replay detection bypass vulnerability in webhook signature hand...",
       "description": "OpenClaw before 2026.3.31 contains a replay detection bypass vulnerability in webhook signature handling that treats Base64 and Base64URL encoded signatures as distinct requests. Attackers can re-encode Telnyx webhook signatures to bypass replay detection while maintaining valid signature verification.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -776,6 +2639,7 @@
       "title": "OpenClaw before 2026.3.31 contains a session visibility bypass vulnerability where the session_statu...",
       "description": "OpenClaw before 2026.3.31 contains a session visibility bypass vulnerability where the session_status function fails to enforce configured tools.sessions.visibility restrictions for unsandboxed invocations. Attackers can invoke session_status without sandbox constraints to bypass session-policy controls and access restricted session information.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -881,6 +2745,7 @@
       "title": "OpenClaw before 2026.3.31 lacks browser-origin validation in HTTP operator endpoints when operating ...",
       "description": "OpenClaw before 2026.3.31 lacks browser-origin validation in HTTP operator endpoints when operating in trusted-proxy mode, allowing cross-site request forgery attacks. Attackers can exploit this by sending malicious requests from a browser in trusted-proxy deployments to perform unauthorized actions on HTTP operator endpoints.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -951,6 +2816,7 @@
       "title": "OpenClaw before 2026.3.31 contains a credential exposure vulnerability in media download functionali...",
       "description": "OpenClaw before 2026.3.31 contains a credential exposure vulnerability in media download functionality that forwards Authorization headers across cross-origin redirects. Attackers can exploit this by crafting malicious cross-origin redirect chains to intercept sensitive authorization credentials intended for legitimate requests.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1020,6 +2886,7 @@
       "title": "OpenClaw before 2026.3.31 lacks a shared pre-auth concurrency budget on the public LINE webhook path...",
       "description": "OpenClaw before 2026.3.31 lacks a shared pre-auth concurrency budget on the public LINE webhook path, allowing attackers to cause transient availability loss. Remote attackers can flood the webhook endpoint with concurrent requests before signature verification to exhaust resources and degrade service availability.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1124,6 +2991,7 @@
       "title": "OpenClaw before 2026.3.31 contains an authentication boundary vulnerability where Telegram legacy al...",
       "description": "OpenClaw before 2026.3.31 contains an authentication boundary vulnerability where Telegram legacy allowFrom migration incorrectly fans default-account trust into all named accounts. Attackers can exploit this trust propagation to bypass authentication controls and gain unauthorized access to named accounts.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1194,6 +3062,7 @@
       "title": "OpenClaw before 2026.3.31 contains a time-of-check-time-of-use vulnerability in sandbox file operati...",
       "description": "OpenClaw before 2026.3.31 contains a time-of-check-time-of-use vulnerability in sandbox file operations that allows attackers to bypass fd-based defenses. Attackers can exploit check-then-act patterns in apply_patch, remove, and mkdir operations to manipulate files between validation and execution.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1229,6 +3098,7 @@
       "title": "OpenClaw before 2026.3.31 contains a callback origin mutation vulnerability in Plivo voice-call repl...",
       "description": "OpenClaw before 2026.3.31 contains a callback origin mutation vulnerability in Plivo voice-call replay that allows attackers to mutate in-process callback origin before replay rejection. Attackers with captured valid callbacks for live calls can exploit this to manipulate callback origins during the replay process.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1264,6 +3134,7 @@
       "title": "OpenClaw before 2026.3.31 allows workspace .env files to override the OPENCLAW_BUNDLED_HOOKS_DIR env...",
       "description": "OpenClaw before 2026.3.31 allows workspace .env files to override the OPENCLAW_BUNDLED_HOOKS_DIR environment variable, enabling loading of attacker-controlled hook code. Attackers can replace trusted default-on bundled hooks from untrusted workspaces to execute arbitrary code.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1299,6 +3170,7 @@
       "title": "OpenClaw before 2026.3.31 contains an information disclosure vulnerability in the Control Interface ...",
       "description": "OpenClaw before 2026.3.31 contains an information disclosure vulnerability in the Control Interface bootstrap JSON that exposes version and assistant agent identifiers. Attackers can extract sensitive fingerprinting information from the Control UI bootstrap payload to identify system versions and agent configurations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1334,6 +3206,7 @@
       "title": "OpenClaw before 2026.3.31 contains a decompression bomb vulnerability in image processing that fails...",
       "description": "OpenClaw before 2026.3.31 contains a decompression bomb vulnerability in image processing that fails to properly enforce pixel-limit guards on sips. Attackers can exploit this by uploading oversized images to cause denial of service through excessive memory consumption.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1369,6 +3242,7 @@
       "title": "OpenClaw before 2026.3.31 contains an authentication rate limiting bypass vulnerability that allows ...",
       "description": "OpenClaw before 2026.3.31 contains an authentication rate limiting bypass vulnerability that allows attackers to circumvent shared authentication protections using fake device tokens. Attackers can exploit the mixed WebSocket authentication flow to bypass rate limiting controls and conduct brute force attacks against weak shared passwords.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1438,6 +3312,7 @@
       "title": "OpenClaw before 2026.4.20 contains an improper authorization vulnerability in paired-device pairing ...",
       "description": "OpenClaw before 2026.4.20 contains an improper authorization vulnerability in paired-device pairing management that allows limited-scope sessions to enumerate and act on pairing requests. Attackers with paired-device access can approve or operate on unrelated pending device requests within the same gateway scope.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1473,6 +3348,7 @@
       "title": "OpenClaw before 2026.4.20 contains a scope enforcement bypass vulnerability in the assistant-media r...",
       "description": "OpenClaw before 2026.4.20 contains a scope enforcement bypass vulnerability in the assistant-media route that allows trusted-proxy callers without operator.read scope to access protected assistant-media files and metadata. Attackers can bypass identity-bearing HTTP auth path scope validation to retrieve sensitive media content within allowed media roots.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2009,6 +3885,7 @@
       "title": "OpenClaw versions 2026.4.7 before 2026.4.15 fail to enforce local-root containment on tool-result me...",
       "description": "OpenClaw versions 2026.4.7 before 2026.4.15 fail to enforce local-root containment on tool-result media paths, allowing arbitrary local and UNC file access. Attackers can craft malicious tool-result media references to trigger host-side file reads or Windows network path access, potentially disclosing sensitive files or exposing credentials.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2256,6 +4133,7 @@
       "title": "OpenClaw before 2026.3.24 contains an incomplete fix for CVE-2026-27486 where the !stop chat command...",
       "description": "OpenClaw before 2026.3.24 contains an incomplete fix for CVE-2026-27486 where the !stop chat command uses an unpatched killProcessTree function from shell-utils.ts that sends SIGKILL immediately without graceful SIGTERM shutdown. Attackers can trigger process termination via the !stop command, causing data corruption, resource leaks, and skipped security-sensitive cleanup operations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
