@@ -3,66 +3,68 @@ Source: ../security-signing-runbook.md
 Review status: draft
 -->
 
-# ClawSec Signing Operations Runbook
+# ClawSec 署名操作 Runbook
 
-## 1) Purpose
+> 参照実装: `clawsec-suite`（OpenClawスイート）
 
-This runbook defines operational procedures for introducing and running cryptographic signing in the ClawSec repository.
+ツイート 1) 目的
 
-It covers:
-- key generation
-- GitHub secret management
-- signing workflow integration
-- key rotation and revocation
-- incident response
+この runbook は、ClawSec リポジトリに暗号署名を導入および実行するための運用手順を定義します。
 
-## 2) Current operating state (important)
+それはカバーします:
+- キー生成
+- GitHubの秘密管理
+- ワークフローの統合の署名
+- キーの回転およびrevocation
+- インシデント対応
 
-On `main`, advisory and release channels are signed and verified by default:
+ツイート 2) 現在の作動状態(重要)
 
-- Feed writers:
-  - `.github/workflows/poll-nvd-cves.yml` updates `advisories/feed.json` and signs `advisories/feed.json.sig`
-  - `.github/workflows/community-advisory.yml` does the same for approved issue reports
-  - both sync signed feed artifacts into `skills/clawsec-feed/advisories/`
-- Feed publish path:
-  - `.github/workflows/deploy-pages.yml` publishes `public/advisories/feed.json` + `.sig`
-  - generates and signs `public/checksums.json` + `public/checksums.sig`
-  - publishes canonical key as `public/signing-public.pem` and `public/advisories/feed-signing-public.pem`
-  - mirrors compatibility artifacts under `public/releases/latest/download/` (including `feed.json`, `feed.json.sig`, `checksums.json`, `checksums.sig`, `signing-public.pem`)
-- Feed consumers:
-  - `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
-  - `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
-  - `skills/clawsec-nanoclaw/lib/advisories.ts`
-  - default feed URL is `https://clawsec.prompt.security/advisories/feed.json`
+`main`では、アドバイザリーおよびリリースチャネルは、デフォルトで署名および検証されています。
 
-Unsigned mode remains an explicit compatibility bypass (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`) and is not the steady-state operating model.
+- フィードライター:
+- `.github/workflows/poll-nvd-cves.yml`は`advisories/feed.json`を更新し、`advisories/feed.json.sig`に署名します
+- `.github/workflows/community-advisory.yml`は承認された問題のレポートのために同じことをします
+- 署名されたフィードアーティファクトを`skills/clawsec-feed/advisories/`に同期する
+- フィード公開パス:
+- `.github/workflows/deploy-pages.yml`公開 `public/advisories/feed.json` + `.sig`の特長
+- `public/checksums.json` + `public/checksums.sig`を生成し、署名します
+- `public/signing-public.pem`および`public/advisories/feed-signing-public.pem`としてcanonicalキーを出版して下さい
+- `public/releases/latest/download/`(`feed.json`、`feed.json.sig`、`checksums.json`、`checksums.sig`、`signing-public.pem`を含む)に基づく互換性のアーティファクトをミラーリング
+- 供給の消費者:
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- デフォルトのフィードURLは`https://clawsec.prompt.security/advisories/feed.json`です
 
-## 3) Target signed artifacts
+符号なしモードは、明示的な互換性バイパス(`CLAWSEC_ALLOW_UNSIGNED_FEED=1`)のままであり、安定した状態の動作モデルではありません。
 
-### Advisory feed channel
-- `advisories/feed.json` (payload)
-- `advisories/feed.json.sig` (detached Ed25519 signature; base64)
-- `advisories/feed-signing-public.pem` (pinned public key)
+ツイート 3) ターゲット署名されたアーティファクト
 
-### Release artifact channel
-- `<release>/checksums.json`
-- `<release>/checksums.sig`
-- `<release>/signing-public.pem`
+##アドバイザリーフィードチャネル
+- `advisories/feed.json` (ペイロード)
+- `advisories/feed.json.sig`(Ed25519署名を取り外す)
+- `advisories/feed-signing-public.pem`(ピンキー公開)
 
-## 4) Key roles and custody
+################################################################################################################################################################################################################################################################ リリースアーティファクトチャンネル
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
 
-- **Security owner**: approves key lifecycle changes and incident actions.
-- **Platform owner**: maintains workflows and GitHub secrets.
-- **Reviewer**: validates fingerprints in PRs/releases.
+ツイート 4) 主な役割およびcustody
 
-Policy:
-- private keys are never committed
-- public keys are committed and code-reviewed
-- key generation occurs on trusted operator workstation or HSM-backed environment
+- **セキュリティ所有者**:重要なライフサイクルの変更とインシデントアクションを承認します。
+- **プラットフォーム所有者**:ワークフローとGitHubの秘密を保持します。
+-**Reviewer**:PR /リリースで指紋を検証します。
 
-## 5) Key generation (Ed25519)
+ポリシー:
+- 秘密鍵は決して約束しません
+- 公開鍵はコミットされ、コードレビューされます
+- 信頼できるオペレータのワークステーションかHSM支えられた環境で主生成は起こります
 
-> Run from a secure workstation. Do not run on shared CI runners.
+ツイート 5)キー生成(Ed25519)
+
+ツイート 安全なワークステーションから実行します。 共有CIランナーで実行しないでください。
 
 ```bash
 # Feed signing keypair
@@ -74,14 +76,14 @@ openssl genpkey -algorithm Ed25519 -out release-signing-private.pem
 openssl pkey -in release-signing-private.pem -pubout -out release-signing-public.pem
 ```
 
-Generate fingerprints (store in ticket/change record):
+指紋の生成(チケット/変更記録の保存):
 
 ```bash
 openssl pkey -pubin -in feed-signing-public.pem -outform DER | shasum -a 256
 openssl pkey -pubin -in release-signing-public.pem -outform DER | shasum -a 256
 ```
 
-Optional test-sign before publishing:
+出版前の任意テスト署名:
 
 ```bash
 echo '{"probe":"ok"}' > /tmp/probe.json
@@ -91,149 +93,149 @@ openssl base64 -d -A -in /tmp/probe.sig -out /tmp/probe.sig.bin
 openssl pkeyutl -verify -rawin -pubin -inkey feed-signing-public.pem -in /tmp/probe.json -sigfile /tmp/probe.sig.bin
 ```
 
-## 6) GitHub secrets setup
+ツイート 6) GitHubの秘密のセットアップ
 
-### Required secrets
+郵便番号 必須の秘密
 
-- `CLAWSEC_SIGNING_PRIVATE_KEY` — PEM-encoded Ed25519 private key (used for both feed and release signing)
-- `CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE` — (optional) passphrase if the private key is encrypted
+- `CLAWSEC_SIGNING_PRIVATE_KEY` — PEMエンコードEd25519プライベートキー(フィードとリリース署名の両方に使用されます)
+- プライベートキーが暗号化されている場合、`CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE` — (オプション) パスフレーズ
 
-### Procedure
+### 手順
 
-1. Go to **Repo Settings → Secrets and variables → Actions → New repository secret**.
-2. Paste full PEM including header/footer.
-3. Prefer GitHub **Environment secrets** (with required reviewers) for workflow scoping when possible.
-4. Record change ticket with:
-   - secret name
-   - creator
-   - creation time
-   - key fingerprint
+1。 [Repo 設定] → [秘密と変数] → [アクション] → [新しいリポジトリ] に移動します。
+2. ヘッダー/フッターを含む完全なPEMを貼って下さい。
+3。 プリファー GitHub **環境の秘密** (必要な査読者と) 可能な場合のワークフロースキャッピング。
+4。 レコード変更チケット:
+- 秘密名
+- クリエイター
+- 制作時間
+- 主指紋
 
-### Recommended environment protections
+################################################################################################################################################################################################################################################################ 推奨環境保護
 
-- Require manual approval for workflows that can use signing secrets.
-- Restrict who can edit protected workflows.
-- Enable branch protection for `main` and require review for workflow changes.
+- 署名の秘密を使用できるワークフローの手動承認が必要です。
+- 保護されたワークフローを編集できる制限
+- `main`のブランチ保護を有効にし、ワークフロー変更のレビューが必要です。
 
-## 7) Workflow integration points
+ツイート 7) ワークフロー統合ポイント
 
-This repo enforces signing as a post-mutation, pre-publish control.
+このリポジトリは、ポスト・ミュテーション、事前公開制御として署名を強制します。
 
-### Feed pipeline
+## フィードパイプライン
 
-Current feed mutation points:
-- `.github/workflows/poll-nvd-cves.yml`
-- `.github/workflows/community-advisory.yml`
+現在の供給の変異ポイント:
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
 
-Current behavior:
-- workflow step signs `advisories/feed.json` into `advisories/feed.json.sig`
-- signing action verifies generated signatures during workflow execution
-- signed artifacts are committed via PR automation
+現在の動作:
+- ワークフローステップは`advisories/feed.json`を`advisories/feed.json.sig`に署名します
+- アクションの署名は、ワークフローの実行中に生成された署名を検証します
+- 署名されたアーティファクトはPRのオートメーションによって託されます
 
-### Pages pipeline
+郵便番号 ページパイプライン
 
-Current publisher:
-- `.github/workflows/deploy-pages.yml`
+現在のパブリッシャー:
+- ZXQトークン0QXZ
 
-Current behavior:
-- copies payload/signature to `public/advisories/`
-- generates + signs `public/checksums.json` and `public/checksums.sig`
-- publishes signing key to `public/signing-public.pem` and `public/advisories/feed-signing-public.pem`
-- mirrors advisory + signature/checksum/key companions into `public/releases/latest/download/` compatibility paths
+現在の動作:
+- `public/advisories/`にペイロード/署名をコピー
+- `public/checksums.json`と`public/checksums.sig`を生成します
+- `public/signing-public.pem`と`public/advisories/feed-signing-public.pem`への署名キーを公開
+- アドバイザリー+シグネチャ/チェックサム/キーコンパニオンを`public/releases/latest/download/`互換パスにミラーリング
 
-### Skill release pipeline (recommended hardening)
+################################################################################################################################################################################################################################################################ スキルリリースパイプライン(推奨硬化)
 
-Current release generator:
-- `.github/workflows/skill-release.yml`
+現在の解放の発電機:
+- ZXQトークン0QXZ
 
-Current behavior:
-- creates `checksums.json`, signs it as `checksums.sig`, and verifies signature before publish
-- includes `signing-public.pem` in release assets
-- validates generated public-key fingerprint against canonical key material
+現在の動作:
+- `checksums.json` を作成し、`checksums.sig` に署名し、公開する前に署名を検証します。
+- リリースアセットに`signing-public.pem`が含まれています
+- 生成された公開鍵の指紋を正規キー素材に対して検証
 
-## 8) Rotation policy and runbook
+ツイート 8) 回転ポリシーとランブック
 
-### Rotation cadence
-- Routine: every 90 days (or stricter org policy).
-- Immediate: on suspected exposure, unauthorized workflow change, or unexplained signature mismatch.
+## 回転アカデミー
+- ルーチン:90日ごとに(または厳格なorgポリシー)。
+- 即時:疑わしい暴露、不正なワークフロー変更、または明示されていない署名不一致。
 
-### Routine rotation steps
+## ルーチン回転ステップ
 
-1. Generate new keypair(s).
-2. Open PR that updates public key file(s) and fingerprints documentation.
-3. Add new private key(s) as GitHub secret(s).
-4. Merge workflow changes that use new key(s).
-5. Re-sign latest feed/release manifests.
-6. Validate verification in CI and in one external client.
-7. Remove old private key secret(s).
-8. Keep old public key reference only as long as required for historical verification.
+1。 新しいキーペアを生成します。
+2。 パブリックキーファイルと指紋のドキュメントを更新するPRを開きます。
+3。 GitHub シークレットとして新しい秘密鍵を追加します。
+4。 新しいキーを使用するワークフローの変更をマージします。
+5。 最新のフィード/リリースマニフェストを再署名します。
+6。 CI および外部クライアントの検証を検証します。
+7。 古い秘密鍵を削除します。
+8。 過去の公開鍵の参照は、履歴検証に必要な限りのみ保持します。
 
-### Revocation steps
+## 取消ステップ
 
-1. Disable workflows using compromised key.
-2. Remove compromised GitHub secret(s).
-3. Commit revocation note and new public key.
-4. Re-sign latest artifacts with replacement key.
-5. Publish incident advisory with timestamp and impacted window.
+1。 妥協されたキーを使用してワークフローを無効にします。
+2. 承認されたGitHubの秘密を削除します。
+3。 取消しメモと公開鍵をコミットします。
+4。 交換キーで最新のアーティファクトを再署名します。
+5。 タイムスタンプとインパクトのあるウィンドウでインシデントアドバイザリーを発行します。
 
-## 9) Incident response playbook (signing-specific)
+ツイート 9) インシデント応答 Playbook(署名固有の)
 
-### Triggers
-- signature verification fails for newly published feed/release
-- unknown commits/workflow edits touching signing paths
-- leaked key material, accidental logging, or suspicious secret access
+## トリガー
+- 新規公開フィード/リリースのシグネチャ検証が失敗
+- 未知のコミット/ワークフローは署名パスに触れる編集します
+- 漏れたキー素材、誤ったロギング、または疑わしいシークレットアクセス
 
-### Severity guide
-- **SEV-1**: key exfiltration confirmed or maliciously signed payload published
-- **SEV-2**: verification failures with unknown cause
-- **SEV-3**: procedural non-compliance, no active compromise
+###重度ガイド
+-**SEV-1**:鍵の浸入確認または悪意のある署名されたペイロードが公開
+- **SEV-2**:未知の原因で検証障害
+- **SEV-3**: 手続き非遵守、活動的な妥協無し
 
-### Response phases
+郵便番号 応答フェーズ
 
-1. **Containment**
-   - pause signing/publish workflows
-   - block further feed merges if authenticity is uncertain
-2. **Investigation**
-   - review workflow run logs
-   - review commits affecting `.github/workflows/`, `advisories/`, and key files
-   - determine first-bad timestamp and affected artifacts
-3. **Eradication**
-   - rotate/revoke compromised key(s)
-   - restore trusted artifacts from known-good commit
-4. **Recovery**
-   - re-sign artifacts
-   - redeploy pages/releases
-   - verify via independent client check
-5. **Post-incident**
-   - publish timeline and remediation summary
-   - tighten controls (review gates, protected environments, secret scope)
+1。 **条件* * 必須
+- ワークフローの署名/公開を一時停止
+- 認証が未認証の場合、さらなるフィードマージをブロック
+2. **調査**
+- ワークフローの実行ログのレビュー
+- `.github/workflows/`、`advisories/`、および主要なファイルに影響を与える検討のコミット
+- ファースト・ベイド・タイムスタンプおよび影響を受けたアーティファクトを決定する
+3。 **取引**
+- 回転/回転調整キー(s)
+- 既知のコミットから信頼できるアーティファクトを復元する
+4。 **回復**
+- 再署名のアーティファクト
+- redeployページ/リリース
+- 独立したクライアントチェックで確認
+5。 **郵便番号* * 必須
+- タイムラインと修正要約を公開
+- 制御をきつく締めて下さい(眺めのゲート、保護された環境、秘密の規模)
 
-## 10) Audit evidence checklist
+#10 監査証拠チェックリスト
 
-For each release cycle or feed-signing run, retain:
-- workflow run URL and commit SHA
-- signer key fingerprint in use
-- verification result logs
-- operator/reviewer approvals
-- any exception or bypass rationale
+各リリースサイクルまたはフィード署名実行の場合、以下を保持します。
+- ワークフロー実行 URL とコミット SHA
+- 使用中のサイダーのキー指紋
+- 検証結果ログ
+- オペレータ/査読者の承認
+- 例外かバイパスの合理
 
-## 11) Minimum acceptance criteria before stricter policy changes
+#11) 厳格なポリシー変更前の最小受け入れ基準
 
-Before tightening policy further (for example, removing compatibility bypass paths):
-- signed artifacts are produced consistently for at least 2 weeks
-- deploy pipeline mirrors signature companions
-- one rollback drill and one key rotation drill completed successfully
-- incident response on-call owner identified and documented
+ポリシーをさらに締める前に(例えば、互換性バイパスパスのパスを削除):
+- 署名されたアーティファクトは少なくとも2週のために一貫して作り出されます
+- パイプラインミラーのシグネチャーコンをデプロイする
+- 1つのロールバックのドリルおよび1つの主回転ドリルは首尾よく完了しました
+- インシデント対応のオンコールオーナーが特定および文書化
 
-## Source References
-- advisories/feed.json
-- advisories/feed.json.sig
-- advisories/feed-signing-public.pem
+## ソース参照
+- アドバイザリー/フィード.json
+- アドバイザリー/フィード.json.sig
+- アドバイザリー/フィード署名-public.pem
 - clawsec-signing-public.pem
 - .github/actions/sign-and-verify/action.yml
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
 - .github/workflows/skill-release.yml
-- scripts/ci/verify_signing_key_consistency.sh
+- スクリプト/ci/verify_signing_key_consistency.sh
 - wiki/migration-signed-feed.md

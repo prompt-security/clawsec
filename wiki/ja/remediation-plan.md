@@ -3,87 +3,87 @@ Source: ../remediation-plan.md
 Review status: draft
 -->
 
-# Cross-Platform Remediation Plan
+# クロスプラットフォームの修復計画
 
-## Phase 1: Immediate Risk Closure (Completed)
+ツイート フェーズ1:リスク閉鎖の即時化(完了)
 
-### Milestones
-- Implement explicit home-path expansion + suspicious token rejection in high-risk runtime/install paths.
-- Add regression tests for path expansion and escaped-token rejection.
-- Add `.gitattributes` LF policy.
-- Expand Node lint/type/build CI coverage to Linux/macOS/Windows.
-- Update install docs with shell-specific guidance and literal `$HOME` troubleshooting.
+##マイルストーン
+- 高リスクランタイム/インストールパスで明示的なホームパス拡張+疑わしいトークン拒否を実行します。
+- パスの拡張とエスケープトケン拒否のための回帰テストを追加します。
+- `.gitattributes` LFポリシーを追加します。
+- Node lint/type/build CI のカバレッジを Linux/macOS/Windows に拡張します。
+- シェル固有のガイダンスとリテラル`$HOME`のトラブルシューティングでインストールドキュメントを更新します。
 
-### Outcomes
-- Literal `$HOME` path propagation bug addressed at source.
-- Core advisory/install path config now fails fast on invalid path tokens.
+## アウトカム
+- `$HOME`パス伝搬のバグをソースで解決
+- コアアドバイザリー/インストールパスコンフィグが無効なパストークンで高速に失敗しました。
 
----
+お問い合わせ
 
-## Phase 2: Windows Parity for Critical Workflows (Next)
+ツイート フェーズ2:批判的ワークフローのためのWindowsのパリティ(次)
 
-### Quick wins
-- Add PowerShell equivalents for the most-used manual install/check commands in:
-  - `skills/clawsec-suite/SKILL.md`
-  - `skills/openclaw-audit-watchdog/SKILL.md`
-  - `README.md`
-- Add a lightweight `scripts/preflight.mjs` to detect missing tools and print OS-specific install hints.
+### クイック勝利
+- パワーを追加 最も使用されるマニュアルのインストール/チェックコマンドのシェルの同等物:
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- 欠けているツールを検出し、OS固有のインストールのヒントを印刷するために、軽量`scripts/preflight.mjs`を追加します。
 
-### Milestones
-- Native PowerShell instructions for suite setup and advisory hook.
-- WSL/Git Bash fallback documented where shell scripts are unavoidable.
+##マイルストーン
+- ネイティブパワー スイートのセットアップとアドバイザリーのホックのためのシェルの指示。
+- シェルスクリプトが無効なWSL/Git Bashフォールバックが文書化されました。
 
----
+お問い合わせ
 
-## Phase 3: Reduce POSIX Shell Surface (Deeper Refactor)
+ツイート フェーズ3:POSIXを削減 貝の表面(Deeper Refactor)
 
-### Refactor targets
-- `scripts/populate-local-feed.sh`
-- `scripts/populate-local-skills.sh`
-- `scripts/release-skill.sh`
+##Refactor ターゲット
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
 
-### Approach
-- Re-implement critical paths in Node/Python to remove dependency on `jq/sed/awk/find/chmod` pipelines.
-- Preserve shell wrappers for backward compatibility; route to new cross-platform implementations.
+### アプローチ
+- `jq/sed/awk/find/chmod`パイプラインの依存性を除去するためにNode/Pythonで再実装重要なパス。
+- 後方互換性のためのシェルラッパーを保存します。新しいクロスプラットフォームの実装へのルート。
 
-### Migration notes
-- Keep old script entrypoints as wrappers for at least one minor release.
-- Emit deprecation warnings with exact migration commands.
+##マイグレーションノート
+- 古いスクリプトのエントリは、少なくとも1つのマイナーリリースのラッパーとして設定します。
+- 正確なマイグレーションコマンドで非推奨警告を省略します。
 
----
+お問い合わせ
 
-## Phase 4: CI Hardening and Ongoing Verification
+ツイート フェーズ4:CIの堅くなり、主張する検証
 
-### Milestones
-- Keep Node matrix (Linux/macOS/Windows) as required check.
-- Add targeted Windows smoke tests for install path handling.
-- Add macOS check for OpenSSL command compatibility notes where relevant.
+##マイルストーン
+- ノード行列(Linux/macOS/Windows)を必須チェックとして保持します。
+- パスの処理を取付けるための対象となるWindowsの煙テストを加えて下さい。
+- 関連するOpenSSLコマンドの互換性メモのmacOSチェックを追加します。
 
-### Test strategy
-- Local:
-  - Run Node test suites that cover path expansion/suppression/install behavior.
-  - Run syntax checks for modified scripts.
+郵便番号 テスト戦略
+- ローカル:
+- ノードテストスイートを実行し、パスの拡張/抑制/インストール動作をカバーします。
+- 変更されたスクリプトの構文チェックを実行します。
 - CI:
-  - Matrix Node checks + guarded installer/suppression/path tests.
-  - Linux-only security scans remain, but explicitly marked as Linux-scoped.
+- マトリックスノードは+ガードドインストーラ/抑制/パステストをチェックします。
+- Linuxのみのセキュリティスキャンは残っていますが、明示的にLinux-scopedとしてマークされています。
 
----
+お問い合わせ
 
-## Rollout / Release Considerations
+##ロールアウト/リリース検討
 
-- No breaking interface changes introduced in this patch set; behavior is stricter only for invalid/unexpanded path tokens.
-- Communicate in release notes:
-  - path token validation now enforced
-  - how to correct invalid quoted env values
-  - where PowerShell examples live
+- - - このパッチセットで導入されたインターフェイスの変更を破らない; 動作は無効/未公開のパストークンのみ厳格です。
+- リリースノートで通信:
+- パストークンの検証が強化されました
+- 無効な引用符 env 値を修正する方法
+- パワー シェル例ライブ
 
-## Source References
-- .gitattributes
+## ソース参照
+- .gitattributesの
 - .github/workflows/ci.yml
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
-- scripts/release-skill.sh
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
-- wiki/platform-verification.md
+- スクリプト/populate-local-feed.sh
+- スクリプト/populate-local-skills.sh
+- スクリプト/リリース-skill.sh
+- スキル/クローセスイート/ホック/クローセ-アドバイザー/ハンドラー.ts
+- スキル/clawsec-suite/scripts/guarded_skill_install.mjs
+- スキル/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- wiki/platform-verification.md の

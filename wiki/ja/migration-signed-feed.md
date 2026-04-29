@@ -3,183 +3,183 @@ Source: ../migration-signed-feed.md
 Review status: draft
 -->
 
-# Migration Record: Unsigned Feed → Signed Feed (Completed)
+# 移行記録: 署名されていないフィード → 署名されたフィード (完了)
 
-## 1) Objective and Status
+ツイート 1) 目的とステータス
 
-Document how ClawSec advisory distribution moved from unsigned `feed.json` delivery to detached-signature verification, with compatibility preserved for legacy clients.
+ClawSec のアドバイザリーディストリビューションが署名されていない `feed.json` デリバリーから、レガシークライアントの互換性が保持された状態の確認に移行する方法を文書化します。
 
-Current status on `main`:
-- Signed feed publishing is active in advisory workflows and deploy workflow.
-- Suite and NanoClaw consumers default to signed feed endpoints.
-- Unsigned behavior exists only as explicit compatibility bypass (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`).
+`main`の現在の状態:
+- 署名されたフィード・パブリッシングは、アドバイザリー・ワークフローとワークフローのデプロイで有効です。
+- スイートおよびNanoClawの消費者は署名された供給のエンドポイントにデフォルトで置きます。
+- 署名されていない動作は、明示的な互換性バイパス(`CLAWSEC_ALLOW_UNSIGNED_FEED=1`)としてのみ存在します。
 
-## 2) Baseline (today, post-migration)
+ツイート 2)ベースライン(今日、ポストマイグレーション)
 
-Current feed paths in active use:
-- Source of truth: `advisories/feed.json`
-- Source signature: `advisories/feed.json.sig`
-- Skill copy: `skills/clawsec-feed/advisories/feed.json`
-- Skill copy signature: `skills/clawsec-feed/advisories/feed.json.sig`
-- Pages copy: `public/advisories/feed.json`
-- Pages signature: `public/advisories/feed.json.sig`
-- Latest mirror copy: `public/releases/latest/download/advisories/feed.json` (+ `.sig`)
+アクティブな使用中の現在のフィードパス:
+- 真実の源:`advisories/feed.json`
+- ソース署名: `advisories/feed.json.sig`
+- スキルコピー:`skills/clawsec-feed/advisories/feed.json`
+- スキルコピー署名:`skills/clawsec-feed/advisories/feed.json.sig`
+- ページのコピー: `public/advisories/feed.json`
+- ページ署名: `public/advisories/feed.json.sig`の特長
+- 最も最近のミラーのコピー: `public/releases/latest/download/advisories/feed.json` (+ `.sig`)
 
-Current consumer defaults:
-- `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
-- `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
-- `skills/clawsec-nanoclaw/lib/advisories.ts`
-- default URL: `https://clawsec.prompt.security/advisories/feed.json`
+現在の消費者のデフォルト:
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- デフォルトURL:`https://clawsec.prompt.security/advisories/feed.json`
 
-## 3) Migration principles
+ツイート 3) 移行原則
 
-- **Dual-publish first**: publish signatures before enforcing verification.
-- **Fail-open only during transition**: temporary compatibility period is explicit and time-bounded.
-- **Measured rollout**: enforce verification after telemetry confirms stable signed publishing.
-- **Fast rollback**: preserve a path back to unsigned behavior while root cause is investigated.
+-**Dual-publish first**:検証の前に署名を公開します。
+- **移行中にのみフェイルオープン**:一時的な互換性期間が明示され、期限が切れる。
+- **測定されたロールアウト**:テレメトリーの後で確認を強制して下さい安定した署名された出版を確認します。
+-**Fast rollback**: 根本原因が調査される間、符号なしの行動に戻るパスを保存します。
 
-## 4) Phased timeline (historical)
+ツイート 4) フェーズドタイムライン(歴史的)
 
-### Phase 0 — Preparation (Completed)
+################################################################################################################################################################################################################################################################ フェーズ0 — 準備(完了)
 
-Deliverables:
-- signing keys generated and fingerprints recorded
-- GitHub secrets created
-- public key(s) added in repo
-- runbooks approved (`security-signing-runbook.md`, this file)
+配達可能:
+- 生成されたキーと指紋を記録する署名
+- GitHubの秘密作成
+- リポジトリに公開鍵を追加
+- runbooks が承認(`security-signing-runbook.md`、このファイル)
 
-Exit criteria:
-- key fingerprints verified by reviewer
-- protected branch/workflow controls enabled
+出口の基準:
+- レビュアーによって検証される重要な指紋
+- 保護された枝/ワークフロー制御は有効にしました
 
-### Phase 1 — CI signing enabled, no client enforcement (Completed)
+################################################################################################################################################################################################################################################################ フェーズ1 — CI 署名機能、クライアントの執行なし (完了)
 
-Implement:
-- add feed signing step/workflow to produce `advisories/feed.json.sig`
-- optionally produce `advisories/checksums.json` + `.sig`
-- ensure CI verifies signatures before publishing artifacts
+実装:
+- `advisories/feed.json.sig`を作り出すために供給の印のステップ/ワークフローを加えて下さい
+- 任意に農産物 `advisories/checksums.json` + `.sig`の特長
+- CIがアーティファクトを公開する前に署名を検証することを確認してください
 
-Also update deployment:
-- copy `.sig` artifacts to `public/advisories/`
-- mirror `.sig` in `public/releases/latest/download/advisories/`
+また更新の展開:
+- `.sig`アーティファクトを`public/advisories/`にコピーする
+- `public/releases/latest/download/advisories/`のミラー`.sig`
 
-Exit criteria:
-- signatures generated successfully for all feed update paths
-- deploy artifacts contain both payload and signature companions
+出口の基準:
+- すべてのフィード更新パスで正常に生成されたシグネチャ
+- アーティファクトには、ペイロードと署名のコンパニオンの両方が含まれている
 
-### Phase 2 — Consumer dual-read/dual-verify support (Completed)
+################################################################################################################################################################################################################################################################ フェーズ 2 — 消費者のデュアル読み取り/デュアル検証サポート(完了)
 
-Implement in consumers:
-- read `feed.json` and `feed.json.sig`
-- verify with pinned public key
-- keep controlled temporary unsigned fallback during migration window
+消費者の実装:
+- `feed.json`と`feed.json.sig`を読みます
+- ピン留めされた公共のキーと確認して下さい
+- migration の窓の間に管理された一時的な署名されていないフォールバックを保って下さい
 
-Validation:
-- test remote signed path
-- test local signed fallback path
-- test invalid signature rejection
+検証:
+- リモート署名されたパスをテストして下さい
+- ローカル署名されたフォールバックパスをテストして下さい
+- 無効な署名拒否のテスト
 
-Exit criteria:
-- verification logic released and tested
-- no false-positive verification failures in soak period
+出口の基準:
+- 検証ロジックのリリースとテスト
+- 浸漬期間中に偽陽性検証の失敗はありません
 
-### Phase 3 — Enforcement (Completed)
+################################################################################################################################################################################################################################################################ フェーズ3 — 強化(完了)
 
-Actions:
-- disable temporary unsigned fallback behavior in default paths
-- add CI/publish gates that fail when `.sig` is missing
-- announce enforcement date in release notes and docs
+アクション:
+- デフォルトパスの一時的な署名されていないフォールバック動作を無効にします
+- `.sig`が欠落したときに失敗するCI /公開ゲートを追加します
+- リリースノートおよび文書の施行日を発表
 
-Exit criteria:
-- all production clients verify signatures by default
-- no unsigned feed dependency in standard installation flow
+出口の基準:
+- すべてのプロダクションクライアントは、デフォルトでシグネチャを検証します
+- 標準的な設置流れの署名されていない供給の依存性無し
 
-### Phase 4 — Stabilization (Ongoing)
+################################################################################################################################################################################################################################################################ フェーズ 4 — 安定化(継続)
 
-Actions:
-- run first key rotation tabletop drill
-- run rollback tabletop drill
-- close migration with post-implementation review
+アクション:
+- 最初のキー回転テーブルトップドリルを実行します
+- ロールバックテーブルトップドリルを実行
+- 簡単なレビューで移行を閉じる
 
-## 5) Rollback plan
+ツイート 5)ロールバックプラン
 
-### Rollback triggers
+## ロールバックトリガー
 
-Initiate rollback if any of the following occur:
-- sustained signature verification failures across clients
-- signing workflow cannot produce valid signatures
-- key compromise suspected but replacement key is not yet deployed
-- deployment path publishes mismatched payload/signature pairs
+以下のいずれかが発生した場合は、ロールバックを初期化します。
+- クライアント間でシグネチャ認証の失敗を持続
+- ワークフローの署名は、有効な署名を生成できません
+- 重要な妥協が疑われるが、置換キーはまだ展開されていない
+- 展開パスは、不一致したペイロード/署名ペアを公開します
 
-### Rollback levels
+##ロールバックレベル
 
-### Level 1 (preferred): Verification bypass window, keep signed publishing
+## レベル 1 (必須): 検証バイパスウィンドウ, 署名された出版を維持
 
-Use when: signing is healthy, client-side verifier has a defect.
+使用時:署名は健康で、クライアント側の修飾子に欠陥があります。
 
-Actions:
-1. Re-enable temporary unsigned-acceptance behavior in client release branch.
-2. Ship patch release with explicit expiry date for bypass.
-3. Keep signing pipeline active to avoid authenticity gap.
+アクション:
+1。 クライアントリリースブランチで一時的な署名なしのアクセプタンス動作を再有効。
+2。 バイパスの明示的な有効期限でパッチリリースを出荷します。
+3。 認証ギャップを避けるためにパイプラインをアクティブに署名し続ける。
 
-Recovery target: restore strict verification within 24–48h.
+回復ターゲット: 24–48h内の厳密な確認を元通りにして下さい。
 
-### Level 2: Signed pipeline paused, unsigned feed temporarily authoritative
+## レベル 2: パイプラインの注入、署名されていない供給を一時的にauthoritative署名しました
 
-Use when: signing pipeline is unstable or producing inconsistent artifacts.
+いつ使用して下さい: 署名のパイプラインは不安定ですまたは不連続なアーティファクトを作り出します。
 
-Actions:
-1. Disable signing workflow or signing step.
-2. Continue publishing unsigned `advisories/feed.json` via existing workflows.
-3. Revert deploy gates that require `.sig` artifacts.
-4. Open incident record and track time in unsigned mode.
+アクション:
+1。 ワークフローの署名やステップの署名を無効にします。
+2. 既存のワークフローを介した`advisories/feed.json`を公開し続けます。
+3。 `.sig`アーティファクトを必要とするデプロイゲートを反転します。
+4。 未署名モードでのインシデントレコードを開き、時刻を追跡します。
 
-Recovery target: restore signed publishing ASAP, ideally <72h.
+回復ターゲット:署名された出版ASAPを、理想的に <72h。
 
-### Level 3: Full release freeze
+##レベル3:フルリリースフリーズ
 
-Use when: compromise or integrity of repository/workflows is in doubt.
+いつ使う: リポジトリ/ワークフローの妥協や完全性が疑わしい。
 
-Actions:
-1. Pause feed mutation and deployment workflows.
-2. Restore known-good commit for advisory files/workflows.
-3. Rotate keys and credentials.
-4. Resume pipeline only after security review sign-off.
+アクション:
+1。 フィードのミューテーションとデプロイのワークフローを再利用します。
+2。 アドバイザリーファイル/ワークフローの既知のコミットを復元します。
+3。 キーと認証情報を回転させます。
+4。 セキュリティレビューサインオフ後にパイプラインを再開します。
 
-### Roll-forward after rollback
+##ロールバック後のロールフォワード
 
-- identify root cause
-- add regression tests/gates
-- redeploy signed artifacts
-- publish incident + remediation summary
+- 根本原因を特定する
+- 回帰テスト/ゲートを追加
+- redeployの署名されたアーティファクト
+- インシデントの公開 + 修正要約
 
-## 6) Communication plan
+ツイート 6)コミュニケーション計画
 
-For enforcement and rollback events, communicate:
-- what changed
-- expected operator/client action
-- duration of temporary compatibility mode (if any)
-- verification commands for users
+執行およびロールバックのでき事のために、伝達します:
+- 変更点
+- 期待される演算子/クライアントアクション
+- 一時的な互換性モードの持続時間(もしあれば)
+- ユーザーの検証コマンド
 
-Recommended channels:
-- GitHub release notes
-- repository README/docs updates
-- issue/incident report in repository
+推奨チャンネル:
+- GitHubリリースノート
+- リポジトリ README/docsの更新
+- リポジトリの発行/インシデントレポート
 
-## 7) Go/No-Go checklist
+ツイート 7) ゴー/ノーゴーチェックリスト
 
-Go only if all are true:
-- signing workflow success rate is stable
-- signatures are mirrored to all documented feed endpoints
-- consumer verification path tested for remote + local fallback
-- rollback owner is assigned and reachable
-- key rotation procedure has been dry-run at least once
+すべてが真の場合だけ行く:
+- ワークフローの成功率の署名は安定しています
+- 署名はすべての文書化されたフィードエンドポイントにミラーリングされます
+- リモート+ローカルフォールバックのためにテストされた消費者検証パス
+- ロールバック所有者が割り当てられ、到達可能
+- キーの回転プロシージャは少なくとも一度に乾燥した操業です
 
-## Source References
+## ソース参照
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- advisories/feed.json
+- スキル/クローセスイート/ホック/クローセ-アドバイザー/ハンドラー.ts
+- スキル/clawsec-suite/scripts/guarded_skill_install.mjs
+- アドバイザリー/フィード.json
 - wiki/security-signing-runbook.md

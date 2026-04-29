@@ -3,54 +3,54 @@ Source: ../configuration.md
 Review status: draft
 -->
 
-# Configuration
+# 設定
 
-## Scope
-- Configuration spans frontend build settings, runtime feed paths, workflow triggers, and skill metadata contracts.
-- Most runtime-sensitive controls are environment variables prefixed with `CLAWSEC_` or `OPENCLAW_`.
-- Path normalization is security-sensitive and intentionally rejects unresolved home-token literals.
+## スコープ
+- 設定は、フロントエンドのビルド設定、ランタイムフィードパス、ワークフロートリガー、およびスキルメタデータ契約を組み合わせます。
+- ほとんどのランタイムに敏感な制御は`CLAWSEC_`か`OPENCLAW_`とプレフィックスした環境変数です。
+- パス正規化は、セキュリティに敏感であり、意図的に未解決の家庭トークンリテラルを拒否します。
 
-## Core Runtime Variables
-| Variable | Default | Used By |
-| --- | --- | --- |
-| `CLAWSEC_FEED_URL` | Hosted advisory URL | Suite hook and guarded installer feed loading. |
-| `CLAWSEC_FEED_SIG_URL` | `<feed>.sig` | Detached signature source. |
-| `CLAWSEC_FEED_CHECKSUMS_URL` | `checksums.json` near feed URL | Optional checksum-manifest source. |
-| `CLAWSEC_FEED_PUBLIC_KEY` | Suite-local PEM file | Feed signature verification. |
-| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Temporary migration bypass flag. |
-| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Enables checksum-manifest verification. |
-| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | Advisory hook scan throttle. |
+## コアランタイム変数
+| 変数 | デフォルト | によって使用される |
+| お問い合わせ |
+| `CLAWSEC_FEED_URL` | ホストアドバイザリーURL | スイートホークとガードドインストーラーの読み込み お問い合わせ
+| `CLAWSEC_FEED_SIG_URL` | `<feed>.sig` | 組織図鑑 | 組織図鑑 お問い合わせ
+| `CLAWSEC_FEED_CHECKSUMS_URL` | フィードURL付近の`checksums.json` | 任意チェックサムマニフェストソース お問い合わせ
+| `CLAWSEC_FEED_PUBLIC_KEY` | スイートローカルPEMファイル | 特筆記検証 お問い合わせ
+| `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | 一時移行バイパスの旗 お問い合わせ
+| `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | チェックサム・マニフェスト検証を有効にします。 お問い合わせ
+| `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | アドバイザリーホックスキャンスロットル お問い合わせ
 
-## Path Resolution Rules
-| Rule | Behavior | Enforcement Location |
-| --- | --- | --- |
-| `~` expansion | Resolved to detected home directory | Shared path utility functions in suite/watchdog scripts. |
-| `$HOME` / `${HOME}` expansion | Resolved when unescaped | Same utilities. |
-| Windows home tokens | `%USERPROFILE%`, `$env:USERPROFILE` normalized | Same utilities. |
-| Escaped tokens (`\$HOME`) | Rejected with explicit error | Prevents accidental literal directory creation. |
-| Invalid explicit path | Can fallback to default path with warning | `resolveConfiguredPath` helpers. |
+## パスの決議規則
+| ルール | 行動 | 施行拠点 |
+| お問い合わせ |
+| `~` 拡張 | 自宅のディレクトリに解決 | スイート/ウォッチドッグスクリプトで共有されたパスユーティリティ機能 お問い合わせ
+| `$HOME` / `${HOME}` 拡張 | エスケープ時に解決 | 同じユーティリティ. お問い合わせ
+お問い合わせ Windowsホームトークン | `%USERPROFILE%`, `$env:USERPROFILE` 正規化 | 同じユーティリティ. お問い合わせ
+| エスケープされたトークン(`\$HOME`) | 明示的なエラーで拒否 | 誤ってリテラルディレクトリの作成を防止します。 お問い合わせ
+| 無効な明示的なパス | 警告でデフォルトパスにフォールバックできる | `resolveConfiguredPath`ヘルパー お問い合わせ
 
-## Frontend and Build Configuration
-- `vite.config.ts` defines port (`3000`), host (`0.0.0.0`), and path alias (`@`).
-- `index.html` provides Tailwind runtime config, custom fonts, and base color tokens.
-- `tsconfig.json` uses bundler module resolution, `noEmit`, and JSX runtime configuration.
-- `eslint.config.js` applies TS, React, hooks, and script-specific lint rules.
+## フロントエンドとビルド構成
+- `vite.config.ts`はポート(`3000`)、ホスト(`0.0.0.0`)、パスエイリアス(`@`)を定義します。
+- `index.html`の提供 Tailwind ランタイムの設定、カスタムフォント、ベースカラートークン。
+- `tsconfig.json`は、バンドルモジュールの解像度、`noEmit`、およびJSXランタイムの設定を使用します。
+- `eslint.config.js`はTS、React、hooks、およびスクリプト固有のlintルールを適用します。
 
-## Skill Metadata Configuration
-| Field Group | Location | Function |
-| --- | --- | --- |
-| Core skill identity | `skills/*/skill.json` | Name/version/author/license/description metadata. |
-| SBOM file list | `skill.json -> sbom.files` | Declares release-required artifacts. |
-| Platform metadata | `openclaw` or `nanoclaw` blocks | CLI requirements, triggers, platform capability hints. |
-| Suite catalog metadata | `skills/clawsec-suite/skill.json -> catalog` | Integrated/default/consent behavior for suite members. |
+## スキルメタデータ 仕様
+| フィールドグループ | 所在地 | 機能 |
+| お問い合わせ |
+お問い合わせ コアスキルアイデンティティ | `skills/*/skill.json` | 名称・バージョン・著者・ライセンス・記述メタデータ お問い合わせ
+| SBOMファイル一覧 | `skill.json -> sbom.files` | 決定版リリース必須項目です。 お問い合わせ
+| プラットフォームメタデータ | `openclaw` または `nanoclaw` ブロック | CLI 要件、トリガー、プラットフォームヒント お問い合わせ
+| スイートカタログメタデータ | `skills/clawsec-suite/skill.json -> catalog` | スイートメンバーの統合/デフォルト/一貫性のある動作 お問い合わせ
 
-## Workflow Configuration
-- Schedule configuration exists in workflow `cron` entries (`poll-nvd-cves`, `codeql`, `scorecard`).
-- Release workflow expects tag naming pattern `<skill>-v<semver>`.
-- Deployment workflow is triggered by successful CI/release `workflow_run` events and manual dispatch.
-- Composite signing action requires private key inputs and verifies signatures immediately after signing.
+## ワークフロー構成
+- スケジュール設定は、`cron`エントリー(`poll-nvd-cves`、`codeql`、`scorecard`)のワークフローに含まれています。
+- リリースワークフローでは、タグのネーミングパターン`<skill>-v<semver>`が期待しています。
+- 展開ワークフローは、CI/release `workflow_run`イベントとマニュアルディスパッチで起動します。
+- 複合署名アクションは、秘密鍵入力を必要とし、署名直後に署名を検証します。
 
-## Example Snippets
+## サンプルスニペット
 ```bash
 # run guarded install with explicit local signed feed paths
 CLAWSEC_LOCAL_FEED="$HOME/.openclaw/skills/clawsec-suite/advisories/feed.json" \
@@ -71,23 +71,23 @@ node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill clawtributor
 }
 ```
 
-## Operational Notes
-- Keep signing keys outside the repository and inject via GitHub Secrets only.
-- Prefer absolute paths or unescaped home expressions in local environment variable overrides.
-- Treat unsigned feed mode as temporary migration support, not normal operation.
-- Re-run release-link validation when editing `SKILL.md` URLs to avoid broken artifact references.
+## 操作上の注意
+- リポジトリの外にキーを署名し、GitHubの秘密を経由して注入してください。
+- ローカル環境変数上書きの絶対パスまたは省略されたホーム式を優先します。
+- 一時的なマイグレーション サポートとして署名されていないフィード モードを、正常な操作は扱いません。
+- 壊れたアーティファクトの参照を避けるために`SKILL.md` URLを編集するとき再実行の解放リンクの検証。
 
-## Source References
+## ソース参照
 - vite.config.ts
-- index.html
+- インデックス.html
 - tsconfig.json
-- eslint.config.js
-- skills/clawsec-suite/skill.json
-- skills/clawsec-nanoclaw/skill.json
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/utils.mjs
-- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- scripts/validate-release-links.sh
+- eslint.config.js ディレクティブ
+- スキル/ clawsec-suite/skill.json
+- スキル/clawsec-nanoclaw/skill.json
+- スキル/ clawsec-suite/hooks/clawsec-advisory-guardian/lib/utils.mjs
+- スキル/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- スキル/clawsec-suite/scripts/guarded_skill_install.mjs
+- スクリプト/validate-release-links.sh
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/skill-release.yml
 - .github/actions/sign-and-verify/action.yml

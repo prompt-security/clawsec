@@ -3,101 +3,101 @@ Source: ../platform-verification.md
 Review status: draft
 -->
 
-# Platform Verification Checklist
+# プラットフォーム検証チェックリスト
 
-Use this checklist to validate portability and path-handling behavior after changes.
+このチェックリストを使用して、変更後のポータビリティとパス処理の動作を検証します。
 
-## Linux Verification
+## Linux 検証
 
-1. Run core Node tests:
+1。 コアノードのテストを実行します。
    ```bash
    node skills/clawsec-suite/test/path_resolution.test.mjs
    node skills/clawsec-suite/test/guarded_install.test.mjs
    node skills/clawsec-suite/test/advisory_suppression.test.mjs
    node skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
    ```
-   Expected: all tests pass.
+期待:すべてのテストパス。
 
-2. Verify no literal `$HOME` path acceptance:
+2。 `$HOME`パスの受け入れを検証しません。
    ```bash
    CLAWSEC_LOCAL_FEED='\$HOME/advisories/feed.json' \
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: exits non-zero with `Unexpanded home token` error.
+期待:`Unexpanded home token`エラーでゼロを終了します。
 
-3. Verify `$HOME` expansion works:
+3. `$HOME`の拡張機能を検証:
    ```bash
    HOME=/tmp/clawsec-home node skills/clawsec-suite/test/path_resolution.test.mjs
    ```
-   Expected: `$HOME` expansion tests pass.
+期待:`$HOME`拡張テストパス
 
-## macOS Verification
+# macOS 検証
 
-1. Run the same Node test suite as Linux.
-2. Confirm OpenSSL tooling path assumptions are documented:
-   - If using LibreSSL/OpenSSL variations, ensure checks use tested command forms from docs.
-3. Verify tilde expansion in config path:
+1。 Linux と同じ Node テスト スイートを実行します。
+2。 OpenSSLツーリングパスの仮定が文書化されていることを確認します。
+- LibreSSL/OpenSSL のバリエーションを使用する場合は、docs からテストされたコマンドフォームを使用することを確認してください。
+3。 設定パスでチルドの拡張を確認します。
    ```bash
    OPENCLAW_AUDIT_CONFIG=~/.openclaw/security-audit.json \
    node skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs --enable-suppressions
    ```
-   Expected: path resolves correctly (or clear file-not-found error at expanded location).
+期待される: パスは正しく解決します (または拡張された場所での明確なファイルではなく、エラー)。
 
-## Windows Verification (PowerShell)
+## Windowsの検証(PowerShell)
 
-1. Run Node tests:
+1。 ノードテストを実行します。
    ```powershell
    node skills/clawsec-suite/test/path_resolution.test.mjs
    node skills/clawsec-suite/test/guarded_install.test.mjs
    node skills/clawsec-suite/test/advisory_suppression.test.mjs
    ```
-   Expected: all pass.
+期待:すべてのパス。
 
-2. Verify PowerShell env path expansion behavior:
+2。 電力を検証 Shell env パス拡張動作:
    ```powershell
    $env:CLAWSEC_LOCAL_FEED = '$env:USERPROFILE\advisories\feed.json'
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: path token is expanded/normalized or fails with a clear error if target files are missing.
+期待: パストークンが展開/正規化されるか、ターゲットファイルが不足している場合、クリアエラーで失敗します。
 
-3. Verify escaped literal token rejection:
+3。 エスケープされたリテラルトークン拒否を確認します。
    ```powershell
    $env:CLAWSEC_LOCAL_FEED = '\$HOME\advisories\feed.json'
    node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
    ```
-   Expected: `Unexpanded home token` error; no directory creation with literal `$HOME`.
+期待: `Unexpanded home token` のエラー、Liteal `$HOME` のディレクトリ作成なし。
 
-## Line Endings Sanity
+ツイート ライン・エンド・サンティ
 
-1. Confirm LF policy is present:
+1。 LFポリシーの提示を確認する:
    ```bash
    test -f .gitattributes && grep -n "eol=lf" .gitattributes
    ```
-   Expected: script/config file patterns enforce LF.
+期待:スクリプト/コンフィグファイルパターンはLFを強制します。
 
-2. After a CRLF-prone checkout, verify scripts still parse:
+2。 CRLF-prone のチェックアウト後、スクリプトは引き続き解析します。
    ```bash
    bash -n scripts/populate-local-feed.sh
    bash -n scripts/populate-local-skills.sh
    ```
-   Expected: no `^M` shebang/parse errors.
+期待される:`^M`のshbang/parseの間違い無し。
 
-## Explicit Bug Check: No Literal `$HOME` Directory Creation
+## Explicit Bug Check: 文字無し `$HOME` ディレクトリ作成
 
-1. Configure a path with a literal/escaped token.
-2. Run setup/install command.
-3. Verify command fails early with token error.
-4. Confirm no `$HOME` segment directory was created under working directories.
+1。 リテラル/エスケープされたトークンを持つパスを設定します。
+2。 セットアップ/インストールコマンドを実行します。
+3。 コマンドがトークンエラーで初期に失敗することを確認します。
+4. `$HOME` のセグメントディレクトリは、作業ディレクトリで作成されていないことを確認します。
 
-Expected outcome: **no directories containing literal `$HOME` are created by supported setup scripts.**
+期待される結果:**Liteal `$HOME` を含むディレクトリはサポートされたセットアップスクリプトによって作成されます。 メニュー
 
-## Source References
-- .gitattributes
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
-- skills/clawsec-suite/test/path_resolution.test.mjs
-- skills/clawsec-suite/test/guarded_install.test.mjs
-- skills/clawsec-suite/test/advisory_suppression.test.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
-- skills/openclaw-audit-watchdog/test/suppression_config.test.mjs
+## ソース参照
+- .gitattributesの
+- スクリプト/populate-local-feed.sh
+- スクリプト/populate-local-skills.sh
+- スキル/clawsec-suite/test/path_resolution.test.mjs
+- スキル/ clawsec-suite/test/guarded_install.test.mjs
+- スキル/ clawsec-suite/test/advisory_suppression.test.mjs
+- スキル/clawsec-suite/scripts/guarded_skill_install.mjs
+- スキル/openclaw-audit-watchdog/scripts/load_suppression_config.mjs
+- スキル/openclaw-audit-watchdog/test/suppression_config.test.mjs

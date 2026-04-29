@@ -3,52 +3,52 @@ Source: ../workflow.md
 Review status: draft
 -->
 
-# Workflow
+# ワークフロー
 
-## End-to-End Lifecycle
-- Development starts with local coding + local data population for realistic UI preview.
-- PR CI validates quality/security and skill test suites.
-- PR Pages-verify validates production build/signing behavior without publishing.
-- Tag-driven release workflow packages and signs skill artifacts.
-- Pages deploy workflow mirrors release/advisory artifacts and publishes the static site.
-- Wiki-sync workflow publishes repo `wiki/` docs to GitHub Wiki on `main`.
-- Scheduled workflows continuously enrich advisory feed and supply-chain visibility.
+## エンドツーエンドのライフサイクル
+- 開発は、ローカルコーディング+ローカルデータ人口と現実的なUIプレビューから始まります。
+- PR CI は、品質/セキュリティとスキルテストスイートを検証します。
+- PR Pages-verifyは、公開せずに生産ビルド/署名の動作を検証します。
+- タグ主導のリリースワークフローパッケージとスキルアーティファクトの署名。
+- ページは、ワークフローミラーのリリース/アドバイザーのアーティファクトをデプロイし、静的なサイトを公開します。
+- Wiki-sync ワークフローでは、`wiki/` のドキュメントを GitHub Wiki に公開しています。
+- スケジュールされたワークフローは、アドバイザリーフィードとサプライチェーンの可視性を継続的に強化します。
 
-## Primary Workflow Map
-| Workflow | Trigger | Main Steps |
-| --- | --- | --- |
-| CI | PR/push to `main` | Lint, typecheck, build, Python checks, security scans, skill tests. |
-| Pages Verify | PRs to `main` | Build Pages artifact and validate signing outputs (no publish). |
-| Poll NVD CVEs | Daily cron + manual dispatch | Fetch CVEs, transform/dedupe, update feed, sign artifacts, PR changes. |
-| Process Community Advisory | Issue label `advisory-approved` | Parse issue form, create advisory, sign feed, open PR, comment issue. |
-| Skill Release | Skill tags + metadata PR changes | PR: version-parity + dry-run checks; tags: package/sign/publish release assets. |
-| Deploy Pages | Successful CI/Release or manual dispatch | Discover releases, mirror assets, sign public advisories/checksums, deploy site. |
-| Sync Wiki | Pushes to `main` touching `wiki/**` + manual dispatch | Sync `wiki/` into `<repo>.wiki.git` and generate `Home.md` from `INDEX.md`. |
+## 第一次ワークフローマップ
+| ワークフロー | トリガー | 主な工程 |
+| お問い合わせ |
+| CI | PR/push to `main` | リント、タイプチェック、ビルド、Pythonチェック、セキュリティスキャン、スキルテスト。 お問い合わせ
+お問い合わせ ページの検証 | `main`へのPR | ページのアーティファクトを構築し、サインアウトプットを検証 (公開なし). お問い合わせ
+| 有料NVD CVE | 日頃のcron + マニュアルディスパッチ | フェッチCVE、トランス/デプス、アップデートフィード、サインアーティファクト、PR変更。 お問い合わせ
+| プロセスコミュニティアドバイザリー | 課題ラベル `advisory-approved` | 課題フォーム | 課題フォーム | 諮問・署名フィードの作成・広報オープン・コメント問題 お問い合わせ
+| スキルリリース | スキルタグ+メタデータPR変更 | PR: バージョン・パーティー + ドライランチェック、タグ: パッケージ・サイン・公開リリースアセット お問い合わせ
+| 展開ページ | CI/Release/手動ディスパッチの成功 | リリース、ミラーアセットの発見、パブリックアドバイザリー/チェックサムの署名、展開サイト お問い合わせ
+| シンクウィキ | `main` に `wiki/**` に触れる `wiki/` を `<repo>.wiki.git` に同期し、 `INDEX.md` から `Home.md` を生成します。 お問い合わせ
 
-## Local Operator Workflow
-| Step | Command | Outcome |
-| --- | --- | --- |
-| Install deps | `npm install` | Ready local environment. |
-| Populate local catalog | `./scripts/populate-local-skills.sh` | `public/skills/index.json` and file checksums. |
-| Populate local feed | `./scripts/populate-local-feed.sh --days 120` | Updated local advisory feed copy. |
-| Generate wiki llms exports | `npm run gen:wiki-llms` | Updates `public/wiki/llms.txt` and per-page exports. |
-| Run local gate | `./scripts/prepare-to-push.sh` | CI-like pass/fail signal. |
-| Start dev UI | `npm run dev` | Browser preview at local Vite endpoint. |
+## ローカルオペレーターワークフロー
+| ステップ | コマンド | アウトカム |
+| お問い合わせ |
+| デプス設置 | `npm install` | 既読のローカル環境 お問い合わせ
+| ローカルカタログ | `./scripts/populate-local-skills.sh` | `public/skills/index.json` とファイルチェックサムの人口 お問い合わせ
+| ローカルフィード | `./scripts/populate-local-feed.sh --days 120` | ローカルアドバイザリーフィードのコピーを更新しました。 お問い合わせ
+| wiki llms のエクスポートを生成する | `npm run gen:wiki-llms` | `public/wiki/llms.txt` とページごとのエクスポートを更新します。 お問い合わせ
+| ローカルゲートを走らせて下さい | `./scripts/prepare-to-push.sh` | CIのようなパス/fail信号。 お問い合わせ
+| 開発UIスタート | `npm run dev` | ローカルViteエンドポイントでのブラウザプレビュー お問い合わせ
 
-## Release Workflow Details
-- Version bump and docs parity are enforced for PR/tag paths.
-- Skill packaging includes SBOM-declared files and integrity manifests.
-- `checksums.json` is signed and immediately verified in workflow execution.
-- Optional publish-to-ClawHub job runs after successful GitHub release when configured.
-- Older releases within same major line can be superseded/deleted by automation.
+ツイート リリースワークフローの詳細
+- PR/tag パスでは、バージョン バンプと docs のパシティが強化されます。
+- スキルパッケージには、SBOM-declaredファイルと完全性マニフェストが含まれています。
+- `checksums.json`は署名され、ワークフローの実行ですぐに検証されます。
+- 設定されたとき、GitHubリリースの成功後、オプションのpublish-to-ClawHubジョブが実行されます。
+- 同じ主要なライン内の古いリリースは、自動化によって監督/削除することができます。
 
-## Advisory Workflow Details
-- NVD workflow determines incremental window from previous feed `updated` timestamp.
-- Transform phase maps CVE metrics to severity/type and normalizes affected targets.
-- Community advisory workflow creates deterministic IDs (`CLAW-YYYY-NNNN`) from issue metadata.
-- Both advisory workflows update skill feed copies and signature companions.
+## 諮問ワークフローの詳細
+- NVDワークフローは、以前のフィード`updated`タイムスタンプから増分ウィンドウを決定します。
+- フェーズマップCVEメトリックを重症/タイプに変換し、影響を受けたターゲットを正規化します。
+- コミュニティアドバイザリーワークフローは、問題メタデータから決定的なID(`CLAW-YYYY-NNNN`)を作成します。
+- アドバイザリーワークフローは、スキルフィードコピーと署名者を更新します。
 
-## Example Snippets
+## サンプルスニペット
 ```bash
 # manual release prep for a skill
 ./scripts/release-skill.sh clawsec-feed 0.0.5
@@ -63,18 +63,18 @@ on:
     types: [completed]
 ```
 
-## Operational Risks
-- Workflow permissions and secret scope misconfiguration can block signing/publishing.
-- NVD/API transient failures may delay advisory freshness.
-- Invalid tag naming or version mismatches halt release automation.
-- Local scripts and CI can diverge if operator machine lacks expected binaries (`jq`, `openssl`, `clawhub`).
+##運用リスク
+- ワークフロー権限と秘密のスコープの不正設定は、署名/公開をブロックできます。
+- NVD/API の一時的な失敗はアドバイザリーの新鮮さを遅らせるかもしれません。
+- Invalidタグのネーミングやバージョンのミスマッチのハレットリリース自動化。
+- オペレータ機械が予想されるバイナリ(`jq`、`openssl`、`clawhub`)を欠いているかどうか、ローカルスクリプトとCIは掘り下げることができます。
 
-## Source References
-- scripts/release-skill.sh
-- scripts/prepare-to-push.sh
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
-- scripts/generate-wiki-llms.mjs
+## ソース参照
+- スクリプト/リリース-skill.sh
+- スクリプト/prepare-to-push.sh
+- スクリプト/populate-local-feed.sh
+- スクリプト/populate-local-skills.sh
+- スクリプト/generate-wiki-llms.mjs
 - .github/workflows/ci.yml
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml

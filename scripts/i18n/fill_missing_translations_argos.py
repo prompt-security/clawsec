@@ -90,6 +90,12 @@ def _process_pair(source: Path, target: Path, tr) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--lang", required=True, choices=["de", "es", "fr", "ja", "ko"])
+    parser.add_argument(
+        "--only",
+        nargs="*",
+        default=None,
+        help="Optional list of target markdown filenames to process (e.g. README.ja.md overview.md security.md)",
+    )
     args = parser.parse_args()
 
     repo = Path(__file__).resolve().parents[2]
@@ -99,12 +105,18 @@ def main() -> int:
 
     total = 0
 
+    only = set(args.only or [])
+
     # README
-    total += _process_pair(repo / "README.md", repo / f"README.{args.lang}.md", tr)
+    readme_target = f"README.{args.lang}.md"
+    if not only or readme_target in only:
+        total += _process_pair(repo / "README.md", repo / readme_target, tr)
 
     # wiki/de
     lang_root = repo / "wiki" / args.lang
     for lang_file in sorted(lang_root.glob("*.md")):
+        if only and lang_file.name not in only:
+            continue
         if lang_file.name in {"INDEX.md", "GENERATION.md"}:
             continue
         src = repo / "wiki" / lang_file.name

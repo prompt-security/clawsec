@@ -3,69 +3,69 @@ Source: ../localization.md
 Review status: draft
 -->
 
-# Localization Workflow
+# ローカリゼーションワークフロー
 
-## Purpose
-Define a repeatable docs localization pipeline for ClawSec README and wiki pages.
+## 目的
+ClawSec README および wiki ページのリピート可能な docs ローカリゼーション パイプラインを定義します。
 
-## Scope
-- Source language: English (`README.md`, `wiki/*.md`)
-- Current translated language: Spanish (`README.es.md`, `wiki/es/*.md`)
-- Korean pilot language: Korean (`README.ko.md`, `wiki/ko/*.md`)
-- Future languages: `wiki/<lang>/...` and `README.<lang>.md`
+## スコープ
+- ソース言語:英語(`README.md`、`wiki/*.md`)
+- 現在の翻訳言語:スペイン語(`README.es.md`、`wiki/es/*.md`)
+- 韓国の試験言語:韓国(`README.ko.md`、`wiki/ko/*.md`)
+- 将来の言語:`wiki/<lang>/...`と`README.<lang>.md`
 
-## Source of Truth Rules
-1. English files are canonical.
-2. Translations must preserve commands, file paths, code blocks, and identifiers exactly.
-3. Product names and skill names stay untranslated (`ClawSec`, `OpenClaw`, `NanoClaw`, `Hermes`, `Picoclaw`, skill package names).
-4. When translation coverage is partial, translated files must state scope explicitly.
+## 真実のルールのソース
+1。 英語のファイルは正式です。
+2. 翻訳は、コマンド、ファイルパス、コードブロック、および識別子を正確に保存する必要があります。
+3。 商品名と技術名は翻訳されていないまま(`ClawSec`、`OpenClaw`、`NanoClaw`、`Hermes`、`Picoclaw`、スキルパッケージ名)。
+4。 翻訳のカバレッジが部分的である場合、翻訳されたファイルは明示的にスコープを記述する必要があります。
 
-## Folder Conventions
-- README translations:
-  - `README.es.md`
-  - Future: `README.fr.md`, `README.de.md`, `README.ja.md`, etc.
-- Wiki translations:
-  - `wiki/es/INDEX.md`
-  - `wiki/es/<page>.md`
-  - Future: `wiki/fr/<page>.md`, `wiki/de/<page>.md`, etc.
-- Localization assets:
-  - `wiki/i18n/terminology-en-es.md`
-  - `wiki/i18n/translation-tracker.md`
+## フォルダー コンベンション
+- README 翻訳:
+- ZXQトークン0QXZ
+- 未来:`README.fr.md`、`README.de.md`、`README.ja.md`、等。
+- ウィキ翻訳:
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
+- 未来:`wiki/fr/<page>.md`、`wiki/de/<page>.md`、等。
+- ローカリゼーションアセット:
+- ZXQトークン0QXZ
+- ZXQトークン0QXZ
 
-## Update Workflow
-1. **Normalize source docs first**
-   - Update English source docs for clarity and structure before translation.
-2. **Record delta**
-   - Note changed English pages in `wiki/i18n/translation-tracker.md`.
+## ワークフローの更新
+1。 **ソースコードの初期化* * 必須
+- 翻訳前の明確さと構造のための英語ソースのドキュメントを更新します。
+2。 **Record delta **
+- `wiki/i18n/translation-tracker.md`で英語ページを変更しました。
 3. **Translate changed pages**
-   - Preserve markdown structure and heading levels.
-   - Keep command blocks untouched.
+- マークダウン構造と見出しレベルを維持します。
+- コマンドブロックを無接触に保ちます。
 4. **QA pass**
-   - Verify links resolve.
-   - Verify code blocks and inline commands are unchanged.
-   - Verify terminology consistency using `terminology-en-es.md`.
+- リンクが解決することを確認します。
+- コードブロックとインラインコマンドの検証は変更されません。
+- `terminology-en-es.md`を使用した用語集の一貫性を確認します。
 5. **Regenerate exports**
-   - Run `npm run gen:wiki-llms`.
+- `npm run gen:wiki-llms`を実行します。
 6. **Review and PR**
-   - Include summary of translated pages and remaining gaps.
+- 翻訳されたページの要約と残りのギャップを含みます。
 
-## Translation QA Checklist
-- [ ] Heading hierarchy preserved.
-- [ ] Command snippets unchanged and runnable.
-- [ ] File paths and URLs unchanged.
-- [ ] Skill and platform names unchanged.
-- [ ] Security terminology consistent.
-- [ ] `wiki/INDEX.md` has translation link entries.
-- [ ] `wiki/<lang>/INDEX.md` links back to key English pages when untranslated.
+## 翻訳 QA チェックリスト
+- [ ] 階層を保持する。
+- [ ] コマンドスニペットは変更され、実行できません。
+- [ ] ファイルパスとURLは変更されません。
+- [ ] スキルとプラットフォーム名が変更されていない。
+- [ ]セキュリティ用語の一貫性。
+- [ ] `wiki/INDEX.md`は翻訳リンクエントリを持っています。
+- [ ] `wiki/<lang>/INDEX.md`は、翻訳されていないときに重要な英語ページに戻ります。
 
-## Suggested Language Rollout
-1. Spanish (`es`) – done in phase 1 baseline.
-2. French (`fr`) and German (`de`) for broad technical audience.
-3. Japanese (`ja`) for high-fidelity platform docs.
+## おすすめ言語ロールアウト
+1。 スペイン語(`es`) - フェーズ1ベースラインで行われます。
+2. フランス(`fr`)、ドイツ(`de`)、幅広い技術聴衆のための。
+3. 高度のプラットホームの文書のための日本語(`ja`)。
 
-## Source References
-- README.md
-- README.es.md
-- wiki/INDEX.md
-- wiki/es/INDEX.md
+## ソース参照
+- README.mdの
+- README.es.mdの
+- wiki/INDEX.md(ウィキ・インデックス)
+- wiki/es/INDEX.md(ウィキ・エス・インデックス)
 - wiki/es/overview.md

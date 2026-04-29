@@ -3,47 +3,47 @@ Source: ../data-flow.md
 Review status: draft
 -->
 
-# Data Flow
+ツイート データフロー
 
-## Primary Flows
-- `Advisory ingestion`: NVD/community inputs are transformed into a normalized advisory feed, signed, then mirrored for clients.
-- `Skill catalog publication`: release assets are discovered and converted into `public/skills/index.json` plus per-skill docs/checksums.
-- `Runtime enforcement`: suite and nanoclaw consumers load advisory data, match against skills, and emit alerts or confirmation gates.
-- This page appears under the `Guides` section in `INDEX.md`.
+## プライマリフロー
+- `Advisory ingestion`:NVD/communityの入力は顧客のために、署名された正常化された諮問的な供給に変えられます。
+- `Skill catalog publication`: リリースアセットが発見され、`public/skills/index.json`とパースキルのドキュメント/チェックサムに変換されます。
+- `Runtime enforcement`: スイートとナノクローの消費者は、アドバイザリーデータをロードし、スキルと一致し、アラートや確認ゲートを発します。
+- - - このページは、`INDEX.md`の`Guides`セクションで表示されます。
 
-## Step-by-Step
-1. Feed producer workflow/script fetches source data (`NVD API` or issue payload).
-2. JSON transform logic normalizes severity/type/affected fields and deduplicates by advisory ID.
-3. Signature/checksum steps generate detached signatures and checksum manifests.
-4. Deploy workflow mirrors signed artifacts under `public/` and `public/releases/latest/download/`.
-5. UI consumers validate JSON shape/content; runtime consumers additionally verify signatures/checksums before trusting feed data.
-6. Matchers compare `affected` specifiers to skill names/versions and emit alerts or enforce confirmation.
+## ステップバイステップ
+1。 フィードプロデューサーワークフロー/スクリプトフェッチソースデータ (`NVD API` または発行ペイロード).
+2。 JSON は、ロジックが重度/種類/影響領域を正規化し、アドバイザリー ID による重複排除を行います。
+3。 シグネチャー/チェックサムのステップは、分離されたシグネチャとチェックサムマニフェストを生成します。
+4。 `public/`と`public/releases/latest/download/`でワークフローミラー署名済みのアーティファクトを展開します。
+5。 UI 消費者は JSON 形状/コンテンツを検証します。ランタイムの消費者は、フィードデータを信頼する前に、署名/チェックサムを検証します。
+6。 Matchers は、`affected` の仕様をスキル名/バージョンに比較し、アラートを発したり、確認を強制したりします。
 
-## Inputs and Outputs
-Inputs/outputs are summarized in the table below.
+## 入力と出力
+入力/出力は下の表でまとめられます。
 
-| Type | Name | Location | Description |
-| --- | --- | --- | --- |
-| Input | CVE payloads | `services.nvd.nist.gov/rest/json/cves/2.0` | Source vulnerabilities filtered by ClawSec keywords. |
-| Input | Community advisory issue | `.github/workflows/community-advisory.yml` event payload | Maintainer-approved issue transformed into advisory record. |
-| Input | Skill release assets | GitHub Releases API + assets | Used to build web catalog and mirror downloads. |
-| Input | Local config/env | `OPENCLAW_AUDIT_CONFIG`, `CLAWSEC_*` vars | Controls feed pathing, suppression, and verification behavior. |
-| Output | Advisory feed | `advisories/feed.json` | Canonical repository feed. |
-| Output | Advisory signature | `advisories/feed.json.sig` | Detached signature for feed authenticity. |
-| Output | Skill catalog index | `public/skills/index.json` | Runtime web catalog used by `/skills` pages. |
-| Output | Release checksums/signatures | `release-assets/checksums.json(.sig)` | Integrity manifest for release consumers. |
-| Output | Hook state | `~/.openclaw/clawsec-suite-feed-state.json` | Tracks scan timing and notified matches. |
+| 種類 | お名前 | 所在地 | 概要 |
+| お問い合わせ |
+| 入力 | CVE ペイロード | `services.nvd.nist.gov/rest/json/cves/2.0` | ClawSec キーワードでフィルタリングされた脆弱性 お問い合わせ
+| 入力 | コミュニティアドバイザリー問題 | `.github/workflows/community-advisory.yml`イベントペイロード | メンテラー承認問題がアドバイザリーレコードに変身 お問い合わせ
+| 入力 | スキルリリースアセット | GitHub リリース API + アセット | ウェブカタログ作成・ミラーダウンロード お問い合わせ
+| 入力 | ローカルコンフィグ/env | `OPENCLAW_AUDIT_CONFIG`、`CLAWSEC_*` vars | フィードの経路制御・抑制・検証の動作 お問い合わせ
+| 出力 | アドバイザリーフィード | `advisories/feed.json` | キヤノンレポジトリフィード お問い合わせ
+| アウトプット | アドバイザリーシグネチャ | `advisories/feed.json.sig` | フィード認証のデタケドシグネチャ お問い合わせ
+| アウトプット | スキルカタログ | `public/skills/index.json` | `/skills`ページで使用されるランタイムウェブカタログ お問い合わせ
+| アウトプット | リリースチェックサム・サイン | `release-assets/checksums.json(.sig)` | リリースコンシューマー向け整合性マニフェスト お問い合わせ
+| 出力 | ホックの状態 | `~/.openclaw/clawsec-suite-feed-state.json` | スキャンのタイミングを追跡し、一致を通知して下さい。 お問い合わせ
 
-## Data Structures
-| Structure | Key Fields | Purpose |
-| --- | --- | --- |
-| Advisory feed record | `id`, `severity`, `type`, `affected[]`, `published` | Unit of risk data used by UI and installers. |
-| Skill metadata record | `id`, `name`, `version`, `emoji`, `tag` | Catalog row for web browsing and install commands. |
-| Checksums manifest | `schema_version`, `algorithm`, `files` | Maps file names to expected digests. |
-| Advisory state | `known_advisories`, `last_hook_scan`, `notified_matches` | Prevents repeated alerts and throttles scans. |
-| Suppression config | `enabledFor[]`, `suppressions[]` | Targeted skip list by `checkId` + `skill`. |
+ツイート データ構造
+| 構成 | 主要分野 | 目的 |
+| お問い合わせ |
+| アドバイザリーフィードレコード | `id`、`severity`、`type`、`affected[]`、`published` | UIやインストーラーが使用するリスクデータの単位 お問い合わせ
+| スキルメタデータレコード | `id`、`name`、`version`、`emoji`、`tag` | ウェブ閲覧・インストールの行 お問い合わせ
+| チェックサムスマニフェスト | `schema_version`, `algorithm`, `files` | 予想される消化器の名前をマップします。 お問い合わせ
+| 諮問状態 | `known_advisories`、`last_hook_scan`、`notified_matches` | 繰り返しのアラートやスロットルのスキャンを防ぎます。 お問い合わせ
+| Suppression config | `enabledFor[]`, `suppressions[]` | `checkId` + `skill` によるスキップリストの対象となります。 お問い合わせ
 
-## Diagrams
+##ダイアグラム
 ```mermaid
 flowchart LR
   A["NVD + Issue Inputs"] --> B["Transform + Deduplicate"]
@@ -55,17 +55,17 @@ flowchart LR
   G --> H["Match skills + emit alerts/gates"]
 ```
 
-## State and Storage
-| Store | Path/Scope | Write Path |
-| --- | --- | --- |
-| Canonical advisories | `advisories/` | NVD + community workflows and local populate script. |
-| Embedded advisory copies | `skills/clawsec-feed/advisories/` and `skills/clawsec-suite/advisories/` | Sync/packaging processes and release workflow. |
-| Public mirrors | `public/advisories/`, `public/releases/` | Deploy workflow. |
-| Runtime state | `~/.openclaw/clawsec-suite-feed-state.json` | Advisory hook state persistence. |
-| NanoClaw cache | `/workspace/project/data/clawsec-advisory-cache.json` | Host-side advisory cache manager. |
-| Integrity state | `/workspace/project/data/soul-guardian/` (NanoClaw) | Integrity monitor baseline/audit storage. |
+## 状態とストレージ
+| 店舗 | パス・スコープ | パス |
+| お問い合わせ |
+| キヤノンのアドバイザリー | `advisories/` | NVD + コミュニティワークフローとローカルのポピュレーションスクリプト お問い合わせ
+お問い合わせ 組込みアドバイザリーコピー | `skills/clawsec-feed/advisories/` と `skills/clawsec-suite/advisories/` | 同期/包装プロセスとリリースワークフロー お問い合わせ
+| パブリックミラー | `public/advisories/`、`public/releases/` | ワークフローの展開 お問い合わせ
+| 稼働時間状態 | `~/.openclaw/clawsec-suite-feed-state.json` | 諮問ホックの状態の永続性。 お問い合わせ
+| NanoClawキャッシュ | `/workspace/project/data/clawsec-advisory-cache.json` | ホスト・サイド・アドバイザリー・キャッシュ・マネージャー お問い合わせ
+| 整合状態 | `/workspace/project/data/soul-guardian/`(ナノクロー) | 整合性モニターベースライン・オーディオストレージ お問い合わせ
 
-## Example Snippets
+## サンプルスニペット
 ```bash
 # Local feed flow (NVD fetch -> transform -> sync)
 ./scripts/populate-local-feed.sh --days 120
@@ -79,25 +79,25 @@ CLAWSEC_FEED_PUBLIC_KEY=~/.openclaw/skills/clawsec-suite/advisories/feed-signing
 node skills/clawsec-suite/scripts/guarded_skill_install.mjs --skill test-skill --dry-run
 ```
 
-## Failure Modes
-- NVD rate limits (`403/429`) can delay feed refresh and require retries/backoff.
-- Missing or invalid detached signatures cause feed rejection in fail-closed mode.
-- HTML fallback responses for JSON endpoints can produce false positives unless explicitly filtered.
-- Path-token misconfiguration (`\$HOME`) can break local fallback path resolution.
-- Mismatched public key fingerprints in workflows trigger hard CI failure.
+## 失敗モード
+- NVD率の限界(`403/429`)は送りを遅らせ、retries/backoffを要求できます。
+- 欠損または無効な離脱署名により、異常終了モードのフィード拒否が発生します。
+- JSONエンドポイントのHTMLフォールバック応答は、明示的にフィルタリングされていない限り、偽陽性を生成できます。
+- パストークンの誤設定(`\$HOME`)は、ローカルのフォールバックパスの解像度を破ることができます。
+- ワークフローで公開鍵のフィンガープリントをミスマッチして、ハードなCI障害が発生します。
 
-## Source References
-- advisories/feed.json
-- advisories/feed.json.sig
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
+## ソース参照
+- アドバイザリー/フィード.json
+- アドバイザリー/フィード.json.sig
+- スクリプト/populate-local-feed.sh
+- スクリプト/populate-local-skills.sh
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/deploy-pages.yml
 - .github/workflows/skill-release.yml
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/state.ts
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/matching.ts
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-nanoclaw/lib/advisories.ts
-- skills/clawsec-nanoclaw/host-services/advisory-cache.ts
+- スキル/ clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- スキル/クローセスイート/ホック/クローセ-アドバイザー/lib/state.ts
+- スキル/クローセスイート/ホック/クローセ管理人/lib/matching.ts
+- スキル/clawsec-suite/scripts/guarded_skill_install.mjs
+- スキル/クローセ・ナンクロー/lib/advisories.ts
+- スキル/法律/犯罪サービス/アドバイザー/キャッシュ.ts

@@ -3,59 +3,59 @@ Source: ../overview.md
 Review status: draft
 -->
 
-# Overview
+ツイート プロフィール
 
-## Purpose
-- ClawSec is a security-focused repository that combines a public web catalog with installable security skills for OpenClaw and NanoClaw environments.
-- The codebase supports three delivery paths at once: static website publishing, signed advisory distribution, and per-skill GitHub release packaging.
-- Primary users are agent operators, skill developers, and maintainers running CI-based security automation.
+## 目的
+- ClawSecは、公開WebカタログとOpenClawおよびNanoClaw環境用のインストール可能なセキュリティスキルを組み合わせたセキュリティ重視のリポジトリです。
+- - - コードベースは、静的ウェブサイトの公開、署名されたアドバイザリー配布、およびper-skill GitHubリリースパッケージの3つのデリバリーパスをサポートしています。
+- プライマリユーザーは、CIベースのセキュリティ自動化を実行しているエージェント・オペレータ、スキル・デベロッパー、メンテナーです。
 
 ![Prompt Security Logo](../assets/overview_img_01_prompt-security-logo.png)
 ![ClawSec Mascot](../assets/overview_img_02_clawsec-mascot.png)
 
-## Repo Layout
-| Path | Role | Notes |
-| --- | --- | --- |
-| `pages/`, `components/`, `App.tsx`, `index.tsx` | Vite + React UI | Skill catalog, advisory feed, and detail pages. |
-| `skills/` | Security skill packages | Each skill has `skill.json`, `SKILL.md`, optional scripts/tests/docs. |
-| `advisories/` | Repository advisory channel | Signed `feed.json` + `feed.json.sig` and key material. |
-| `scripts/` | Local automation | Populate feed/skills, pre-push checks, release helpers. |
-| `.github/workflows/` | CI/CD pipelines | CI, releases, NVD polling, community advisory ingestion, pages deploy. |
-| `utils/` | Python utilities | Skill validation and checksum packaging helpers. |
-| `public/` | Published static assets | Site media, mirrored advisories, and generated skill artifacts. |
-| `wiki/` | Documentation hub | Architecture, operations runbooks, compatibility, and verification guides. |
+ツイート リポレイアウト
+| パス | ロール | ノート |
+| お問い合わせ |
+| `pages/`、`components/`、`App.tsx`、`index.tsx` | Vite + React UI | スキルカタログ、アドバイザリーフィード、詳細ページ お問い合わせ
+| `skills/` | セキュリティスキルパッケージ | 各スキルは`skill.json`、`SKILL.md`、オプションスクリプト/テスト/ドキュメントを持っています。 お問い合わせ
+| `advisories/` | リポジトリアドバイザリーチャンネル | 署名 `feed.json` + `feed.json.sig`と主要素材. お問い合わせ
+| `scripts/` | ローカルオートメーション | フィード/スキル、プレプッシュチェック、リリースヘルパーのポップアップ お問い合わせ
+| `.github/workflows/` | CI/CD パイプライン | CI、リリース、NVD ポーリング、コミュニティアドバイザリー摂取、ページ展開 お問い合わせ
+| `utils/` | パイソンユーティリティ | スキル検証とチェックサム包装ヘルパー お問い合わせ
+| `public/` | 静的資産の公開 | サイトメディア、ミラード・アドバイザリー、生成されたスキルアーティファクト。 お問い合わせ
+| `wiki/` | ドキュメンテーションハブ | アーキテクチャー・オペレーション・ランブック・互換性・検証ガイド お問い合わせ
 
-## Entry Points
-| Entry | Type | Purpose |
-| --- | --- | --- |
-| `index.tsx` | Frontend bootstrap | Mounts React app into `#root`. |
-| `App.tsx` | Frontend router | Defines route map for home, skills, feed, and wiki pages. |
-| `scripts/prepare-to-push.sh` | Dev workflow | Runs lint/type/build/security checks before push. |
-| `scripts/populate-local-feed.sh` | Data bootstrap | Pulls CVEs from NVD and updates local advisory feeds. |
-| `scripts/populate-local-skills.sh` | Data bootstrap | Builds `public/skills/index.json` and per-skill checksums. |
-| `scripts/generate-wiki-llms.mjs` | Docs export | Generates `public/wiki/llms.txt` and per-page wiki exports. |
-| `.github/workflows/skill-release.yml` | Release entry | Handles PR version-parity/dry-run checks and tag-based packaging/signing/release. |
-| `.github/workflows/poll-nvd-cves.yml` | Scheduled feed updates | Polls NVD and updates advisories. |
+## エントリーポイント
+| エントリー | タイプ | 目的 |
+| お問い合わせ |
+| `index.tsx` | フロントエンドブーツ | `#root`にReactアプリをマウント お問い合わせ
+| `App.tsx` | フロントエンドルータ | 自宅・スキル・フィード・wikiページのルートマップの定義 お問い合わせ
+| `scripts/prepare-to-push.sh` | Devのワークフロー | プッシュ前にlint/type/build/securityのチェックを実行します。 お問い合わせ
+| `scripts/populate-local-feed.sh` | データブートストラップ | NVD から CVE をプルし、現地のアドバイザリーフィードを更新します。 お問い合わせ
+| `scripts/populate-local-skills.sh` | データブートストラップ | `public/skills/index.json` と 1 スキルチェックサムのビルド お問い合わせ
+| `scripts/generate-wiki-llms.mjs` | ドキュメントのエクスポート | `public/wiki/llms.txt` と 1 ページの wiki のエクスポートを生成します。 お問い合わせ
+| `.github/workflows/skill-release.yml` | リリースエントリー | ハンドルPR版-parity/dry-run checks and tag-based Packaging/signing/release お問い合わせ
+| `.github/workflows/poll-nvd-cves.yml` | フィード更新スケジュール | ポールズNVDとアップデートのアドバイザリー お問い合わせ
 
-## Key Artifacts
-| Artifact | Produced By | Consumed By |
-| --- | --- | --- |
-| `advisories/feed.json` | NVD poll + community advisory workflows | Web UI, clawsec-suite hook, installers. |
-| `advisories/feed.json.sig` | Signing workflow steps | Signature verification in suite/nanoclaw tooling. |
-| `public/skills/index.json` | Deploy workflow / local populate script | `pages/SkillsCatalog.tsx` and `pages/SkillDetail.tsx`. |
-| `public/wiki/llms.txt` + `public/wiki/**/llms.txt` | Wiki generator script + build hooks | LLM-ready wiki exports linked from the wiki UI. |
-| `public/checksums.json` + `public/checksums.sig` | Deploy workflow | Published integrity artifacts for operators and runtime clients. |
-| `release-assets/checksums.json` | Skill release workflow | Release consumers verifying zip integrity. |
-| `skills/*/skill.json` | Skill authors | Site catalog generation, validators, and release pipelines. |
+## キーアーティファクト
+| アーティファクト | プロデュース | | コンセプト |
+| お問い合わせ |
+| `advisories/feed.json` | NVD 投票 + コミュニティアドバイザリーワークフロー | Web UI、clawsec-suite ホック、インストーラー お問い合わせ
+| `advisories/feed.json.sig` | ワークフローの署名 | スイート・アンド・ノークローのシグネチャ検証 お問い合わせ
+| `public/skills/index.json` | ワークフロー・ローカル・ポジュレート・スクリプトの展開 | `pages/SkillsCatalog.tsx` と `pages/SkillDetail.tsx` お問い合わせ
+| `public/wiki/llms.txt` + `public/wiki/**/llms.txt` | ウィキジェネレータスクリプト + ビルドホック | LLM-ready wiki エクスポート wiki UI からリンクされています。 お問い合わせ
+| `public/checksums.json` + `public/checksums.sig` | ワークフローの展開 | オペレータやランタイムのクライアントのための公開整合性アーティファクト. お問い合わせ
+| `release-assets/checksums.json` | スキルリリースワークフロー | 消費者がzipの完全性を検証するリリース お問い合わせ
+| `skills/*/skill.json` | スキル作者 | サイトカタログ作成・検証・リリースパイプライン お問い合わせ
 
-## Key Workflows
-- Local web development: `npm install` then `npm run dev`.
-- Local security data preview: run `./scripts/populate-local-skills.sh` and `./scripts/populate-local-feed.sh` before loading `/skills` and `/feed` pages.
-- Pre-push quality gate: run `./scripts/prepare-to-push.sh` (optionally `--fix`).
-- Skill lifecycle: edit `skills/<name>/`, validate with `python utils/validate_skill.py`, then tag `<skill>-vX.Y.Z` to trigger release workflow.
-- Advisory lifecycle: scheduled NVD poll and issue-label-based community ingestion both merge into the same signed feed.
+ツイート キーワークフロー
+- ローカルWeb開発: `npm install` は、`npm run dev` です。
+- ローカルセキュリティデータプレビュー: `./scripts/populate-local-skills.sh` と `./scripts/populate-local-feed.sh` をロードする前に `/skills` と `/feed` ページを実行します。
+- プレパス品質ゲート:`./scripts/prepare-to-push.sh`(オプションで`--fix`)を実行します。
+- スキルのライフサイクル:`skills/<name>/`を編集し、`python utils/validate_skill.py`で検証し、`<skill>-vX.Y.Z`にタグを付けてリリースワークフローをトリガーします。
+- アドバイザリーのライフサイクル:NVDのポールおよび問題ラベルに基づくコミュニティの摂取量は、同じ署名されたフィードに結合します。
 
-## Example Snippets
+## サンプルスニペット
 ```bash
 # local UI + locally populated data
 npm install
@@ -71,42 +71,42 @@ npx tsc --noEmit
 npm run build
 ```
 
-## Where to Start
-- Read `README.md` for product positioning and install paths.
-- Open `App.tsx` and `pages/` to understand user-facing behavior.
-- Open `skills/clawsec-suite/skill.json` to understand the suite contract and embedded components.
-- Review `.github/workflows/ci.yml`, `.github/workflows/pages-verify.yml`, `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml`, and `.github/workflows/wiki-sync.yml` for production behavior.
+ツイート 開始場所
+- ZXQTOKEN0 を読んで下さい QXZは、製品位置決めとインストールパスです。
+- `App.tsx` と `pages/` を開き、ユーザーフェーシングの動作を把握します。
+- `skills/clawsec-suite/skill.json`を開き、スイート契約と組込みコンポーネントを理解します。
+- `.github/workflows/ci.yml`、`.github/workflows/pages-verify.yml`、`.github/workflows/skill-release.yml`、`.github/workflows/deploy-pages.yml`、および`.github/workflows/wiki-sync.yml`の生産行動のレビュー。
 
-## How to Navigate
-- UI behavior is centered in `pages/`; visual wrappers sit in `components/`.
-- Skill-specific logic is isolated by folder under `skills/`; each folder includes its own scripts/tests/docs.
-- Feed handling appears in three layers: repository feed files, workflow updates, and runtime consumers (`clawsec-suite`/`clawsec-nanoclaw`).
-- Operational quality gates live in `scripts/` and workflow YAML files.
-- For generation traces and update baselines, start from `wiki/GENERATION.md` and then branch into module pages.
+ツイート ナビゲートする方法
+- `pages/`にUIの動作が集中しています。`components/`にビジュアルラッパーが座っています。
+- スキル固有のロジックは、`skills/`のフォルダによって分離されます。各フォルダには独自のスクリプト/テスト/ドキュメントが含まれています。
+- フィード処理は、リポジトリフィードファイル、ワークフローの更新、ランタイムの消費者(`clawsec-suite`/`clawsec-nanoclaw`)の3つのレイヤーに表示されます。
+- `scripts/`およびワークフローYAMLファイルで動作品質ゲートが稼働します。
+- 生成のトレースやベースラインを更新するには、`wiki/GENERATION.md`から始まり、モジュールページにブランチします。
 
-## Common Pitfalls
-- Using literal home tokens (for example `\$HOME`) in config path env vars can trigger path validation failures.
-- Fetching JSON from SPA routes can return HTML with status 200; pages guard for this and treat it as empty-state.
-- Unsigned feed bypass mode (`CLAWSEC_ALLOW_UNSIGNED_FEED=1`) exists for migration compatibility and should not be used in steady state.
-- Skill release automation expects version parity between `skill.json` and `SKILL.md` frontmatter.
-- Some scripts are POSIX shell oriented; Windows users should prefer PowerShell equivalents or WSL.
+## 共通ピッタフォール
+- 設定パス env vars で literal のホームトークン (たとえば `\$HOME`) を使うと、パス検証の失敗をトリガーできます。
+- SPA ルートから JSON を取得すると、ステータス 200 で HTML を返すことができます。このページガードは空の状態として扱います。
+- 移行の互換性のために、フィードバイパスモード(`CLAWSEC_ALLOW_UNSIGNED_FEED=1`)が存在し、安定した状態では使用しないでください。
+- `skill.json`と`SKILL.md`のフロントマッタ間のバージョンのパリティを期待するスキルリリース自動化。
+- 一部のスクリプトは、POSIX シェル指向です。 Windows ユーザーは、PowerShell の同等体または WSL を好む必要があります。
 
-## Update Notes
-- 2026-02-26: Updated repo layout to point operational documentation at `wiki/` instead of the removed root `docs/` directory.
+## 更新ノート
+- 2026-02-26: 削除されたルート`docs/`ディレクトリの代わりに、`wiki/`で運用文書を指すためにリポジトリレイアウトを更新しました。
 
-## Source References
-- README.md
-- package.json
-- App.tsx
-- index.tsx
-- pages/Home.tsx
-- pages/SkillsCatalog.tsx
-- pages/SkillDetail.tsx
-- pages/FeedSetup.tsx
-- scripts/prepare-to-push.sh
-- scripts/populate-local-feed.sh
-- scripts/populate-local-skills.sh
-- skills/clawsec-suite/skill.json
+## ソース参照
+- README.mdの
+- パッケージ.json
+- App.tsxアプリ
+- インデックス.tsx
+- ページ/ホーム.tsx
+- ページ/SkillsCatalog.tsx
+- ページ/SkillDetail.tsx
+- ページ/フィードSetup.tsx
+- スクリプト/prepare-to-push.sh
+- スクリプト/populate-local-feed.sh
+- スクリプト/populate-local-skills.sh
+- スキル/ clawsec-suite/skill.json
 - .github/workflows/ci.yml
 - .github/workflows/pages-verify.yml
 - .github/workflows/skill-release.yml

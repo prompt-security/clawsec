@@ -3,43 +3,43 @@ Source: ../security.md
 Review status: draft
 -->
 
-# Security
+ツイート セキュリティ
 
-## Security Model Overview
-- ClawSec secures both content distribution (signed artifacts) and runtime behavior (advisory gating, integrity monitoring).
-- Trust anchors are pinned public keys committed in repo and verified against workflow-generated outputs.
-- Runtime consumers default to verification-first behavior with explicit migration bypass flags.
+##セキュリティモデルの概要
+- ClawSec は、コンテンツの配布 (署名されたアーティファクト) とランタイムの動作 (管理者のゲート、完全性監視) の両方を保護します。
+- Trust アンカーは、リポジトリにコミットし、ワークフロー生成された出力に対して検証された公開鍵をピン留めします。
+- Runtime 消費者は、明示的なマイグレーションバイパスフラグを使用して、検証優先動作にデフォルトでデフォルトで設定します。
 
-## Cryptographic Controls
-| Control | Mechanism | Location |
-| --- | --- | --- |
-| Feed authenticity | Ed25519 detached signatures (`feed.json.sig`) | Advisory workflows + consumer verification libs. |
-| Artifact integrity | SHA-256 checksum manifests (`checksums.json`) | Skill release and pages deploy workflows. |
-| Key consistency | Fingerprint comparison across docs + canonical PEMs | `scripts/ci/verify_signing_key_consistency.sh`. |
-| Signature verification action | Composite sign+verify action in CI | `.github/actions/sign-and-verify/action.yml`. |
+## 暗号化制御
+| 制御 | 機構 | 位置 |
+| お問い合わせ |
+お問い合わせ フィード認証 | Ed25519 は署名を取り外す (`feed.json.sig`) | アドバイザリーワークフロー + 消費者検証ライブラリ お問い合わせ
+| アーティファクトの完全性 | SHA-256チェックサムマニフェスト(`checksums.json`) | スキルリリースとページ展開ワークフロー お問い合わせ
+お問い合わせ 鍵の一貫性 | ドキュメント全体の指紋比較 + 正式PEM | `scripts/ci/verify_signing_key_consistency.sh`. お問い合わせ
+| シグネチャー検証アクション | CIでのコンポジットサイン+検証アクション | `.github/actions/sign-and-verify/action.yml` お問い合わせ
 
-## Runtime Enforcement Controls
-| Control | Component | Effect |
-| --- | --- | --- |
-| Advisory hook gating | `clawsec-advisory-guardian` | Alerts and cautious guidance based on matched advisories. |
-| Double-confirmation installer | `guarded_skill_install.mjs` | Exit `42` until explicit confirmation for matched advisories. |
-| Reputation extension | `clawsec-clawhub-checker` | Additional risk scoring before install. |
-| NanoClaw signature gate | `skill-signature-handler.ts` + MCP tool | Blocks tampered/unsigned package installs by policy. |
-| Integrity baseline monitor | `soul-guardian` + NanoClaw integrity monitor | Drift detection, quarantine, restore, auditable history. |
+#ランタイムの執行制御
+| 制御 | コンポーネント | 効果 |
+| お問い合わせ |
+| アドバイザリーホークギャティング | `clawsec-advisory-guardian` | マッチングアドバイザリーに基づく注意・注意深い指導 お問い合わせ
+| ダブルカンファレンスインストーラー | `guarded_skill_install.mjs` | `42`を終了 マッチングアドバイザリーの明示的な確認まで お問い合わせ
+| 評判の延長 | `clawsec-clawhub-checker` | インストール前の追加リスクスコアリング お問い合わせ
+| ナノクローシグネチャーゲート | `skill-signature-handler.ts` + MCPツール | ブロック改ざん・荷役パッケージをポリシーでインストールします。 お問い合わせ
+| 整合性ベースラインモニター | `soul-guardian` + NanoClaw 整合性モニター | ドリフト検知・検疫・復元・監査可能な履歴 お問い合わせ
 
-## Supply-Chain and CI Controls
-- CI runs Trivy, npm audit, CodeQL, and Scorecard workflows.
-- Local pre-push checks can run `gitleaks detect` when `gitleaks` is installed.
-- Release workflows validate SBOM file existence before packaging.
-- Deploy workflow verifies generated signing key fingerprint against canonical key material.
-- Release docs include manual verification commands for downstream consumers.
+## サプライチェーンとCIコントロール
+- CI実行 トリビー、npm 監査、CodeQL、およびスコアカードワークフロー。
+- `gitleaks`がインストールされているときにローカルプレパスチェックが`gitleaks detect`を実行できます。
+- リリースワークフローは、パッケージの前にSBOMファイルの存在を検証します。
+- ワークフローをデプロイすると、生成された署名キーフィンガープリントをキャノンキー素材に対して検証します。
+- リリースドキュメントには、ダウンストリームの消費者向けの手動検証コマンドが含まれます。
 
-## Incident and Rotation Playbooks
-- `wiki/security-signing-runbook.md` defines key generation, custody, rotation, and incident phases.
-- `wiki/migration-signed-feed.md` defines staged enforcement and rollback levels.
-- Rollback paths prioritize preserving signed publishing where possible and time-boxing any bypass.
+## インシデントとローテーションの Playbooks
+- `wiki/security-signing-runbook.md`は、キー生成、クラスト、回転、およびインシデントフェーズを定義します。
+- `wiki/migration-signed-feed.md`は段階的な執行およびロールバックのレベルを定義します。
+- ロールバックパスは、署名された公開を優先順位付けし、可能かつ任意のバイパスをタイムボックス化します。
 
-## Example Snippets
+## サンプルスニペット
 ```bash
 # verify canonical public key fingerprint
 openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | shasum -a 256
@@ -50,34 +50,34 @@ openssl pkey -pubin -in clawsec-signing-public.pem -outform DER | shasum -a 256
 ./scripts/ci/verify_signing_key_consistency.sh
 ```
 
-## Known Security Tradeoffs
-- Unsigned compatibility mode can reduce assurance and should be disabled once migration completes.
-- Some deploy paths tolerate unsigned legacy checksum assets for backward compatibility.
-- Reputation checks rely on external tooling output and may include heuristic false positives/negatives.
-- Local scripts inherit environment trust; compromised local shells can still subvert operator workflows.
+#既知のセキュリティトレードオフ
+- 符号なしの互換性モードは保証を減らすことができ、移行が完了したら無効にする必要があります。
+- バックワードの互換性のために署名されていないレガシーチェックサムアセットを許容するパスをいくつかデプロイします。
+- 評判は外的な工具細工の出力に依存し、ヒューリスティック偽陽性/負を含むかもしれません。
+- ローカルスクリプトは、環境の信頼を継承します。 侵害されたローカルシェルは、オペレータのワークフローをサブバートできます。
 
-## Hardening Opportunities
-- Remove unsigned compatibility flags after migration stabilization.
-- Expand deterministic checksum/signature verification for all mirrored release files.
-- Add explicit tests for workflow-level signature failure scenarios.
-- Increase runtime telemetry for advisory fetch/verification failures to simplify incident triage.
+## 困難な機会
+- 移行の安定化後に署名されていない互換性フラグを削除します。
+- すべてのミラーリングされた解放ファイルのための決定的なチェックサム/signatureの確認を拡大して下さい。
+- ワークフローレベルのシグネチャー障害シナリオに明示的なテストを追加します。
+- アドバイザリー・フェッチ/検証の失敗に対するランタイムテレメトリーを増加させ、インシデント・トライを簡素化します。
 
-## Update Notes
-- 2026-02-26: Repointed signing and migration references from root `docs/` files to dedicated `wiki/` operations pages.
+## 更新ノート
+- 2026-02-26: `docs/`ファイルをroot `wiki/`の操作ページ専用の署名とマイグレーションの参照をリセットしました。
 
-## Source References
-- SECURITY.md
+## ソース参照
+- セキュリティ.md
 - wiki/security-signing-runbook.md
 - wiki/migration-signed-feed.md
-- scripts/ci/verify_signing_key_consistency.sh
+- スクリプト/ci/verify_signing_key_consistency.sh
 - .github/actions/sign-and-verify/action.yml
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/skill-release.yml
 - .github/workflows/deploy-pages.yml
-- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- skills/clawsec-suite/scripts/guarded_skill_install.mjs
-- skills/clawsec-clawhub-checker/scripts/enhanced_guarded_install.mjs
-- skills/soul-guardian/scripts/soul_guardian.py
-- skills/clawsec-nanoclaw/host-services/skill-signature-handler.ts
-- skills/clawsec-nanoclaw/guardian/integrity-monitor.ts
+- スキル/ clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
+- スキル/clawsec-suite/scripts/guarded_skill_install.mjs
+- スキル/clawsec-clawhub-checker/scripts/enhanced_guarded_install.mjs
+- スキル/ロシア語/スクリプト/soul_guardian.py
+- スキル/ clawsec-nanoclaw/host-services/skill-signature-handler.ts
+- スキル/クローセ・ナンクロー/ガーディアン/積分僧侶。ts
