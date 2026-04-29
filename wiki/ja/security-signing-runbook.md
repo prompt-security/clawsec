@@ -32,9 +32,9 @@ Review status: draft
 - `public/signing-public.pem`および`public/advisories/feed-signing-public.pem`としてcanonicalキーを出版して下さい
 - `public/releases/latest/download/`(`feed.json`、`feed.json.sig`、`checksums.json`、`checksums.sig`、`signing-public.pem`を含む)に基づく互換性のアーティファクトをミラーリング
 - 供給の消費者:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
+- `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
+- `skills/clawsec-nanoclaw/lib/advisories.ts`
 - デフォルトのフィードURLは`https://clawsec.prompt.security/advisories/feed.json`です
 
 符号なしモードは、明示的な互換性バイパス(`CLAWSEC_ALLOW_UNSIGNED_FEED=1`)のままであり、安定した状態の動作モデルではありません。
@@ -47,9 +47,9 @@ Review status: draft
 - `advisories/feed-signing-public.pem`(ピンキー公開)
 
 ################################################################################################################################################################################################################################################################ リリースアーティファクトチャンネル
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `<release>/signing-public.pem`
+- `<release>/signing-public.pem`
+- `<release>/signing-public.pem`
 
 ツイート 4) 主な役割およびcustody
 
@@ -124,8 +124,8 @@ openssl pkeyutl -verify -rawin -pubin -inkey feed-signing-public.pem -in /tmp/pr
 ## フィードパイプライン
 
 現在の供給の変異ポイント:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `.github/workflows/community-advisory.yml`
+- `advisories/feed.json`
 
 現在の動作:
 - ワークフローステップは`advisories/feed.json`を`advisories/feed.json.sig`に署名します
@@ -135,7 +135,7 @@ openssl pkeyutl -verify -rawin -pubin -inkey feed-signing-public.pem -in /tmp/pr
 郵便番号 ページパイプライン
 
 現在のパブリッシャー:
-- ZXQトークン0QXZ
+- `public/advisories/`
 
 現在の動作:
 - `public/advisories/`にペイロード/署名をコピー
@@ -146,7 +146,7 @@ openssl pkeyutl -verify -rawin -pubin -inkey feed-signing-public.pem -in /tmp/pr
 ################################################################################################################################################################################################################################################################ スキルリリースパイプライン(推奨硬化)
 
 現在の解放の発電機:
-- ZXQトークン0QXZ
+- `checksums.json`
 
 現在の動作:
 - `checksums.json` を作成し、`checksums.sig` に署名し、公開する前に署名を検証します。

@@ -6,16 +6,16 @@ Review status: draft
 # Datenfluss
 
 Primäre Ströme
-- __TOK_0_: NVD/Gemeinde-Eingänge werden in einen normalisierten Beratungsfeed umgewandelt, signiert, dann für Kunden gespiegelt.
-- __TOK_0_: Freigabevermögen werden entdeckt und in __TOK_1_ plus per-skill docs/checksums umgewandelt.
-- __TOK_0_: Suite- und Nanoclaw-Verbraucher laden beratende Daten, passen gegen Fähigkeiten und senden Alarme oder Bestätigungs-Gate aus.
+- `Advisory ingestion`: NVD/Gemeinde-Eingänge werden in einen normalisierten Beratungsfeed umgewandelt, signiert, dann für Kunden gespiegelt.
+- `Skill catalog publication`: Freigabevermögen werden entdeckt und in `public/skills/index.json` plus per-skill docs/checksums umgewandelt.
+- `Runtime enforcement`: Suite- und Nanoclaw-Verbraucher laden beratende Daten, passen gegen Fähigkeiten und senden Alarme oder Bestätigungs-Gate aus.
 - Ja. Diese Seite erscheint unter dem `Guides` Abschnitt in `INDEX.md`.
 
 Schritt für Schritt
-ANHANG Feed-Produzent Workflow/script holt Quelldaten (_TOK_0__ oder Ausgabe Payload) ab.
+ANHANG Feed-Produzent Workflow/script holt Quelldaten (`NVD API` oder Ausgabe Payload) ab.
 2. JSON-Transformationslogik normalisiert Schwere/Typ/beeinflusste Felder und dedupliziert durch Beratungs-ID.
 3. Signatur/Checksum-Schritte erzeugen abgelöste Signaturen und Prüfsummen manifestiert.
-4. Bereitstellung von Workflow-Spiegeln signiert Artefakte unter __TOK_0_ und `public/releases/latest/download/`.
+4. Bereitstellung von Workflow-Spiegeln signiert Artefakte unter `public/` und `public/releases/latest/download/`.
 5. UI-Verbraucher validieren JSON Shape/Content; Laufzeit-Verbraucher überprüfen zusätzlich Signaturen/Checksums vor vertrauensvollen Feed-Daten.
 6. Die Matcher vergleichen `affected`-Spezifikatoren mit Geschicksnamen/Versionen und senden Alarme aus oder setzen die Bestätigung durch.
 
@@ -25,23 +25,23 @@ Inputs/Outputs sind in der folgenden Tabelle zusammengefasst.
 | Typ | Name | Standort | Beschreibung |
 | --- | --- | ---
 | Input | CVE Payloads | `services.nvd.nist.gov/rest/json/cves/2.0` | Source Schwachstellen gefiltert durch ClawSec Keywords. |
-| Input | Community Advisory Issue | __TOK_0_ Event Payload | Maintainer-genehmigte Ausgabe verwandelt in Advisory Record. |
+| Input | Community Advisory Issue | `.github/workflows/community-advisory.yml` Event Payload | Maintainer-genehmigte Ausgabe verwandelt in Advisory Record. |
 | Input | Skill release Assets | GitHub veröffentlicht API + Assets | Wird verwendet, um Webkatalog und Spiegel-Downloads zu erstellen. |
-| Input | Local config/env | __TOK_0_, `CLAWSEC_*` vars | Controls Feed-Tracking, Unterdrückung und Verifikationsverhalten. |
+| Input | Local config/env | `OPENCLAW_AUDIT_CONFIG`, `CLAWSEC_*` vars | Controls Feed-Tracking, Unterdrückung und Verifikationsverhalten. |
 | Ausgabe | Beratender Feed | `advisories/feed.json` | Canonical Repository Feed. |
 | Ausgabe | Beratende Signatur | `advisories/feed.json.sig` | Entschlossene Signatur für Feed-Authentizität. |
 | Ausgabe | Skill Katalogindex | `public/skills/index.json` | Runtime Webkatalog verwendet von `/skills` Seiten. |
 | Ausgabe | Release Schecksums/signatures | `release-assets/checksums.json(.sig)` | Integrity manifest for release Konsumenten. |
-| Ausgabe | Hook state | __TOK_0_ | Verfolgen Sie Scan-Terminal und angezeigte Spiele. |
+| Ausgabe | Hook state | `~/.openclaw/clawsec-suite-feed-state.json` | Verfolgen Sie Scan-Terminal und angezeigte Spiele. |
 
 oder Datenstrukturen
 | Struktur | Schlüsselfelder | Zweck |
 --- | --- | ---
-| Beratender Feed-Record | __TOK_0_, `severity`, __TOK_2_, `affected[]`, `published`_ | Einheit der von UI und Installern verwendeten Risikodaten. |
-| Skill Metadatensatz | __TOK_0_, `name`, __TOK_2_, __TOK_3_, `tag` | Katalogzeile für Web-Browsing und Installationsbefehle. |
-| Checksums manifest | __TOK_0_, `algorithm`, `files` | Kartendateinamen, die erwartete Verdauungen aufweisen. |
-| Beratender Zustand | __TOK_0_, __TOK_1_, `notified_matches` | Verhindert wiederholte Warnungen und Drosseln Scans. |
-| Suppression config | __TOK_0_, `suppressions[]` | Gezielte Liste der Skipisten von __TOK_2_ + `skill`.
+| Beratender Feed-Record | `id`, `severity`, `type`, `affected[]`, `published`_ | Einheit der von UI und Installern verwendeten Risikodaten. |
+| Skill Metadatensatz | `id`, `name`, `version`, `emoji`, `tag` | Katalogzeile für Web-Browsing und Installationsbefehle. |
+| Checksums manifest | `schema_version`, `algorithm`, `files` | Kartendateinamen, die erwartete Verdauungen aufweisen. |
+| Beratender Zustand | `known_advisories`, `last_hook_scan`, `notified_matches` | Verhindert wiederholte Warnungen und Drosseln Scans. |
+| Suppression config | `enabledFor[]`, `suppressions[]` | Gezielte Liste der Skipisten von `checkId` + `skill`.
 
 (Diagramme)
 ```mermaid
@@ -58,12 +58,12 @@ flowchart LR
 Zustand und Lagerung
 | Pfad/Scope | Pfad schreiben |
 --- | --- | ---
-| Canonical Advisories | __TOK_0_ | NVD + Community Workflows und lokales Populärskript. |
-| Embedded-Beratungskopien | __TOK_0_ und `skills/clawsec-suite/advisories/` | Sync/Packaging-Prozesse und Release-Workflow. |
-| Öffentliche Spiegel | __TOK_0_, `public/releases/` | Workflow bereitstellen. |
+| Canonical Advisories | `advisories/` | NVD + Community Workflows und lokales Populärskript. |
+| Embedded-Beratungskopien | `skills/clawsec-feed/advisories/` und `skills/clawsec-suite/advisories/` | Sync/Packaging-Prozesse und Release-Workflow. |
+| Öffentliche Spiegel | `public/advisories/`, `public/releases/` | Workflow bereitstellen. |
 | Laufzeit Zustand | `~/.openclaw/clawsec-suite-feed-state.json` | Beratender Haken Zustand Beharrlichkeit. |
 | NanoClaw cache | `/workspace/project/data/clawsec-advisory-cache.json` | Host-side Advisory cache manager. |
-| Integritätszustand | __TOK_0_ (NanoClaw) | Integritätsmonitor Basis-/Auditspeicher. |
+| Integritätszustand | `/workspace/project/data/soul-guardian/` (NanoClaw) | Integritätsmonitor Basis-/Auditspeicher. |
 
 Beispiel Snippets
 ```bash

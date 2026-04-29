@@ -21,7 +21,7 @@ Chaque compétence a `skill.json`, `SKILL.md`, scripts/tests/docs optionnels. - 
 `advisories/` Assemblage d'avis de dépôt Signé `feed.json` + `feed.json.sig` et matériel clé. - Oui.
 `scripts/`= Automatisation locale= Popular feed/skills, pré-push checks, aide à la libération. - Oui.
 `.github/workflows/`=1 pipelines CI/CD=1 IC, rejets, sondage NVD, ingestion de conseils communautaires, pages déployées. - Oui.
-Utilitaires de Python de `utils/` de ZXTOKEN. - Oui.
+Utilitaires de Python de `utils/` de `utils/`. - Oui.
 `public/`S Actifs statiques publiés. - Oui.
 `wiki/`=Moyeu de documentation= Architecture, opérations, guides d'exécution, compatibilité et guides de vérification. - Oui.
 
@@ -29,7 +29,7 @@ Points d'entrée
 Entrée Type Objet
 - Oui.
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . - Oui.
-ZXQTOKEN0QXXZ=Définit la carte de route pour les pages home, kills, feed et wiki. - Oui.
+`App.tsx`=Définit la carte de route pour les pages home, kills, feed et wiki. - Oui.
 `scripts/prepare-to-push.sh` Obtenir le flux de travail Dev Exécute les contrôles de lint/type/build/security avant de pousser. - Oui.
 `scripts/populate-local-feed.sh`= Données bootstrap=Pulls CVEs de NVD et met à jour les flux de conseils locaux. - Oui.
 `scripts/populate-local-skills.sh`=_____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ - Oui.
@@ -72,7 +72,7 @@ npm run build
 ```
 
 Oui. Par où commencer
-- Lire ZXQTOKEN0 QXZ pour le positionnement des produits et l'installation des chemins.
+- Lire `README.md` pour le positionnement des produits et l'installation des chemins.
 - Ouvrez `App.tsx` et `pages/` pour comprendre le comportement orienté vers l'utilisateur.
 - Ouvrez `skills/clawsec-suite/skill.json` pour comprendre le contrat de suite et les composants intégrés.
 - Examiner `.github/workflows/ci.yml`, `.github/workflows/pages-verify.yml`, `.github/workflows/skill-release.yml`, `.github/workflows/deploy-pages.yml` et `.github/workflows/wiki-sync.yml` pour le comportement de production.

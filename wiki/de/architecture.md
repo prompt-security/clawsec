@@ -17,20 +17,20 @@ Review status: draft
 Komponenten
 | Komponente | Standort | Verantwortung |
 --- | --- | ---
-| Web UI | __TOK_0_, `pages/`, `components/` | Renders-Katalog und Beratungs-Detail-Erfahrungen. |
-| Advisory Feed Core | __TOK_0_, `skills/clawsec-suite/.../feed.mjs` | Stores, überprüft und parses Advisories mit abgelösten Signaturen/Checksums. |
+| Web UI | `App.tsx`, `pages/`, `components/` | Renders-Katalog und Beratungs-Detail-Erfahrungen. |
+| Advisory Feed Core | `advisories/feed.json*`, `skills/clawsec-suite/.../feed.mjs` | Stores, überprüft und parses Advisories mit abgelösten Signaturen/Checksums. |
 | Skill Packages | `skills/*/` | Verteilt installierbare Sicherheitsfunktionen mit SBOM-Metadaten. |
 | Local Automation Scripts | `scripts/*.sh` | Lokale Spiegel, Pre-Push-Checks und manuelle Release-Helfer erstellen. |
 | CI/CD Workflows | `.github/workflows/*.yml` | Linting, Tests, NVD-Verschmutzung, Release-Verpackung und Pages bereitstellen. |
-| Python Utility Layer | __TOK_0_ | Skill Metadatenvalidierung und Prüfsummengenerierung. |
+| Python Utility Layer | `utils/*.py` | Skill Metadatenvalidierung und Prüfsummengenerierung. |
 
 oder Schlüsselflüsse
 - Skill Katalogfluss:
 1. Release/tag Workflows veröffentlichen Fähigkeiten Assets.
 2. Deploy Workflow entdeckt Freigabevermögen und baut `public/skills/index.json`.
-3. UI fetches __TOK_0_ und Skill-Docs für `/skills` Seiten.
+3. UI fetches `public/skills/index.json` und Skill-Docs für `/skills` Seiten.
 - Beratender Förderstrom:
-1. __TOK_0_ und `community-advisory.yml` update `advisories/feed.json`.
+1. `poll-nvd-cves.yml` und `community-advisory.yml` update `advisories/feed.json`.
 2. Fütterung wird unterschrieben und auf öffentliche Wege gespiegelt.
 3. Runtime Haken / Schriften laden Remote Feed und Rückfall auf lokale signierte Kopien.
 - Bewachter Installationsfluss:
@@ -55,9 +55,9 @@ Schnittstellen und Verträge
 | Schnittstelle | Vertragsformular | Validierung |
 --- | --- | ---
 | Skill metadata | `skills/*/skill.json` | Gültig durch Python Dienstprogramm + CI-Versionsparitätsprüfungen. |
-| Beratender Feed | JSON + Ed25519 abgelöste Signatur | Verifiziert durch __TOK_0_ und NanoClaw Signaturenprogramme. |
-| Checksums manifest | __TOK_0_ (+ optional `.sig`) | Parsed and hash-matched before trusting payloads. |
-| Hook event interface | __TOK_0_ (_TOK_1_, __TOK_2_, `messages`) | Runtime-Handler verarbeitet nur ausgewählte Ereignisnamen. |
+| Beratender Feed | JSON + Ed25519 abgelöste Signatur | Verifiziert durch `feed.mjs` und NanoClaw Signaturenprogramme. |
+| Checksums manifest | `checksums.json` (+ optional `.sig`) | Parsed and hash-matched before trusting payloads. |
+| Hook event interface | `HookEvent` (`type`, `action`, `messages`) | Runtime-Handler verarbeitet nur ausgewählte Ereignisnamen. |
 | Workflow Release Benennung | Tag-Muster `<skill>-vX.Y.Z` | Parsed in Release/Deploy Workflows, um Fähigkeiten zu entdecken. |
 
 oder Schlüsselparameter

@@ -22,15 +22,15 @@ ClawSec README および wiki ページのリピート可能な docs ローカ�
 
 ## フォルダー コンベンション
 - README 翻訳:
-- ZXQトークン0QXZ
+- `README.es.md`
 - 未来:`README.fr.md`、`README.de.md`、`README.ja.md`、等。
 - ウィキ翻訳:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `wiki/es/INDEX.md`
+- `wiki/es/<page>.md`
 - 未来:`wiki/fr/<page>.md`、`wiki/de/<page>.md`、等。
 - ローカリゼーションアセット:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `wiki/i18n/terminology-en-es.md`
+- `wiki/i18n/translation-tracker.md`
 
 ## ワークフローの更新
 1。 **ソースコードの初期化* * 必須

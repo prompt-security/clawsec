@@ -8,22 +8,22 @@ Review status: draft
 Aufbau und Laufzeit
 | Ebene | Primärabhängigkeiten | Warum es existiert |
 --- | --- | ---
-| Frontend Laufzeit | __TOK_0_, `react-dom`, `react-router-dom`, `lucide-react` | UI Rendering, Routing, Iconographie. |
-| Markdown Rendering | __TOK_0_, `remark-gfm` | Render Skill-Docs/readmes und in-app Wiki-Markdown-Seiten. |
-| Werkzeugbau | __TOK_0_, __TOK_1_, `typescript` | Fast TS/TSX Bündelung und Produktion baut. |
-| Python utilities | stdlib + `ruff`/_TOK_1_ Policy from `pyproject.toml` | Gültige/Paketfähigkeiten und führen statische Überprüfungen durch. |
-| Shell Automation | `bash`, `jq`, `curl`, __TOK_3_, `sha256sum`_`shasum` | Fütterung, Signierung, Prüfsummenerzeugung, Freigabeprüfungen. |
+| Frontend Laufzeit | `react`, `react-dom`, `react-router-dom`, `lucide-react` | UI Rendering, Routing, Iconographie. |
+| Markdown Rendering | `react-markdown`, `remark-gfm` | Render Skill-Docs/readmes und in-app Wiki-Markdown-Seiten. |
+| Werkzeugbau | `vite`, `@vitejs/plugin-react`, `typescript` | Fast TS/TSX Bündelung und Produktion baut. |
+| Python utilities | stdlib + `ruff`/`bandit` Policy from `pyproject.toml` | Gültige/Paketfähigkeiten und führen statische Überprüfungen durch. |
+| Shell Automation | `bash`, `jq`, `curl`, `openssl`, `sha256sum`_`shasum` | Fütterung, Signierung, Prüfsummenerzeugung, Freigabeprüfungen. |
 
 Abhängige Details
 | Paket | Version Constraint | Scope |
 --- | --- | ---
 | `react` / `react-dom` | `^19.2.4` | Vorneige Laufzeit |
-| `react-router-dom` | __TOK_1_ | Frontend Routing |
+| `react-router-dom` | `^7.13.1` | Frontend Routing |
 | `lucide-react`_ | `^0.575.0` | UI Symbolsatz |
-| `vite` | __TOK_1_ | Dev Server + build |
+| `vite` | `^7.3.1` | Dev Server + build |
 | `typescript` | `~5.8.2` | Typkontrolle |
 |
-| `@typescript-eslint/*` | __TOK_1_ / `^8.56.0` | TS lint parser/rules |
+| `@typescript-eslint/*` | `^8.55.0` / `^8.56.0` | TS lint parser/rules |
 | `fast-check` | `^4.5.3` | Immobilien/Fuss-Style-Tests |
 
 | Override | Pinned Version | Rationale |
@@ -45,12 +45,12 @@ Externe Dienste
 / Entwicklungswerkzeuge
 | Tool | Invocation | Coverage |
 --- | --- | ---
-| ESLint | __TOK_0_ | Frontend und Skriptlinting. |
+| ESLint | `npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings 0` | Frontend und Skriptlinting. |
 | TypeScript | `npx tsc --noEmit` | Laufzeit TS Vertragsüberprüfungen. |
 | Ruff | `ruff check utils/` | Python-Stil und Bug-Muster überprüfen. |
-| Bandit | __TOK_0_ | Python Sicherheitskontrollen. |
+| Bandit | `bandit -r utils/ -ll` | Python Sicherheitskontrollen. |
 | Trivy | Workflow + optionaler lokaler Run | FS/config Sicherheitsscans. |
-| Gitleaks | __TOK_0_ optionaler lokaler Run | Secret Leck Erkennung vor dem Push. |
+| Gitleaks | `scripts/prepare-to-push.sh` optionaler lokaler Run | Secret Leck Erkennung vor dem Push. |
 
 Beispiel Snippets
 ```json
@@ -78,14 +78,14 @@ skips = ["B101"]
 ```
 
 In den Warenkorb
-- Lokale Skripte Konto für macOS vs Linux Unterschiede in __TOK_0_ und __TOK_1_ Nutzung.
+- Lokale Skripte Konto für macOS vs Linux Unterschiede in `date` und `stat` Nutzung.
 - Einige Workflows/scripts erfordern OpenSSL-Funktionen, die mit Ed25519 und `pkeyutl -rawin` verwendet werden.
 - Windows-Unterstützung ist am stärksten für Node-basierte Tooling; POSIX Shell-Pfade kann WSL / Git Bash benötigen.
 - Zu den Futtermittelverbrauchern gehören Kompatibilitätsbypasses für Migrationsphasen, aber der unterzeichnete Modus ist der beabsichtigte stationäre Zustand.
 
 In den Warenkorb
-- Skill Release-Tags folgen __TOK_0_ und werden von CI/Deploy Automation parsed.
-- Die PR-Validierung erzwingt die Versionsparität zwischen __TOK_0_ und `SKILL.md` Frontmatter für sprunghafte Fähigkeiten.
+- Skill Release-Tags folgen `<skill>-v<semver>` und werden von CI/Deploy Automation parsed.
+- Die PR-Validierung erzwingt die Versionsparität zwischen `skill.json` und `SKILL.md` Frontmatter für sprunghafte Fähigkeiten.
 - Ja. Der Public Skill Index hält die neueste entdeckte Version pro Geschick für UI-Display.
 - Signierte Artefakte Manifeste (`checksums.json`) werden pro Veröffentlichung veröffentlicht und beinhalten File Hashes und URLs.
 

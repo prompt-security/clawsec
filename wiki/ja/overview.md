@@ -72,7 +72,7 @@ npm run build
 ```
 
 ツイート 開始場所
-- ZXQTOKEN0 を読んで下さい QXZは、製品位置決めとインストールパスです。
+- `README.md`は、製品位置決めとインストールパスです。
 - `App.tsx` と `pages/` を開き、ユーザーフェーシングの動作を把握します。
 - `skills/clawsec-suite/skill.json`を開き、スイート契約と組込みコンポーネントを理解します。
 - `.github/workflows/ci.yml`、`.github/workflows/pages-verify.yml`、`.github/workflows/skill-release.yml`、`.github/workflows/deploy-pages.yml`、および`.github/workflows/wiki-sync.yml`の生産行動のレビュー。

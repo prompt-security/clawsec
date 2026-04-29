@@ -24,9 +24,9 @@ Review status: draft
 
 ### クイック勝利
 - パワーを追加 最も使用されるマニュアルのインストール/チェックコマンドのシェルの同等物:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `skills/clawsec-suite/SKILL.md`
+- `skills/openclaw-audit-watchdog/SKILL.md`
+- `README.md`
 - 欠けているツールを検出し、OS固有のインストールのヒントを印刷するために、軽量`scripts/preflight.mjs`を追加します。
 
 ##マイルストーン
@@ -38,9 +38,9 @@ Review status: draft
 ツイート フェーズ3:POSIXを削減 貝の表面(Deeper Refactor)
 
 ##Refactor ターゲット
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `scripts/populate-local-feed.sh`
+- `scripts/populate-local-skills.sh`
+- `scripts/release-skill.sh`
 
 ### アプローチ
 - `jq/sed/awk/find/chmod`パイプラインの依存性を除去するためにNode/Pythonで再実装重要なパス。

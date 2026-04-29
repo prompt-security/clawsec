@@ -33,7 +33,7 @@ C'est-à-dire **Live at: [https://clawsec.prompt.security](https://clawsec.promp
 
 [![CI](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
-[![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clasec/actions/workflows/poll-nvd-cves.yml)
+[![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml)
 
 
 </div>
@@ -141,7 +141,7 @@ Pour Windows (PowerShell):
 - Préférez la construction explicite du chemin :
 - `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
 - `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
-- POSIX ZXQTOKEN0 Les scripts QXZ nécessitent WSL ou Git Bash.
+- POSIX `.sh` nécessitent WSL ou Git Bash.
 
 Dépannage : si vous voyez des répertoires tels que `~/.openclaw/workspace/$HOME/...`, une variable d'accueil a été transmise littéralement. Re-exécuter en utilisant un chemin absolu ou une expression de la maison non citée.
 

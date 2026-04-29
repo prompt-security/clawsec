@@ -59,9 +59,9 @@ Define a repeatable docs localization pipeline for ClawSec README and wiki pages
 - [ ] `wiki/<lang>/INDEX.md` verlinkt zurück zu den wichtigsten englischen Seiten, wenn nicht übersetzt.
 
 Sprache Rollout vorschlagen
-1. Spanisch (_TOK_0__) – in Phase 1 Basislinie.
-2. Französisch (_TOK_0__) und Deutsch (_TOK_1__) für breites technisches Publikum.
-3. Japanisch (_TOK_0__) für High-Fidelity-Plattformen.
+1. Spanisch (`es`) – in Phase 1 Basislinie.
+2. Französisch (`fr`) und Deutsch (`de`) für breites technisches Publikum.
+3. Japanisch (`ja`) für High-Fidelity-Plattformen.
 
 Quellenangaben
 - README.md

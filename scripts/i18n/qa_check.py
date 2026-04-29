@@ -164,11 +164,7 @@ def _check_pair(pair: Pair) -> tuple[list[str], list[str]]:
 
     for term in NON_TRANSLATABLE_TERMS:
         if term in source_text and term not in target_text:
-            msg = f"non-translatable term missing: {term}"
-            if partial_pair:
-                warnings.append(f"{msg} (partial pair)")
-            else:
-                errors.append(msg)
+            errors.append(f"non-translatable term missing: {term}")
 
     return errors, warnings
 

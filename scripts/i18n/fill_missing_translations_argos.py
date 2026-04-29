@@ -1,15 +1,43 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import re
-from pathlib import Path
-
 import argparse
+import re
+from collections.abc import Iterable
+from pathlib import Path
 
 from argostranslate import translate
 
 RE_INLINE_CODE = re.compile(r"`[^`]*`")
 RE_MD_LINK = re.compile(r"\[[^\]]*\]\([^\)]*\)")
+ENGLISH_HINTS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "before",
+    "by",
+    "for",
+    "from",
+    "if",
+    "in",
+    "is",
+    "of",
+    "on",
+    "or",
+    "the",
+    "this",
+    "to",
+    "use",
+    "using",
+    "when",
+    "with",
+    "you",
+    "your",
+}
 
 
 def _protect_tokens(line: str) -> tuple[str, dict[str, str]]:
@@ -36,8 +64,19 @@ def _protect_tokens(line: str) -> tuple[str, dict[str, str]]:
 
 def _restore_tokens(line: str, mapping: dict[str, str]) -> str:
     out = line
-    for k, v in mapping.items():
-        out = out.replace(k, v)
+    for key, value in mapping.items():
+        out = out.replace(key, value)
+
+        old_style = re.fullmatch(r"__TOK_(\d+)__", key)
+        if old_style:
+            idx = old_style.group(1)
+            out = re.sub(rf"_{{1,2}}TOK_{idx}_{{1,2}}", value, out)
+            continue
+
+        new_style = re.fullmatch(r"ZXQTOKEN(\d+)QXZ", key)
+        if new_style:
+            idx = new_style.group(1)
+            out = re.sub(rf"ZXQTOKEN{idx}\s+QXZ", value, out)
     return out
 
 
@@ -57,9 +96,26 @@ def _translate_line(tr, line: str) -> str:
     return restored
 
 
+def _normalize_line(line: str) -> str:
+    return re.sub(r"\s+", " ", line.strip())
+
+
+def _looks_like_english(line: str) -> bool:
+    words = re.findall(r"[A-Za-z]+", line.lower())
+    if not words:
+        return False
+    hint_count = sum(1 for word in words if word in ENGLISH_HINTS)
+    return hint_count >= 2
+
+
+def _should_process_target_line(target_line: str, source_lines: set[str]) -> bool:
+    normalized = _normalize_line(target_line)
+    return normalized in source_lines or _looks_like_english(target_line)
+
+
 def _process_pair(source: Path, target: Path, tr) -> int:
     src_lines = source.read_text(encoding="utf-8").splitlines()
-    src_set = {l for l in src_lines if l.strip()}
+    src_set = {_normalize_line(line) for line in src_lines if line.strip()}
     tgt_lines = target.read_text(encoding="utf-8").splitlines()
     changed = 0
     in_code = False
@@ -71,8 +127,8 @@ def _process_pair(source: Path, target: Path, tr) -> int:
         if in_code:
             continue
 
-        # only fill lines still in English (line text matches a source line)
-        if tgt not in src_set:
+        # Only fill lines that are still unchanged or visibly retain English fragments.
+        if not _should_process_target_line(tgt, src_set):
             continue
         if not _should_translate(tgt):
             continue
@@ -85,6 +141,26 @@ def _process_pair(source: Path, target: Path, tr) -> int:
     if changed:
         target.write_text("\n".join(tgt_lines) + "\n", encoding="utf-8")
     return changed
+
+
+def _normalize_only(values: Iterable[str] | None) -> set[str]:
+    normalized: set[str] = set()
+    for value in values or []:
+        item = value.strip().replace("\\", "/")
+        if not item:
+            continue
+        normalized.add(item)
+        normalized.add(Path(item).name)
+    return normalized
+
+
+def _matches_only(path: Path, repo: Path, only: set[str]) -> bool:
+    if not only:
+        return True
+
+    rel = path.relative_to(repo).as_posix()
+    candidates = {path.name, rel}
+    return bool(candidates & only)
 
 
 def main() -> int:
@@ -105,17 +181,17 @@ def main() -> int:
 
     total = 0
 
-    only = set(args.only or [])
+    only = _normalize_only(args.only)
 
     # README
-    readme_target = f"README.{args.lang}.md"
-    if not only or readme_target in only:
-        total += _process_pair(repo / "README.md", repo / readme_target, tr)
+    readme_target = repo / f"README.{args.lang}.md"
+    if _matches_only(readme_target, repo, only):
+        total += _process_pair(repo / "README.md", readme_target, tr)
 
-    # wiki/de
+    # wiki/<lang>
     lang_root = repo / "wiki" / args.lang
     for lang_file in sorted(lang_root.glob("*.md")):
-        if only and lang_file.name not in only:
+        if not _matches_only(lang_file, repo, only):
             continue
         if lang_file.name in {"INDEX.md", "GENERATION.md"}:
             continue

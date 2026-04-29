@@ -45,7 +45,7 @@ En option, SMTP/sendmail local. - Oui.
 ## Outils de développement
 Couverture de l'Invocation
 - Oui.
-ENGLISH ZXQTOKEN0QXXZ. - Oui.
+ESLint: `npx eslint . --ext .ts,.tsx,.js,.jsx,.mjs --max-warnings 0`. - Oui.
 TypeScript (en anglais seulement) `npx tsc --noEmit` (en anglais seulement). - Oui.
 Le style Python et les contrôles de patrons de bugs. - Oui.
 Bandit: `bandit -r utils/ -ll` , Vérifications de sécurité Python. - Oui.

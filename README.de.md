@@ -17,13 +17,13 @@ ClawSec: Security Skill Suite für KI-Agenten
 
 Sichern Sie Ihre OpenClaw, NanoClaw und Hermes Agents mit einer kompletten Sicherheits-Fähigkeits-Suite
 
-<h4>Brought to you von <a href="https://prompt.security">Prompt Security</a>, the Platform of AI Security>/h4>
+<h4>Brought to you von <a href="https://prompt.security">Prompt Security</a>, the Platform of AI Security</h4>
 
 </div>
 
 <div align="center">
 
-!_TOK_0__
+![Prompt Security Logo](./img/Black+Color.png)
 <img src="/public/img/mascot.png" alt="clawsec mascot" breit="200" />
 
 </div>
@@ -131,9 +131,9 @@ Kopieren Sie diese Anleitung zu Ihrem KI-Agent:
 
 ClawSec-Skripte werden aufgeteilt zwischen:
 - Cross-Plattform Node/Python-Tooling (`npm run build`, Haken/Setup `.mjs`_ `utils/*.py`_
-- POSIX Shell Workflows (__TOK_0_, die meisten manuellen Installationsschnipsel)
+- POSIX Shell Workflows (`*.sh`, die meisten manuellen Installationsschnipsel)
 
-Für Linux/macOS (`bash`/_TOK_1__):
+Für Linux/macOS (`bash`/`zsh`):
 - Verwenden Sie nicht zitiertes oder doppelt zitiertes Zuhause vars: `export INSTALL_ROOT="$HOME/.openclaw/skills"`
 - Do **not** Einquoten-Expandierbare Vars (zum Beispiel `'$HOME/.openclaw/skills'`)
 
@@ -143,7 +143,7 @@ Für Windows (PowerShell):
 - Was?
 - POSIX `.sh` Skripte benötigen WSL oder Git Bash.
 
-Fehlerbehebung: Wenn Sie Verzeichnisse wie __TOK_0_ sehen, wurde eine Heimvariable buchstäblich übergeben. Re-run mit einem absoluten Pfad oder einem nicht zitierten Heimausdruck.
+Fehlerbehebung: Wenn Sie Verzeichnisse wie `~/.openclaw/workspace/$HOME/...` sehen, wurde eine Heimvariable buchstäblich übergeben. Re-run mit einem absoluten Pfad oder einem nicht zitierten Heimausdruck.
 
 --
 
@@ -185,7 +185,7 @@ Kompatibilitätsspiegel (Legalacy): `https://clawsec.prompt.security/releases/la
 Die Feed-Quoten CVEs bezogen auf:
 **OpenClaw Platform**: `OpenClaw`, `clawdbot`__, `Moltbot`
 **NanoClaw Platform**: `NanoClaw`____________________________________________________
-- **Picoclaw Platform*: __TOK_0_, `picoclaw`, leichte AI Gateways, MCP Gateway Belichtung
+- **Picoclaw Platform*: `Picoclaw`, `picoclaw`, leichte AI Gateways, MCP Gateway Belichtung
 - Prompt Injektionsmuster
 - Sicherheitslücken von Agenten
 
@@ -279,7 +279,7 @@ Kontrollen:
 
 ### Skill Checksums Generator
 
-Erzeugt __TOK_0_ mit SHA256 Hashes für ein Geschick:
+Erzeugt `checksums.json` mit SHA256 Hashes für ein Geschick:
 
 ```bash
 python utils/package_skill.py skills/clawsec-feed ./dist
@@ -325,8 +325,8 @@ npm run gen:wiki-llms
 ```
 
 Anmerkungen:
-- __TOK_0_ und `npm run build` regenerieren automatisch wiki __TOK_2_ Exporte (`predev`_`prebuild` Haken).
-- __TOK_0_ wird ausgegeben (lokal + CI) und ist absichtlich gitignored.
+- `npm run dev` und `npm run build` regenerieren automatisch wiki `llms.txt` Exporte (`predev`_`prebuild` Haken).
+- `public/wiki/` wird ausgegeben (lokal + CI) und ist absichtlich gitignored.
 
 ### Build
 
@@ -395,22 +395,22 @@ Haben Sie einen schnellen Injektionsvektor, bösartige Fähigkeiten oder Sicherh
 
 ANHANG Öffne ein neues Problem mit der Vorlage **Security Incident Report***
 2. Füllen Sie die erforderlichen Felder aus (Stärke, Art, Beschreibung, Betroffene Fähigkeiten)
-3. Ein Betreuer überprüft und fügt das __TOK_0_ Label hinzu
+3. Ein Betreuer überprüft und fügt das `advisory-approved` Label hinzu
 4. Die Beratung wird automatisch im Feed veröffentlicht als `CLAW-{YEAR}-{ISSUE#}`
 
-Siehe __TOK_0_ für detaillierte Richtlinien.
+Siehe `CLAW-{YEAR}-{ISSUE#}` für detaillierte Richtlinien.
 
 ### Neue Fähigkeiten hinzufügen
 
-ANHANG Erstellen Sie einen Kompetenzordner unter __TOK_0_
-2. Hinzufügen __TOK_0_ mit benötigten Metadaten und SBOM
+ANHANG Erstellen Sie einen Kompetenzordner unter `skills/`
+2. Hinzufügen `skill.json` mit benötigten Metadaten und SBOM
 3. `SKILL.md` mit agentenlesbaren Anweisungen hinzufügen
 4. Gültig mit `python utils/validate_skill.py skills/your-skill`
 5. Eine PR zur Überprüfung einreichen
 
 📚 Dokumentation Quelle der Wahrheit
 
-Für alle Wiki-Inhalte bearbeiten Sie Dateien unter __TOK_0_ in diesem Repository. Das GitHub Wiki (`<repo>.wiki.git`) wird von `wiki/`_ durch `.github/workflows/wiki-sync.yml` synchronisiert, wenn `wiki/**`_ auf `main`__ wechselt.
+Für alle Wiki-Inhalte bearbeiten Sie Dateien unter `wiki/` in diesem Repository. Das GitHub Wiki (`<repo>.wiki.git`) wird von `wiki/`_ durch `.github/workflows/wiki-sync.yml` synchronisiert, wenn `wiki/**`_ auf `main`__ wechselt.
 
 LLM-Exporte werden von `wiki/` in `public/wiki/`_ generiert:
 - `/wiki/llms.txt` ist der LLM-ready Export für `wiki/INDEX.md` (oder ein generierter Fallback-Index, wenn `INDEX.md` fehlt).
@@ -421,7 +421,7 @@ LLM-Exporte werden von `wiki/` in `public/wiki/`_ generiert:
 📄 Lizenz
 
 - Quellcode: GNU AGPL v3.0 oder später - Siehe [LICENSE](LICENSE) für Details.
-- Schriften in __TOK_1_: separat lizenziert - Siehe [`font/README.md`](font/README.md).
+- Schriften in `font/`: separat lizenziert - Siehe [`font/README.md`](font/README.md).
 
 --
 

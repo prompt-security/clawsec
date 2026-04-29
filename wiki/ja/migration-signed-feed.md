@@ -26,9 +26,9 @@ ClawSec のアドバイザリーディストリビューションが署名され
 - 最も最近のミラーのコピー: `public/releases/latest/download/advisories/feed.json` (+ `.sig`)
 
 現在の消費者のデフォルト:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- `skills/clawsec-suite/hooks/clawsec-advisory-guardian/handler.ts`
+- `skills/clawsec-suite/scripts/guarded_skill_install.mjs`
+- `skills/clawsec-nanoclaw/lib/advisories.ts`
 - デフォルトURL:`https://clawsec.prompt.security/advisories/feed.json`
 
 ツイート 3) 移行原則

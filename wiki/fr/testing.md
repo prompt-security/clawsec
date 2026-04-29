@@ -32,7 +32,7 @@ Couverture du flux de travail de l'IC
 Flux de travail - Oui.
 - Oui.
 Lint/type/build, Python checks, scans de sécurité, tests de compétence. - Oui.
-ZXQTOKEN0QXXZ (en anglais seulement) - Oui.
+`codeql.yml` (en anglais seulement) - Oui.
 `scorecard.yml`="horaire/poussoir" Rapport de posture de la chaîne d'approvisionnement et téléchargement SARIF. - Oui.
 Tags de `skill-release.yml` PRs. - Oui.
 

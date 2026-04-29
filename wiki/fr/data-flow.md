@@ -98,7 +98,7 @@ Références sources
 - .github/workflows/deploy-pages.yml
 - .github/workflows/kill-release.yml
 - compétences/clawsec-suite/hooks/clawsec-advisory-guardian/lib/feed.mjs
-- compétences/clasec-suite/hooks/clasec-advisory-guardian/lib/state.ts
+- skills/clawsec-suite/hooks/clawsec-advisory-guardian/lib/state.ts
 - compétences/clawsec-suite/hooks/clawsec-advisory-guardian/lib/matching.ts
 - compétences/clawsec-suite/scripts/guarded_skill_install.mjs
 - compétences/clawsec-nanoclaw/lib/advisories.ts

@@ -139,9 +139,9 @@ Linux/macOS (`bash`/`zsh`) の場合:
 
 Windows用(PowerShell):
 - プレファーの明示的な道の建物:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
-- POSIX ZXQTOKEN0の特長 QXZスクリプトはWSLまたはGit Bashが必要です。
+- `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
+- `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
+- POSIX `.sh`スクリプトはWSLまたはGit Bashが必要です。
 
 トラブルシューティング:`~/.openclaw/workspace/$HOME/...`などのディレクトリが表示された場合、ホーム変数は文字通り渡されました。 絶対パスまたは非引用のホーム式を使用して再実行します。
 
@@ -251,11 +251,11 @@ ClawSec は、CVE のアドバイザリーを **exploitability context** で強�
 ## は、CI/CD パイプライン
 
 CI/CD パイプラインの詳細は wiki モジュールページに移動しました。
-- ZXQトークン0QXZ
+- [wiki/modules/automation-release.md](wiki/modules/automation-release.md)
 
 関連操作 docs:
-- ZXQトークン0QXZ
-- ZXQトークン0QXZ
+- [wiki/security-signing-runbook.md](wiki/security-signing-runbook.md)
+- [wiki/migration-signed-feed.md](wiki/migration-signed-feed.md)
 
 お問い合わせ
 

@@ -15,7 +15,7 @@ Variablen Core Runtime
 --- | --- | ---
 | `CLAWSEC_FEED_URL` | Hosted Advisory URL | Suite Haken und bewachte Installations-Feed-Ladung. |
 | `CLAWSEC_FEED_SIG_URL` | `<feed>.sig` | Gelöschte Signaturquelle. |
-| `CLAWSEC_FEED_CHECKSUMS_URL` | __TOK_1_ in der Nähe der Feed-URL | Optionale Prüfsumme-manifest-Quelle. |
+| `CLAWSEC_FEED_CHECKSUMS_URL` | `checksums.json` in der Nähe der Feed-URL | Optionale Prüfsumme-manifest-Quelle. |
 | `CLAWSEC_FEED_PUBLIC_KEY` | Suite-local PEM-Datei | Signaturverifikation füttern. |
 | `CLAWSEC_ALLOW_UNSIGNED_FEED` | `0` | Temporäre Migrationsbypass-Flagge. |
 | `CLAWSEC_VERIFY_CHECKSUM_MANIFEST` | `1` | Ermöglicht die Überprüfung von Prüfsummen-Manifest. |
@@ -24,30 +24,30 @@ Variablen Core Runtime
 / Wegeauflösungsregeln
 | Regel | Verhalten | Durchsetzung Standort |
 --- | --- | ---
-| __TOK_0_ Erweiterung | Aufgelöst auf erkanntes Home-Verzeichnis | Geteilte Pfad-Dienstfunktionen in Suite/watchdog-Skripten. |
-| __TOK_0_ / __TOK_1_ Erweiterung | Aufgelöst, wenn nicht | Gleiche Dienstprogramme. |
-| Windows home tokens | __TOK_0_, __TOK_1_ normalisiert | Gleiche Dienstprogramme. |
+| `~` Erweiterung | Aufgelöst auf erkanntes Home-Verzeichnis | Geteilte Pfad-Dienstfunktionen in Suite/watchdog-Skripten. |
+| `$HOME` / `${HOME}` Erweiterung | Aufgelöst, wenn nicht | Gleiche Dienstprogramme. |
+| Windows home tokens | `%USERPROFILE%`, `$env:USERPROFILE` normalisiert | Gleiche Dienstprogramme. |
 | Escaped tokens (`\$HOME`) | Ausgestoßen mit explizitem Fehler | Verhindert die zufällige buchstäbliche Verzeichnis-Erstellung. |
 | Ungültiger expliziter Pfad | Kann mit Warnung auf Standardpfad zurückfallen . `resolveConfiguredPath` Helfer. |
 
 Frontend und Build Konfiguration
-- `vite.config.ts` definiert Port (_TOK_1__), Host (`0.0.0.0`) und Pfad-Alias (`@`_).
-- __TOK_0_ bietet Tailwind Runtime config, benutzerdefinierte Schriften, und Grundfarbe Tokens.
-- __TOK_0_ verwendet die Paketermodulauflösung __TOK_1_ und die JSX Laufzeitkonfiguration.
-- __TOK_0_ TS, React, Haken und Script-spezifische Lint Regeln.
+- `vite.config.ts` definiert Port (`3000`), Host (`0.0.0.0`) und Pfad-Alias (`@`_).
+- `index.html` bietet Tailwind Runtime config, benutzerdefinierte Schriften, und Grundfarbe Tokens.
+- `tsconfig.json` verwendet die Paketermodulauflösung `noEmit` und die JSX Laufzeitkonfiguration.
+- `eslint.config.js` TS, React, Haken und Script-spezifische Lint Regeln.
 
 Metadaten der Fähigkeiten Konfiguration
 | Feldgruppe | Standort | Funktion |
 --- | --- | ---
-| Kernkompetenzidentität | __TOK_0_ | Name/Version/Autor/Lizenz/Beschreibung Metadaten. |
-| SBOM-Dateiliste | __TOK_0_ | Erklärt Release-erforderliche Artefakte. |
-| Platform metadata | __TOK_0_ oder `nanoclaw` Blöcke | CLI Anforderungen, Trigger, Plattformfähigkeitshinweise. |
+| Kernkompetenzidentität | `skills/*/skill.json` | Name/Version/Autor/Lizenz/Beschreibung Metadaten. |
+| SBOM-Dateiliste | `skill.json -> sbom.files` | Erklärt Release-erforderliche Artefakte. |
+| Platform metadata | `openclaw` oder `nanoclaw` Blöcke | CLI Anforderungen, Trigger, Plattformfähigkeitshinweise. |
 | Suite Katalog Metadaten | `skills/clawsec-suite/skill.json -> catalog` | Integriertes/Standard/consent Verhalten für Suite-Mitglieder. |
 
 Â Workflow Konfiguration
-- Die Schedule-Konfiguration existiert im Workflow `cron` Einträge (`poll-nvd-cves`, __TOK_2_, `scorecard`.
+- Die Schedule-Konfiguration existiert im Workflow `cron` Einträge (`poll-nvd-cves`, `codeql`, `scorecard`.
 - Release Workflow erwartet Tag Benming-Muster `<skill>-v<semver>`.
-- Der Arbeitsablauf wird durch erfolgreiche CI/Release __TOK_0_ Ereignisse und manuelle Versendung ausgelöst.
+- Der Arbeitsablauf wird durch erfolgreiche CI/Release `workflow_run` Ereignisse und manuelle Versendung ausgelöst.
 - Composite Signing Aktion erfordert private Schlüsseleingänge und überprüft Signaturen unmittelbar nach der Unterzeichnung.
 
 Beispiel Snippets
