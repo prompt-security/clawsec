@@ -17,7 +17,7 @@ ClawSec README 및 위키 문서를 반복 가능하게 번역/현지화하기 �
 
 ## 폴더 규칙
 - README 번역:
-  - `README.es.md`
+- `README.es.md`의
   - `README.ko.md`
   - 향후 예시: `README.fr.md`, `README.de.md`, `README.ja.md`
 - 위키 번역:
@@ -25,8 +25,8 @@ ClawSec README 및 위키 문서를 반복 가능하게 번역/현지화하기 �
   - `wiki/ko/INDEX.md`, `wiki/ko/<page>.md`
   - 향후 예시: `wiki/fr/<page>.md`, `wiki/de/<page>.md`
 - 로컬라이제이션 자산:
-  - `wiki/i18n/terminology-en-es.md`
-  - `wiki/i18n/translation-tracker.md`
+- `wiki/i18n/terminology-en-es.md`의
+- `wiki/i18n/translation-tracker.md`의
   - `scripts/i18n/qa_check.py`
 
 ## 업데이트 워크플로우

@@ -6,16 +6,16 @@
 - 런타임 소비자는 기본적으로 verification-first 동작을 사용하며, 마이그레이션용 bypass 플래그는 명시적으로만 허용됩니다.
 
 ## 암호학적 통제
-| Control | Mechanism | Location |
-| --- | --- | --- |
+| 통제 | 메커니즘 | 위치 |
+인포메이션
 | Feed authenticity | Ed25519 detached signatures (`feed.json.sig`) | Advisory 워크플로우 + 소비자 검증 라이브러리 |
 | Artifact integrity | SHA-256 checksum manifests (`checksums.json`) | 스킬 릴리스 및 pages 배포 워크플로우 |
 | Key consistency | 문서/정본 PEM 간 fingerprint 비교 | `scripts/ci/verify_signing_key_consistency.sh` |
 | Signature verification action | CI의 composite sign+verify 액션 | `.github/actions/sign-and-verify/action.yml` |
 
 ## 런타임 enforcement 통제
-| Control | Component | Effect |
-| --- | --- | --- |
+|제어 | 부품 | 효과 |
+인포메이션
 | Advisory hook gating | `clawsec-advisory-guardian` | 매칭된 advisory 기반 경고 및 보수적 가이드 제공 |
 | Double-confirmation installer | `guarded_skill_install.mjs` | advisory 매칭 시 명시적 확인 전까지 `42`로 종료 |
 | Reputation extension | `clawsec-clawhub-checker` | 설치 전 추가 리스크 스코어링 |

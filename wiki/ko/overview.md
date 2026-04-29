@@ -6,7 +6,7 @@
 
 ## 저장소 구성
 | 경로 | 역할 | 비고 |
-| --- | --- | --- |
+인포메이션
 | `pages/`, `components/`, `App.tsx`, `index.tsx` | Vite + React UI | 스킬 카탈로그, advisory 피드, 상세 페이지 |
 | `skills/` | 보안 스킬 패키지 | 각 스킬은 `skill.json`, `SKILL.md`, 선택적 scripts/tests/docs 포함 |
 | `advisories/` | 리포지토리 advisory 채널 | 서명된 `feed.json` + `feed.json.sig` |

@@ -6,8 +6,8 @@
 - 경로 정규화는 보안 민감 영역이며, 해석되지 않은 home-token literal을 의도적으로 거부합니다.
 
 ## 핵심 런타임 변수
-| Variable | Default | Used By |
-| --- | --- | --- |
+| 변하기 쉬운 | 기본 | 이용 |
+인포메이션
 | `CLAWSEC_FEED_URL` | Hosted advisory URL | Suite hook 및 guarded installer의 피드 로딩 |
 | `CLAWSEC_FEED_SIG_URL` | `<feed>.sig` | Detached signature 소스 |
 | `CLAWSEC_FEED_CHECKSUMS_URL` | `checksums.json` near feed URL | 선택적 checksum-manifest 소스 |
@@ -17,8 +17,8 @@
 | `CLAWSEC_HOOK_INTERVAL_SECONDS` | `300` | advisory hook 스캔 스로틀 |
 
 ## 경로 해석 규칙
-| Rule | Behavior | Enforcement Location |
-| --- | --- | --- |
+| 규칙 | 행동 | 시행 위치 |
+인포메이션
 | `~` expansion | 감지된 홈 디렉터리로 해석 | suite/watchdog 스크립트의 공용 path 유틸리티 |
 | `$HOME` / `${HOME}` expansion | 이스케이프되지 않은 경우 해석 | 동일 유틸리티 |
 | Windows home tokens | `%USERPROFILE%`, `$env:USERPROFILE` 정규화 | 동일 유틸리티 |
@@ -32,8 +32,8 @@
 - `eslint.config.js`는 TS/React/hooks 및 스크립트 전용 lint 규칙을 적용합니다.
 
 ## 스킬 메타데이터 설정
-| Field Group | Location | Function |
-| --- | --- | --- |
+| 필드 그룹 | 위치 | 기능 |
+인포메이션
 | Core skill identity | `skills/*/skill.json` | 이름/버전/작성자/라이선스/설명 메타데이터 |
 | SBOM file list | `skill.json -> sbom.files` | 릴리스 필수 아티팩트 선언 |
 | Platform metadata | `openclaw` or `nanoclaw` blocks | CLI 요구사항, 트리거, 플랫폼 capability 힌트 |

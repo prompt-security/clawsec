@@ -32,7 +32,7 @@ npx clawhub@latest install clawsec-suite
 ### 사람 운영자용
 에이전트에게 다음 지시를 전달하세요:
 
-> Install ClawSec with `npx clawhub@latest install clawsec-suite`, then complete the setup steps from the generated instructions.
+· `npx clawhub@latest install clawsec-suite`로 ClawSec을 설치 한 다음 생성 된 지침에서 설정 단계를 완료하십시오.
 
 ## 🧭 위키 문서
 플랫폼/스위트 상세 문서는 wiki 모듈을 참고하세요:
