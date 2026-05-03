@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-04-30T06:50:23Z",
+  "updated": "2026-05-03T06:49:44Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -11,6 +11,7 @@
       "title": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired no...",
       "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired nodes to reconnect with exec-capable commands without operator.admin scope requirement. Attackers can bypass re-pairing authentication to execute privileged commands on the local assistant system.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -46,6 +47,7 @@
       "title": "OpenClaw before 2026.4.8 contains a security bypass vulnerability in node.invoke(browser.proxy) that...",
       "description": "OpenClaw before 2026.4.8 contains a security bypass vulnerability in node.invoke(browser.proxy) that allows mutation of persistent browser profiles. Attackers can exploit this path to circumvent the browser.request persistent profile-mutation guard and modify browser configurations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -81,6 +83,7 @@
       "title": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in Playwright redirect...",
       "description": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in Playwright redirect handling that allows attackers to bypass strict SSRF checks. Attackers can exploit request-time navigation to reach private targets that should be restricted by browser SSRF protections.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -116,6 +119,7 @@
       "title": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP au...",
       "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP authentication mechanism that widens identity-bearing operator.read requests into runtime operator.write permissions. Attackers can exploit this by sending read-scoped requests through the gateway auth route to gain unauthorized write access to runtime operations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -151,6 +155,7 @@
       "title": "OpenClaw versions before 2026.4.8 fail to enforce integrity verification on downloaded plugin archiv...",
       "description": "OpenClaw versions before 2026.4.8 fail to enforce integrity verification on downloaded plugin archives. Attackers can install malicious or tampered plugin packages without detection, compromising the local assistant environment.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -186,6 +191,7 @@
       "title": "OpenClaw before 2026.4.8 contains a remote code execution vulnerability caused by missing environmen...",
       "description": "OpenClaw before 2026.4.8 contains a remote code execution vulnerability caused by missing environment variable denylist entries for HGRCPATH, CARGO_BUILD_RUSTC_WRAPPER, RUSTC_WRAPPER, and MAKEFLAGS. Attackers can inject malicious build tool environment variables to influence host exec commands and achieve arbitrary code execution.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -221,6 +227,7 @@
       "title": "OpenClaw before 2026.4.8 contains an improper authorization vulnerability where the node.pair.approv...",
       "description": "OpenClaw before 2026.4.8 contains an improper authorization vulnerability where the node.pair.approve method accepts operator.write scope instead of the narrower operator.pairing scope, allowing unprivileged users to approve node pairing. Attackers with operator.write permissions can bypass pairing approval restrictions to gain unauthorized access to exec-capable nodes.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -256,6 +263,7 @@
       "title": "OpenClaw before 2026.4.8 treats shared reply MEDIA paths as trusted, allowing crafted references to ...",
       "description": "OpenClaw before 2026.4.8 treats shared reply MEDIA paths as trusted, allowing crafted references to trigger cross-channel local file exfiltration. Attackers can exploit this by crafting malicious shared reply MEDIA references to cause another channel to read local file paths as trusted generated media.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -291,6 +299,7 @@
       "title": "OpenClaw before 2026.4.8 contains an approval-timeout fallback mechanism that bypasses strictInlineE...",
       "description": "OpenClaw before 2026.4.8 contains an approval-timeout fallback mechanism that bypasses strictInlineEval explicit-approval requirements on gateway and node exec hosts. Attackers can exploit this timeout fallback to execute inline eval commands that should require explicit user approval, circumventing the intended security boundary.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -326,6 +335,7 @@
       "title": "OpenClaw before 2026.4.8 contains a role bypass vulnerability in the device.token.rotate function th...",
       "description": "OpenClaw before 2026.4.8 contains a role bypass vulnerability in the device.token.rotate function that allows minting tokens for unapproved roles. Attackers can bypass device role-upgrade pairing to preserve or mint roles and scopes that had not undergone intended approval.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -361,6 +371,7 @@
       "title": "OpenClaw before 2026.4.8 contains a session management vulnerability where existing WebSocket sessio...",
       "description": "OpenClaw before 2026.4.8 contains a session management vulnerability where existing WebSocket sessions survive shared gateway token rotation. Attackers can maintain unauthorized access to WebSocket connections after token rotation by exploiting the failure to disconnect existing shared-token sessions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -396,6 +407,7 @@
       "title": "OpenClaw before 2026.4.8 contains improper input validation in base64 decode paths that allocate mem...",
       "description": "OpenClaw before 2026.4.8 contains improper input validation in base64 decode paths that allocate memory before enforcing decoded-size limits. Attackers can exploit multiple code paths to cause memory exhaustion or denial of service through crafted base64-encoded input.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -431,6 +443,7 @@
       "title": "OpenClaw before 2026.4.8 contains an authentication state management vulnerability where the resolve...",
       "description": "OpenClaw before 2026.4.8 contains an authentication state management vulnerability where the resolvedAuth closure becomes stale after configuration reload. Newly accepted gateway connections continue using outdated resolved auth state, allowing attackers to bypass authentication controls through config reload operations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -466,6 +479,7 @@
       "title": "OpenClaw before 2026.4.8 fails to remove git plumbing environment variables from the execution envir...",
       "description": "OpenClaw before 2026.4.8 fails to remove git plumbing environment variables from the execution environment before host exec operations. Attackers can exploit this by setting GIT_DIR and related variables to redirect git operations and compromise repository integrity.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -501,6 +515,7 @@
       "title": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in QQ Bot media downlo...",
       "description": "OpenClaw before 2026.4.8 contains a server-side request forgery vulnerability in QQ Bot media download paths that bypass SSRF protection. Attackers can exploit unprotected media fetch endpoints to access internal resources and bypass allowlist policies.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -536,6 +551,7 @@
       "title": "OpenClaw before 2026.4.4 contains a race condition vulnerability in shared-secret authentication tha...",
       "description": "OpenClaw before 2026.4.4 contains a race condition vulnerability in shared-secret authentication that allows concurrent asynchronous requests to bypass the per-key rate-limit budget. Attackers can exploit this by sending multiple simultaneous authentication attempts to circumvent intended rate-limiting protections on Tailscale-capable paths.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -571,6 +587,7 @@
       "title": "OpenClaw before 2026.4.8 contains a server-side request forgery policy bypass vulnerability allowing...",
       "description": "OpenClaw before 2026.4.8 contains a server-side request forgery policy bypass vulnerability allowing attackers to trigger navigations bypassing normal SSRF checks. Attackers can exploit browser interactions to bypass SSRF protections and access restricted resources.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -606,6 +623,7 @@
       "title": "OpenClaw before 2026.4.8 contains a filesystem policy bypass vulnerability in docx upload processing...",
       "description": "OpenClaw before 2026.4.8 contains a filesystem policy bypass vulnerability in docx upload processing that allows local file reads outside workspace boundaries. Attackers can exploit upload_file and upload_image endpoints to access files beyond the intended workspace-only filesystem policy.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -641,6 +659,7 @@
       "title": "OpenClaw before 2026.4.8 omits owner-only enforcement for cross-channel allowlist writes in the /all...",
       "description": "OpenClaw before 2026.4.8 omits owner-only enforcement for cross-channel allowlist writes in the /allowlist endpoint. An authorized non-owner sender can bypass access controls to perform allowlist modifications against different channels, violating the intended trust model.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -676,6 +695,7 @@
       "title": "OpenClaw before 2026.3.31 contains a resource exhaustion vulnerability in media downloads that bypas...",
       "description": "OpenClaw before 2026.3.31 contains a resource exhaustion vulnerability in media downloads that bypasses core safety limits for file size, count, and cleanup operations. Attackers can exhaust disk space by downloading media files without triggering intended safety restrictions, causing availability impact.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -711,6 +731,7 @@
       "title": "OpenClaw before 2026.4.2 contains a timing side channel vulnerability in shared-secret comparison ca...",
       "description": "OpenClaw before 2026.4.2 contains a timing side channel vulnerability in shared-secret comparison call sites that use early length-mismatch checks instead of fixed-length comparison helpers. Attackers can measure timing differences to leak secret-length information, weakening constant-time handling for shared secrets.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -746,6 +767,7 @@
       "title": "OpenClaw before 2026.3.31 contains a sender allowlist bypass vulnerability that allows remote attack...",
       "description": "OpenClaw before 2026.3.31 contains a sender allowlist bypass vulnerability that allows remote attackers to access restricted messages. Attackers can exploit fetched quoted, root, and thread context messages to bypass sender allowlist restrictions and retrieve unauthorized content.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -781,6 +803,7 @@
       "title": "OpenClaw before 2026.3.31 parses MS Teams webhook request bodies before performing JWT validation, a...",
       "description": "OpenClaw before 2026.3.31 parses MS Teams webhook request bodies before performing JWT validation, allowing unauthenticated attackers to trigger resource exhaustion. Remote attackers can send malicious Teams webhook payloads to exhaust server resources by bypassing authentication checks.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -816,6 +839,7 @@
       "title": "OpenClaw before 2026.3.31 contains an incomplete scope-clearing vulnerability in trusted-proxy authe...",
       "description": "OpenClaw before 2026.3.31 contains an incomplete scope-clearing vulnerability in trusted-proxy authentication mode that allows operator.admin privilege escalation. Attackers can exploit this by declaring operator scopes on non-Control-UI clients, allowing self-declared scopes to persist on identity-bearing authentication paths and escalate privileges.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -851,6 +875,7 @@
       "title": "OpenClaw before 2026.3.31 misclassifies proxied remote requests as loopback connections in the diffs...",
       "description": "OpenClaw before 2026.3.31 misclassifies proxied remote requests as loopback connections in the diffs viewer when allowRemoteViewer is disabled, allowing unauthorized access. Attackers can bypass access controls by sending proxied requests that are incorrectly identified as local loopback traffic, circumventing intended remote viewer restrictions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -886,6 +911,7 @@
       "title": "OpenClaw before 2026.3.31 contains a scope bypass vulnerability in webhook replay cache deduplicatio...",
       "description": "OpenClaw before 2026.3.31 contains a scope bypass vulnerability in webhook replay cache deduplication that allows authenticated attackers to replay messages across sibling targets using the same messageId. Attackers can exploit overly broad cache keying to bypass replay protection and deliver duplicate webhook messages to unintended targets.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -921,6 +947,7 @@
       "title": "OpenClaw before 2026.3.31 contains an incomplete fix for CVE-2026-32062 where the voice-call compone...",
       "description": "OpenClaw before 2026.3.31 contains an incomplete fix for CVE-2026-32062 where the voice-call component parses large WebSocket frames before start validation. Remote attackers can send oversized pre-start WebSocket frames to cause resource consumption and denial of service.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -956,6 +983,7 @@
       "title": "OpenClaw before 2026.3.28 accepts unbounded concurrent unauthenticated WebSocket upgrades without pr...",
       "description": "OpenClaw before 2026.3.28 accepts unbounded concurrent unauthenticated WebSocket upgrades without pre-authentication budget allocation. Unauthenticated network attackers can exhaust socket and worker capacity to disrupt WebSocket availability for legitimate clients.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -990,6 +1018,7 @@
       "title": "OpenClaw before 2026.4.2 contains an improper access control vulnerability in the iOS A2UI bridge th...",
       "description": "OpenClaw before 2026.4.2 contains an improper access control vulnerability in the iOS A2UI bridge that treats generic local-network pages as trusted origins. Attackers can inject unauthorized agent.request runs by loading attacker-controlled pages from local-network or tailnet hosts, polluting session state and consuming budget.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1025,6 +1054,7 @@
       "title": "OpenClaw before 2026.3.31 contains a sandbox escape vulnerability allowing attackers to traverse dir...",
       "description": "OpenClaw before 2026.3.31 contains a sandbox escape vulnerability allowing attackers to traverse directory boundaries through symlink exploitation during file synchronization operations. Remote attackers can bypass sandbox restrictions by crafting malicious symlinks in mirror sync operations to access arbitrary files outside intended boundaries.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1060,6 +1090,7 @@
       "title": "OpenClaw before 2026.3.31 allows workspace .env files to override the OPENCLAW_BUNDLED_PLUGINS_DIR e...",
       "description": "OpenClaw before 2026.3.31 allows workspace .env files to override the OPENCLAW_BUNDLED_PLUGINS_DIR environment variable, compromising plugin trust verification. Attackers with control over workspace configuration can inject malicious plugins by overriding the bundled plugin trust root directory.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1095,6 +1126,7 @@
       "title": "OpenClaw before 2026.3.28 contains a webhook replay vulnerability in Plivo V3 signature verification...",
       "description": "OpenClaw before 2026.3.28 contains a webhook replay vulnerability in Plivo V3 signature verification that canonicalizes query ordering for signatures but hashes raw URLs for replay detection. Attackers can reorder query parameters to bypass replay cache detection and trigger duplicate voice-call processing with a captured valid signed webhook.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1129,6 +1161,7 @@
       "title": "OpenClaw before 2026.3.31 contains an authentication bypass vulnerability where unauthenticated plug...",
       "description": "OpenClaw before 2026.3.31 contains an authentication bypass vulnerability where unauthenticated plugin-auth HTTP routes receive operator runtime write scopes. Attackers can access these routes without authentication to perform privileged runtime actions intended for authorized operators.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1164,6 +1197,7 @@
       "title": "OpenClaw before 2026.3.31 contains a wide-area discovery vulnerability allowing arbitrary tailnet pe...",
       "description": "OpenClaw before 2026.3.31 contains a wide-area discovery vulnerability allowing arbitrary tailnet peers to be accepted as DNS authorities. Attackers with same-tailnet position and CA-trusted endpoint access can exfiltrate operator credentials through DNS steering manipulation.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1199,6 +1233,7 @@
       "title": "OpenClaw before 2026.3.31 contains an exec allowlist bypass vulnerability allowing attackers to inhe...",
       "description": "OpenClaw before 2026.3.31 contains an exec allowlist bypass vulnerability allowing attackers to inherit allowlist trust via shell init-file wrapper invocations. Attackers can exploit shell options like --rcfile, --init-file, and --startup-file to load attacker-chosen initialization files while bypassing exec allowlist matching restrictions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1234,6 +1269,7 @@
       "title": "OpenClaw before 2026.3.31 fails to properly sanitize PIP_INDEX_URL and UV_INDEX_URL environment vari...",
       "description": "OpenClaw before 2026.3.31 fails to properly sanitize PIP_INDEX_URL and UV_INDEX_URL environment variables in host execution contexts, allowing attackers to redirect Python package-index traffic. Attackers can exploit this bypass to intercept or manipulate package management operations by injecting malicious index URLs through unsanitized environment variables.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1269,6 +1305,7 @@
       "title": "OpenClaw before 2026.3.28 contains an exec allowlist bypass vulnerability where allow-always persist...",
       "description": "OpenClaw before 2026.3.28 contains an exec allowlist bypass vulnerability where allow-always persistence fails to unwrap /usr/bin/script and similar wrappers before storing trust decisions. Attackers can obtain user approval for one wrapped command to persist trust for wrapper binaries that execute different underlying programs.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1303,6 +1340,7 @@
       "title": "OpenClaw before 2026.3.31 contains a configuration management vulnerability where startup migration ...",
       "description": "OpenClaw before 2026.3.31 contains a configuration management vulnerability where startup migration treats empty-array settings as missing values. Attackers can restart the application to rehydrate revoked Tlon configuration from file state, bypassing intended revocation controls.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1338,6 +1376,7 @@
       "title": "OpenClaw before 2026.3.22 contains an incomplete host environment variable sanitization vulnerabilit...",
       "description": "OpenClaw before 2026.3.22 contains an incomplete host environment variable sanitization vulnerability in host-env-security-policy.json and host-env-security.ts that allows package-manager environment overrides. Attackers can exploit approved exec requests to redirect package resolution or runtime bootstrap to attacker-controlled infrastructure and execute trojanized content.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1372,6 +1411,7 @@
       "title": "OpenClaw before 2026.3.22 contains a privilege escalation vulnerability where bootstrap setup codes ...",
       "description": "OpenClaw before 2026.3.22 contains a privilege escalation vulnerability where bootstrap setup codes are not bound to intended device roles and scopes during pairing. Attackers can exploit this during first-use device pairing to escalate privileges beyond their intended role and scope.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1407,6 +1447,7 @@
       "title": "OpenClaw before 2026.3.31 stores Nostr privateKey as plaintext in configuration, allowing exposure t...",
       "description": "OpenClaw before 2026.3.31 stores Nostr privateKey as plaintext in configuration, allowing exposure through config.get method calls that bypass redaction mechanisms. Attackers can retrieve unredacted configuration data to obtain plaintext signing keys used for Nostr protocol operations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1442,6 +1483,7 @@
       "title": "OpenClaw before 2026.3.24 contains an environment variable injection vulnerability in the CLI backen...",
       "description": "OpenClaw before 2026.3.24 contains an environment variable injection vulnerability in the CLI backend runner that allows attackers to inject malicious environment variables through workspace configuration. Attackers can craft malicious workspace configs to inject arbitrary environment variables into the backend process spawning, enabling code execution or sensitive data exposure.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1477,6 +1519,7 @@
       "title": "OpenClaw before 2026.4.2 contains an arbitrary directory deletion vulnerability in mirror mode that ...",
       "description": "OpenClaw before 2026.4.2 contains an arbitrary directory deletion vulnerability in mirror mode that allows attackers to delete remote directories by influencing remoteWorkspaceDir and remoteAgentWorkspaceDir configuration values. Attackers can manipulate these OpenShell config paths to cause mirror sync operations to delete unintended remote directory contents and replace them with uploaded workspace data.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1512,6 +1555,7 @@
       "title": "OpenClaw before 2026.3.31 contains an authorization bypass vulnerability in Discord voice ingress th...",
       "description": "OpenClaw before 2026.3.31 contains an authorization bypass vulnerability in Discord voice ingress that allows attackers to bypass channel and member allowlist restrictions. Attackers can exploit stale-role validation gaps and improper channel name validation to gain unauthorized access to restricted voice channels.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1547,6 +1591,7 @@
       "title": "OpenClaw before 2026.3.31 contains an access control bypass vulnerability in the Discord voice manag...",
       "description": "OpenClaw before 2026.3.31 contains an access control bypass vulnerability in the Discord voice manager that allows attackers to bypass channel-level member access allowlist restrictions. Attackers can send Discord voice ingress requests before channel allowlist authorization is performed, gaining unauthorized access to restricted voice channels.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1582,6 +1627,7 @@
       "title": "OpenClaw before 2026.3.28 contains an execution approval vulnerability in exec-approvals-allowlist.t...",
       "description": "OpenClaw before 2026.3.28 contains an execution approval vulnerability in exec-approvals-allowlist.ts that allows allow-always persistence to trust wrapper carrier executables instead of invoked targets. Attackers can exploit positional carrier executable routing through dispatch wrappers to establish broader allowlist entries than intended, weakening execution approval boundaries.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1616,6 +1662,7 @@
       "title": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability allowing authenticated opera...",
       "description": "OpenClaw before 2026.3.28 contains a privilege escalation vulnerability allowing authenticated operators with write permissions to access admin-class Talk Voice configuration persistence. Attackers with operator.write privileges can exploit the chat.send endpoint to reach and modify sensitive voice configuration settings intended for administrators only.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1651,6 +1698,7 @@
       "title": "OpenClaw before 2026.3.31 contains a privilege escalation vulnerability allowing paired nodes with r...",
       "description": "OpenClaw before 2026.3.31 contains a privilege escalation vulnerability allowing paired nodes with role=node to dispatch node.event agent requests with unrestricted gateway-side tool access. Attackers with trusted paired node credentials can escalate privileges by leveraging unrestricted agent.request dispatch to achieve remote code execution on the gateway.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1686,6 +1734,7 @@
       "title": "OpenClaw before 2026.3.31 contains a fail-open vulnerability in the plugin installation flow where s...",
       "description": "OpenClaw before 2026.3.31 contains a fail-open vulnerability in the plugin installation flow where security scan failures do not block installation. Attackers can exploit scan failures to install untrusted plugins when operators proceed despite visible scan warnings.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1721,6 +1770,7 @@
       "title": "OpenClaw before 2026.3.31 contains an allowlist bypass vulnerability in Matrix thread root and reply...",
       "description": "OpenClaw before 2026.3.31 contains an allowlist bypass vulnerability in Matrix thread root and reply context handling that fails to properly validate message senders. Attackers can fetch thread-root and reply context messages that should be filtered by sender allowlists, bypassing access controls.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1756,6 +1806,7 @@
       "title": "OpenClaw before 2026.3.28 contains an authorization bypass vulnerability in the /phone arm and /phon...",
       "description": "OpenClaw before 2026.3.28 contains an authorization bypass vulnerability in the /phone arm and /phone disarm endpoints that fails to properly enforce operator.admin scope checks for external channels. Attackers can bypass authentication restrictions to arm or disarm phone channels without proper administrative privileges.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1791,6 +1842,7 @@
       "title": "OpenClaw before 2026.3.31 performs Discord audio preflight transcription before validating member au...",
       "description": "OpenClaw before 2026.3.31 performs Discord audio preflight transcription before validating member authorization, allowing unauthenticated attackers to consume resources. Remote attackers can trigger audio preflight processing without member allowlist validation to cause resource exhaustion.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1826,6 +1878,7 @@
       "title": "OpenClaw before 2026.3.31 contains an incomplete host-env-security-policy.json that fails to restric...",
       "description": "OpenClaw before 2026.3.31 contains an incomplete host-env-security-policy.json that fails to restrict compiler binary environment variables, allowing untrusted models to substitute CC, CXX, CARGO_BUILD_RUSTC, and CMAKE_C_COMPILER via environment overrides. Attackers with approved host-exec requests can override compiler binaries to execute arbitrary code during build processes.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2253,6 +2306,7 @@
       "title": "A vulnerability was detected in PicoClaw up to 0.2.4. Impacted is an unknown function of the file /a...",
       "description": "A vulnerability was detected in PicoClaw up to 0.2.4. Impacted is an unknown function of the file /api/gateway/restart of the component Web Launcher Management Plane. Performing a manipulation results in command injection. It is possible to initiate the attack remotely. The project was informed of the problem early through an issue report but has not responded yet.",
       "affected": [
+        "cpe:2.3:a:sipeed:picoclaw:*:*:*:*:*:go:*:*",
         "picoclaw@*"
       ],
       "platforms": [
@@ -2323,6 +2377,7 @@
       "title": "OpenClaw before 2026.4.2 contains an approval integrity vulnerability in pnpm dlx that fails to bind...",
       "description": "OpenClaw before 2026.4.2 contains an approval integrity vulnerability in pnpm dlx that fails to bind local script operands consistently with pnpm exec flows. Attackers can replace approved local scripts before execution without invalidating the approval plan, allowing execution of modified script contents.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2394,6 +2449,7 @@
       "title": "OpenClaw before 2026.4.2 fails to filter Slack thread context by sender allowlist, allowing non-allo...",
       "description": "OpenClaw before 2026.4.2 fails to filter Slack thread context by sender allowlist, allowing non-allowlisted messages to enter agent context. Attackers can inject unauthorized thread messages through allowlisted user replies to bypass sender access controls and manipulate model context.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2501,6 +2557,7 @@
       "title": "OpenClaw before 2026.4.2 contains an insufficient scope vulnerability in Zalo webhook replay dedupe ...",
       "description": "OpenClaw before 2026.4.2 contains an insufficient scope vulnerability in Zalo webhook replay dedupe keys that allows legitimate events from different conversations or senders to collide. Attackers can exploit weak deduplication scoping to cause silent message suppression and disrupt bot workflows across chat sessions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2536,6 +2593,7 @@
       "title": "OpenClaw before 2026.3.22 contains an access control bypass vulnerability in the allowProfiles featu...",
       "description": "OpenClaw before 2026.3.22 contains an access control bypass vulnerability in the allowProfiles feature that allows attackers to circumvent profile restrictions through persistent profile mutation and runtime profile selection. Remote attackers can exploit this by manipulating browser proxy profiles at runtime to access restricted profiles and bypass intended access controls.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -5077,6 +5135,7 @@
       "title": "A weakness has been identified in OpenClaw up to 2026.1.26. Affected by this issue is some unknown f...",
       "description": "A weakness has been identified in OpenClaw up to 2026.1.26. Affected by this issue is some unknown functionality of the file src/agents/tools/web-fetch.ts of the component assertPublicHostname Handler. Executing a manipulation can lead to server-side request forgery. The attack can be executed remotely. This attack is characterized by high complexity. The exploitation is known to be difficult. The exploit has been made available to the public and could be used for attacks. Upgrading to version 2026.1.29 can resolve this issue. This patch is called b623557a2ec7e271bda003eb3ac33fbb2e218505. Upgrading the affected component is advised.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
