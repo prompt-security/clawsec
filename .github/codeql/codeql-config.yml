@@ -1,0 +1,4 @@
+name: "ClawSec CodeQL Config"
+
+paths-ignore:
+  - dist/**
