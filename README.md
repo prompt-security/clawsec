@@ -50,20 +50,26 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 
 ### Skill Feature Matrix
 
-| Skill name | supported platform| security feed verification| config drift | agent self pen testing| supply-chain install verification |
-|---|---|---|---|---|---|
-| claw-release | OpenClaw | No | No | No | Yes |
-| clawsec-clawhub-checker | OpenClaw + clawsec-suite integration | No | No | No | Yes |
-| clawsec-feed | OpenClaw | Yes | No | No | Yes |
-| clawsec-nanoclaw | NanoClaw | Yes | Yes | Yes | Yes |
-| clawsec-scanner | OpenClaw | Yes | No | Yes | Yes |
-| clawsec-suite | OpenClaw | Yes | Yes | No | Yes |
-| clawtributor | OpenClaw | Yes | No | No | No |
-| hermes-attestation-guardian | Hermes | Yes (signed advisory feed verification) | Yes | No | Limited (advisory preflight gating only; no artifact signature/provenance install verification) |
-| openclaw-audit-watchdog | OpenClaw | No | No | Yes | No |
-| picoclaw-security-guardian | Picoclaw | Yes | Yes | No | Yes |
-| picoclaw-self-pen-testing | Picoclaw | No | No | Yes | No |
-| soul-guardian | OpenClaw | No | Yes | No | No |
+| Skill name | supported platform| security feed verification| config drift | agent self pen testing| supply-chain install verification | runtime traffic monitoring |
+|---|---|---|---|---|---|---|
+| claw-release | OpenClaw | No | No | No | Yes | No |
+| clawsec-clawhub-checker | OpenClaw + clawsec-suite integration | No | No | No | Yes | No |
+| clawsec-feed | OpenClaw | Yes | No | No | Yes | No |
+| clawsec-nanoclaw | NanoClaw | Yes | Yes | Yes | Yes | No |
+| clawsec-scanner | OpenClaw | Yes | No | Yes | Yes | No |
+| clawsec-suite | OpenClaw | Yes | Yes | No | Yes | No |
+| clawtributor | OpenClaw | Yes | No | No | No | No |
+| hermes-attestation-guardian | Hermes | Yes (signed advisory feed verification) | Yes | No | Limited (advisory preflight gating only; no artifact signature/provenance install verification) | No |
+| hermes-traffic-guardian | Hermes | No | Planned posture export only | No | No | Spec baseline |
+| nanoclaw-traffic-guardian | NanoClaw | No | No | No | No | Spec baseline |
+| openclaw-audit-watchdog | OpenClaw | No | No | Yes | No | No |
+| openclaw-traffic-guardian | OpenClaw | No | No | No | No | Spec baseline |
+| picoclaw-security-guardian | Picoclaw | Yes | Yes | No | Yes | No |
+| picoclaw-self-pen-testing | Picoclaw | No | No | Yes | No | No |
+| picoclaw-traffic-guardian | Picoclaw | No | Planned profile export only | No | No | Spec baseline |
+| soul-guardian | OpenClaw | No | Yes | No | No | No |
+
+`Spec baseline` means the skill folder, metadata, frontmatter, and implementation contract exist, but runtime proxy code is intentionally left for platform-specific builders.
 
 ### Core Capabilities
 
@@ -72,6 +78,7 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 - **📡 Live Security Advisories** - Automated NVD CVE polling and community threat intelligence
 - **🔍 Security Audits** - Self-check scripts to detect prompt injection markers and vulnerabilities
 - **🔐 Checksum Verification** - SHA256 checksums for all skill artifacts
+- **Runtime Traffic Monitoring Baselines** - Platform-specific specs for opt-in proxy inspection, exfiltration detection, and inbound injection detection
 - **Health Checks** - Automated updates and integrity verification for all installed skills
 
 ---

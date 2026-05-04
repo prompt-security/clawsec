@@ -1,0 +1,112 @@
+{
+  "name": "hermes-traffic-guardian",
+  "version": "0.0.1",
+  "description": "Hermes runtime traffic monitoring baseline for opt-in proxy inspection, egress detection, and attestation-aware traffic posture.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "platform": "hermes",
+  "keywords": [
+    "security",
+    "hermes",
+    "traffic-monitoring",
+    "egress",
+    "exfiltration",
+    "injection",
+    "proxy",
+    "mitm",
+    "attestation",
+    "runtime"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Hermes traffic guardian skill instructions and operating model"
+      },
+      {
+        "path": "README.md",
+        "required": true,
+        "description": "Human-oriented overview and builder handoff notes"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and baseline release notes"
+      },
+      {
+        "path": "SPEC.md",
+        "required": true,
+        "description": "Implementation specification for Hermes runtime traffic monitoring"
+      },
+      {
+        "path": "lib/.gitkeep",
+        "required": false,
+        "description": "Placeholder for shared detector, posture, and report code"
+      },
+      {
+        "path": "scripts/.gitkeep",
+        "required": false,
+        "description": "Placeholder for lifecycle, status, and attestation export scripts"
+      },
+      {
+        "path": "test/.gitkeep",
+        "required": false,
+        "description": "Placeholder for unit and integration tests"
+      }
+    ]
+  },
+  "hermes": {
+    "emoji": "TG",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "node",
+        "python3"
+      ]
+    },
+    "runtime": {
+      "required_env": [],
+      "optional_env": [
+        "HERMES_TRAFFIC_GUARDIAN_HOME",
+        "HERMES_TRAFFIC_GUARDIAN_CONFIG",
+        "HERMES_TRAFFIC_GUARDIAN_MODE",
+        "HERMES_TRAFFIC_GUARDIAN_PROXY_URL",
+        "HERMES_TRAFFIC_GUARDIAN_CA_BUNDLE",
+        "HERMES_TRAFFIC_GUARDIAN_LOG_DIR",
+        "HERMES_TRAFFIC_GUARDIAN_MAX_SCAN_BYTES",
+        "HERMES_TRAFFIC_GUARDIAN_REDACT_SNIPPETS",
+        "HERMES_TRAFFIC_GUARDIAN_ATTESTATION_OUTPUT"
+      ]
+    },
+    "capabilities": {
+      "runtime_traffic_monitoring": "spec_baseline",
+      "http_proxy_inspection": "planned",
+      "https_mitm_inspection": "planned_optional",
+      "egress_exfiltration_detection": "planned",
+      "inbound_injection_detection": "planned",
+      "attestation_export": "planned",
+      "blocking": "future_version"
+    },
+    "execution": {
+      "always": false,
+      "persistence": "Spec baseline only. Builders must keep monitoring opt-in and scheduler-free unless an operator explicitly applies one.",
+      "network_egress": "Future runtime will proxy operator-scoped Hermes traffic. No runtime network behavior is implemented in v0.0.1."
+    },
+    "operator_review": [
+      "Do not merge proxy runtime into hermes-attestation-guardian.",
+      "Export traffic-monitor status for hermes-attestation-guardian to attest, but keep runtime ownership in this skill.",
+      "Do not install a system-wide CA automatically.",
+      "Default to detect-and-log mode; blocking is out of scope for v0.0.1 implementation.",
+      "Redact secret snippets before writing logs or attestation-linked summaries."
+    ],
+    "triggers": [
+      "hermes traffic guardian",
+      "hermes traffic monitoring",
+      "monitor hermes egress",
+      "inspect hermes http traffic",
+      "attest hermes traffic monitor"
+    ]
+  }
+}
