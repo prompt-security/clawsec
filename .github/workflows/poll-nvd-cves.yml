@@ -217,6 +217,9 @@ jobs:
           KEYWORDS_PATTERN="$(nvd_keyword_pattern)"
           GITHUB_PATTERN="$(nvd_github_ref_pattern)"
           CPE_PATTERN="$(nvd_cpe_pattern)"
+          # Export concise project keyword groups for PR body + workflow summary steps
+          KEYWORDS="$(nvd_summary_keywords)"
+          echo "KEYWORDS=$KEYWORDS" >> "$GITHUB_ENV"
 
           # Combine all fetched CVEs
           echo '{"vulnerabilities":[]}' > tmp/combined.json
@@ -398,7 +401,7 @@ jobs:
                 | (
                     (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
                     + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
-                    + (if ($blob | test("github\\.com/softwarepub/hermes|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
+                    + (if ($blob | test("github\\.com/softwarepub/hermes|github\\.com/nousresearch/hermes-agent|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|\\bhermes-agent\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
                     + (if ($blob | test("github\\.com/[^/]+/picoclaw|\\bpicoclaw\\b|cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)")) then ["picoclaw@*"] else [] end)
                   )
               );
@@ -640,7 +643,7 @@ jobs:
                 | (
                     (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
                     + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
-                    + (if ($blob | test("github\\.com/softwarepub/hermes|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
+                    + (if ($blob | test("github\\.com/softwarepub/hermes|github\\.com/nousresearch/hermes-agent|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|\\bhermes-agent\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
                     + (if ($blob | test("github\\.com/[^/]+/picoclaw|\\bpicoclaw\\b|cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)")) then ["picoclaw@*"] else [] end)
                   )
               );
