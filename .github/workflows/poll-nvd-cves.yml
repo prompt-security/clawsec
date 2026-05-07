@@ -217,8 +217,8 @@ jobs:
           KEYWORDS_PATTERN="$(nvd_keyword_pattern)"
           GITHUB_PATTERN="$(nvd_github_ref_pattern)"
           CPE_PATTERN="$(nvd_cpe_pattern)"
-          # Export plain keywords for later PR body + workflow summary steps
-          KEYWORDS="$KEYWORDS_PATTERN"
+          # Export concise project keyword groups for PR body + workflow summary steps
+          KEYWORDS="$(nvd_summary_keywords)"
           echo "KEYWORDS=$KEYWORDS" >> "$GITHUB_ENV"
 
           # Combine all fetched CVEs

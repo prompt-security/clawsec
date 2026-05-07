@@ -52,6 +52,10 @@ virtualMatchString|cpe:2.3:a:picoclaw:picoclaw
 EOF
 }
 
+nvd_summary_keywords() {
+  echo 'openclaw, nanoclaw, hermes, picoclaw'
+}
+
 nvd_keyword_pattern() {
   echo 'OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys|HERMES workflow|hermes-agent|software publication with rich metadata|Picoclaw|picoclaw'
 }
