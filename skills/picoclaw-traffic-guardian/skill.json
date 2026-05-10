@@ -1,0 +1,112 @@
+{
+  "name": "picoclaw-traffic-guardian",
+  "version": "0.0.1-beta1",
+  "description": "Picoclaw runtime traffic monitoring baseline for lightweight AI gateway proxy inspection, egress detection, and posture integration.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "platform": "picoclaw",
+  "keywords": [
+    "security",
+    "picoclaw",
+    "ai-gateway",
+    "traffic-monitoring",
+    "egress",
+    "exfiltration",
+    "injection",
+    "proxy",
+    "mitm",
+    "runtime"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Picoclaw traffic guardian skill instructions and operating model"
+      },
+      {
+        "path": "README.md",
+        "required": true,
+        "description": "Human-oriented overview and builder handoff notes"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and baseline release notes"
+      },
+      {
+        "path": "SPEC.md",
+        "required": true,
+        "description": "Implementation specification for Picoclaw runtime traffic monitoring"
+      },
+      {
+        "path": "lib/.gitkeep",
+        "required": false,
+        "description": "Placeholder for shared detector, profile, and report code"
+      },
+      {
+        "path": "scripts/.gitkeep",
+        "required": false,
+        "description": "Placeholder for lifecycle, status, and profile export scripts"
+      },
+      {
+        "path": "test/.gitkeep",
+        "required": false,
+        "description": "Placeholder for unit and integration tests"
+      }
+    ]
+  },
+  "picoclaw": {
+    "emoji": "TG",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "node",
+        "python3"
+      ]
+    },
+    "runtime": {
+      "required_env": [],
+      "optional_env": [
+        "PICOCLAW_TRAFFIC_GUARDIAN_HOME",
+        "PICOCLAW_TRAFFIC_GUARDIAN_CONFIG",
+        "PICOCLAW_TRAFFIC_GUARDIAN_MODE",
+        "PICOCLAW_TRAFFIC_GUARDIAN_PROXY_URL",
+        "PICOCLAW_TRAFFIC_GUARDIAN_CA_BUNDLE",
+        "PICOCLAW_TRAFFIC_GUARDIAN_LOG_DIR",
+        "PICOCLAW_TRAFFIC_GUARDIAN_MAX_SCAN_BYTES",
+        "PICOCLAW_TRAFFIC_GUARDIAN_REDACT_SNIPPETS",
+        "PICOCLAW_TRAFFIC_GUARDIAN_PROFILE_OUTPUT"
+      ]
+    },
+    "capabilities": {
+      "runtime_traffic_monitoring": "spec_baseline",
+      "http_proxy_inspection": "planned",
+      "https_mitm_inspection": "planned_optional",
+      "egress_exfiltration_detection": "planned",
+      "inbound_injection_detection": "planned",
+      "profile_export": "planned",
+      "blocking": "future_version"
+    },
+    "execution": {
+      "always": false,
+      "persistence": "Spec baseline only. Builders must keep monitoring opt-in and scheduler-free unless an operator explicitly applies one.",
+      "network_egress": "Future runtime will proxy operator-scoped Picoclaw gateway traffic. No runtime network behavior is implemented in v0.0.1."
+    },
+    "operator_review": [
+      "Do not merge proxy runtime into picoclaw-security-guardian or picoclaw-self-pen-testing.",
+      "Export traffic-monitor status for picoclaw-security-guardian to profile and drift-check, but keep runtime ownership in this skill.",
+      "Do not install a system-wide CA automatically.",
+      "Default to detect-and-log mode; blocking is out of scope for v0.0.1 implementation.",
+      "Redact secret snippets before writing logs or profile summaries."
+    ],
+    "triggers": [
+      "picoclaw traffic guardian",
+      "picoclaw traffic monitoring",
+      "monitor picoclaw egress",
+      "inspect picoclaw http traffic",
+      "picoclaw proxy inspection"
+    ]
+  }
+}

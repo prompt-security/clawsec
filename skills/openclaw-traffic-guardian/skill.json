@@ -1,0 +1,114 @@
+{
+  "name": "openclaw-traffic-guardian",
+  "version": "0.0.1-beta1",
+  "description": "OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, and inbound injection detection.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "platform": "openclaw",
+  "keywords": [
+    "security",
+    "openclaw",
+    "traffic-monitoring",
+    "egress",
+    "exfiltration",
+    "injection",
+    "proxy",
+    "mitm",
+    "runtime"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "OpenClaw traffic guardian skill instructions and operating model"
+      },
+      {
+        "path": "README.md",
+        "required": true,
+        "description": "Human-oriented overview and builder handoff notes"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and baseline release notes"
+      },
+      {
+        "path": "SPEC.md",
+        "required": true,
+        "description": "Implementation specification for OpenClaw runtime traffic monitoring"
+      },
+      {
+        "path": "lib/.gitkeep",
+        "required": false,
+        "description": "Placeholder for shared detector and report code"
+      },
+      {
+        "path": "scripts/.gitkeep",
+        "required": false,
+        "description": "Placeholder for proxy lifecycle and status scripts"
+      },
+      {
+        "path": "hooks/openclaw-traffic-guardian-hook/.gitkeep",
+        "required": false,
+        "description": "Placeholder for optional OpenClaw hook integration"
+      },
+      {
+        "path": "test/.gitkeep",
+        "required": false,
+        "description": "Placeholder for unit and integration tests"
+      }
+    ]
+  },
+  "openclaw": {
+    "emoji": "TG",
+    "category": "security",
+    "requires": {
+      "bins": [
+        "node",
+        "python3"
+      ]
+    },
+    "runtime": {
+      "required_env": [],
+      "optional_env": [
+        "OPENCLAW_TRAFFIC_GUARDIAN_HOME",
+        "OPENCLAW_TRAFFIC_GUARDIAN_CONFIG",
+        "OPENCLAW_TRAFFIC_GUARDIAN_MODE",
+        "OPENCLAW_TRAFFIC_GUARDIAN_PROXY_URL",
+        "OPENCLAW_TRAFFIC_GUARDIAN_CA_BUNDLE",
+        "OPENCLAW_TRAFFIC_GUARDIAN_LOG_DIR",
+        "OPENCLAW_TRAFFIC_GUARDIAN_MAX_SCAN_BYTES",
+        "OPENCLAW_TRAFFIC_GUARDIAN_REDACT_SNIPPETS"
+      ]
+    },
+    "capabilities": {
+      "runtime_traffic_monitoring": "spec_baseline",
+      "http_proxy_inspection": "planned",
+      "https_mitm_inspection": "planned_optional",
+      "egress_exfiltration_detection": "planned",
+      "inbound_injection_detection": "planned",
+      "blocking": "future_version"
+    },
+    "execution": {
+      "always": false,
+      "persistence": "Spec baseline only. Builders must keep monitoring opt-in and avoid installing persistent hooks or schedulers without explicit operator action.",
+      "network_egress": "Future runtime will proxy operator-scoped agent traffic. No runtime network behavior is implemented in v0.0.1."
+    },
+    "operator_review": [
+      "Do not install a system-wide CA automatically.",
+      "Default to detect-and-log mode; blocking is out of scope for v0.0.1 implementation.",
+      "Scope HTTP_PROXY/HTTPS_PROXY to the OpenClaw process being monitored.",
+      "Redact secret snippets before writing logs or sending conversation alerts.",
+      "Integrate with clawsec-suite as an optional add-on, not a default install."
+    ],
+    "triggers": [
+      "openclaw traffic guardian",
+      "openclaw traffic monitoring",
+      "monitor openclaw egress",
+      "inspect openclaw http traffic",
+      "detect openclaw exfiltration"
+    ]
+  }
+}

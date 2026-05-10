@@ -1,0 +1,122 @@
+{
+  "name": "nanoclaw-traffic-guardian",
+  "version": "0.0.1-beta1",
+  "description": "NanoClaw runtime traffic monitoring baseline for host-side proxy inspection with container-safe MCP and IPC status surfaces.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "platform": "nanoclaw",
+  "keywords": [
+    "security",
+    "nanoclaw",
+    "traffic-monitoring",
+    "egress",
+    "exfiltration",
+    "injection",
+    "proxy",
+    "mitm",
+    "mcp",
+    "container"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "NanoClaw traffic guardian skill instructions and operating model"
+      },
+      {
+        "path": "README.md",
+        "required": true,
+        "description": "Human-oriented overview and builder handoff notes"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and baseline release notes"
+      },
+      {
+        "path": "SPEC.md",
+        "required": true,
+        "description": "Implementation specification for NanoClaw runtime traffic monitoring"
+      },
+      {
+        "path": "lib/.gitkeep",
+        "required": false,
+        "description": "Placeholder for shared detector, type, and report code"
+      },
+      {
+        "path": "host-services/.gitkeep",
+        "required": false,
+        "description": "Placeholder for host-side monitor lifecycle and IPC handlers"
+      },
+      {
+        "path": "mcp-tools/.gitkeep",
+        "required": false,
+        "description": "Placeholder for container-side MCP tool definitions"
+      },
+      {
+        "path": "test/.gitkeep",
+        "required": false,
+        "description": "Placeholder for unit and integration tests"
+      }
+    ]
+  },
+  "capabilities": [
+    "Spec baseline for host-side runtime traffic monitoring",
+    "MCP status and findings query surface",
+    "Container-safe host/container IPC boundary",
+    "Optional HTTPS inspection with explicit per-runtime trust",
+    "Redacted local threat logging"
+  ],
+  "nanoclaw": {
+    "mcp_tools": [
+      "clawsec_traffic_status",
+      "clawsec_traffic_findings",
+      "clawsec_traffic_check_config"
+    ],
+    "requires": {
+      "node": ">=18.0.0",
+      "nanoclaw": ">=0.1.0"
+    },
+    "runtime": {
+      "required_env": [],
+      "optional_env": [
+        "NANOCLAW_TRAFFIC_GUARDIAN_HOME",
+        "NANOCLAW_TRAFFIC_GUARDIAN_CONFIG",
+        "NANOCLAW_TRAFFIC_GUARDIAN_MODE",
+        "NANOCLAW_TRAFFIC_GUARDIAN_PROXY_URL",
+        "NANOCLAW_TRAFFIC_GUARDIAN_CA_BUNDLE",
+        "NANOCLAW_TRAFFIC_GUARDIAN_LOG_DIR",
+        "NANOCLAW_TRAFFIC_GUARDIAN_MAX_SCAN_BYTES",
+        "NANOCLAW_TRAFFIC_GUARDIAN_REDACT_SNIPPETS"
+      ]
+    },
+    "capabilities": {
+      "runtime_traffic_monitoring": "spec_baseline",
+      "http_proxy_inspection": "planned",
+      "https_mitm_inspection": "planned_optional",
+      "egress_exfiltration_detection": "planned",
+      "inbound_injection_detection": "planned",
+      "mcp_status_tools": "planned",
+      "blocking": "future_version"
+    },
+    "execution": {
+      "always": false,
+      "persistence": "Spec baseline only. Builders must keep host-side monitoring opt-in and avoid container persistence without explicit operator action.",
+      "network_egress": "Future runtime will proxy operator-scoped NanoClaw/WhatsApp-bot traffic. No runtime network behavior is implemented in v0.0.1."
+    },
+    "operator_review": [
+      "Keep proxy runtime on the host side when possible; expose only status and findings into the container.",
+      "Do not grant container code access to CA private key material.",
+      "Do not install a system-wide CA automatically.",
+      "Default to detect-and-log mode; blocking is out of scope for v0.0.1 implementation.",
+      "Redact secret snippets before writing logs or exposing MCP responses."
+    ],
+    "integration": {
+      "mcp_tools_dir": "mcp-tools/",
+      "host_services_dir": "host-services/",
+      "result_channel": "/workspace/ipc/clawsec_results"
+    }
+  }
+}
