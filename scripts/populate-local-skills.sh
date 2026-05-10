@@ -168,15 +168,22 @@ EOF
   echo "  ✓ Generated: checksums.json"
   
   # Build skill entry for index
-  SKILL_DATA=$(jq -c --arg tag "$TAG" '{
-    id: .name,
-    name: .name,
-    version: .version,
-    description: .description,
-    emoji: .openclaw.emoji,
-    category: .openclaw.category,
-    tag: $tag
-  }' "$SKILL_JSON")
+  SKILL_DATA=$(jq -c --arg tag "$TAG" '
+    def platform_meta:
+      (.platform as $platform
+        | if ($platform != null and .[$platform]? != null) then .[$platform]
+          else (.openclaw // .hermes // .nanoclaw // .picoclaw // {})
+          end);
+    {
+      id: .name,
+      name: .name,
+      version: .version,
+      description: .description,
+      emoji: (platform_meta.emoji // .openclaw.emoji // .hermes.emoji // .nanoclaw.emoji // .picoclaw.emoji // "📦"),
+      category: (platform_meta.category // .openclaw.category // .hermes.category // .nanoclaw.category // .picoclaw.category // "utility"),
+      tag: $tag
+    }
+  ' "$SKILL_JSON")
   
   # Append to index
   if [ "$FIRST_SKILL" = "true" ]; then
