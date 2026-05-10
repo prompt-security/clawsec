@@ -8,26 +8,35 @@ import type { SkillJson, SkillChecksums, SkillPlatformMetadata } from '../types'
 import { defaultMarkdownComponents } from '../utils/markdownComponents';
 import { stripFrontmatter } from '../utils/markdownHelpers.mjs';
 
+const PLATFORM_METADATA_KEYS = ['openclaw', 'hermes', 'nanoclaw', 'picoclaw'] as const;
+
 const isProbablyHtmlDocument = (text: string): boolean => {
   const start = text.trimStart().slice(0, 200).toLowerCase();
   return start.startsWith('<!doctype html') || start.startsWith('<html');
 };
 
+const isPlatformMetadataObject = (value: unknown): value is SkillPlatformMetadata => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const maybe = value as Record<string, unknown>;
+  return 'emoji' in maybe || 'category' in maybe || 'triggers' in maybe;
+};
+
 const resolvePlatformMetadata = (skill: SkillJson): SkillPlatformMetadata => {
   const platform = skill.platform;
-  const platformBlock =
-    typeof platform === 'string' && platform in skill
-      ? (skill[platform as keyof SkillJson] as SkillPlatformMetadata | null | undefined)
-      : undefined;
+  if (
+    typeof platform === 'string' &&
+    (PLATFORM_METADATA_KEYS as readonly string[]).includes(platform)
+  ) {
+    const platformBlock = skill[platform as (typeof PLATFORM_METADATA_KEYS)[number]];
+    if (isPlatformMetadataObject(platformBlock)) return platformBlock;
+  }
 
-  return (
-    platformBlock ??
-    skill.openclaw ??
-    skill.hermes ??
-    skill.nanoclaw ??
-    skill.picoclaw ??
-    {}
-  );
+  for (const key of PLATFORM_METADATA_KEYS) {
+    const fallbackBlock = skill[key];
+    if (isPlatformMetadataObject(fallbackBlock)) return fallbackBlock;
+  }
+
+  return {};
 };
 
 export const SkillDetail: React.FC = () => {

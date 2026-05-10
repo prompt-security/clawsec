@@ -184,18 +184,22 @@ jobs:
 
                 # Build skill entry for index
                 SKILL_DATA=$(jq -c --arg tag "$TAG" '
+                  def object_or_empty($value):
+                    if ($value | type) == "object" then $value else {} end;
+                  def object_field($name):
+                    object_or_empty(.[$name]?);
                   def platform_meta:
                     (.platform as $platform
-                      | if ($platform != null and .[$platform]? != null) then .[$platform]
-                        else (.openclaw // .hermes // .nanoclaw // .picoclaw // {})
+                      | if ($platform | type) == "string" then object_or_empty(.[$platform]?)
+                        else {}
                         end);
                   {
                     id: .name,
                     name: .name,
                     version: .version,
                     description: .description,
-                    emoji: (platform_meta.emoji // .openclaw.emoji // .hermes.emoji // .nanoclaw.emoji // .picoclaw.emoji // "📦"),
-                    category: (platform_meta.category // .openclaw.category // .hermes.category // .nanoclaw.category // .picoclaw.category // "utility"),
+                    emoji: (platform_meta.emoji // object_field("openclaw").emoji // object_field("hermes").emoji // object_field("nanoclaw").emoji // object_field("picoclaw").emoji // "📦"),
+                    category: (platform_meta.category // object_field("openclaw").category // object_field("hermes").category // object_field("nanoclaw").category // object_field("picoclaw").category // "utility"),
                     trust: .trust.level,
                     tag: $tag
                   }
