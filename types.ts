@@ -101,6 +101,19 @@ export interface SkillChecksums {
   }>;
 }
 
+export interface SkillPlatformMetadata {
+  emoji?: string;
+  category?: string;
+  feed_url?: string;
+  requires?: {
+    bins?: string[];
+    [key: string]: unknown;
+  };
+  triggers?: string[];
+  internal?: boolean;
+  [key: string]: unknown;
+}
+
 export interface SkillJson {
   name: string;
   version: string;
@@ -116,13 +129,9 @@ export interface SkillJson {
       description: string;
     }>;
   };
-  openclaw: {
-    emoji: string;
-    category: string;
-    feed_url?: string;
-    requires?: {
-      bins?: string[];
-    };
-    triggers: string[];
-  };
+  platform?: CorePlatformSlug | (string & {});
+  openclaw?: SkillPlatformMetadata | null;
+  hermes?: SkillPlatformMetadata | null;
+  nanoclaw?: SkillPlatformMetadata | null;
+  picoclaw?: SkillPlatformMetadata | null;
 }
