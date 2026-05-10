@@ -44,6 +44,7 @@ Review status: draft
 - [NanoClaw Integration](../modules/nanoclaw-integration.md)
 - [Picoclaw Security Guardian](../modules/picoclaw-security-guardian.md)
 - [Picoclaw Self Pen Testing](../modules/picoclaw-self-pen-testing.md)
+- [Runtime Traffic Guardian Baseline](../modules/runtime-traffic-guardian-baseline.md)
 - [Automation and Release Pipelines](../modules/automation-release.md)
 - [Local Validation and Packaging Tools](../modules/local-tooling.md)
 
@@ -54,6 +55,7 @@ Review status: draft
 - [Generation Metadata](GENERATION.md)
 
 ## Update Notes
+- 2026-05-04: Added runtime traffic guardian baseline module and platform-specific skill scaffolds for OpenClaw, Hermes, NanoClaw, and Picoclaw.
 - 2026-04-26: Split Picoclaw self-pen-testing into standalone `picoclaw-self-pen-testing`; updated Picoclaw module docs and references.
 - 2026-04-25: Added Picoclaw Security Guardian module for advisory awareness, config drift detection, and chain-of-supply verification.
 - 2026-04-19: Moved NanoClaw platform-support and CI/CD pipeline detail sections out of `README.md` into module pages (`modules/nanoclaw-integration.md`, `modules/automation-release.md`) and left README pointers.
@@ -72,11 +74,16 @@ Review status: draft
 - skills/clawsec-suite/skill.json
 - skills/clawsec-scanner/skill.json
 - skills/hermes-attestation-guardian/skill.json
+- skills/hermes-traffic-guardian/skill.json
+- skills/nanoclaw-traffic-guardian/skill.json
+- skills/openclaw-traffic-guardian/skill.json
 - skills/picoclaw-security-guardian/skill.json
 - skills/picoclaw-self-pen-testing/skill.json
+- skills/picoclaw-traffic-guardian/skill.json
 - wiki/modules/clawsec-scanner.md
 - wiki/modules/hermes-attestation-guardian.md
 - wiki/modules/hermes-attestation-guardian-draft-history.md
 - wiki/modules/picoclaw-security-guardian.md
 - wiki/modules/picoclaw-self-pen-testing.md
+- wiki/modules/runtime-traffic-guardian-baseline.md
 - .github/workflows/ci.yml

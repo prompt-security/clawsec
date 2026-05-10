@@ -1,7 +1,6 @@
 # Changelog
 
-## 0.0.1
+## [0.0.1] - 2026-05-10
 
 - Added baseline skill metadata, frontmatter, and implementation specification.
 - Reserved folder structure for Hermes traffic-monitoring runtime code, posture export, and tests.
-
