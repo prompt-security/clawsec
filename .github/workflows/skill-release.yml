@@ -375,6 +375,26 @@ jobs:
           failures=0
           mkdir -p dist/dry-run
 
+          normalize_release_path() {
+            local path="$1"
+            path="${path//\//}"
+            while [[ "$path" == ./* ]]; do
+              path="${path#./}"
+            done
+            while [[ "$path" == *//* ]]; do
+              path="${path//\/\//\/}"
+            done
+            if [[ -z "$path" || "$path" == /* || "$path" == ".." || "$path" == ../* || "$path" == */.. || "$path" == */../* ]]; then
+              return 1
+            fi
+            printf '%s\n' "$path"
+          }
+
+          is_test_release_path() {
+            local lower="${1,,}"
+            [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == */test/* || "$lower" == */tests/* ]]
+          }
+
           while IFS= read -r skill_dir; do
             json_path="${skill_dir}/skill.json"
             md_path="${skill_dir}/SKILL.md"
@@ -477,9 +497,14 @@ jobs:
             temp_sbom_file="$(mktemp)"
             jq -r '.sbom.files[].path' "${json_path}" > "${temp_sbom_file}"
 
-            while IFS= read -r file; do
-              [ -z "${file}" ] && continue
-              if [[ "${file}" == test/* || "${file}" == tests/* ]]; then
+            while IFS= read -r raw_file; do
+              [ -z "${raw_file}" ] && continue
+              if ! file="$(normalize_release_path "${raw_file}")"; then
+                echo "::error file=${json_path}::SBOM references unsafe file path: ${raw_file}"
+                failures=$((failures + 1))
+                continue
+              fi
+              if is_test_release_path "${file}"; then
                 echo "  [Dry-run] Skipping test-only release file: ${file}"
                 continue
               fi
@@ -508,9 +533,9 @@ jobs:
             # --- Create zip preserving directory structure ---
             zip_name="${skill_name}-v${version}.zip"
             (cd "${staging_dir}" && zip -qr "${OLDPWD}/${out_assets}/${zip_name}" .)
-            if unzip -Z1 "${out_assets}/${zip_name}" | grep -Eq '(^|/)(test|tests)/'; then
+            if unzip -Z1 "${out_assets}/${zip_name}" | grep -Eiq '(^|/)(test|tests)/'; then
               echo "::error::Dry-run release archive contains test-only files: ${zip_name}"
-              unzip -Z1 "${out_assets}/${zip_name}" | grep -E '(^|/)(test|tests)/' || true
+              unzip -Z1 "${out_assets}/${zip_name}" | grep -Ei '(^|/)(test|tests)/' || true
               failures=$((failures + 1))
             fi
 
@@ -524,9 +549,12 @@ jobs:
 
             # --- Generate checksums.json via jq ---
             files_json="{}"
-            while IFS= read -r file; do
-              [ -z "${file}" ] && continue
-              if [[ "${file}" == test/* || "${file}" == tests/* ]]; then
+            while IFS= read -r raw_file; do
+              [ -z "${raw_file}" ] && continue
+              if ! file="$(normalize_release_path "${raw_file}")"; then
+                continue
+              fi
+              if is_test_release_path "${file}"; then
                 continue
               fi
               full_path="${skill_dir}/${file}"
@@ -800,6 +828,26 @@ jobs:
 
           mkdir -p release-assets
 
+          normalize_release_path() {
+            local path="$1"
+            path="${path//\//}"
+            while [[ "$path" == ./* ]]; do
+              path="${path#./}"
+            done
+            while [[ "$path" == *//* ]]; do
+              path="${path//\/\//\/}"
+            done
+            if [[ -z "$path" || "$path" == /* || "$path" == ".." || "$path" == ../* || "$path" == */.. || "$path" == */../* ]]; then
+              return 1
+            fi
+            printf '%s\n' "$path"
+          }
+
+          is_test_release_path() {
+            local lower="${1,,}"
+            [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == */test/* || "$lower" == */tests/* ]]
+          }
+
           # --- Stage SBOM files preserving directory structure ---
           STAGING_DIR="$(mktemp -d)"
           INNER_DIR="$STAGING_DIR/$SKILL_NAME"
@@ -807,9 +855,13 @@ jobs:
           TEMPFILE="$(mktemp)"
           jq -r '.sbom.files[].path' "$SKILL_PATH/skill.json" > "$TEMPFILE"
 
-          while IFS= read -r file; do
-            [ -z "$file" ] && continue
-            if [[ "$file" == test/* || "$file" == tests/* ]]; then
+          while IFS= read -r raw_file; do
+            [ -z "$raw_file" ] && continue
+            if ! file="$(normalize_release_path "$raw_file")"; then
+              echo "::error file=$SKILL_PATH/skill.json::SBOM references unsafe file path: $raw_file"
+              exit 1
+            fi
+            if is_test_release_path "$file"; then
               echo "Skipping test-only release file: $file"
               continue
             fi
@@ -828,17 +880,20 @@ jobs:
           # --- Create zip preserving directory structure ---
           ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
           (cd "$STAGING_DIR" && zip -qr "$OLDPWD/release-assets/$ZIP_NAME" .)
-          if unzip -Z1 "release-assets/$ZIP_NAME" | grep -Eq '(^|/)(test|tests)/'; then
+          if unzip -Z1 "release-assets/$ZIP_NAME" | grep -Eiq '(^|/)(test|tests)/'; then
             echo "::error::Release archive contains test-only files: $ZIP_NAME"
-            unzip -Z1 "release-assets/$ZIP_NAME" | grep -E '(^|/)(test|tests)/' || true
+            unzip -Z1 "release-assets/$ZIP_NAME" | grep -Ei '(^|/)(test|tests)/' || true
             exit 1
           fi
 
           # --- Generate checksums.json via jq ---
           FILES_JSON="{}"
-          while IFS= read -r file; do
-            [ -z "$file" ] && continue
-            if [[ "$file" == test/* || "$file" == tests/* ]]; then
+          while IFS= read -r raw_file; do
+            [ -z "$raw_file" ] && continue
+            if ! file="$(normalize_release_path "$raw_file")"; then
+              continue
+            fi
+            if is_test_release_path "$file"; then
               continue
             fi
             FULL_PATH="$SKILL_PATH/$file"
