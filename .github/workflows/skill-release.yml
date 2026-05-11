@@ -729,11 +729,16 @@ jobs:
             echo "No SKILL.md found, skipping frontmatter validation"
           fi
 
-      - name: Detect publishability
+      - name: Detect publishability and install defaults
         id: publishable
         run: |
           SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
           INTERNAL=$(jq -r '.openclaw.internal // false' "$SKILL_PATH/skill.json")
+
+          OPENCLAW_SKILL=false
+          if jq -e 'has("openclaw")' "$SKILL_PATH/skill.json" >/dev/null; then
+            OPENCLAW_SKILL=true
+          fi
 
           PUBLISHABLE=true
           if [ "$INTERNAL" = "true" ]; then
@@ -742,6 +747,7 @@ jobs:
           fi
 
           echo "internal=${INTERNAL}" >> $GITHUB_OUTPUT
+          echo "openclaw_skill=${OPENCLAW_SKILL}" >> $GITHUB_OUTPUT
           echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
 
       - name: Setup Node
@@ -1025,6 +1031,71 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Build quick install instructions
+        id: install
+        run: |
+          set -euo pipefail
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          REPO="${{ github.repository }}"
+          TAG="${{ github.ref_name }}"
+
+          {
+            echo "quick_install<<INSTALL_EOF"
+
+            if [ "${{ steps.publishable.outputs.openclaw_skill }}" = "true" ]; then
+              cat <<EOF
+          ### Quick Install
+
+          **Via ClawHub (recommended for OpenClaw skills):**
+          \`\`\`bash
+          npx clawhub@latest install ${SKILL_NAME}
+          \`\`\`
+
+          **If you already have \`clawsec-suite\` installed:**
+          Ask your agent to pull \`${SKILL_NAME}\` from the ClawSec catalog and it will handle setup and verification automatically.
+          EOF
+            else
+              cat <<EOF
+          ### Quick Install
+
+          **GitHub release artifact (recommended):**
+          Ask your agent to read the published skill instructions from this GitHub release and follow them:
+
+          https://github.com/${REPO}/releases/download/${TAG}/SKILL.md
+
+          Or download them locally:
+          \`\`\`bash
+          curl -sLO https://github.com/${REPO}/releases/download/${TAG}/SKILL.md
+          \`\`\`
+          EOF
+            fi
+
+            cat <<EOF
+
+          **Manual download with verification:**
+          \`\`\`bash
+          # 1. Download the release archive, checksums, and signing material
+          curl -sLO https://github.com/${REPO}/releases/download/${TAG}/${SKILL_NAME}-v${VERSION}.zip
+          curl -sLO https://github.com/${REPO}/releases/download/${TAG}/checksums.json
+          curl -sLO https://github.com/${REPO}/releases/download/${TAG}/checksums.sig
+          curl -sLO https://github.com/${REPO}/releases/download/${TAG}/signing-public.pem
+
+          # 2. Verify the checksums manifest signature (Ed25519)
+          openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
+          openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
+
+          # 3. Verify archive checksum from the signed manifest
+          echo "\$(jq -r '.archive.sha256' checksums.json)  ${SKILL_NAME}-v${VERSION}.zip" | sha256sum -c
+
+          # 4. Extract (creates ${SKILL_NAME}/ directory)
+          unzip ${SKILL_NAME}-v${VERSION}.zip
+          \`\`\`
+          EOF
+
+            echo "INSTALL_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
@@ -1036,34 +1107,7 @@ jobs:
 
             ${{ steps.changelog.outputs.changelog }}
 
-            ### Quick Install
-
-            **Via clawhub (recommended):**
-            ```bash
-            npx clawhub@latest install ${{ steps.parse.outputs.skill_name }}
-            ```
-
-            **If you already have `clawsec-suite` installed:**
-            Ask your agent to pull `${{ steps.parse.outputs.skill_name }}` from the ClawSec catalog and it will handle setup and verification automatically.
-
-            **Manual download with verification:**
-            ```bash
-            # 1. Download the release archive, checksums, and signing material
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
-
-            # 2. Verify the checksums manifest signature (Ed25519)
-            openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
-            openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
-
-            # 3. Verify archive checksum from the signed manifest
-            echo "$(jq -r '.archive.sha256' checksums.json)  ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip" | sha256sum -c
-
-            # 4. Extract (creates ${{ steps.parse.outputs.skill_name }}/ directory)
-            unzip ${{ steps.parse.outputs.skill_name }}-v${{ steps.parse.outputs.version }}.zip
-            ```
+            ${{ steps.install.outputs.quick_install }}
 
             ### Verification
 
