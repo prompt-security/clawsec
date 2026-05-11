@@ -479,6 +479,10 @@ jobs:
 
             while IFS= read -r file; do
               [ -z "${file}" ] && continue
+              if [[ "${file}" == test/* || "${file}" == tests/* ]]; then
+                echo "  [Dry-run] Skipping test-only release file: ${file}"
+                continue
+              fi
               full_path="${skill_dir}/${file}"
               if [ -f "${full_path}" ]; then
                 mkdir -p "${inner_dir}/$(dirname "${file}")"
@@ -504,6 +508,11 @@ jobs:
             # --- Create zip preserving directory structure ---
             zip_name="${skill_name}-v${version}.zip"
             (cd "${staging_dir}" && zip -qr "${OLDPWD}/${out_assets}/${zip_name}" .)
+            if unzip -Z1 "${out_assets}/${zip_name}" | grep -Eq '(^|/)(test|tests)/'; then
+              echo "::error::Dry-run release archive contains test-only files: ${zip_name}"
+              unzip -Z1 "${out_assets}/${zip_name}" | grep -E '(^|/)(test|tests)/' || true
+              failures=$((failures + 1))
+            fi
 
             # --- Clean up test artifacts from source directory ---
             if [ -d "${skill_dir}/advisories" ]; then
@@ -517,6 +526,9 @@ jobs:
             files_json="{}"
             while IFS= read -r file; do
               [ -z "${file}" ] && continue
+              if [[ "${file}" == test/* || "${file}" == tests/* ]]; then
+                continue
+              fi
               full_path="${skill_dir}/${file}"
               if [ -f "${full_path}" ]; then
                 sha256="$(sha256sum "${full_path}" | awk '{print $1}')"
@@ -797,6 +809,10 @@ jobs:
 
           while IFS= read -r file; do
             [ -z "$file" ] && continue
+            if [[ "$file" == test/* || "$file" == tests/* ]]; then
+              echo "Skipping test-only release file: $file"
+              continue
+            fi
             FULL_PATH="$SKILL_PATH/$file"
             if [ -f "$FULL_PATH" ]; then
               mkdir -p "$INNER_DIR/$(dirname "$file")"
@@ -812,11 +828,19 @@ jobs:
           # --- Create zip preserving directory structure ---
           ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
           (cd "$STAGING_DIR" && zip -qr "$OLDPWD/release-assets/$ZIP_NAME" .)
+          if unzip -Z1 "release-assets/$ZIP_NAME" | grep -Eq '(^|/)(test|tests)/'; then
+            echo "::error::Release archive contains test-only files: $ZIP_NAME"
+            unzip -Z1 "release-assets/$ZIP_NAME" | grep -E '(^|/)(test|tests)/' || true
+            exit 1
+          fi
 
           # --- Generate checksums.json via jq ---
           FILES_JSON="{}"
           while IFS= read -r file; do
             [ -z "$file" ] && continue
+            if [[ "$file" == test/* || "$file" == tests/* ]]; then
+              continue
+            fi
             FULL_PATH="$SKILL_PATH/$file"
             if [ -f "$FULL_PATH" ]; then
               SHA256=$(sha256sum "$FULL_PATH" | awk '{print $1}')

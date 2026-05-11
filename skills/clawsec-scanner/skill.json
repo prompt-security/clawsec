@@ -93,26 +93,6 @@
         "path": "hooks/clawsec-scanner-hook/handler.ts",
         "required": false,
         "description": "OpenClaw hook handler for periodic vulnerability scanning"
-      },
-      {
-        "path": "test/dependency_scanner.test.mjs",
-        "required": false,
-        "description": "Unit tests for dependency scanning (npm audit, pip-audit)"
-      },
-      {
-        "path": "test/cve_integration.test.mjs",
-        "required": false,
-        "description": "Integration tests for CVE database API queries"
-      },
-      {
-        "path": "test/sast_engine.test.mjs",
-        "required": false,
-        "description": "Unit tests for SAST analysis (Semgrep, Bandit)"
-      },
-      {
-        "path": "test/dast_harness.test.mjs",
-        "required": false,
-        "description": "DAST harness tests for real hook execution and malicious-input failure detection"
       }
     ]
   },

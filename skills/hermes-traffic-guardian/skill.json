@@ -49,11 +49,6 @@
         "path": "scripts/.gitkeep",
         "required": false,
         "description": "Placeholder for lifecycle, status, and attestation export scripts"
-      },
-      {
-        "path": "test/.gitkeep",
-        "required": false,
-        "description": "Placeholder for unit and integration tests"
       }
     ]
   },

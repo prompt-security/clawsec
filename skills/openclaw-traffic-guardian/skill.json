@@ -53,11 +53,6 @@
         "path": "hooks/openclaw-traffic-guardian-hook/.gitkeep",
         "required": false,
         "description": "Placeholder for optional OpenClaw hook integration"
-      },
-      {
-        "path": "test/.gitkeep",
-        "required": false,
-        "description": "Placeholder for unit and integration tests"
       }
     ]
   },

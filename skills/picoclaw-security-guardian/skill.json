@@ -70,31 +70,11 @@
         "path": "scripts/check_advisories.mjs",
         "required": true,
         "description": "Check Picoclaw-relevant advisories from a signed/verified feed state"
-      },
-      {
-        "path": "test/profile.test.mjs",
-        "required": false,
-        "description": "Profile generation and path-safety tests"
-      },
-      {
-        "path": "test/drift.test.mjs",
-        "required": false,
-        "description": "Drift severity tests"
-      },
-      {
-        "path": "test/supply_chain.test.mjs",
-        "required": false,
-        "description": "Checksum and required-signature verification tests"
-      },
-      {
-        "path": "test/picoclaw_security_guardian_sandbox_regression.sh",
-        "required": false,
-        "description": "Isolated Docker/Picoclaw install regression harness using Picoclaw find_skills/install_skill and skill-loader validation for pre-release checks"
       }
     ]
   },
   "picoclaw": {
-    "emoji": "\ud83e\udd90",
+    "emoji": "🦐",
     "category": "security",
     "requires": {
       "bins": [

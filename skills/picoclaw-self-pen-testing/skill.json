@@ -45,11 +45,6 @@
         "path": "scripts/self_pen_test.mjs",
         "required": true,
         "description": "Run posture-review checks on a profile"
-      },
-      {
-        "path": "test/self_pen_test.test.mjs",
-        "required": false,
-        "description": "Finding classification tests"
       }
     ]
   },

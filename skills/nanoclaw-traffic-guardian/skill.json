@@ -54,11 +54,6 @@
         "path": "mcp-tools/.gitkeep",
         "required": false,
         "description": "Placeholder for container-side MCP tool definitions"
-      },
-      {
-        "path": "test/.gitkeep",
-        "required": false,
-        "description": "Placeholder for unit and integration tests"
       }
     ]
   },

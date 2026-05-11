@@ -73,6 +73,9 @@ def package_skill(skill_path: str, output_dir: str = None) -> tuple[Path | None,
 
     for file_entry in sbom_files:
         file_rel_path = file_entry["path"]
+        if file_rel_path.startswith(("test/", "tests/")):
+            print(f"  Skipping test-only release file: {file_rel_path}")
+            continue
         full_path = skill_path / file_rel_path
         if full_path.exists():
             files_to_checksum.append((file_rel_path, full_path))
