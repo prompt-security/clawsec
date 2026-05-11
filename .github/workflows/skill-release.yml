@@ -655,6 +655,8 @@ jobs:
       version: ${{ steps.parse.outputs.version }}
       skill_path: ${{ steps.parse.outputs.skill_path }}
       publishable: ${{ steps.publishable.outputs.publishable }}
+      openclaw_skill: ${{ steps.publishable.outputs.openclaw_skill }}
+      publish_clawhub: ${{ steps.publishable.outputs.publish_clawhub }}
     steps:
       - name: Parse tag
         id: parse
@@ -743,11 +745,17 @@ jobs:
           PUBLISHABLE=true
           if [ "$INTERNAL" = "true" ]; then
             PUBLISHABLE=false
-            echo "Skill marked internal=true; will skip ClawHub publish."
+            echo "Skill marked internal=true; will skip release-only publishing helpers."
+          fi
+
+          PUBLISH_CLAWHUB=false
+          if [ "$OPENCLAW_SKILL" = "true" ] && [ "$INTERNAL" != "true" ]; then
+            PUBLISH_CLAWHUB=true
           fi
 
           echo "internal=${INTERNAL}" >> $GITHUB_OUTPUT
           echo "openclaw_skill=${OPENCLAW_SKILL}" >> $GITHUB_OUTPUT
+          echo "publish_clawhub=${PUBLISH_CLAWHUB}" >> $GITHUB_OUTPUT
           echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
 
       - name: Setup Node
@@ -1043,7 +1051,7 @@ jobs:
           {
             echo "quick_install<<INSTALL_EOF"
 
-            if [ "${{ steps.publishable.outputs.openclaw_skill }}" = "true" ]; then
+            if [ "${{ steps.publishable.outputs.publish_clawhub }}" = "true" ]; then
               cat <<EOF
           ### Quick Install
 
@@ -1184,28 +1192,28 @@ jobs:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
       - name: Check if publishable
-        if: needs.release-tag.outputs.publishable != 'true'
+        if: needs.release-tag.outputs.publish_clawhub != 'true'
         run: |
-          echo "Skill marked as internal, skipping ClawHub publish"
+          echo "Skill is not eligible for ClawHub publishing; skipping"
           exit 0
 
       - name: Checkout
-        if: needs.release-tag.outputs.publishable == 'true'
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Node
-        if: needs.release-tag.outputs.publishable == 'true'
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 20
 
       - name: Install clawhub CLI
-        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
 
       - name: Patch clawhub publish payload workaround
         # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
-        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
           node <<'NODE'
           const { execSync } = require("node:child_process");
@@ -1248,7 +1256,7 @@ jobs:
           NODE
 
       - name: Login to ClawHub
-        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
@@ -1259,7 +1267,7 @@ jobs:
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
 
       - name: Guard duplicate ClawHub version
-        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
@@ -1289,7 +1297,7 @@ jobs:
           fi
 
       - name: Publish to ClawHub
-        if: needs.release-tag.outputs.publishable == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
@@ -1359,18 +1367,28 @@ jobs:
           fi
           echo "Skill validated: $SKILL_PATH"
 
-      - name: Check if publishable
+      - name: Check if eligible for ClawHub
         id: publishable
         run: |
           SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
           INTERNAL=$(jq -r '.openclaw.internal // false' "$SKILL_PATH/skill.json")
+
+          OPENCLAW_SKILL=false
+          if jq -e 'has("openclaw")' "$SKILL_PATH/skill.json" >/dev/null; then
+            OPENCLAW_SKILL=true
+          fi
+
+          if [ "$OPENCLAW_SKILL" != "true" ]; then
+            echo "::error::Skill lacks openclaw metadata and is not eligible for ClawHub publishing"
+            exit 1
+          fi
 
           if [ "$INTERNAL" = "true" ]; then
             echo "::error::Skill is marked internal and cannot be published to ClawHub"
             exit 1
           fi
 
-          echo "Skill is publishable to ClawHub"
+          echo "Skill is eligible for ClawHub"
 
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
