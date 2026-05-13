@@ -1,6 +1,6 @@
 ---
 name: picoclaw-traffic-guardian
-version: 0.0.1-beta1
+version: 0.0.1-beta2
 description: Picoclaw runtime traffic monitoring baseline for lightweight AI gateway proxy inspection, egress detection, and posture integration.
 homepage: https://clawsec.prompt.security
 author: prompt-security

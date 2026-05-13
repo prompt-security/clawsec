@@ -1,6 +1,6 @@
 ---
 name: picoclaw-self-pen-testing
-version: 0.0.1
+version: 0.0.2
 description: Picoclaw-only local posture-review skill focused on read-only findings and safe operator remediation guidance.
 homepage: https://clawsec.prompt.security
 author: prompt-security
