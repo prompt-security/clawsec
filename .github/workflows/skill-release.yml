@@ -1052,7 +1052,7 @@ jobs:
           {
             echo "quick_install<<INSTALL_EOF"
 
-            if [ "${{ steps.publishable.outputs.publish_clawhub }}" = "true" ]; then
+            if [ "${{ steps.publishable.outputs.publish_clawhub }}" = "true" ] && [ "${{ steps.publishable.outputs.openclaw_skill }}" = "true" ]; then
               cat <<EOF
           ### Quick Install
 
