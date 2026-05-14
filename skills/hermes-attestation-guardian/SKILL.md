@@ -1,6 +1,6 @@
 ---
 name: hermes-attestation-guardian
-version: 0.1.0
+version: 0.1.1
 description: Hermes-only runtime security attestation and drift detection skill for operator-managed Hermes infrastructure.
 homepage: https://clawsec.prompt.security
 hermes:
@@ -15,41 +15,89 @@ IMPORTANT SCOPE:
 - This skill targets Hermes infrastructure only (CLI/Gateway/profile-managed deployments).
 - This skill is not an OpenClaw runtime hook package.
 
+
+## Release Artifact Verification
+
+For standalone installs, verify the signed release manifest before trusting `SKILL.md`, `skill.json`, or the archive. The `skill.json` file is the package metadata/SBOM source, and the release pipeline signs `checksums.json` with the ClawSec release key.
+
+```bash
+set -euo pipefail
+
+SKILL_NAME="hermes-attestation-guardian"
+VERSION="0.1.1"
+REPO="prompt-security/clawsec"
+TAG="${SKILL_NAME}-v${VERSION}"
+BASE="https://github.com/${REPO}/releases/download/${TAG}"
+ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+RELEASE_PUBKEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"
+
+curl -fsSL "$BASE/checksums.json" -o "$TMP_DIR/checksums.json"
+curl -fsSL "$BASE/checksums.sig" -o "$TMP_DIR/checksums.sig"
+curl -fsSL "$BASE/signing-public.pem" -o "$TMP_DIR/signing-public.pem"
+curl -fsSL "$BASE/$ZIP_NAME" -o "$TMP_DIR/$ZIP_NAME"
+curl -fsSL "$BASE/SKILL.md" -o "$TMP_DIR/SKILL.md"
+curl -fsSL "$BASE/skill.json" -o "$TMP_DIR/skill.json"
+
+ACTUAL_PUBKEY_SHA256="$(openssl pkey -pubin -in "$TMP_DIR/signing-public.pem" -outform DER | shasum -a 256 | awk '{print $1}')"
+if [ "$ACTUAL_PUBKEY_SHA256" != "$RELEASE_PUBKEY_SHA256" ]; then
+  echo "ERROR: signing-public.pem fingerprint mismatch" >&2
+  exit 1
+fi
+
+openssl base64 -d -A -in "$TMP_DIR/checksums.sig" -out "$TMP_DIR/checksums.sig.bin"
+openssl pkeyutl -verify -rawin -pubin \
+  -inkey "$TMP_DIR/signing-public.pem" \
+  -sigfile "$TMP_DIR/checksums.sig.bin" \
+  -in "$TMP_DIR/checksums.json" >/dev/null
+
+hash_file() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    sha256sum "$1" | awk '{print $1}'
+  fi
+}
+
+verify_manifest_file() {
+  asset="$1"
+  path="$2"
+  expected="$(jq -r --arg asset "$asset" '.files[$asset].sha256 // empty' "$TMP_DIR/checksums.json")"
+  if [ -z "$expected" ]; then
+    echo "ERROR: checksums.json missing $asset" >&2
+    exit 1
+  fi
+  actual="$(hash_file "$path")"
+  if [ "$actual" != "$expected" ]; then
+    echo "ERROR: checksum mismatch for $asset" >&2
+    exit 1
+  fi
+}
+
+expected_archive="$(jq -r '.archive.sha256 // empty' "$TMP_DIR/checksums.json")"
+if [ -z "$expected_archive" ]; then
+  echo "ERROR: checksums.json missing archive.sha256" >&2
+  exit 1
+fi
+actual_archive="$(hash_file "$TMP_DIR/$ZIP_NAME")"
+if [ "$actual_archive" != "$expected_archive" ]; then
+  echo "ERROR: archive checksum mismatch" >&2
+  exit 1
+fi
+
+verify_manifest_file "SKILL.md" "$TMP_DIR/SKILL.md"
+verify_manifest_file "skill.json" "$TMP_DIR/skill.json"
+
+echo "Signed release manifest, archive, SKILL.md, and skill.json verified."
+```
+
+Only install or extract the archive after this verification succeeds.
+
 ## Goal
 
 Generate deterministic Hermes posture attestations, verify them with fail-closed integrity checks, and compare baseline drift using stable severity mapping.
-
-## Mandatory release verification gate (before install)
-
-Before treating any release install instructions as valid, verify all three inputs:
-
-1) `checksums.json`
-2) `checksums.sig`
-3) pinned signing public-key fingerprint
-
-```bash
-BASE="https://github.com/prompt-security/clawsec/releases/download/hermes-attestation-guardian-v0.1.0"
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
-
-curl -fsSL "$BASE/checksums.json" -o "$TMP/checksums.json"
-curl -fsSL "$BASE/checksums.sig" -o "$TMP/checksums.sig"
-curl -fsSL "$BASE/signing-public.pem" -o "$TMP/signing-public.pem"
-
-[ -s "$TMP/checksums.json" ] || { echo "ERROR: missing checksums.json" >&2; exit 1; }
-[ -s "$TMP/checksums.sig" ] || { echo "ERROR: missing checksums.sig" >&2; exit 1; }
-
-EXPECTED_PUBKEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"
-ACTUAL_PUBKEY_SHA256="$(openssl pkey -pubin -in "$TMP/signing-public.pem" -outform DER | sha256sum | awk '{print $1}')"
-[ "$ACTUAL_PUBKEY_SHA256" = "$EXPECTED_PUBKEY_SHA256" ] || {
-  echo "ERROR: signing-public.pem fingerprint mismatch" >&2
-  exit 1
-}
-
-openssl base64 -d -A -in "$TMP/checksums.sig" -out "$TMP/checksums.sig.bin"
-openssl pkeyutl -verify -rawin -pubin -inkey "$TMP/signing-public.pem" \
-  -sigfile "$TMP/checksums.sig.bin" -in "$TMP/checksums.json" >/dev/null
-```
 
 ## Hermes guard trust policy note
 

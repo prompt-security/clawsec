@@ -1,6 +1,6 @@
 ---
 name: clawsec-scanner
-version: 0.0.2
+version: 0.0.3
 description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific DAST hook execution testing for OpenClaw hooks.
 homepage: https://clawsec.prompt.security
 clawdis:

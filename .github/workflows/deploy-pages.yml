@@ -184,15 +184,23 @@ jobs:
 
                 # Build skill entry for index
                 SKILL_DATA=$(jq -c --arg tag "$TAG" '
+                  . as $skill |
                   def object_or_empty($value):
                     if ($value | type) == "object" then $value else {} end;
                   def object_field($name):
-                    object_or_empty(.[$name]?);
+                    object_or_empty($skill[$name]?);
                   def platform_meta:
-                    (.platform as $platform
-                      | if ($platform | type) == "string" then object_or_empty(.[$platform]?)
+                    ($skill.platform as $platform
+                      | if ($platform | type) == "string" then object_or_empty($skill[$platform]?)
                         else {}
                         end);
+                  def platform_list:
+                    ([]
+                      + (if ($skill.platforms | type) == "array" then $skill.platforms else [] end)
+                      + (if ($skill.platform | type) == "string" then [$skill.platform] else [] end)
+                      + (["openclaw", "hermes", "nanoclaw", "picoclaw"] | map(select((object_field(.) | length) > 0))))
+                    | map(select(type == "string") | ascii_downcase)
+                    | unique;
                   {
                     id: .name,
                     name: .name,
@@ -200,6 +208,7 @@ jobs:
                     description: .description,
                     emoji: (platform_meta.emoji // object_field("openclaw").emoji // object_field("hermes").emoji // object_field("nanoclaw").emoji // object_field("picoclaw").emoji // "📦"),
                     category: (platform_meta.category // object_field("openclaw").category // object_field("hermes").category // object_field("nanoclaw").category // object_field("picoclaw").category // "utility"),
+                    platforms: platform_list,
                     trust: .trust.level,
                     tag: $tag
                   }

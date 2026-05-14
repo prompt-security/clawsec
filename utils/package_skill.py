@@ -12,11 +12,49 @@ Example:
 
 import hashlib
 import json
+import re
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from validate_skill import validate_skill
+
+_TEST_PATH_RE = re.compile(r"(^|/)(test|tests)/", re.IGNORECASE)
+
+
+def normalize_release_path(path: str) -> str:
+    """Normalize a skill SBOM path for release packaging.
+
+    Paths must remain relative POSIX paths inside the skill directory. Test
+    filtering and checksum keys use this normalized form so local packaging and
+    the GitHub release workflow apply the same policy.
+    """
+    raw_path = str(path)
+    windows_path = PureWindowsPath(raw_path)
+    if windows_path.is_absolute() or windows_path.drive:
+        raise ValueError(f"unsafe SBOM path: {path}")
+
+    normalized = raw_path.replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    while "//" in normalized:
+        normalized = normalized.replace("//", "/")
+
+    pure = PurePosixPath(normalized)
+    if (
+        not normalized
+        or pure.is_absolute()
+        or normalized == "."
+        or ".." in pure.parts
+    ):
+        raise ValueError(f"unsafe SBOM path: {path}")
+
+    return pure.as_posix()
+
+
+def is_test_release_path(path: str) -> bool:
+    """Return True for root or nested test/test(s) release paths."""
+    return bool(_TEST_PATH_RE.search(path))
 
 
 def calculate_sha256(file_path: Path) -> str:
@@ -72,10 +110,23 @@ def package_skill(skill_path: str, output_dir: str = None) -> tuple[Path | None,
     sbom_files = skill_data.get("sbom", {}).get("files", [])
 
     for file_entry in sbom_files:
-        file_rel_path = file_entry["path"]
+        try:
+            file_rel_path = normalize_release_path(file_entry["path"])
+        except ValueError as exc:
+            print(f"[ERROR] {exc}")
+            return None, None
+        if is_test_release_path(file_rel_path):
+            print(f"  Skipping test-only release file: {file_rel_path}")
+            continue
         full_path = skill_path / file_rel_path
         if full_path.exists():
-            files_to_checksum.append((file_rel_path, full_path))
+            resolved_full_path = full_path.resolve()
+            try:
+                resolved_full_path.relative_to(skill_path)
+            except ValueError:
+                print(f"[ERROR] SBOM file escapes skill directory: {file_rel_path}")
+                return None, None
+            files_to_checksum.append((file_rel_path, resolved_full_path))
 
     # Always include skill.json
     files_to_checksum.append(("skill.json", skill_json_path))

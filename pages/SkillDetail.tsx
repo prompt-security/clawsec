@@ -4,39 +4,17 @@ import { ArrowLeft, Copy, Check, Download, ExternalLink, FileText, Shield } from
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Footer } from '../components/Footer';
-import type { SkillJson, SkillChecksums, SkillPlatformMetadata } from '../types';
+import type { SkillJson, SkillChecksums } from '../types';
+import { getPlatformDescriptor } from '../utils/advisoryPlatforms';
 import { defaultMarkdownComponents } from '../utils/markdownComponents';
 import { stripFrontmatter } from '../utils/markdownHelpers.mjs';
+import { getRecommendedSkillPlatforms, resolveSkillPlatformMetadata } from '../utils/skillPlatforms';
 
-const PLATFORM_METADATA_KEYS = ['openclaw', 'hermes', 'nanoclaw', 'picoclaw'] as const;
+const RELEASE_REPO_URL = 'https://github.com/prompt-security/clawsec';
 
 const isProbablyHtmlDocument = (text: string): boolean => {
   const start = text.trimStart().slice(0, 200).toLowerCase();
   return start.startsWith('<!doctype html') || start.startsWith('<html');
-};
-
-const isPlatformMetadataObject = (value: unknown): value is SkillPlatformMetadata => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const maybe = value as Record<string, unknown>;
-  return 'emoji' in maybe || 'category' in maybe || 'triggers' in maybe;
-};
-
-const resolvePlatformMetadata = (skill: SkillJson): SkillPlatformMetadata => {
-  const platform = skill.platform;
-  if (
-    typeof platform === 'string' &&
-    (PLATFORM_METADATA_KEYS as readonly string[]).includes(platform)
-  ) {
-    const platformBlock = skill[platform as (typeof PLATFORM_METADATA_KEYS)[number]];
-    if (isPlatformMetadataObject(platformBlock)) return platformBlock;
-  }
-
-  for (const key of PLATFORM_METADATA_KEYS) {
-    const fallbackBlock = skill[key];
-    if (isPlatformMetadataObject(fallbackBlock)) return fallbackBlock;
-  }
-
-  return {};
 };
 
 export const SkillDetail: React.FC = () => {
@@ -147,9 +125,28 @@ export const SkillDetail: React.FC = () => {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const installCommand = skillData
-    ? `npx clawhub@latest install ${skillData.name}`
+  const releaseTag = skillData ? `${skillData.name}-v${skillData.version}` : '';
+  const skillInstructionsUrl = releaseTag
+    ? `${RELEASE_REPO_URL}/releases/download/${releaseTag}/SKILL.md`
     : '';
+
+  const recommendedPlatforms = useMemo(
+    () => (skillData ? getRecommendedSkillPlatforms(skillData) : []),
+    [skillData]
+  );
+
+  const isOpenClawSkill = recommendedPlatforms.includes('openclaw');
+
+  const installCommand = skillData
+    ? isOpenClawSkill
+      ? `npx clawhub@latest install ${skillData.name}`
+      : `curl -sLO ${skillInstructionsUrl}`
+    : '';
+
+  const installLabel = isOpenClawSkill ? 'Via ClawHub' : 'Via SKILL.md instructions';
+  const installHelp = isOpenClawSkill
+    ? 'Recommended for OpenClaw-compatible skills.'
+    : 'Pull the published instruction file and follow the platform-specific setup steps.';
 
   const releasePageUrl = useMemo(() => {
     if (!skillData) return '';
@@ -160,7 +157,7 @@ export const SkillDetail: React.FC = () => {
         const [owner, repo] = url.pathname.split('/').filter(Boolean);
         if (owner && repo) {
           const repoBase = `${url.origin}/${owner}/${repo.replace(/\\.git$/, '')}`;
-          return `${repoBase}/releases/tag/${skillData.name}-v${skillData.version}`;
+          return `${repoBase}/releases/tag/${releaseTag}`;
         }
       }
     } catch {
@@ -168,10 +165,10 @@ export const SkillDetail: React.FC = () => {
     }
 
     return skillData.homepage;
-  }, [skillData]);
+  }, [releaseTag, skillData]);
 
   const platformMetadata = useMemo(
-    () => (skillData ? resolvePlatformMetadata(skillData) : null),
+    () => (skillData ? resolveSkillPlatformMetadata(skillData) : null),
     [skillData]
   );
 
@@ -221,6 +218,18 @@ export const SkillDetail: React.FC = () => {
             <h1 className="text-3xl font-bold text-white mb-1">{skillData.name}</h1>
             <div className="flex items-center gap-3 text-sm">
               <span className="text-gray-500 font-mono">v{skillData.version}</span>
+              {recommendedPlatforms.slice(0, 4).map((platform) => {
+                const descriptor = getPlatformDescriptor(platform);
+
+                return (
+                  <span
+                    key={platform}
+                    className={`text-xs px-2 py-0.5 rounded-md ${descriptor.classes}`}
+                  >
+                    {descriptor.label}
+                  </span>
+                );
+              })}
               {/* Category badge - hidden for now, uncomment when we have multiple categories
               <span className="text-gray-500 bg-clawd-800 px-2 py-0.5 rounded">
                 {platformMetadata?.category || 'utility'}
@@ -254,6 +263,10 @@ export const SkillDetail: React.FC = () => {
           <Download size={20} />
           Quick Install
         </h2>
+        <div>
+          <p className="text-sm font-medium text-white">{installLabel}</p>
+          <p className="text-sm text-gray-400">{installHelp}</p>
+        </div>
         <div className="bg-clawd-800 rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4">
           <code className="text-gray-200 font-mono text-xs sm:text-sm overflow-x-auto break-all min-w-0 flex-1">
             {installCommand}

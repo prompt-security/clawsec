@@ -78,6 +78,7 @@ export interface SkillMetadata {
   description: string;
   emoji: string;
   category: string;
+  platforms?: AdvisoryPlatformSlug[];
   tag: string;
 }
 
@@ -129,6 +130,7 @@ export interface SkillJson {
       description: string;
     }>;
   };
+  platforms?: AdvisoryPlatformSlug[];
   platform?: CorePlatformSlug | (string & {});
   openclaw?: SkillPlatformMetadata | null;
   hermes?: SkillPlatformMetadata | null;

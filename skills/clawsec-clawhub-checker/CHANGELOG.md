@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.4] - 2026-05-13
+
+### Security
+- Added explicit signed release artifact verification instructions for standalone installs, including `checksums.json`, `checksums.sig`, `signing-public.pem`, archive hash verification, and `SKILL.md`/`skill.json` checksum checks.
+
+### Changed
+- Re-release skill payload metadata after excluding test-only files from release SBOMs and archives.
+
 All notable changes to the ClawSec ClawHub Checker will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

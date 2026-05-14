@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.3] - 2026-05-13
+
+### Changed
+- Re-release skill payload metadata after excluding test-only files from release SBOMs and archives.
+
 All notable changes to the ClawSec Scanner will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

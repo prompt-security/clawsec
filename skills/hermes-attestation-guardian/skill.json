@@ -1,6 +1,6 @@
 {
   "name": "hermes-attestation-guardian",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Hermes-only runtime security attestation and drift detection skill. Generates deterministic posture artifacts, verifies integrity fail-closed, and classifies baseline drift severity.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -80,46 +80,6 @@
         "path": "scripts/setup_advisory_check_cron.mjs",
         "required": true,
         "description": "Optional recurring schedule setup for Hermes guarded advisory checks"
-      },
-      {
-        "path": "test/attestation_schema.test.mjs",
-        "required": false,
-        "description": "Schema and determinism tests"
-      },
-      {
-        "path": "test/attestation_diff.test.mjs",
-        "required": false,
-        "description": "Diff and severity mapping tests"
-      },
-      {
-        "path": "test/attestation_cli.test.mjs",
-        "required": false,
-        "description": "Generator/verifier CLI behavior tests"
-      },
-      {
-        "path": "test/setup_attestation_cron.test.mjs",
-        "required": false,
-        "description": "Hermes-only cron setup tests"
-      },
-      {
-        "path": "test/setup_advisory_check_cron.test.mjs",
-        "required": false,
-        "description": "Hermes-only guarded advisory cron setup tests"
-      },
-      {
-        "path": "test/feed_verification.test.mjs",
-        "required": false,
-        "description": "Advisory feed signature/checksum verification behavior tests"
-      },
-      {
-        "path": "test/guarded_skill_verify.test.mjs",
-        "required": false,
-        "description": "Advisory-aware guarded verification gate behavior tests"
-      },
-      {
-        "path": "test/hermes_attestation_sandbox_regression.sh",
-        "required": false,
-        "description": "Sandboxed end-to-end regression harness for install and verification paths"
       }
     ]
   },

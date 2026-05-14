@@ -1,6 +1,6 @@
 {
   "name": "clawsec-clawhub-checker",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "ClawHub reputation checker for clawsec-suite. Adds a standalone reputation gate before guarded skill installation.",
   "author": "abutbul",
   "license": "AGPL-3.0-or-later",
@@ -52,16 +52,6 @@
         "path": "CHANGELOG.md",
         "required": true,
         "description": "Version history and release notes"
-      },
-      {
-        "path": "test/reputation_check.test.mjs",
-        "required": false,
-        "description": "Test suite for reputation checking functionality"
-      },
-      {
-        "path": "test/setup_reputation_hook.test.mjs",
-        "required": false,
-        "description": "Regression coverage for setup preflight behavior"
       }
     ]
   },

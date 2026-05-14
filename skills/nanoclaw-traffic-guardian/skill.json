@@ -1,6 +1,6 @@
 {
   "name": "nanoclaw-traffic-guardian",
-  "version": "0.0.1-beta1",
+  "version": "0.0.1-beta2",
   "description": "NanoClaw runtime traffic monitoring baseline for host-side proxy inspection with container-safe MCP and IPC status surfaces.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -54,11 +54,6 @@
         "path": "mcp-tools/.gitkeep",
         "required": false,
         "description": "Placeholder for container-side MCP tool definitions"
-      },
-      {
-        "path": "test/.gitkeep",
-        "required": false,
-        "description": "Placeholder for unit and integration tests"
       }
     ]
   },
