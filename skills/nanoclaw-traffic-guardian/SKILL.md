@@ -1,6 +1,6 @@
 ---
 name: nanoclaw-traffic-guardian
-version: 0.0.1-beta3
+version: 0.0.1-beta2
 description: NanoClaw runtime traffic monitoring baseline for host-side proxy inspection with container-safe MCP and IPC status surfaces.
 homepage: https://clawsec.prompt.security
 author: prompt-security
@@ -23,7 +23,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="nanoclaw-traffic-guardian"
-VERSION="0.0.1-beta3"
+VERSION="0.0.1-beta2"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
