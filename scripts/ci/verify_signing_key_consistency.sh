@@ -71,3 +71,14 @@ if [[ "$CANONICAL_FPR" != "$DOC_EXPECTED_FPR" ]]; then
 fi
 
 echo "All signing key references are consistent: $CANONICAL_FPR"
+
+while IFS= read -r skill_md; do
+  while IFS= read -r doc_fpr; do
+    if [[ "$doc_fpr" != "$CANONICAL_FPR" ]]; then
+      echo "ERROR: $skill_md RELEASE_PUBKEY_SHA256 ($doc_fpr) != canonical fingerprint ($CANONICAL_FPR)" >&2
+      exit 1
+    fi
+  done < <(awk -F'"' '/RELEASE_PUBKEY_SHA256=/{print $2}' "$skill_md")
+done < <(find skills -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort)
+
+echo "All skill doc RELEASE_PUBKEY_SHA256 references match the canonical signing key."

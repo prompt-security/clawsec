@@ -1,6 +1,6 @@
 {
   "name": "openclaw-traffic-guardian",
-  "version": "0.0.1-beta2",
+  "version": "0.0.1-beta3",
   "description": "OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, and inbound injection detection.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.6] - 2026-05-14
+
+### Security
+- Added explicit signed release artifact verification instructions for standalone installs, including `checksums.json`, `checksums.sig`, `signing-public.pem`, archive hash verification, and `SKILL.md`/`skill.json` checksum checks.
+
 All notable changes to soul-guardian will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

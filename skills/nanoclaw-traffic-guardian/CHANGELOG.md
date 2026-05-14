@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.1-beta3] - 2026-05-14
+
+### Security
+- Added explicit signed release artifact verification instructions for standalone installs, including `checksums.json`, `checksums.sig`, `signing-public.pem`, archive hash verification, and `SKILL.md`/`skill.json` checksum checks.
+
 ## [0.0.1-beta2] - 2026-05-13
 
 ### Changed
