@@ -530,6 +530,9 @@ jobs:
               echo "  [Dry-run] Removed test signatures from release staging"
             fi
 
+            # --- Verify staged runtime import closure before archiving ---
+            python3 scripts/ci/verify_skill_release_import_closure.py "${inner_dir}"
+
             # --- Create zip preserving directory structure ---
             zip_name="${skill_name}-v${version}.zip"
             (cd "${staging_dir}" && zip -qr "${OLDPWD}/${out_assets}/${zip_name}" .)
@@ -891,6 +894,9 @@ jobs:
           done < "$TEMPFILE"
 
           cp "$SKILL_PATH/skill.json" "$INNER_DIR/skill.json"
+
+          # --- Verify staged runtime import closure before archiving ---
+          python3 scripts/ci/verify_skill_release_import_closure.py "$INNER_DIR"
 
           # --- Create zip preserving directory structure ---
           ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
