@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2] - 2026-05-15
+
+### Fixed
+- Included `lib/semver.mjs` and `lib/cron.mjs` in the release SBOM so signed archives contain every runtime library imported by shipped scripts.
+
 ## [0.1.1] - 2026-05-13
 
 ### Security

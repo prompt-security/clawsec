@@ -1,6 +1,6 @@
 {
   "name": "hermes-attestation-guardian",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Hermes-only runtime security attestation and drift detection skill. Generates deterministic posture artifacts, verifies integrity fail-closed, and classifies baseline drift severity.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -45,6 +45,16 @@
         "path": "lib/feed.mjs",
         "required": true,
         "description": "Hermes-native advisory feed verification and state helpers"
+      },
+      {
+        "path": "lib/semver.mjs",
+        "required": true,
+        "description": "Advisory version-range parsing and matching helpers"
+      },
+      {
+        "path": "lib/cron.mjs",
+        "required": true,
+        "description": "Shared managed cron block and cadence helpers"
       },
       {
         "path": "scripts/generate_attestation.mjs",
