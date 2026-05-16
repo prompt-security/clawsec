@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-05-12T06:56:03Z",
+  "updated": "2026-05-16T22:02:27Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -11,6 +11,7 @@
       "title": "A vulnerability was detected in OpenClaw up to 2026.1.24. The impacted element is the function handl...",
       "description": "A vulnerability was detected in OpenClaw up to 2026.1.24. The impacted element is the function handleBlueBubblesWebhookRequest of the file extensions/bluebubbles/src/monitor.ts of the component bluebubbles Webhook. Performing a manipulation results in improper authentication. It is possible to initiate the attack remotely. The exploit is now public and may be used. Upgrading to version 2026.2.12 is sufficient to resolve this issue. The patch is named a6653be0265f1f02b9de46c06f52ea7c81a836e6. The affected component should be upgraded.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -46,6 +47,7 @@
       "title": "OpenClaw before 2026.4.23 contains an improper access control vulnerability in the gateway tool's co...",
       "description": "OpenClaw before 2026.4.23 contains an improper access control vulnerability in the gateway tool's config.apply and config.patch operations that allows compromised models to write unsafe configuration changes by bypassing an incomplete denylist protection. Attackers can persist malicious config modifications affecting command execution, network behavior, credentials, and operator policies that survive restart.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -81,6 +83,7 @@
       "title": "OpenClaw before 2026.4.23 caches resolved webhook route secrets backed by SecretRef values, allowing...",
       "description": "OpenClaw before 2026.4.23 caches resolved webhook route secrets backed by SecretRef values, allowing stale secrets to remain valid after rotation and reload. Attackers with previously valid webhook route secrets can continue authenticating requests and invoking configured webhook task flows until gateway or plugin restart.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -116,6 +119,7 @@
       "title": "OpenClaw before 2026.4.23 contains an arbitrary code execution vulnerability in the bundled plugin s...",
       "description": "OpenClaw before 2026.4.23 contains an arbitrary code execution vulnerability in the bundled plugin setup resolver that loads setup-api.js from process.cwd() during provider setup metadata resolution. Attackers can execute arbitrary JavaScript under the current user account by placing a malicious extensions/<plugin>/setup-api.js file in a repository and convincing a user to run OpenClaw commands from that directory.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -151,6 +155,7 @@
       "title": "OpenClaw before 2026.4.22 allows workspace dotenv files to override connector endpoint hosts for Mat...",
       "description": "OpenClaw before 2026.4.22 allows workspace dotenv files to override connector endpoint hosts for Matrix, Mattermost, IRC, and Synology connectors. Attackers with workspace access can redirect runtime traffic to malicious endpoints by setting endpoint variables in dotenv files.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -186,6 +191,7 @@
       "title": "OpenClaw before 2026.4.20 contains a hook session-key bypass vulnerability that allows attackers to ...",
       "description": "OpenClaw before 2026.4.20 contains a hook session-key bypass vulnerability that allows attackers to circumvent the hooks.allowRequestSessionKey opt-in restriction. Attackers can render externally influenced session keys through templated hook mappings to bypass webhook routing isolation controls.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -221,6 +227,7 @@
       "title": "OpenClaw before 2026.4.20 contains a guard bypass vulnerability in the agent-facing gateway config.p...",
       "description": "OpenClaw before 2026.4.20 contains a guard bypass vulnerability in the agent-facing gateway config.patch and config.apply endpoints that fails to protect operator-trusted settings including sandbox policy, plugin enablement, gateway auth/TLS, hook routing, MCP server configuration, SSRF policy, and filesystem hardening. A prompt-injected model with access to the owner-only gateway tool can persist unauthorized changes to protected operator settings.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -256,6 +263,7 @@
       "title": "OpenClaw before 2026.4.20 contains a server-side request forgery vulnerability in browser CDP profil...",
       "description": "OpenClaw before 2026.4.20 contains a server-side request forgery vulnerability in browser CDP profile creation that skips strict-mode SSRF policy checks. Attackers can create stored profiles pointing to private-network or metadata endpoints that bypass security policies and are later probed during normal profile status operations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -291,6 +299,7 @@
       "title": "OpenClaw before 2026.4.20 fails to properly preserve untrusted labels for isolated cron awareness ev...",
       "description": "OpenClaw before 2026.4.20 fails to properly preserve untrusted labels for isolated cron awareness events, allowing webhook-triggered cron agent output to be recorded as trusted system events. Attackers can exploit this trust-labeling issue to strengthen prompt-injection attacks by rendering untrusted events as trusted System events.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -326,6 +335,7 @@
       "title": "OpenClaw before 2026.4.20 contains a tool policy bypass vulnerability allowing bundled MCP and LSP t...",
       "description": "OpenClaw before 2026.4.20 contains a tool policy bypass vulnerability allowing bundled MCP and LSP tools to circumvent configured tool restrictions. Attackers with local agent access can append restricted tools to the effective tool set after policy filtering, bypassing profile policies, allow/deny lists, owner-only restrictions, sandbox policies, and subagent policies.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -361,6 +371,7 @@
       "title": "OpenClaw before 2026.4.22 contains a security envelope constraint bypass vulnerability allowing rest...",
       "description": "OpenClaw before 2026.4.22 contains a security envelope constraint bypass vulnerability allowing restricted subagents to spawn ACP child sessions that fail to inherit depth, child-count limits, control scope, or target-agent restrictions. Attackers can exploit this by spawning child sessions that bypass subagent-only constraints, potentially escalating privileges or accessing restricted resources.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -396,6 +407,7 @@
       "title": "OpenClaw before 2026.4.15 contains an arbitrary local file read vulnerability in the webchat audio e...",
       "description": "OpenClaw before 2026.4.15 contains an arbitrary local file read vulnerability in the webchat audio embedding helper that fails to apply local media root containment checks. Attackers can influence agent or tool-produced ReplyPayload.mediaUrl parameters to resolve absolute local paths or file URLs, read audio-like files, and embed them base64-encoded into webchat responses.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -431,6 +443,7 @@
       "title": "OpenClaw before 2026.4.20 contains an improper environment variable validation vulnerability in MCP ...",
       "description": "OpenClaw before 2026.4.20 contains an improper environment variable validation vulnerability in MCP stdio server configuration that allows attackers to execute arbitrary code. Malicious workspace configurations can pass dangerous startup variables like NODE_OPTIONS, LD_PRELOAD, or BASH_ENV to spawned MCP server processes, enabling code injection when operators start sessions using those servers.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -466,6 +479,7 @@
       "title": "OpenClaw before 2026.4.22 contains an authentication bypass vulnerability in the Control UI bootstra...",
       "description": "OpenClaw before 2026.4.22 contains an authentication bypass vulnerability in the Control UI bootstrap config endpoint that allows unauthenticated attackers to read sensitive configuration fields. Attackers can access the bootstrap config route without a valid Gateway token to expose sensitive bootstrap and config information intended only for authenticated Control UI sessions.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -501,6 +515,7 @@
       "title": "OpenClaw before 2026.4.20 contains a message classification vulnerability in Feishu card-action call...",
       "description": "OpenClaw before 2026.4.20 contains a message classification vulnerability in Feishu card-action callbacks that misclassifies direct messages as group conversations. Attackers can bypass dmPolicy enforcement by triggering card-action flows in direct message conversations that should have been blocked by restrictive policies.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -536,6 +551,7 @@
       "title": "OpenClaw versions 2026.4.5 before 2026.4.20 contain an environment variable injection vulnerability ...",
       "description": "OpenClaw versions 2026.4.5 before 2026.4.20 contain an environment variable injection vulnerability allowing workspace dotenv to override MINIMAX_API_HOST. Attackers can redirect credentialed MiniMax API requests to attacker-controlled origins, exposing the MiniMax API key in Authorization headers.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -571,6 +587,7 @@
       "title": "OpenClaw before 2026.4.21 contains an authorization bypass vulnerability in command-auth.ts that all...",
       "description": "OpenClaw before 2026.4.21 contains an authorization bypass vulnerability in command-auth.ts that allows non-owner senders to execute owner-enforced slash commands when wildcard inbound senders are configured without explicit owner allowFrom settings. Attackers can exploit this by sending commands like /send, /config, or /debug on affected channels to bypass owner-only command authorization checks.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -780,7 +797,7 @@
     },
     {
       "id": "CVE-2026-44113",
-      "severity": "medium",
+      "severity": "high",
       "type": "unknown_cwe_367",
       "nvd_category_id": "CWE-367",
       "title": "OpenClaw before 2026.4.22 contains a time-of-check/time-of-use race condition in the OpenShell files...",
@@ -799,7 +816,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-5h3g-6xhh-rg6p",
         "https://www.vulncheck.com/advisories/openclaw-time-of-check-time-of-use-race-condition-in-openshell-fs-bridge"
       ],
-      "cvss_score": 5.3,
+      "cvss_score": 7.7,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-44113",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.3); network accessible",
@@ -816,7 +833,7 @@
     },
     {
       "id": "CVE-2026-44112",
-      "severity": "medium",
+      "severity": "critical",
       "type": "unknown_cwe_367",
       "nvd_category_id": "CWE-367",
       "title": "OpenClaw before 2026.4.22 contains a time-of-check/time-of-use race condition in OpenShell sandbox f...",
@@ -835,7 +852,7 @@
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-wppj-c6mr-83jj",
         "https://www.vulncheck.com/advisories/openclaw-symlink-swap-race-condition-in-openshell-fs-bridge-writes"
       ],
-      "cvss_score": 5.3,
+      "cvss_score": 9.6,
       "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-44112",
       "exploitability_score": "medium",
       "exploitability_rationale": "Medium CVSS score (5.3); network accessible",
