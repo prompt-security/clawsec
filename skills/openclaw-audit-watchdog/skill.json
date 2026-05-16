@@ -1,6 +1,6 @@
 {
   "name": "openclaw-audit-watchdog",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Creates or updates an unattended cron job and sends formatted reports to configured recipients.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -51,6 +51,11 @@
         "path": "scripts/send_smtp.mjs",
         "required": false,
         "description": "SMTP delivery (Node.js)"
+      },
+      {
+        "path": "scripts/load_suppression_config.mjs",
+        "required": false,
+        "description": "Suppression configuration loading and path normalization used by report rendering"
       },
       {
         "path": "scripts/setup_cron.mjs",

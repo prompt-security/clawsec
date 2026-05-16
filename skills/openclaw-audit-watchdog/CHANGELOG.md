@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.6] - 2026-05-16
+
+### Fixed
+- Added `scripts/load_suppression_config.mjs` to `skill.json` SBOM metadata so release archives include the helper imported by `scripts/render_report.mjs`.
+
 ## [0.1.5] - 2026-05-14
 
 ### Security

@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -86,6 +86,11 @@
         "description": "Shared semver parsing and version matching logic"
       },
       {
+        "path": "hooks/clawsec-advisory-guardian/lib/advisory_scope.mjs",
+        "required": true,
+        "description": "Advisory application-scope filtering helper for OpenClaw-facing flows"
+      },
+      {
         "path": "hooks/clawsec-advisory-guardian/lib/feed.mjs",
         "required": true,
         "description": "Advisory feed loading with Ed25519 signature and checksum manifest verification"
@@ -109,6 +114,11 @@
         "path": "hooks/clawsec-advisory-guardian/lib/matching.ts",
         "required": true,
         "description": "Advisory-to-skill matching and alert message generation"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/suppression.mjs",
+        "required": true,
+        "description": "Advisory suppression loading and matching helpers"
       },
       {
         "path": "scripts/setup_advisory_hook.mjs",
