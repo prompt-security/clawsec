@@ -1,6 +1,6 @@
 ---
 name: openclaw-audit-watchdog
-version: 0.1.5
+version: 0.1.6
 description: Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Runs deep audits, creates or updates a recurring cron job, and sends formatted reports to configured recipients.
 homepage: https://clawsec.prompt.security
 metadata:
@@ -74,7 +74,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="openclaw-audit-watchdog"
-VERSION="0.1.5"
+VERSION="0.1.6"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
