@@ -47,6 +47,10 @@ def is_within(path: Path, root: Path) -> bool:
         return False
 
 
+def is_resolved_file(candidate: Path, root: Path) -> bool:
+    return candidate.is_file() and is_within(candidate, root)
+
+
 def verify_import_closure(root: Path) -> list[str]:
     root = root.resolve()
     failures: list[str] = []
@@ -56,7 +60,7 @@ def verify_import_closure(root: Path) -> list[str]:
         for match in IMPORT_RE.finditer(text):
             spec = match.group("spec")
             candidates = candidate_paths(source, spec)
-            if any(candidate.exists() and is_within(candidate, root) for candidate in candidates):
+            if any(is_resolved_file(candidate, root) for candidate in candidates):
                 continue
 
             rel_source = source.relative_to(root).as_posix()
