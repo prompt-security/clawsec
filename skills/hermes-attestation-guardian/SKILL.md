@@ -1,6 +1,6 @@
 ---
 name: hermes-attestation-guardian
-version: 0.1.2
+version: 0.1.3
 description: Hermes-only runtime security attestation and drift detection skill for operator-managed Hermes infrastructure.
 homepage: https://clawsec.prompt.security
 hermes:
@@ -24,7 +24,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="hermes-attestation-guardian"
-VERSION="0.1.2"
+VERSION="0.1.3"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -206,6 +206,8 @@ Severity messages are emitted as INFO / WARNING / CRITICAL style lines.
   - generated command path uses `guarded_skill_verify.mjs` (advisory-aware gate), not raw `check_advisories.mjs`
 
 ## Advisory feed override knobs
+
+The default signed advisory feed is consolidated: it can contain NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records. Hermes matching still gates on affected package names and supported version ranges.
 
 - Source selection: `HERMES_ADVISORY_FEED_SOURCE=auto|remote|local`
 - Remote artifacts: `HERMES_ADVISORY_FEED_URL`, `HERMES_ADVISORY_FEED_SIG_URL`, `HERMES_ADVISORY_FEED_CHECKSUMS_URL`, `HERMES_ADVISORY_FEED_CHECKSUMS_SIG_URL`

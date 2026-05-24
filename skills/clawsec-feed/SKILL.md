@@ -1,6 +1,6 @@
 ---
 name: clawsec-feed
-version: 0.0.7
+version: 0.0.8
 description: Security advisory feed package for OpenClaw-related threats and vulnerabilities. The upstream feed is updated daily; local automation is handled by clawsec-suite or the operator.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
@@ -14,7 +14,7 @@ clawdis:
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
-This feed is automatically updated daily with CVEs related to OpenClaw and Moltbot from the NIST National Vulnerability Database (NVD).
+The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and provisional GitHub Security Advisories that do not have CVE IDs yet.
 
 ## Operational Notes
 
@@ -90,7 +90,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawsec-feed"
-VERSION="0.0.7"
+VERSION="0.0.8"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -783,7 +783,7 @@ fi
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CLAWSEC_FEED_URL` | Custom advisory feed URL | Raw GitHub (`main` branch) |
+| `CLAWSEC_FEED_URL` | Custom advisory feed URL | Consolidated signed feed |
 | `CLAWSEC_INSTALL_DIR` | Installation directory | `~/.openclaw/skills/clawsec-feed` |
 
 ---

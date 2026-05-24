@@ -6,6 +6,11 @@ export type HookEvent = {
 
 export type Advisory = {
   id?: string;
+  ghsa_id?: string;
+  cve_id?: string | null;
+  status?: string;
+  stale?: boolean;
+  source_feed?: string;
   severity?: string;
   type?: string;
   application?: string | string[];
@@ -15,6 +20,10 @@ export type Advisory = {
   published?: string;
   updated?: string;
   affected?: string[];
+  platforms?: string[];
+  references?: string[];
+  nvd_url?: string | null;
+  github_advisory_url?: string;
 };
 
 export type FeedPayload = {

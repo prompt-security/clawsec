@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.3] - 2026-05-24
+
+### Changed
+- Documented that Picoclaw advisory checks consume the consolidated signed advisory feed, including NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records.
+
 ## [0.0.2] - 2026-05-13
 
 ### Security

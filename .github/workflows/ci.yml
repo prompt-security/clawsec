@@ -93,6 +93,29 @@ jobs:
       - name: Check for outdated deps
         run: npm outdated || true
 
+  advisory-feed-tests:
+    name: Advisory Feed Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: GHSA Without CVE Feed Tests
+        run: node scripts/test-ghsa-without-cve-feed.mjs
+      - name: GHSA Poll Workflow Tests
+        run: node scripts/test-ghsa-poll-workflow.mjs
+      - name: NVD GHSA Consolidation Workflow Tests
+        run: node scripts/test-nvd-ghsa-consolidation-workflow.mjs
+      - name: NVD + GHSA Pipeline Dry Run
+        run: node scripts/test-nvd-ghsa-pipeline-dry-run.mjs
+      - name: Skill Release Workflow Tests
+        run: node scripts/test-skill-release-workflow.mjs
+      - name: Deploy Pages Advisory Checksums Tests
+        run: node scripts/test-deploy-pages-checksums.mjs
+
   clawsec-suite-tests:
     name: ClawSec Suite Verification Tests
     runs-on: ubuntu-latest

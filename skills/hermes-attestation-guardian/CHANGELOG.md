@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.3] - 2026-05-24
+
+### Changed
+- Documented that the default signed advisory feed is consolidated and may include NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records while Hermes matching remains package-scoped.
+
 ## [0.1.2] - 2026-05-15
 
 ### Fixed

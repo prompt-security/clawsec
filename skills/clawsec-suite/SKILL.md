@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.8
+version: 0.1.9
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -28,7 +28,7 @@ This means `clawsec-suite` can:
 ## Included vs Optional Protections
 
 ### Built into clawsec-suite
-- Embedded feed seed file: `advisories/feed.json`
+- Embedded consolidated advisory feed seed file: `advisories/feed.json`
 - Portable heartbeat workflow in `HEARTBEAT.md`
 - Advisory polling + state tracking + affected-skill checks
 - OpenClaw advisory guardian hook package: `hooks/clawsec-advisory-guardian/`
@@ -200,7 +200,8 @@ This enforces:
 
 The embedded feed logic uses these defaults:
 
-- Remote feed URL: `https://clawsec.prompt.security/advisories/feed.json`
+- Remote consolidated feed URL: `https://clawsec.prompt.security/advisories/feed.json`
+- Feed contents: NVD CVEs, approved community advisories, and provisional GHSA-without-CVE advisories.
 - Remote feed signature URL: `${CLAWSEC_FEED_URL}.sig` (override with `CLAWSEC_FEED_SIG_URL`)
 - Remote checksums manifest URL: sibling `checksums.json` (override with `CLAWSEC_FEED_CHECKSUMS_URL`)
 - Local seed fallback: `~/.openclaw/skills/clawsec-suite/advisories/feed.json`

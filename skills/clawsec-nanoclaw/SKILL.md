@@ -1,6 +1,6 @@
 ---
 name: clawsec-nanoclaw
-version: 0.0.5
+version: 0.0.6
 description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
 ---
 
@@ -183,6 +183,8 @@ if (advisory.exploitability_score === 'high' || advisory.severity === 'critical'
 
 **Feed Source**: https://clawsec.prompt.security/advisories/feed.json
 
+This signed feed is consolidated. NanoClaw receives NVD CVEs, approved community advisories, and provisional GHSA-without-CVE advisories through the same default URL.
+
 **Update Frequency**: Every 6 hours (automatic)
 
 **Signature Verification**: Ed25519 signed feeds
@@ -208,7 +210,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawsec-nanoclaw"
-VERSION="0.0.5"
+VERSION="0.0.6"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

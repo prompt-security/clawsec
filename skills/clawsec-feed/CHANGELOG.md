@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.8] - 2026-05-24
+
+### Changed
+- Documented the consolidated signed advisory feed as the default feed for NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records.
+
 ## [0.0.7] - 2026-05-14
 
 ### Security
