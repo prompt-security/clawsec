@@ -46,6 +46,32 @@ class VerifySkillReleaseImportClosureTests(unittest.TestCase):
 
             self.assertEqual(failures, [])
 
+    def test_ts_source_accepts_js_import_specifier(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "types.ts").write_text("export type Value = string;\n", encoding="utf-8")
+            (root / "main.ts").write_text("import type { Value } from './types.js';\n", encoding="utf-8")
+
+            failures = self.module.verify_import_closure(root)
+
+            self.assertEqual(failures, [])
+
+    def test_comment_import_examples_are_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "main.ts").write_text(
+                "/*\n"
+                " * Example integration:\n"
+                " * import { Missing } from '../external/project/file';\n"
+                " */\n"
+                "export {};\n",
+                encoding="utf-8",
+            )
+
+            failures = self.module.verify_import_closure(root)
+
+            self.assertEqual(failures, [])
+
 
 if __name__ == "__main__":
     unittest.main()

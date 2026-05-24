@@ -29,11 +29,20 @@ IMPORT_RE = re.compile(
 SOURCE_SUFFIXES = {".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"}
 RESOLUTION_SUFFIXES = ["", ".mjs", ".js", ".cjs", ".mts", ".ts", ".cts", ".json"]
 INDEX_FILENAMES = ["index.mjs", "index.js", "index.cjs", "index.mts", "index.ts", "index.cts", "index.json"]
+TS_IMPORTER_SUFFIXES = {".ts", ".mts", ".cts"}
+JS_TO_TS_SUFFIX = {".js": ".ts", ".mjs": ".mts", ".cjs": ".cts"}
+COMMENT_RE = re.compile(r"/\*.*?\*/|//[^\r\n]*", re.DOTALL)
+
+
+def strip_js_ts_comments(text: str) -> str:
+    return COMMENT_RE.sub("", text)
 
 
 def candidate_paths(importer: Path, spec: str) -> list[Path]:
     base = (importer.parent / spec).resolve()
     candidates = [base]
+    if importer.suffix in TS_IMPORTER_SUFFIXES and base.suffix in JS_TO_TS_SUFFIX:
+        candidates.append(base.with_suffix(JS_TO_TS_SUFFIX[base.suffix]))
     candidates.extend(base.with_suffix(suffix) for suffix in RESOLUTION_SUFFIXES if suffix and base.suffix == "")
     candidates.extend(base / name for name in INDEX_FILENAMES)
     return candidates
@@ -57,6 +66,7 @@ def verify_import_closure(root: Path) -> list[str]:
 
     for source in sorted(p for p in root.rglob("*") if p.is_file() and p.suffix in SOURCE_SUFFIXES):
         text = source.read_text(encoding="utf-8", errors="ignore")
+        text = strip_js_ts_comments(text)
         for match in IMPORT_RE.finditer(text):
             spec = match.group("spec")
             candidates = candidate_paths(source, spec)
