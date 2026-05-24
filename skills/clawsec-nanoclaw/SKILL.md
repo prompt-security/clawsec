@@ -183,6 +183,8 @@ if (advisory.exploitability_score === 'high' || advisory.severity === 'critical'
 
 **Feed Source**: https://clawsec.prompt.security/advisories/feed.json
 
+This signed feed is consolidated. NanoClaw receives NVD CVEs, approved community advisories, and provisional GHSA-without-CVE advisories through the same default URL.
+
 **Update Frequency**: Every 6 hours (automatic)
 
 **Signature Verification**: Ed25519 signed feeds

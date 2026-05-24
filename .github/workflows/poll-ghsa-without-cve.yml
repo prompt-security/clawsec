@@ -13,9 +13,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FEED_PATH: advisories/feed.json
+  FEED_SIG_PATH: advisories/feed.json.sig
   GHSA_FEED_PATH: advisories/ghsa-without-cve.json
   GHSA_FEED_SIG_PATH: advisories/ghsa-without-cve.json.sig
-  NVD_FEED_PATH: advisories/feed.json
+  SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
+  SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
 
 jobs:
   poll-and-update:
@@ -43,28 +46,66 @@ jobs:
           set -euo pipefail
           node scripts/ghsa-without-cve-feed.mjs \
             --output "$GHSA_FEED_PATH" \
+            --consolidated-feed "$FEED_PATH" \
             --existing-feed "$GHSA_FEED_PATH" \
-            --nvd-feed "$NVD_FEED_PATH" \
+            --nvd-feed "$FEED_PATH" \
             --stale-after-days 60
+
+      - name: Sync consolidated feed to clawsec-feed skill
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$SKILL_FEED_PATH")"
+          cp "$FEED_PATH" "$SKILL_FEED_PATH"
 
       - name: Detect feed changes
         id: changes
         run: |
           set -euo pipefail
+
+          GHSA_CHANGED=false
+          AGENT_CHANGED=false
+
           if ! git diff --quiet -- "$GHSA_FEED_PATH" || [ ! -f "$GHSA_FEED_SIG_PATH" ]; then
+            GHSA_CHANGED=true
+          fi
+
+          if ! git diff --quiet -- "$FEED_PATH" "$SKILL_FEED_PATH" || [ ! -f "$FEED_SIG_PATH" ] || [ ! -f "$SKILL_FEED_SIG_PATH" ]; then
+            AGENT_CHANGED=true
+          fi
+
+          echo "ghsa_changed=$GHSA_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "agent_changed=$AGENT_CHANGED" >> "$GITHUB_OUTPUT"
+
+          if [ "$GHSA_CHANGED" = "true" ] || [ "$AGENT_CHANGED" = "true" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Sign GHSA feed and verify
-        if: steps.changes.outputs.changed == 'true'
+        if: steps.changes.outputs.ghsa_changed == 'true'
         uses: ./.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
           input_file: ${{ env.GHSA_FEED_PATH }}
           signature_file: ${{ env.GHSA_FEED_SIG_PATH }}
+
+      - name: Sign consolidated agent feed and verify
+        if: steps.changes.outputs.agent_changed == 'true'
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: ${{ env.FEED_PATH }}
+          signature_file: ${{ env.FEED_SIG_PATH }}
+          verify_files: |
+            ${{ env.FEED_PATH }}
+            ${{ env.SKILL_FEED_PATH }}
+
+      - name: Sync consolidated signature to clawsec-feed skill
+        if: steps.changes.outputs.agent_changed == 'true'
+        run: cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
 
       - name: Create Pull Request
         if: steps.changes.outputs.changed == 'true'
@@ -77,9 +118,10 @@ jobs:
           title: 'chore: update provisional GHSA advisory feed'
           body: |
             ## Summary
-            Updates the provisional GHSA advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.
+            Updates the provisional GHSA advisory feed and the consolidated agent advisory feed.
 
             - Feed: `${{ env.GHSA_FEED_PATH }}`
+            - Agent feed: `${{ env.FEED_PATH }}`
             - Stale threshold: 60 days without a CVE
             - Statuses: `active`, `matured`, `stale`
 
@@ -90,8 +132,12 @@ jobs:
 
             Poll public GitHub Security Advisories without CVE identifiers.
           add-paths: |
+            ${{ env.FEED_PATH }}
+            ${{ env.FEED_SIG_PATH }}
             ${{ env.GHSA_FEED_PATH }}
             ${{ env.GHSA_FEED_SIG_PATH }}
+            ${{ env.SKILL_FEED_PATH }}
+            ${{ env.SKILL_FEED_SIG_PATH }}
 
       - name: Summary
         run: |
@@ -101,7 +147,10 @@ jobs:
           echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| Feed changed | ${{ steps.changes.outputs.changed }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Agent feed changed | ${{ steps.changes.outputs.agent_changed }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| GHSA source feed changed | ${{ steps.changes.outputs.ghsa_changed }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Feed path | $GHSA_FEED_PATH |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Agent feed path | $FEED_PATH |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Total advisories | $(jq '.advisories | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Active | $(jq '[.advisories[] | select(.status == "active")] | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Matured | $(jq '[.advisories[] | select(.status == "matured")] | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"

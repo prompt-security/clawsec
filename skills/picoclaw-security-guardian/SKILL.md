@@ -127,6 +127,7 @@ node scripts/check_advisories.mjs   --feed ~/.picoclaw/security/clawsec/feed.jso
 ```
 
 The script filters advisories for `picoclaw`, `ai-gateway`, empty/all-platform advisories, or affected package entries containing `picoclaw`.
+The expected feed input is the consolidated signed ClawSec advisory feed, so it can contain NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records.
 
 ## Drift protection
 
@@ -184,4 +185,3 @@ skills/picoclaw-security-guardian/test/picoclaw_security_guardian_sandbox_regres
 ```
 
 The regression installs the skill through Picoclaw's own `find_skills` / `install_skill` path from a local ClawHub-compatible registry into an isolated Docker-hosted Picoclaw workspace with isolated `HOME`, `PICOCLAW_HOME`, and `PICOCLAW_WORKSPACE`. It verifies signed release-artifact preflight inputs, confirms Picoclaw's skill loader can list/load the installed skill, then runs the installed copy's profile, drift, advisory fail-closed, advisory filtering, and supply-chain verification paths against Picoclaw-style `config.json` and `launcher-config.json` files.
-

@@ -5,6 +5,11 @@
 
 export interface Advisory {
   id: string;
+  ghsa_id?: string;
+  cve_id?: string | null;
+  status?: 'active' | 'matured' | 'stale' | string;
+  stale?: boolean;
+  source_feed?: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
   type: 'vulnerable_skill' | 'malicious_skill' | 'prompt_injection' | string;
   title: string;
@@ -14,7 +19,10 @@ export interface Advisory {
   published: string;
   references: string[];
   cvss_score?: number;
+  cvss_vector?: string | null;
   nvd_url?: string;
+  github_advisory_url?: string;
+  platforms?: string[];
   exploitability_score?: 'high' | 'medium' | 'low' | 'unknown';
   exploitability_rationale?: string;
   source?: string;

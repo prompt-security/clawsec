@@ -33,9 +33,16 @@ export type CorePlatformSlug = (typeof CORE_PLATFORM_SLUGS)[number];
 export type AdvisoryPlatformSlug = CorePlatformSlug | (string & {});
 export type AdvisoryPlatformFilter = 'all' | CorePlatformSlug | 'other';
 
-// Full advisory type from NVD CVE feed or community reports
+export type AdvisoryLifecycleStatus = 'active' | 'matured' | 'stale' | (string & {});
+
+// Full advisory type from NVD CVE feed, provisional GHSA feed, or community reports
 export interface Advisory {
   id: string;
+  ghsa_id?: string;
+  cve_id?: string | null;
+  status?: AdvisoryLifecycleStatus;
+  stale?: boolean;
+  source_feed?: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   type: AdvisoryType;
   title: string;
@@ -45,7 +52,9 @@ export interface Advisory {
   published: string;
   references?: string[];
   cvss_score?: number | null;
+  cvss_vector?: string | null;
   nvd_url?: string;
+  github_advisory_url?: string;
   platforms?: AdvisoryPlatformSlug[];
   // Community report fields (source defaults to "Prompt Security Staff" when absent)
   source?: string;

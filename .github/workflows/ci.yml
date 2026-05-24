@@ -105,6 +105,8 @@ jobs:
       - run: npm ci
       - name: GHSA Without CVE Feed Tests
         run: node scripts/test-ghsa-without-cve-feed.mjs
+      - name: GHSA Poll Workflow Tests
+        run: node scripts/test-ghsa-poll-workflow.mjs
       - name: Deploy Pages Advisory Checksums Tests
         run: node scripts/test-deploy-pages-checksums.mjs
 

@@ -14,7 +14,7 @@ clawdis:
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
-This feed is automatically updated daily with CVEs related to OpenClaw and Moltbot from the NIST National Vulnerability Database (NVD).
+The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and provisional GitHub Security Advisories that do not have CVE IDs yet.
 
 ## Operational Notes
 
@@ -783,7 +783,7 @@ fi
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CLAWSEC_FEED_URL` | Custom advisory feed URL | Raw GitHub (`main` branch) |
+| `CLAWSEC_FEED_URL` | Custom advisory feed URL | Consolidated signed feed |
 | `CLAWSEC_INSTALL_DIR` | Installation directory | `~/.openclaw/skills/clawsec-feed` |
 
 ---

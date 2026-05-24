@@ -207,6 +207,8 @@ Severity messages are emitted as INFO / WARNING / CRITICAL style lines.
 
 ## Advisory feed override knobs
 
+The default signed advisory feed is consolidated: it can contain NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records. Hermes matching still gates on affected package names and supported version ranges.
+
 - Source selection: `HERMES_ADVISORY_FEED_SOURCE=auto|remote|local`
 - Remote artifacts: `HERMES_ADVISORY_FEED_URL`, `HERMES_ADVISORY_FEED_SIG_URL`, `HERMES_ADVISORY_FEED_CHECKSUMS_URL`, `HERMES_ADVISORY_FEED_CHECKSUMS_SIG_URL`
 - Local artifacts: `HERMES_LOCAL_ADVISORY_FEED`, `HERMES_LOCAL_ADVISORY_FEED_SIG`, `HERMES_LOCAL_ADVISORY_FEED_CHECKSUMS`, `HERMES_LOCAL_ADVISORY_FEED_CHECKSUMS_SIG`
