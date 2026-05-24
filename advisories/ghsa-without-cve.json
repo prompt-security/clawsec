@@ -1,0 +1,39 @@
+{
+  "version": "0.1.0",
+  "updated": "2026-05-24T07:39:08Z",
+  "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
+  "stale_after_days": 60,
+  "semantics": {
+    "active": "GHSA is published and has no CVE identifier yet.",
+    "matured": "GHSA now has a CVE identifier and should be reconciled with the canonical CVE feed.",
+    "stale": "GHSA is older than stale_after_days and still has no CVE identifier."
+  },
+  "sources": [
+    {
+      "repository": "openclaw/openclaw",
+      "platform": "openclaw",
+      "url": "https://github.com/openclaw/openclaw/security/advisories"
+    },
+    {
+      "repository": "qwibitai/nanoclaw",
+      "platform": "nanoclaw",
+      "url": "https://github.com/qwibitai/nanoclaw/security/advisories"
+    },
+    {
+      "repository": "softwarepub/hermes",
+      "platform": "hermes",
+      "url": "https://github.com/softwarepub/hermes/security/advisories"
+    },
+    {
+      "repository": "nousresearch/hermes-agent",
+      "platform": "hermes",
+      "url": "https://github.com/nousresearch/hermes-agent/security/advisories"
+    },
+    {
+      "repository": "sipeed/picoclaw",
+      "platform": "picoclaw",
+      "url": "https://github.com/sipeed/picoclaw/security/advisories"
+    }
+  ],
+  "advisories": []
+}

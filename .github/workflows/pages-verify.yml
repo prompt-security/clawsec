@@ -27,14 +27,26 @@ jobs:
           set -euo pipefail
           mkdir -p public/advisories
           cp advisories/feed.json public/advisories/feed.json
+          if [ -f advisories/ghsa-without-cve.json ]; then
+            cp advisories/ghsa-without-cve.json public/advisories/ghsa-without-cve.json
+          fi
 
       - name: Generate advisory checksums manifest
         run: |
           set -euo pipefail
 
-          FEED_FILE="public/advisories/feed.json"
-          FEED_SHA=$(sha256sum "$FEED_FILE" | awk '{print $1}')
-          FEED_SIZE=$(stat -c%s "$FEED_FILE" 2>/dev/null || stat -f%z "$FEED_FILE")
+          FILES_JSON="{}"
+          for file in public/advisories/*.json; do
+            REL_PATH="${file#public/}"
+            FILE_SHA=$(sha256sum "$file" | awk '{print $1}')
+            FILE_SIZE=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
+            FILES_JSON=$(jq \
+              --arg path "$REL_PATH" \
+              --arg sha "$FILE_SHA" \
+              --argjson size "$FILE_SIZE" \
+              '. + {($path): {sha256: $sha, size: $size, path: $path, url: ("https://clawsec.prompt.security/" + $path)}}' \
+              <<< "$FILES_JSON")
+          done
 
           jq -n \
             --arg schema_version "1" \
@@ -42,22 +54,14 @@ jobs:
             --arg version "1.1.0" \
             --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg repo "${{ github.repository }}" \
-            --arg sha "$FEED_SHA" \
-            --argjson size "$FEED_SIZE" \
+            --argjson files "$FILES_JSON" \
             '{
               schema_version: $schema_version,
               algorithm: $algorithm,
               version: $version,
               generated_at: $generated,
               repository: $repo,
-              files: {
-                "advisories/feed.json": {
-                  sha256: $sha,
-                  size: $size,
-                  path: "advisories/feed.json",
-                  url: "https://clawsec.prompt.security/advisories/feed.json"
-                }
-              }
+              files: $files
             }' > public/checksums.json
 
       - name: Generate ephemeral signing key for PR verification
@@ -80,6 +84,14 @@ jobs:
           input_file: public/advisories/feed.json
           signature_file: public/advisories/feed.json.sig
           public_key_output: public/signing-public.pem
+
+      - name: Sign provisional GHSA feed and verify
+        if: hashFiles('public/advisories/ghsa-without-cve.json') != ''
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ steps.test_key.outputs.private_key }}
+          input_file: public/advisories/ghsa-without-cve.json
+          signature_file: public/advisories/ghsa-without-cve.json.sig
 
       - name: Sign checksums and verify
         uses: ./.github/actions/sign-and-verify
@@ -107,5 +119,8 @@ jobs:
           set -euo pipefail
           test -f dist/index.html
           test -f public/advisories/feed.json.sig
+          if [ -f public/advisories/ghsa-without-cve.json ]; then
+            test -f public/advisories/ghsa-without-cve.json.sig
+          fi
           test -f public/checksums.sig
           test -f public/signing-public.pem
