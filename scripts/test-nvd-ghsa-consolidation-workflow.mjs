@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 
 const workflowPath = new URL('../.github/workflows/poll-nvd-cves.yml', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
+const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
+const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 
 function requiredIndex(snippet, message) {
   const index = workflow.indexOf(snippet);
@@ -44,6 +46,11 @@ assert.match(
   workflow,
   /git add "\$FEED_PATH" "\$FEED_SIG_PATH" "\$GHSA_FEED_PATH" "\$GHSA_FEED_SIG_PATH" "\$SKILL_FEED_PATH" "\$SKILL_FEED_SIG_PATH"/,
   'NVD workflow PR must include both NVD and GHSA feed artifacts',
+);
+assert.match(
+  ciWorkflow,
+  /name: NVD \+ GHSA Pipeline Dry Run[\s\S]*node scripts\/test-nvd-ghsa-pipeline-dry-run\.mjs/,
+  'CI must run the deterministic NVD + GHSA pipeline dry run before merge',
 );
 
 const updateFeedIndex = requiredIndex('name: Update feed.json', 'NVD workflow must update the CVE feed first');
