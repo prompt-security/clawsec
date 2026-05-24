@@ -78,12 +78,15 @@ jobs:
           }
 
           touched_skills_file="$(mktemp)"
-          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/**' \
+          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- \
+            'skills/*/**' \
+            ':(exclude)skills/*/test/**' \
+            ':(exclude)skills/*/tests/**' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
             | sort -u > "${touched_skills_file}"
 
           if [ ! -s "${touched_skills_file}" ]; then
-            echo "No skill package files changed in this PR."
+            echo "No release-relevant skill package files changed in this PR."
             rm -f "${touched_skills_file}"
             exit 0
           fi

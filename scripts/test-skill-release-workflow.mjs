@@ -12,8 +12,8 @@ assert.match(
 
 assert.match(
   workflow,
-  /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" -- 'skills\/\*\/\*\*'/,
-  'Skill release validation must inspect every changed file under changed skill directories',
+  /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
+  'Skill release validation must ignore test-only skill changes while inspecting release-relevant skill files',
 );
 
 assert.doesNotMatch(
