@@ -4,6 +4,12 @@ import { readFile } from 'node:fs/promises';
 const workflowPath = new URL('../.github/workflows/poll-ghsa-without-cve.yml', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 
+assert.match(workflow, /workflow_dispatch:/, 'GHSA poll workflow must remain runnable as a manual fallback');
+assert.doesNotMatch(
+  workflow,
+  /\n\s+schedule:/,
+  'Scheduled GHSA consolidation belongs to the NVD workflow to avoid duplicate automated feed PRs',
+);
 assert.match(
   workflow,
   /FEED_PATH:\s+advisories\/feed\.json/,

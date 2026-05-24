@@ -1,9 +1,6 @@
 name: Poll GHSA Without CVE
 
 on:
-  schedule:
-    # Run after the NVD poll so matured GHSAs can reconcile against the latest CVE feed.
-    - cron: '30 7 * * *'
   workflow_dispatch:
 
 permissions: read-all

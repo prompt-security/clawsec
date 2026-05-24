@@ -21,6 +21,8 @@ concurrency:
 env:
   FEED_PATH: advisories/feed.json
   FEED_SIG_PATH: advisories/feed.json.sig
+  GHSA_FEED_PATH: advisories/ghsa-without-cve.json
+  GHSA_FEED_SIG_PATH: advisories/ghsa-without-cve.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
   SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
 
@@ -833,8 +835,54 @@ jobs:
             exit 1
           fi
 
+      - name: Poll GHSA without CVE and consolidate feed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node scripts/ghsa-without-cve-feed.mjs \
+            --output "$GHSA_FEED_PATH" \
+            --consolidated-feed "$FEED_PATH" \
+            --existing-feed "$GHSA_FEED_PATH" \
+            --nvd-feed "$FEED_PATH" \
+            --stale-after-days 60
+
+          mkdir -p "$(dirname "$SKILL_FEED_PATH")"
+          cp "$FEED_PATH" "$SKILL_FEED_PATH"
+
+      - name: Detect advisory feed changes
+        id: feed_changes
+        run: |
+          set -euo pipefail
+
+          NVD_CHANGED=false
+          GHSA_CHANGED=false
+          AGENT_CHANGED=false
+
+          if [ "${{ steps.transform.outputs.new_count }}" != "0" ] || [ "${{ steps.updates.outputs.update_count }}" != "0" ]; then
+            NVD_CHANGED=true
+          fi
+
+          if ! git diff --quiet -- "$GHSA_FEED_PATH" || [ ! -f "$GHSA_FEED_SIG_PATH" ]; then
+            GHSA_CHANGED=true
+          fi
+
+          if ! git diff --quiet -- "$FEED_PATH" "$SKILL_FEED_PATH" || [ ! -f "$FEED_SIG_PATH" ] || [ ! -f "$SKILL_FEED_SIG_PATH" ]; then
+            AGENT_CHANGED=true
+          fi
+
+          echo "nvd_changed=$NVD_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "ghsa_changed=$GHSA_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "agent_changed=$AGENT_CHANGED" >> "$GITHUB_OUTPUT"
+
+          if [ "$GHSA_CHANGED" = "true" ] || [ "$AGENT_CHANGED" = "true" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Guard dependency manifests from NVD updates
-        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        if: steps.feed_changes.outputs.changed == 'true'
         run: |
           set -euo pipefail
 
@@ -851,8 +899,17 @@ jobs:
             exit 1
           fi
 
+      - name: Sign GHSA feed and verify
+        if: steps.feed_changes.outputs.ghsa_changed == 'true'
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: ${{ env.GHSA_FEED_PATH }}
+          signature_file: ${{ env.GHSA_FEED_SIG_PATH }}
+
       - name: Sign advisory feed and verify
-        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        if: steps.feed_changes.outputs.agent_changed == 'true'
         uses: ./.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
@@ -864,18 +921,18 @@ jobs:
             ${{ env.SKILL_FEED_PATH }}
 
       - name: Sync advisory signature to skill feed
-        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        if: steps.feed_changes.outputs.agent_changed == 'true'
         run: cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
 
       - name: Clean workspace for PR
-        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        if: steps.feed_changes.outputs.changed == 'true'
         run: |
           # Reset any unintended changes, keep only feed files
           git checkout -- .github/ 2>/dev/null || true
           git clean -fd .github/ 2>/dev/null || true
 
       - name: Upsert NVD advisory PR
-        if: steps.transform.outputs.new_count != '0' || steps.updates.outputs.update_count != '0'
+        if: steps.feed_changes.outputs.changed == 'true'
         id: upsert-pr
         env:
           GH_TOKEN: ${{ github.token }}
@@ -884,9 +941,14 @@ jobs:
 
           BRANCH_PREFIX="automated/nvd-cve-update"
           PR_COMMENT="Superseded by newer automated NVD advisory update."
-          TITLE="chore: CVE advisories - ${{ steps.transform.outputs.new_count }} new, ${{ steps.updates.outputs.update_count }} updated"
+          TITLE="chore: update NVD/GHSA advisories - ${{ steps.transform.outputs.new_count }} NVD new, ${{ steps.updates.outputs.update_count }} NVD updated"
           COMMIT_SUBJECT="$TITLE"
-          COMMIT_BODY=$'Automated update from NVD CVE feed.\nKeywords: ${{ env.KEYWORDS }}\nPoll window: ${{ steps.dates.outputs.start_date }} to ${{ steps.dates.outputs.end_date }}'
+          COMMIT_BODY=$'Automated update from NVD CVE and GHSA advisory feeds.\nKeywords: ${{ env.KEYWORDS }}\nPoll window: ${{ steps.dates.outputs.start_date }} to ${{ steps.dates.outputs.end_date }}'
+
+          GHSA_TOTAL="$(jq '.advisories | length' "$GHSA_FEED_PATH")"
+          GHSA_ACTIVE="$(jq '[.advisories[] | select(.status == "active")] | length' "$GHSA_FEED_PATH")"
+          GHSA_MATURED="$(jq '[.advisories[] | select(.status == "matured")] | length' "$GHSA_FEED_PATH")"
+          GHSA_STALE="$(jq '[.advisories[] | select(.status == "stale")] | length' "$GHSA_FEED_PATH")"
 
           if [ "${{ inputs.force_full_scan }}" = "true" ]; then
             MODE="full-rebuild (ignore feed state)"
@@ -897,16 +959,19 @@ jobs:
           BODY_FILE="$(mktemp)"
           cat > "$BODY_FILE" <<EOF
           ## Summary
-          Automated update from NVD CVE feed.
+          Automated update from NVD CVE and GHSA advisory feeds.
 
           - **Mode:** ${MODE}
-          - **New advisories:** ${{ steps.transform.outputs.new_count }}
-          - **Updated advisories:** ${{ steps.updates.outputs.update_count }}
+          - **New NVD advisories:** ${{ steps.transform.outputs.new_count }}
+          - **Updated NVD advisories:** ${{ steps.updates.outputs.update_count }}
+          - **GHSA source feed changed:** ${{ steps.feed_changes.outputs.ghsa_changed }}
+          - **Consolidated agent feed changed:** ${{ steps.feed_changes.outputs.agent_changed }}
+          - **GHSA provisional advisories:** ${GHSA_TOTAL} total (${GHSA_ACTIVE} active, ${GHSA_MATURED} matured, ${GHSA_STALE} stale)
           - **Poll window:** ${{ steps.dates.outputs.start_date }} → ${{ steps.dates.outputs.end_date }}
           - **Keywords:** ${{ env.KEYWORDS }}
 
           ---
-          *This PR was automatically generated by the NVD CVE polling workflow.*
+          *This PR was automatically generated by the NVD CVE polling workflow with GHSA consolidation.*
           EOF
 
           PR_LIST_JSON="$(
@@ -953,7 +1018,7 @@ jobs:
           git fetch origin main
           git checkout -B "$TARGET_BRANCH" origin/main
 
-          git add "$FEED_PATH" "$FEED_SIG_PATH" "$SKILL_FEED_PATH" "$SKILL_FEED_SIG_PATH"
+          git add "$FEED_PATH" "$FEED_SIG_PATH" "$GHSA_FEED_PATH" "$GHSA_FEED_SIG_PATH" "$SKILL_FEED_PATH" "$SKILL_FEED_SIG_PATH"
           if git diff --cached --quiet; then
             echo "::error::Expected advisory feed changes but none were staged."
             exit 1
@@ -1033,6 +1098,9 @@ jobs:
           echo "| CVEs Found (filtered) | ${{ steps.process.outputs.filtered_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| New Advisories | ${{ steps.transform.outputs.new_count }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Updated Advisories | ${{ steps.updates.outputs.update_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GHSA source feed changed | ${{ steps.feed_changes.outputs.ghsa_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Consolidated agent feed changed | ${{ steps.feed_changes.outputs.agent_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GHSA provisional advisories | $(jq '.advisories | length' "$GHSA_FEED_PATH") |" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.transform.outputs.new_count }}" != "0" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
