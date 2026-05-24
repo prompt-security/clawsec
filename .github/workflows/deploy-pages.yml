@@ -258,12 +258,32 @@ jobs:
             cat public/advisories/ghsa-without-cve.json | jq '.advisories | length' | xargs -I {} echo "GHSA provisional feed contains {} advisories"
           fi
 
+      - name: Sign advisory feed and verify
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: public/advisories/feed.json
+          signature_file: public/advisories/feed.json.sig
+          public_key_output: public/signing-public.pem
+
+      - name: Sign provisional GHSA feed and verify
+        if: hashFiles('public/advisories/ghsa-without-cve.json') != ''
+        uses: ./.github/actions/sign-and-verify
+        with:
+          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
+          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
+          input_file: public/advisories/ghsa-without-cve.json
+          signature_file: public/advisories/ghsa-without-cve.json.sig
+
       - name: Generate advisory checksums manifest
         run: |
           set -euo pipefail
 
           FILES_JSON="{}"
-          for file in public/advisories/*.json; do
+          ADVISORY_ARTIFACTS=(public/advisories/*.json public/advisories/*.json.sig)
+          for file in "${ADVISORY_ARTIFACTS[@]}"; do
+            [ -e "$file" ] || continue
             REL_PATH="${file#public/}"
             FILE_SHA=$(sha256sum "$file" | awk '{print $1}')
             FILE_SIZE=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
@@ -299,24 +319,6 @@ jobs:
 
           echo "Generated public/checksums.json"
           jq . public/checksums.json
-
-      - name: Sign advisory feed and verify
-        uses: ./.github/actions/sign-and-verify
-        with:
-          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
-          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
-          input_file: public/advisories/feed.json
-          signature_file: public/advisories/feed.json.sig
-          public_key_output: public/signing-public.pem
-
-      - name: Sign provisional GHSA feed and verify
-        if: hashFiles('public/advisories/ghsa-without-cve.json') != ''
-        uses: ./.github/actions/sign-and-verify
-        with:
-          private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
-          private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
-          input_file: public/advisories/ghsa-without-cve.json
-          signature_file: public/advisories/ghsa-without-cve.json.sig
 
       - name: Sign checksums and verify
         uses: ./.github/actions/sign-and-verify
