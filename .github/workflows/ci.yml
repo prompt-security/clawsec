@@ -109,6 +109,8 @@ jobs:
         run: node scripts/test-ghsa-poll-workflow.mjs
       - name: NVD GHSA Consolidation Workflow Tests
         run: node scripts/test-nvd-ghsa-consolidation-workflow.mjs
+      - name: Skill Release Workflow Tests
+        run: node scripts/test-skill-release-workflow.mjs
       - name: Deploy Pages Advisory Checksums Tests
         run: node scripts/test-deploy-pages-checksums.mjs
 

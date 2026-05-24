@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.6] - 2026-05-24
+
+### Changed
+- Documented that NanoClaw consumes the consolidated signed advisory feed containing NVD CVEs, approved community advisories, and provisional GHSA-without-CVE records.
+- Added advisory metadata typing for GHSA lifecycle fields used by the consolidated feed.
+
 ## [0.0.5] - 2026-05-14
 
 ### Security

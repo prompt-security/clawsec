@@ -6,8 +6,7 @@ on:
       - '*-v[0-9]*.[0-9]*.[0-9]*'
   pull_request:
     paths:
-      - 'skills/*/skill.json'
-      - 'skills/*/SKILL.md'
+      - 'skills/**'
   workflow_dispatch:
     inputs:
       tag:
@@ -39,7 +38,7 @@ jobs:
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
 
-      - name: Validate version parity for bumped skills
+      - name: Validate version parity for changed skills
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -79,12 +78,12 @@ jobs:
           }
 
           touched_skills_file="$(mktemp)"
-          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/skill.json' 'skills/*/SKILL.md' \
+          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/**' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
             | sort -u > "${touched_skills_file}"
 
           if [ ! -s "${touched_skills_file}" ]; then
-            echo "No skill metadata files changed in this PR."
+            echo "No skill package files changed in this PR."
             rm -f "${touched_skills_file}"
             exit 0
           fi
@@ -129,6 +128,8 @@ jobs:
               continue
             fi
 
+            checked_skills=$((checked_skills + 1))
+
             json_version_changed=false
             md_version_changed=false
 
@@ -141,11 +142,11 @@ jobs:
             fi
 
             if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
-              echo "No version bump detected for ${skill_dir}; skipping."
+              echo "::error file=${skill_dir}::Changed skill package has no version bump. Update skill.json and SKILL.md versions and add CHANGELOG.md release notes."
+              failures=$((failures + 1))
               continue
             fi
 
-            checked_skills=$((checked_skills + 1))
             echo "Version bump detected for ${skill_dir} (skill.json changed: ${json_version_changed}, SKILL.md changed: ${md_version_changed})"
 
             if [ ! -f "${json_path}" ]; then
