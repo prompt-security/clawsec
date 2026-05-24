@@ -72,6 +72,40 @@ class VerifySkillReleaseImportClosureTests(unittest.TestCase):
 
             self.assertEqual(failures, [])
 
+    def test_url_string_does_not_hide_following_relative_import(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "main.ts").write_text(
+                'const feedUrl = "https://example.test/feed.json"; import value from "./missing.js";\n',
+                encoding="utf-8",
+            )
+
+            failures = self.module.verify_import_closure(root)
+
+            self.assertEqual(len(failures), 1)
+            self.assertIn("main.ts imports ./missing.js", failures[0])
+
+    def test_remote_import_spec_survives_comment_stripping(self) -> None:
+        source = 'import remote from "https://example.test/module.mjs";\n'
+        stripped = self.module.strip_js_ts_comments(source)
+
+        specs = [match.group("spec") for match in self.module.IMPORT_RE.finditer(stripped)]
+
+        self.assertEqual(specs, ["https://example.test/module.mjs"])
+
+    def test_remote_runtime_import_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "main.mjs").write_text(
+                'import remote from "https://example.test/module.mjs";\n',
+                encoding="utf-8",
+            )
+
+            failures = self.module.verify_import_closure(root)
+
+            self.assertEqual(len(failures), 1)
+            self.assertIn("remote runtime import https://example.test/module.mjs", failures[0])
+
 
 if __name__ == "__main__":
     unittest.main()
