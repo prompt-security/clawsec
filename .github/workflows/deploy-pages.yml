@@ -408,10 +408,12 @@ jobs:
             if [ -f "public/advisories/ghsa-without-cve.json" ]; then
               mkdir -p "$MIRROR_LATEST_DIR/advisories"
               cp "public/advisories/ghsa-without-cve.json" "$MIRROR_LATEST_DIR/advisories/ghsa-without-cve.json"
+              cp "public/advisories/ghsa-without-cve.json" "$MIRROR_LATEST_DIR/ghsa-without-cve.json"
             fi
             if [ -f "public/advisories/ghsa-without-cve.json.sig" ]; then
               mkdir -p "$MIRROR_LATEST_DIR/advisories"
               cp "public/advisories/ghsa-without-cve.json.sig" "$MIRROR_LATEST_DIR/advisories/ghsa-without-cve.json.sig"
+              cp "public/advisories/ghsa-without-cve.json.sig" "$MIRROR_LATEST_DIR/ghsa-without-cve.json.sig"
             fi
             if [ -f "public/checksums.json" ]; then
               cp "public/checksums.json" "$MIRROR_LATEST_DIR/checksums.json"
