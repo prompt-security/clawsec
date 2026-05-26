@@ -1,6 +1,8 @@
 cff-version: 1.2.0
 message: "If you use ClawSec in research or security tooling, please cite it as below."
 title: "ClawSec"
+version: "0.1.0"
+date-released: "2026-05-26"
 abstract: >-
   ClawSec is a security skill suite for AI agent platforms. It provides
   advisory monitoring, cryptographic signature verification, guarded skill
@@ -26,5 +28,3 @@ authors:
     family-names: Abutbul
     affiliation: "Prompt Security"
     orcid: "https://orcid.org/0009-0001-7883-3593"
-  - name: "Prompt Security"
-    website: "https://prompt.security/"
