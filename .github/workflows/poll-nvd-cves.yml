@@ -1055,7 +1055,10 @@ jobs:
             exit 1
           fi
 
-          echo "Dispatching CodeQL for branch: $BRANCH"
+          EXPECTED_HEAD_SHA="$(git rev-parse HEAD)"
+          DISPATCHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          echo "Dispatching CodeQL for branch: $BRANCH (head: $EXPECTED_HEAD_SHA, dispatched_at: $DISPATCHED_AT)"
           gh workflow run codeql.yml --ref "$BRANCH"
 
           RUN_ID=""
@@ -1064,8 +1067,13 @@ jobs:
               --workflow "CodeQL" \
               --branch "$BRANCH" \
               --event workflow_dispatch \
-              --json databaseId,createdAt \
-              --jq 'sort_by(.createdAt) | last | .databaseId // empty')
+              --limit 50 \
+              --json databaseId,createdAt,headSha \
+              --jq --arg since "$DISPATCHED_AT" --arg sha "$EXPECTED_HEAD_SHA" '
+                map(select(.createdAt >= $since and .headSha == $sha))
+                | sort_by(.createdAt)
+                | last
+                | .databaseId // empty')
             if [ -n "$RUN_ID" ]; then
               break
             fi
@@ -1073,7 +1081,13 @@ jobs:
           done
 
           if [ -z "$RUN_ID" ]; then
-            echo "::error::Unable to locate dispatched CodeQL run for branch $BRANCH"
+            echo "::error::Unable to locate dispatched CodeQL run for branch $BRANCH after $DISPATCHED_AT (head: $EXPECTED_HEAD_SHA)"
+            gh run list \
+              --workflow "CodeQL" \
+              --branch "$BRANCH" \
+              --event workflow_dispatch \
+              --limit 5 \
+              --json databaseId,createdAt,headSha,status,conclusion || true
             exit 1
           fi
 
