@@ -42,8 +42,8 @@
   "overrides": {
     "ajv": "6.14.0",
     "balanced-match": "4.0.3",
-    "brace-expansion": "5.0.5",
-    "minimatch": "10.2.4",
+    "brace-expansion": "5.0.6",
+    "minimatch": "10.2.5",
     "picomatch": "4.0.4"
   }
 }
