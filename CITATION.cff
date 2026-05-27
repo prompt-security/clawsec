@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use ClawSec in research or security tooling, please cite it as below."
+title: "ClawSec"
+version: "0.1.0"
+date-released: "2026-05-26"
+abstract: >-
+  ClawSec is a security skill suite for AI agent platforms. It provides
+  advisory monitoring, cryptographic signature verification, guarded skill
+  installation, file integrity checks, and platform-specific security
+  capabilities for OpenClaw, NanoClaw, Hermes, and Picoclaw deployments.
+type: software
+license: "AGPL-3.0-or-later"
+url: "https://clawsec.prompt.security/"
+repository-code: "https://github.com/prompt-security/clawsec"
+keywords:
+  - ai-security
+  - agent-security
+  - prompt-injection
+  - security-advisories
+  - software-supply-chain
+  - integrity-verification
+  - openclaw
+  - nanoclaw
+  - hermes
+  - picoclaw
+authors:
+  - given-names: David
+    family-names: Abutbul
+    affiliation: "Prompt Security"
+    orcid: "https://orcid.org/0009-0001-7883-3593"
