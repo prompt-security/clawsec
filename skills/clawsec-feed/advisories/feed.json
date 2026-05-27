@@ -1,8 +1,323 @@
 {
   "version": "0.0.3",
-  "updated": "2026-05-24T18:52:13Z",
+  "updated": "2026-05-27T06:34:09Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-9369",
+      "severity": "medium",
+      "type": "unknown_cwe_697",
+      "nvd_category_id": "CWE-697",
+      "title": "A security flaw has been discovered in NousResearch hermes-agent 2026.4.23. Affected is the function...",
+      "description": "A security flaw has been discovered in NousResearch hermes-agent 2026.4.23. Affected is the function _discover_dashboard_plugins of the file hermes_cli/web_server.py of the component CLI web-dashboard Interface. Performing a manipulation of the argument HERMES_ENABLE_PROJECT_PLUGINS results in incorrect comparison. The attack is only possible with local access. The exploit has been released to the public and may be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T09:16:33.140",
+      "references": [
+        "https://gist.github.com/YLChen-007/062b77ceac6aa9844842a616f5d2ef30",
+        "https://vuldb.com/submit/812230",
+        "https://vuldb.com/vuln/365332"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9369",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9368",
+      "severity": "high",
+      "type": "unknown_cwe_264",
+      "nvd_category_id": "CWE-264",
+      "title": "A vulnerability was identified in NousResearch hermes-agent up to 2026.4.16. This impacts the functi...",
+      "description": "A vulnerability was identified in NousResearch hermes-agent up to 2026.4.16. This impacts the function execute_code of the file tools/code_execution_tool.py of the component Environment Variable Handler. Such manipulation leads to sandbox issue. It is possible to launch the attack remotely. The exploit is publicly available and might be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T09:16:32.963",
+      "references": [
+        "https://gist.github.com/YLChen-007/43c72d19668421abe8ce10f299323a0a",
+        "https://vuldb.com/submit/812229",
+        "https://vuldb.com/vuln/365331"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9368",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9367",
+      "severity": "high",
+      "type": "command_injection",
+      "nvd_category_id": "CWE-77",
+      "title": "A vulnerability was determined in NousResearch hermes-agent up to 5157f5427f19488b31c6fdebbacd15d798...",
+      "description": "A vulnerability was determined in NousResearch hermes-agent up to 5157f5427f19488b31c6fdebbacd15d798ce7f63. This affects the function detect_dangerous_command of the file tools/approval.py of the component terminal_tool. This manipulation causes os command injection. It is possible to initiate the attack remotely. The exploit has been publicly disclosed and may be utilized. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T09:16:32.793",
+      "references": [
+        "https://gist.github.com/YLChen-007/75fb10319693e86106ced2ef3a472c80",
+        "https://vuldb.com/submit/812228",
+        "https://vuldb.com/vuln/365330"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9367",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9366",
+      "severity": "high",
+      "type": "unknown_cwe_707",
+      "nvd_category_id": "CWE-707",
+      "title": "A vulnerability was found in NousResearch hermes-agent 2026.4.23. The impacted element is the functi...",
+      "description": "A vulnerability was found in NousResearch hermes-agent 2026.4.23. The impacted element is the function _scan_context_content of the file agent/prompt_builder.py. The manipulation results in injection. The attack may be performed from remote. The exploit has been made public and could be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T09:16:32.617",
+      "references": [
+        "https://gist.github.com/YLChen-007/581fd92de5548fbaacb2092e848a75cc",
+        "https://vuldb.com/submit/812227",
+        "https://vuldb.com/vuln/365329"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9366",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9354",
+      "severity": "medium",
+      "type": "unknown_cwe_116",
+      "nvd_category_id": "CWE-116",
+      "title": "A vulnerability was detected in NousResearch hermes-agent up to 2026.4.16. The affected element is a...",
+      "description": "A vulnerability was detected in NousResearch hermes-agent up to 2026.4.16. The affected element is an unknown function of the component Slack Agent/Mattermost Agent. The manipulation of the argument format_message results in escaping of output. The attack can be executed remotely. The exploit is now public and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T05:16:40.537",
+      "references": [
+        "https://gist.github.com/YLChen-007/e90fb38ac03284176bae49898a3a46a4",
+        "https://vuldb.com/submit/812226",
+        "https://vuldb.com/vuln/365317"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9354",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9353",
+      "severity": "high",
+      "type": "unknown_cwe_707",
+      "nvd_category_id": "CWE-707",
+      "title": "A security vulnerability has been detected in NousResearch hermes-agent up to 2026.4.23. Impacted is...",
+      "description": "A security vulnerability has been detected in NousResearch hermes-agent up to 2026.4.23. Impacted is an unknown function of the file agent/skills_guard.py of the component Skills Guard Multi-Word Prompt Handler. The manipulation of the argument THREAT_PATTERNS leads to injection. Remote exploitation of the attack is possible. The exploit has been disclosed publicly and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T05:16:40.357",
+      "references": [
+        "https://gist.github.com/YLChen-007/82a3539d6358842e69dfaef0a9fcf14a",
+        "https://vuldb.com/submit/812216",
+        "https://vuldb.com/vuln/365316"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9353",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9352",
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "A weakness has been identified in NousResearch hermes-agent up to 2026.4.23. This issue affects the ...",
+      "description": "A weakness has been identified in NousResearch hermes-agent up to 2026.4.23. This issue affects the function _make_run_env of the file tools/environments/local.py of the component Messaging Gateway Handler. Executing a manipulation can lead to information disclosure. The attack may be launched remotely. The exploit has been made available to the public and could be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T05:16:40.180",
+      "references": [
+        "https://gist.github.com/YLChen-007/760b3940f708990e535214529c0c7a27",
+        "https://vuldb.com/submit/812215",
+        "https://vuldb.com/vuln/365315"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9352",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9351",
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "A security flaw has been discovered in NousResearch hermes-agent up to 2026.4.16. This vulnerability...",
+      "description": "A security flaw has been discovered in NousResearch hermes-agent up to 2026.4.16. This vulnerability affects the function _is_blocked_device of the file tools/file_tools.py of the component read_file Tool. Performing a manipulation results in path traversal. The attack may be initiated remotely. The exploit has been released to the public and may be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T04:17:04.430",
+      "references": [
+        "https://gist.github.com/YLChen-007/1d1aeff404cb88e06ec2fb3377f49fef",
+        "https://vuldb.com/submit/812214",
+        "https://vuldb.com/vuln/365314"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9351",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); remotely exploitable without authentication; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-9350",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "A vulnerability was identified in NousResearch hermes-agent up to 2026.4.16. This affects the functi...",
+      "description": "A vulnerability was identified in NousResearch hermes-agent up to 2026.4.16. This affects the function check_all_command_guards of the file tools/approval.py of the component Batch Runner. Such manipulation leads to missing authorization. The attack can be launched remotely. The exploit is publicly available and might be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-05-24T04:17:04.113",
+      "references": [
+        "https://gist.github.com/YLChen-007/22cada4c9060f5123dde6185135ae3ab",
+        "https://vuldb.com/submit/812213",
+        "https://vuldb.com/vuln/365313"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9350",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-8305",
       "severity": "high",
@@ -2168,7 +2483,7 @@
       "type": "unknown_cwe_770",
       "nvd_category_id": "CWE-770",
       "title": "OpenClaw versions 2026.4.9 before 2026.4.10 contain a denial of service vulnerability in the voice-c...",
-      "description": "OpenClaw versions 2026.4.9 before 2026.4.10 contain a denial of service vulnerability in the voice-call realtime WebSocket path that accepts oversized frames without proper validation. Remote attackers can send oversized WebSocket frames to cause service unavailability for deployments exposing the webhook path.",
+      "description": "OpenClaw versions 2026.4.9 before 2026.4.10 contain a denial of service vulnerability in the voice-call realtime WebSocket path that accepts oversized frames without proper validation. Remote attackers can send oversized WebSocket frames to cause service unavailability for deployments exposing the voice-call realtime WebSocket path.",
       "affected": [
         "openclaw@*"
       ],
@@ -2413,7 +2728,7 @@
       "type": "incorrect_authorization",
       "nvd_category_id": "CWE-863",
       "title": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired no...",
-      "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired nodes to reconnect with exec-capable commands without operator.admin scope requirement. Attackers can bypass re-pairing authentication to execute privileged commands on the local assistant system.",
+      "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability allowing previously paired nodes to reconnect with exec-capable commands without the operator.admin scope requirement. Attackers can bypass re-pairing authentication to execute privileged commands on the local assistant system.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -2521,7 +2836,7 @@
       "type": "incorrect_authorization",
       "nvd_category_id": "CWE-863",
       "title": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP au...",
-      "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP authentication mechanism that widens identity-bearing operator.read requests into runtime operator.write permissions. Attackers can exploit this by sending read-scoped requests through the gateway auth route to gain unauthorized write access to runtime operations.",
+      "description": "OpenClaw before 2026.4.8 contains a privilege escalation vulnerability in the gateway plugin HTTP authentication mechanism that escalates identity-bearing operator.read requests to runtime operator.write permissions. Attackers can exploit this by sending read-scoped requests through the gateway auth route to gain unauthorized write access to runtime operations.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -10446,8 +10761,8 @@
       "id": "GHSA-39mp-545q-w789",
       "ghsa_id": "GHSA-39mp-545q-w789",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "medium",
       "type": "github_security_advisory",
@@ -10490,8 +10805,8 @@
       "id": "GHSA-vqvg-86cc-cg83",
       "ghsa_id": "GHSA-vqvg-86cc-cg83",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "medium",
       "type": "missing_authorization",
@@ -10920,8 +11235,8 @@
       "severity": "medium",
       "type": "missing_authentication_for_critical_function",
       "nvd_category_id": "CWE-306",
-      "title": "OpenClaw versions prior to 2026.2.21 BlueBubbles webhook handler contains a passwordless fallback au...",
-      "description": "OpenClaw versions prior to 2026.2.21 BlueBubbles webhook handler contains a passwordless fallback authentication path that allows unauthenticated webhook events in certain reverse-proxy or local routing configurations. Attackers can bypass webhook authentication by exploiting the loopback/proxy heuristics to send unauthenticated webhook events to the BlueBubbles plugin.",
+      "title": "The BlueBubbles webhook handler in OpenClaw versions prior to 2026.2.21 contains a passwordless fall...",
+      "description": "The BlueBubbles webhook handler in OpenClaw versions prior to 2026.2.21 contains a passwordless fallback authentication path that allows unauthenticated webhook events in certain reverse-proxy or local routing configurations. Attackers can bypass webhook authentication by exploiting the loopback/proxy heuristics to send unauthenticated webhook events to the BlueBubbles plugin.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -10992,8 +11307,8 @@
       "severity": "low",
       "type": "incorrect_authorization",
       "nvd_category_id": "CWE-863",
-      "title": "OpenClaw versions prior to 2026.2.26 contains an authorization bypass vulnerability in the pairing-s...",
-      "description": "OpenClaw versions prior to 2026.2.26 contains an authorization bypass vulnerability in the pairing-store access control for direct message pairing policy that allows attackers to reuse pairing approvals across multiple accounts. An attacker approved as a sender in one account can be automatically accepted in another account in multi-account deployments without explicit approval, bypassing authorization boundaries.",
+      "title": "OpenClaw versions prior to 2026.2.26 contain an authorization bypass vulnerability in the pairing-st...",
+      "description": "OpenClaw versions prior to 2026.2.26 contain an authorization bypass vulnerability in the pairing-store access control for direct message pairing policy that allows attackers to reuse pairing approvals across multiple accounts. An attacker approved as a sender in one account can be automatically accepted in another account in multi-account deployments without explicit approval, bypassing authorization boundaries.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -12390,7 +12705,7 @@
       "type": "unknown_cwe_184",
       "nvd_category_id": "CWE-184",
       "title": "OpenClaw versions prior to 2026.2.21 contain a stdin-only policy bypass vulnerability in the grep to...",
-      "description": "OpenClaw versions prior to 2026.2.21 contain a stdin-only policy bypass vulnerability in the grep tool within tools.exec.safeBins that allows attackers to read arbitrary files by supplying a pattern via the -e flag parameter. Attackers can include a positional filename operand to bypass file access restrictions and read sensitive files .env from the working directory.",
+      "description": "OpenClaw versions prior to 2026.2.21 contain a stdin-only policy bypass vulnerability in the grep tool within tools.exec.safeBins that allows attackers to read arbitrary files by supplying a pattern via the -e flag parameter. Attackers can include a positional filename operand to bypass file access restrictions and read sensitive files.env from the working directory.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -14008,8 +14323,8 @@
       "severity": "medium",
       "type": "unknown_cwe_829",
       "nvd_category_id": "CWE-829",
-      "title": "OpenClaw version 2026.2.22 prior to 2026.2.23 contain an arbitrary code execution vulnerability in s...",
-      "description": "OpenClaw version 2026.2.22 prior to 2026.2.23 contain an arbitrary code execution vulnerability in shell-env that allows attackers to execute attacker-controlled binaries by exploiting trusted-prefix fallback logic for the $SHELL variable. An attacker can influence the $SHELL environment variable on systems with writable trusted-prefix directories such as /opt/homebrew/bin to execute arbitrary binaries in the OpenClaw process context.",
+      "title": "OpenClaw version 2026.2.22 prior to 2026.2.23 contains an arbitrary code execution vulnerability in ...",
+      "description": "OpenClaw version 2026.2.22 prior to 2026.2.23 contains an arbitrary code execution vulnerability in shell-env that allows attackers to execute attacker-controlled binaries by exploiting trusted-prefix fallback logic for the $SHELL variable. An attacker can influence the $SHELL environment variable on systems with writable trusted-prefix directories such as /opt/homebrew/bin to execute arbitrary binaries in the OpenClaw process context.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -14620,8 +14935,8 @@
       "severity": "high",
       "type": "unknown_cwe_770",
       "nvd_category_id": "CWE-770",
-      "title": "OpenClaw versions 2026.2.21-2 prior to 2026.2.22 and @openclaw/voice-call versions 2026.2.21 prior t...",
-      "description": "OpenClaw versions 2026.2.21-2 prior to 2026.2.22 and @openclaw/voice-call versions 2026.2.21 prior to 2026.2.22 accept media-stream WebSocket upgrades before stream validation, allowing unauthenticated clients to establish connections. Remote attackers can hold idle pre-authenticated sockets open to consume connection resources and degrade service availability for legitimate streams.",
+      "title": "OpenClaw versions 2026.2.21-2 up to, but not including, 2026.2.22, and @openclaw/voice-call versions...",
+      "description": "OpenClaw versions 2026.2.21-2 up to, but not including, 2026.2.22, and @openclaw/voice-call versions 2026.2.21 up to, but not including, 2026.2.22 accept media-stream WebSocket upgrades before stream validation, allowing unauthenticated clients to establish connections. Remote attackers can hold idle pre-authenticated sockets open to consume connection resources and degrade service availability for legitimate streams.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "cpe:2.3:a:openclaw:openclaw\\/voice-call:*:*:*:*:*:node.js:*:*",
@@ -16555,8 +16870,8 @@
       "severity": "medium",
       "type": "unknown_cwe_1327",
       "nvd_category_id": "CWE-1327",
-      "title": "OpenClaw version 2026.1.14-1 prior to 2026.2.12 contain an improper network binding vulnerability in...",
-      "description": "OpenClaw version 2026.1.14-1 prior to 2026.2.12 contain an improper network binding vulnerability in the Chrome extension (must be installed and enabled) relay server that treats wildcard hosts as loopback addresses, allowing the relay HTTP/WS server to bind to all interfaces when a wildcard cdpUrl is configured. Remote attackers can access relay HTTP endpoints off-host to leak service presence and port information, or conduct denial-of-service and brute-force attacks against the relay token header.",
+      "title": "OpenClaw version 2026.1.14-1 prior to 2026.2.12 contains an improper network binding vulnerability i...",
+      "description": "OpenClaw version 2026.1.14-1 prior to 2026.2.12 contains an improper network binding vulnerability in the Chrome extension (must be installed and enabled) relay server that treats wildcard hosts as loopback addresses, allowing the relay HTTP/WS server to bind to all interfaces when a wildcard cdpUrl is configured. Remote attackers can access relay HTTP endpoints off-host to leak service presence and port information, or conduct denial-of-service and brute-force attacks against the relay token header.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
