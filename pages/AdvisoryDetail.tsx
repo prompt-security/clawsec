@@ -10,7 +10,6 @@ import {
   LEGACY_ADVISORY_FEED_URL,
   LOCAL_FEED_PATH,
 } from '../constants';
-import { formatLongDateTime } from '../utils/dateFormatters';
 
 export const AdvisoryDetail: React.FC = () => {
   const { advisoryId } = useParams<{ advisoryId: string }>();
@@ -56,6 +55,20 @@ export const AdvisoryDetail: React.FC = () => {
 
     fetchAdvisory();
   }, [advisoryId]);
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   const getSeverityClasses = (severity: string) => {
     switch (severity) {
@@ -141,7 +154,7 @@ export const AdvisoryDetail: React.FC = () => {
             {getTypeLabel(advisory.type)}
           </span>
           <span className="text-sm text-gray-500">
-            Published {formatLongDateTime(advisory.published)}
+            Published {formatDate(advisory.published)}
           </span>
           {advisory.platforms?.map((platform) => (
             <AdvisoryPlatformBadge
@@ -253,7 +266,7 @@ export const AdvisoryDetail: React.FC = () => {
           </div>
           <div className="flex justify-between md:block">
             <dt className="text-gray-500 mb-1">Published</dt>
-            <dd className="text-white">{formatLongDateTime(advisory.published)}</dd>
+            <dd className="text-white">{formatDate(advisory.published)}</dd>
           </div>
           {advisory.platforms && advisory.platforms.length > 0 && (
             <div className="flex justify-between md:block">

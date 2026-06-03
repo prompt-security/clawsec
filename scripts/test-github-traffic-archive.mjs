@@ -214,5 +214,8 @@ test('traffic archive workflow uses a daily schedule and a dedicated archive bra
   assert.match(workflow, /TRAFFIC_ARCHIVE_BRANCH:\s+traffic-archive/);
   assert.match(workflow, /TRAFFIC_ARCHIVE_TOKEN/);
   assert.match(workflow, /node scripts\/archive-github-traffic\.mjs/);
+  assert.match(workflow, /git add traffic\/archive\.json traffic\/summary\.json/);
+  assert.match(workflow, /git rm --ignore-unmatch traffic\/README\.md/);
+  assert.doesNotMatch(workflow, /git add .*traffic\/README\.md/);
   assert.match(workflow, /git push origin HEAD:\$\{TRAFFIC_ARCHIVE_BRANCH\}/);
 });

@@ -8,7 +8,6 @@ import { SkillDetail } from './pages/SkillDetail';
 import { AdvisoryDetail } from './pages/AdvisoryDetail';
 import { WikiBrowser } from './pages/WikiBrowser';
 import { ProductDemo } from './pages/ProductDemo';
-import { TrafficAnalytics } from './pages/TrafficAnalytics';
 
 const App: React.FC = () => {
   return (
@@ -21,7 +20,6 @@ const App: React.FC = () => {
           <Route path="/feed" element={<FeedSetup />} />
           <Route path="/feed/:advisoryId" element={<AdvisoryDetail />} />
           <Route path="/demo" element={<ProductDemo />} />
-          <Route path="/traffic" element={<TrafficAnalytics />} />
           <Route path="/wiki/*" element={<WikiBrowser />} />
         </Routes>
       </Layout>

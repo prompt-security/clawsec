@@ -404,25 +404,6 @@ export const writeJson = async (file, value) => {
   await writeTextAtomic(file, `${JSON.stringify(value, null, 2)}\n`);
 };
 
-const buildArchiveReadme = (archive) => `# GitHub Traffic Archive
-
-This branch is maintained by the scheduled ClawSec traffic archival workflow.
-
-GitHub only exposes repository traffic for a short rolling window. The workflow
-captures the traffic API once per day and merges the result into:
-
-- \`traffic/archive.json\`: normalized long-term source of truth.
-- \`traffic/summary.json\`: compact dashboard payload.
-
-Views and clones are merged by daily timestamp, so overlapping 14-day windows do
-not double-count. Referrers and popular paths are kept as dated snapshots because
-GitHub only exposes rolling top-10 lists for those endpoints.
-
-Repository: \`${archive.repository}\`
-Archive started: \`${archive.archive_started_at}\`
-Last updated: \`${archive.updated_at}\`
-`;
-
 const parseArgs = (args) => {
   const options = {};
   for (let index = 0; index < args.length; index += 1) {
@@ -468,7 +449,6 @@ const main = async () => {
   );
   const archiveFile = path.join(archiveDir, 'archive.json');
   const summaryFile = path.join(archiveDir, 'summary.json');
-  const readmeFile = path.join(archiveDir, 'README.md');
   const repository = normalizeRepository(options.repo || process.env.GITHUB_REPOSITORY);
   const token = process.env.GH_TRAFFIC_TOKEN
     || process.env.TRAFFIC_ARCHIVE_TOKEN
@@ -487,7 +467,6 @@ const main = async () => {
 
   await writeJson(archiveFile, archive);
   await writeJson(summaryFile, summary);
-  await writeTextAtomic(readmeFile, buildArchiveReadme(archive));
 
   console.log(`Archived GitHub traffic for ${repository} at ${archive.updated_at}`);
   console.log(`Daily views retained: ${archive.daily.views.length}`);

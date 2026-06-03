@@ -29,7 +29,6 @@
 
 ## Operations
 - [Security Signing Runbook](security-signing-runbook.md)
-- [Repository Traffic Archive](repository-traffic-archive.md)
 - [Signed Feed Migration Plan](migration-signed-feed.md)
 - [Platform Verification Checklist](platform-verification.md)
 - [Cross-Platform Remediation Plan](remediation-plan.md)

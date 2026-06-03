@@ -62,7 +62,8 @@ jobs:
           set -euo pipefail
 
           cd ../traffic-archive
-          git add traffic/archive.json traffic/summary.json traffic/README.md
+          git add traffic/archive.json traffic/summary.json
+          git rm --ignore-unmatch traffic/README.md
 
           if git diff --cached --quiet; then
             echo "No traffic archive changes."
