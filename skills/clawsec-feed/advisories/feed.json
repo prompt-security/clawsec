@@ -1,8 +1,218 @@
 {
   "version": "0.0.3",
-  "updated": "2026-05-31T07:16:20Z",
+  "updated": "2026-06-03T07:38:12Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-10548",
+      "severity": "medium",
+      "type": "improper_authentication",
+      "nvd_category_id": "CWE-287",
+      "title": "A security flaw has been discovered in NousResearch hermes-agent up to 2026.4.23. This affects the f...",
+      "description": "A security flaw has been discovered in NousResearch hermes-agent up to 2026.4.23. This affects the function _sync_anthropic_entry_from_credentials_file of the file agent/credential_pool.py of the component Credential Pool Synchronization. The manipulation results in improper authentication. The attack must be initiated from a local position. The exploit has been released to the public and may be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-02T02:16:15.233",
+      "references": [
+        "https://gist.github.com/YLChen-007/caf38652afeccbbd53a9d77152b6198d",
+        "https://vuldb.com/cve/CVE-2026-10548",
+        "https://vuldb.com/submit/822026"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10548",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-10224",
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "A security vulnerability has been detected in NousResearch hermes-agent up to 2026.4.30. This vulner...",
+      "description": "A security vulnerability has been detected in NousResearch hermes-agent up to 2026.4.30. This vulnerability affects the function _handle_webhook_request of the file gateway/platforms/feishu.py of the component Webhook Endpoint. Such manipulation leads to resource consumption. The attack can be launched remotely. The exploit has been disclosed publicly and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-01T06:16:38.657",
+      "references": [
+        "https://gist.github.com/YLChen-007/0304e313d811f187ade93d3b01de0f87",
+        "https://vuldb.com/cve/CVE-2026-10224",
+        "https://vuldb.com/submit/822022"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10224",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); remotely exploitable without authentication; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-10223",
+      "severity": "medium",
+      "type": "unknown_cwe_707",
+      "nvd_category_id": "CWE-707",
+      "title": "A weakness has been identified in NousResearch hermes-agent up to 2026.4.30. This affects the functi...",
+      "description": "A weakness has been identified in NousResearch hermes-agent up to 2026.4.30. This affects the function _scan_memory_content of the file tools/memory_tool.py. This manipulation causes injection. The attack can be initiated remotely. The exploit has been made available to the public and could be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-01T06:16:37.900",
+      "references": [
+        "https://gist.github.com/YLChen-007/a1fb77ad2488c545a35d0f66356ea7b4",
+        "https://vuldb.com/cve/CVE-2026-10223",
+        "https://vuldb.com/submit/822021"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10223",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-10222",
+      "severity": "medium",
+      "type": "unknown_cwe_707",
+      "nvd_category_id": "CWE-707",
+      "title": "A security flaw has been discovered in NousResearch hermes-agent up to 2026.4.30. Affected by this i...",
+      "description": "A security flaw has been discovered in NousResearch hermes-agent up to 2026.4.30. Affected by this issue is the function _sanitize_env_lines of the file hermes_cli/config.py. The manipulation results in injection. It is possible to launch the attack remotely. The attack requires a high level of complexity. The exploitation is known to be difficult. The exploit has been released to the public and may be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-01T06:16:36.053",
+      "references": [
+        "https://gist.github.com/YLChen-007/7ee2eeaa383b3540d2e8854250c03fb0",
+        "https://vuldb.com/cve/CVE-2026-10222",
+        "https://vuldb.com/submit/822020"
+      ],
+      "cvss_score": 5.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10222",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.6); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-10221",
+      "severity": "high",
+      "type": "unknown_cwe_707",
+      "nvd_category_id": "CWE-707",
+      "title": "A vulnerability was identified in NousResearch hermes-agent up to 0.12.0. Affected by this vulnerabi...",
+      "description": "A vulnerability was identified in NousResearch hermes-agent up to 0.12.0. Affected by this vulnerability is the function _compress_context of the file run_agent.py. The manipulation leads to injection. It is possible to initiate the attack remotely. The exploit is publicly available and might be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-01T04:16:21.550",
+      "references": [
+        "https://gist.github.com/YLChen-007/d343fcfe2c009cd45f56dc475fd5ac03",
+        "https://vuldb.com/cve/CVE-2026-10221",
+        "https://vuldb.com/submit/822019"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10221",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-10220",
+      "severity": "high",
+      "type": "unknown_cwe_707",
+      "nvd_category_id": "CWE-707",
+      "title": "A vulnerability was determined in NousResearch hermes-agent up to 2026.4.30. Affected is the functio...",
+      "description": "A vulnerability was determined in NousResearch hermes-agent up to 2026.4.30. Affected is the function _serve_plugin_skill/skill_view of the file tools/skills_tool.py. Executing a manipulation can lead to injection. The attack may be performed from remote. The exploit has been publicly disclosed and may be utilized. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-01T04:16:21.260",
+      "references": [
+        "https://gist.github.com/YLChen-007/9dd399c6f75b31fa741a613dfd41de08",
+        "https://vuldb.com/cve/CVE-2026-10220",
+        "https://vuldb.com/submit/822018"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-10220",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-35674",
       "severity": "high",
@@ -11,6 +221,7 @@
       "title": "OpenClaw before 2026.5.18 contains a scope bypass vulnerability in the Gateway chat.send route that ...",
       "description": "OpenClaw before 2026.5.18 contains a scope bypass vulnerability in the Gateway chat.send route that allows scoped clients to execute privileged commands. Attackers with operator.write scope can deliver commands through inherited external routes to bypass operator.approvals and operator.admin scope requirements, enabling unauthorized plugin, config, MCP, allowlist, and ACP mutations.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:-:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -45,6 +256,7 @@
       "title": "OpenClaw before 2026.4.29 contains an SSRF policy bypass vulnerability in browser debug and export r...",
       "description": "OpenClaw before 2026.4.29 contains an SSRF policy bypass vulnerability in browser debug and export routes that allows reuse of already-open blocked tabs. Attackers with access to these routes can bypass private-network SSRF policies by reusing blocked tabs to export or inspect content that should remain protected.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -79,6 +291,7 @@
       "title": "OpenClaw before 2026.5.18 contains an authorization bypass vulnerability in QQBot native approval bu...",
       "description": "OpenClaw before 2026.5.18 contains an authorization bypass vulnerability in QQBot native approval buttons that fails to enforce configured approver identity. Non-approver users can click approval buttons to resolve pending exec or plugin approval requests without proper authorization.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:-:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -113,6 +326,7 @@
       "title": "OpenClaw before 2026.4.29 contains a policy bypass vulnerability in QQBot admin commands that allows...",
       "description": "OpenClaw before 2026.4.29 contains a policy bypass vulnerability in QQBot admin commands that allows authenticated senders to skip DM-only and allowFrom policy checks. Attackers can route admin commands from unauthorized senders or contexts to execute restricted behavior that policy should have blocked.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -147,6 +361,7 @@
       "title": "OpenClaw before 2026.5.12 contains a privilege escalation vulnerability in Slack plugin approvals th...",
       "description": "OpenClaw before 2026.5.12 contains a privilege escalation vulnerability in Slack plugin approvals that allows exec-authorized users to resolve plugin approvals through the exec approver gate. Attackers with limited exec approval permissions can bypass intended approval splits to approve plugin actions outside operator configuration.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -181,6 +396,7 @@
       "title": "OpenClaw before 2026.5.4 contains an authorization bypass vulnerability in the bundled device-pair p...",
       "description": "OpenClaw before 2026.5.4 contains an authorization bypass vulnerability in the bundled device-pair plugin that allows non-owner authorized chat senders to issue device-pairing bootstrap codes without proper scope validation. Attackers with chat command access can create setup codes to enroll devices with operator/node capabilities, granting persistent credentials until manual removal.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2214,7 +2430,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-rggc-m335-3wvj"
@@ -2259,7 +2476,8 @@
         "CWE-284"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-6fvr-66p3-3qj4"
@@ -2304,7 +2522,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-q99w-vh6v-q3v7"
@@ -2349,7 +2568,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-3c6j-hq33-3jv4"
@@ -2394,7 +2614,8 @@
         "CWE-918"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-2hfg-4fh4-qp7f"
@@ -2441,7 +2662,8 @@
         "CWE-829"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-v6r2-jh58-xx6w"
@@ -2487,7 +2709,8 @@
         "CWE-284"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-mhq8-78pj-5j79"
@@ -2534,7 +2757,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-5cj2-3jr2-5h77"
@@ -2579,7 +2803,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-xww8-gqvh-92x9"
@@ -2624,7 +2849,8 @@
         "CWE-284"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-qh2f-99mv-mrcf"
@@ -12114,8 +12340,8 @@
       "id": "GHSA-846p-hgpv-vphc",
       "ghsa_id": "GHSA-846p-hgpv-vphc",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "high",
       "type": "github_security_advisory",
