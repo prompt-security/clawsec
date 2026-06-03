@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated": "2026-05-31T07:16:21Z",
+  "updated": "2026-06-03T07:38:13Z",
   "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
   "stale_after_days": 60,
   "semantics": {
@@ -1998,7 +1998,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-rggc-m335-3wvj"
@@ -2042,7 +2043,8 @@
         "CWE-284"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-6fvr-66p3-3qj4"
@@ -2086,7 +2088,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-q99w-vh6v-q3v7"
@@ -2130,7 +2133,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-3c6j-hq33-3jv4"
@@ -2174,7 +2178,8 @@
         "CWE-918"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-2hfg-4fh4-qp7f"
@@ -2220,7 +2225,8 @@
         "CWE-829"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-v6r2-jh58-xx6w"
@@ -2265,7 +2271,8 @@
         "CWE-284"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-mhq8-78pj-5j79"
@@ -2311,7 +2318,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-5cj2-3jr2-5h77"
@@ -2355,7 +2363,8 @@
         "CWE-863"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-xww8-gqvh-92x9"
@@ -2399,7 +2408,8 @@
         "CWE-284"
       ],
       "credits": [
-        "cantinagen"
+        "cantinagen",
+        "Ellahinator"
       ],
       "aliases": [
         "GHSA-qh2f-99mv-mrcf"
@@ -2886,8 +2896,8 @@
       "id": "GHSA-846p-hgpv-vphc",
       "ghsa_id": "GHSA-846p-hgpv-vphc",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "high",
       "type": "github_security_advisory",
