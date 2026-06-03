@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 
 import {
   buildTrafficSummary,
   fetchGitHubTraffic,
   mergeTrafficArchive,
+  writeJson,
 } from './archive-github-traffic.mjs';
 
 const capturedAt = '2026-06-03T03:17:00.000Z';
@@ -133,6 +136,43 @@ test('mergeTrafficArchive keeps one referrer/path snapshot per capture date', ()
   assert.deepEqual(second.snapshots.paths[0].entries, [
     { path: '/prompt-security/clawsec/wiki', title: 'Wiki', count: 11, uniques: 7 },
   ]);
+});
+
+test('mergeTrafficArchive rejects blank referrer and path fields instead of archiving empty strings', () => {
+  assert.throws(
+    () => mergeTrafficArchive(undefined, {
+      repository: 'prompt-security/clawsec',
+      captured_at: capturedAt,
+      views: { views: [] },
+      clones: { clones: [] },
+      referrers: [{ count: 12, uniques: 9 }],
+      paths: [],
+    }),
+    /referrers\.referrer must be a non-empty string/,
+  );
+
+  assert.throws(
+    () => mergeTrafficArchive(undefined, {
+      repository: 'prompt-security/clawsec',
+      captured_at: capturedAt,
+      views: { views: [] },
+      clones: { clones: [] },
+      referrers: [],
+      paths: [{ path: '/prompt-security/clawsec', title: ' ', count: 16, uniques: 10 }],
+    }),
+    /paths\.title must be a non-empty string/,
+  );
+});
+
+test('writeJson replaces JSON through a same-directory temporary file', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'clawsec-traffic-json-'));
+  const file = path.join(dir, 'summary.json');
+
+  await writeJson(file, { version: 1, count: 1 });
+  await writeJson(file, { version: 1, count: 2 });
+
+  assert.equal(await readFile(file, 'utf8'), '{\n  "version": 1,\n  "count": 2\n}\n');
+  assert.deepEqual(await readdir(dir), ['summary.json']);
 });
 
 test('buildTrafficSummary reports count totals and labels summed daily uniques accurately', () => {

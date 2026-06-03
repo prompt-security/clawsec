@@ -22,6 +22,7 @@ import {
   TrafficReferrerEntry,
   TrafficSummary,
 } from '../types';
+import { formatUtcDateTime, formatUtcShortDate } from '../utils/dateFormatters';
 
 type TrafficMode = 'views' | 'clones';
 
@@ -34,44 +35,6 @@ const WINDOW_LABELS: Array<[keyof TrafficSummary['metrics']['views'], string]> =
 ];
 
 const formatNumber = new Intl.NumberFormat('en-US');
-
-const formatDate = (dateStr?: string | null) => {
-  if (!dateStr) {
-    return 'n/a';
-  }
-
-  try {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      timeZone: 'UTC',
-    });
-  } catch {
-    return dateStr;
-  }
-};
-
-const formatDateTime = (dateStr?: string | null) => {
-  if (!dateStr) {
-    return 'n/a';
-  }
-
-  try {
-    return new Date(dateStr).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'UTC',
-      timeZoneName: 'short',
-    });
-  } catch {
-    return dateStr;
-  }
-};
 
 const MetricCard = ({
   label,
@@ -98,7 +61,7 @@ const MetricCard = ({
       </div>
     </div>
     <p className="mt-4 text-xs text-gray-500">
-      {formatDate(metric.first_date)} - {formatDate(metric.last_date)}
+      {formatUtcShortDate(metric.first_date)} - {formatUtcShortDate(metric.last_date)}
     </p>
   </div>
 );
@@ -138,7 +101,7 @@ const DailyChart = ({
             <div
               key={entry.timestamp}
               className="group flex min-w-0 flex-1 items-end"
-              title={`${formatDate(entry.timestamp)}: ${formatNumber.format(entry.count)} ${mode}, ${formatNumber.format(entry.uniques)} daily uniques`}
+              title={`${formatUtcShortDate(entry.timestamp)}: ${formatNumber.format(entry.count)} ${mode}, ${formatNumber.format(entry.uniques)} daily uniques`}
             >
               <div
                 className={`w-full rounded-t-sm ${barClass} opacity-70 transition-opacity group-hover:opacity-100`}
@@ -149,8 +112,8 @@ const DailyChart = ({
         })}
       </div>
       <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-        <span>{formatDate(chartEntries[0].timestamp)}</span>
-        <span>{formatDate(chartEntries.at(-1)?.timestamp)}</span>
+        <span>{formatUtcShortDate(chartEntries[0].timestamp)}</span>
+        <span>{formatUtcShortDate(chartEntries.at(-1)?.timestamp)}</span>
       </div>
     </div>
   );
@@ -171,7 +134,7 @@ const SnapshotList = ({
     <div className="mb-5 flex items-center justify-between gap-4">
       <div>
         <h2 className="text-lg font-bold text-white">{title}</h2>
-        <p className="text-xs text-gray-500">Captured {formatDateTime(capturedAt)}</p>
+        <p className="text-xs text-gray-500">Captured {formatUtcDateTime(capturedAt)}</p>
       </div>
       <Activity className="h-5 w-5 text-clawd-accent" />
     </div>
@@ -321,7 +284,7 @@ export const TrafficAnalytics: React.FC = () => {
           <section className="flex flex-col gap-4 rounded-lg border border-clawd-700 bg-clawd-900/70 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 text-sm text-gray-400">
               <Users className="h-5 w-5 text-clawd-accent" />
-              <span>Updated {formatDateTime(summary.updated_at)}</span>
+              <span>Updated {formatUtcDateTime(summary.updated_at)}</span>
             </div>
             <div className="inline-flex rounded-lg bg-clawd-800 p-1">
               <button

@@ -37,6 +37,19 @@ const toNonNegativeInteger = (value, label) => {
   return Math.trunc(number);
 };
 
+const toRequiredString = (value, label) => {
+  if (typeof value !== 'string') {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+
+  return trimmed;
+};
+
 const normalizeRepository = (repo) => {
   const normalized = String(repo || '').trim();
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(normalized)) {
@@ -65,7 +78,7 @@ const normalizeReferrers = (entries) => {
   }
 
   return entries.map((entry) => ({
-    referrer: String(entry.referrer || '').trim(),
+    referrer: toRequiredString(entry.referrer, 'referrers.referrer'),
     count: toNonNegativeInteger(entry.count, 'referrers.count'),
     uniques: toNonNegativeInteger(entry.uniques, 'referrers.uniques'),
   }));
@@ -77,8 +90,8 @@ const normalizePaths = (entries) => {
   }
 
   return entries.map((entry) => ({
-    path: String(entry.path || '').trim(),
-    title: String(entry.title || '').trim(),
+    path: toRequiredString(entry.path, 'paths.path'),
+    title: toRequiredString(entry.title, 'paths.title'),
     count: toNonNegativeInteger(entry.count, 'paths.count'),
     uniques: toNonNegativeInteger(entry.uniques, 'paths.uniques'),
   }));
@@ -364,9 +377,31 @@ const readJsonIfPresent = async (file) => {
   }
 };
 
-const writeJson = async (file, value) => {
-  await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+const writeTextAtomic = async (file, content) => {
+  const dir = path.dirname(file);
+  const tempFile = path.join(dir, `.${path.basename(file)}.${process.pid}.${Date.now()}.tmp`);
+  let handle;
+
+  await fs.mkdir(dir, { recursive: true });
+
+  try {
+    handle = await fs.open(tempFile, 'w');
+    await handle.writeFile(content, 'utf8');
+    await handle.sync();
+    await handle.close();
+    handle = undefined;
+    await fs.rename(tempFile, file);
+  } catch (error) {
+    if (handle) {
+      await handle.close().catch(() => {});
+    }
+    await fs.unlink(tempFile).catch(() => {});
+    throw error;
+  }
+};
+
+export const writeJson = async (file, value) => {
+  await writeTextAtomic(file, `${JSON.stringify(value, null, 2)}\n`);
 };
 
 const buildArchiveReadme = (archive) => `# GitHub Traffic Archive
@@ -452,7 +487,7 @@ const main = async () => {
 
   await writeJson(archiveFile, archive);
   await writeJson(summaryFile, summary);
-  await fs.writeFile(readmeFile, buildArchiveReadme(archive), 'utf8');
+  await writeTextAtomic(readmeFile, buildArchiveReadme(archive));
 
   console.log(`Archived GitHub traffic for ${repository} at ${archive.updated_at}`);
   console.log(`Daily views retained: ${archive.daily.views.length}`);

@@ -10,6 +10,7 @@ import {
   LEGACY_ADVISORY_FEED_URL,
   LOCAL_FEED_PATH,
 } from '../constants';
+import { formatShortDate } from '../utils/dateFormatters';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -129,18 +130,6 @@ export const FeedSetup: React.FC = () => {
     setCurrentPage(1);
   }, [advisories, selectedSeverity, selectedPlatform]);
 
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
   // Pagination calculations
   const totalPages = Math.ceil(filteredAdvisories.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -162,7 +151,7 @@ export const FeedSetup: React.FC = () => {
         </p>
         {lastUpdated && (
           <p className="text-xs text-gray-500">
-            Last updated: {formatDate(lastUpdated)}
+            Last updated: {formatShortDate(lastUpdated)}
           </p>
         )}
       </section>
@@ -201,7 +190,7 @@ export const FeedSetup: React.FC = () => {
           <>
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {currentAdvisories.map((item) => (
-                <AdvisoryCard key={item.id} advisory={item} formatDate={formatDate} />
+                <AdvisoryCard key={item.id} advisory={item} formatDate={formatShortDate} />
               ))}
             </div>
 
