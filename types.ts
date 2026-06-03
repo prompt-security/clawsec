@@ -146,3 +146,75 @@ export interface SkillJson {
   nanoclaw?: SkillPlatformMetadata | null;
   picoclaw?: SkillPlatformMetadata | null;
 }
+
+export interface TrafficDailyEntry {
+  timestamp: string;
+  count: number;
+  uniques: number;
+}
+
+export interface TrafficMetricWindow {
+  days?: number;
+  count: number;
+  sum_daily_uniques: number;
+  unique_semantics: 'sum_of_daily_uniques';
+  first_date: string | null;
+  last_date: string | null;
+}
+
+export interface TrafficMetricSummary {
+  last_14_days: TrafficMetricWindow;
+  last_30_days: TrafficMetricWindow;
+  last_90_days: TrafficMetricWindow;
+  last_365_days: TrafficMetricWindow;
+  all_time: TrafficMetricWindow;
+}
+
+export interface TrafficReferrerEntry {
+  referrer: string;
+  count: number;
+  uniques: number;
+}
+
+export interface TrafficPathEntry {
+  path: string;
+  title: string;
+  count: number;
+  uniques: number;
+}
+
+export interface TrafficSnapshot<TEntry> {
+  captured_at: string;
+  date: string;
+  entries: TEntry[];
+}
+
+export interface TrafficSummary {
+  version: number;
+  repository: string;
+  generated_at: string;
+  archive_started_at: string | null;
+  updated_at: string | null;
+  source: {
+    api: string;
+    retention_limit: string;
+    unique_semantics: string;
+  };
+  metrics: {
+    views: TrafficMetricSummary;
+    clones: TrafficMetricSummary;
+  };
+  daily: {
+    views: TrafficDailyEntry[];
+    clones: TrafficDailyEntry[];
+  };
+  latest_snapshots: {
+    referrers: TrafficSnapshot<TrafficReferrerEntry> | null;
+    paths: TrafficSnapshot<TrafficPathEntry> | null;
+  };
+  snapshot_counts: {
+    referrers: number;
+    paths: number;
+    captures: number;
+  };
+}
