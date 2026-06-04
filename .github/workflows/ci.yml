@@ -115,6 +115,8 @@ jobs:
         run: node scripts/test-skill-release-workflow.mjs
       - name: Deploy Pages Advisory Checksums Tests
         run: node scripts/test-deploy-pages-checksums.mjs
+      - name: GitHub Traffic Archive Tests
+        run: node scripts/test-github-traffic-archive.mjs
 
   clawsec-suite-tests:
     name: ClawSec Suite Verification Tests
