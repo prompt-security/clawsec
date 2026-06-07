@@ -478,10 +478,10 @@ function pushHookVulnerability(bucket, id, severity, hook, eventKey, title, desc
 async function evaluateHook(hook, _targetPath, timeoutMs) {
   const findings = [];
   const invocationTimeoutMs = Math.max(1000, timeoutMs);
+  // Static inspection depends only on the handler source/export, so reuse it for all hook events.
+  const inspection = await inspectHookHandler(hook, invocationTimeoutMs);
 
   for (const eventKey of hook.events) {
-    const inspection = await inspectHookHandler(hook, invocationTimeoutMs);
-
     if (inspection.timedOut) {
       pushHookVulnerability(
         findings,

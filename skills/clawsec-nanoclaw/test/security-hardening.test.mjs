@@ -105,6 +105,9 @@ test('advisory matcher handles comparator ranges and fails closed on malformed s
   assert.equal(versionMatches('2026.5.18', '<=2026.5.18'), true, 'less-than-or-equal comparator must match boundary versions');
   assert.equal(versionMatches('1.4.0', '>=1.2.0 <2.0.0'), true, 'composite comparator ranges must match all clauses');
   assert.equal(versionMatches('2.0.0', '>=1.2.0 <2.0.0'), false, 'composite comparator ranges must reject failed clauses');
+  assert.equal(versionMatches('0.0.2', '<= 0.0.2'), true, 'spaced comparators must match boundary versions');
+  assert.equal(versionMatches('0.0.3', '<= 0.0.2'), false, 'spaced comparators must reject versions outside range');
+  assert.equal(versionMatches('1.2.3', '>= 1.0.0 <'), false, 'partially parsed comparator ranges must not match everything');
   assert.equal(versionMatches('1.2.3', 'not-a-range'), true, 'unparseable advisory specifiers must fail closed');
 });
 

@@ -86,10 +86,14 @@ export function versionMatches(version: string, versionSpec: string): boolean {
   if (v === spec) return true;
 
   // Parse semver components
+  const semverPattern = String.raw`v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?`;
+
   const parseVersion = (ver: string): number[] | null => {
-    const match = ver.match(/^v?(\d+)\.(\d+)\.(\d+)(?:[-+][0-9A-Za-z.-]+)?$/);
+    const match = ver.match(new RegExp(`^${semverPattern}$`));
     if (!match) return null;
-    return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+    const parts = match[0].replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)/);
+    if (!parts) return null;
+    return [parseInt(parts[1], 10), parseInt(parts[2], 10), parseInt(parts[3], 10)];
   };
 
   const compareVersions = (left: number[], right: number[]): number => {
@@ -101,12 +105,12 @@ export function versionMatches(version: string, versionSpec: string): boolean {
   };
 
   const evaluateComparator = (comparator: string): boolean => {
-    const match = comparator.trim().match(/^(<=|>=|<|>|=)?\s*(v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/);
-    if (!match) return true;
+    const match = comparator.trim().match(new RegExp(`^(<=|>=|<|>|=)?\\s*(${semverPattern})$`));
+    if (!match) return false;
 
     const operator = match[1] || '=';
     const comparatorParts = parseVersion(match[2]);
-    if (!comparatorParts) return true;
+    if (!comparatorParts) return false;
 
     const comparison = compareVersions(vParts, comparatorParts);
     if (operator === '<') return comparison < 0;
@@ -116,18 +120,31 @@ export function versionMatches(version: string, versionSpec: string): boolean {
     return comparison === 0;
   };
 
+  const extractComparatorTokens = (range: string): string[] | null => {
+    const tokenPattern = new RegExp(`(?:<=|>=|<|>|=)?\\s*${semverPattern}`, 'g');
+    const tokens: string[] = [];
+    let cursor = 0;
+    let match = tokenPattern.exec(range);
+
+    while (match) {
+      const gap = range.slice(cursor, match.index);
+      if (!/^[\s,]*$/.test(gap)) return null;
+
+      tokens.push(match[0].trim());
+      cursor = match.index + match[0].length;
+      match = tokenPattern.exec(range);
+    }
+
+    if (!/^[\s,]*$/.test(range.slice(cursor))) return null;
+    return tokens.length > 0 ? tokens : null;
+  };
+
   const vParts = parseVersion(v);
   if (!vParts) return true;
 
-  const comparatorTokens = spec
-    .split(/[\s,]+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
-
-  if (
-    comparatorTokens.length > 0 &&
-    comparatorTokens.every((token) => /^(?:<=|>=|<|>|=)\s*v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(token))
-  ) {
+  if (/(?:<=|>=|<|>|=)/.test(spec)) {
+    const comparatorTokens = extractComparatorTokens(spec);
+    if (!comparatorTokens) return false;
     return comparatorTokens.every((token) => evaluateComparator(token));
   }
 
@@ -155,7 +172,7 @@ export function versionMatches(version: string, versionSpec: string): boolean {
     return vParts[2] >= specParts[2];
   }
 
-  if (/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(spec)) {
+  if (new RegExp(`^${semverPattern}$`).test(spec)) {
     return compareVersions(vParts, specParts) === 0;
   }
 

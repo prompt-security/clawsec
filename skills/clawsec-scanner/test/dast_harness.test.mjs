@@ -89,6 +89,11 @@ metadata: { "openclaw": { "events": [${eventsLiteral}] } }
   await fs.writeFile(path.join(hookDir, handlerFile), handlerSource, "utf8");
 }
 
+async function writeExecutable(filePath, content) {
+  await fs.writeFile(filePath, content, "utf8");
+  await fs.chmod(filePath, 0o755);
+}
+
 async function testSafeHookIsInspectedWithoutExecution() {
   const testName = "DAST harness: inspects hooks without executing target code";
   const tmp = await createTempDir();
@@ -250,10 +255,76 @@ export default handler;
   }
 }
 
+async function testStaticInspectionRunsOncePerHook() {
+  const testName = "DAST harness: static inspection runs once per hook across events";
+  const tmp = await createTempDir();
+
+  try {
+    const targetPath = path.join(tmp.path, "skill");
+    const hookDir = path.join(targetPath, "hooks", "multi-event-hook");
+    const binDir = path.join(tmp.path, "bin");
+    const nodeLogPath = path.join(tmp.path, "node-invocations.log");
+
+    await writeHookFixture(
+      hookDir,
+      '"agent:bootstrap", "command:new", "message:preprocessed"',
+      `export default async function handler() {
+  return;
+}
+`,
+    );
+
+    await fs.mkdir(binDir, { recursive: true });
+    await writeExecutable(
+      path.join(binDir, "node"),
+      `#!${process.execPath}
+import fs from "node:fs";
+import { spawnSync } from "node:child_process";
+
+fs.appendFileSync(${JSON.stringify(nodeLogPath)}, JSON.stringify(process.argv.slice(2)) + "\\n");
+const result = spawnSync(${JSON.stringify(process.execPath)}, process.argv.slice(2), {
+  env: process.env,
+  stdio: ["ignore", "inherit", "inherit"],
+});
+process.exit(result.status ?? 1);
+`,
+    );
+
+    const result = await runDast(targetPath, 2500, {
+      PATH: `${binDir}:${process.env.PATH}`,
+    });
+
+    const log = await fs.readFile(nodeLogPath, "utf8");
+    const invocations = log
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const executorCount = invocations.filter((args) => String(args[0] || "").endsWith("dast_hook_executor.mjs")).length;
+    const staticCoverageCount = Array.isArray(result.report?.vulnerabilities)
+      ? result.report.vulnerabilities.filter((v) => String(v.id || "").includes("DAST-STATIC-COVERAGE")).length
+      : 0;
+
+    if (result.code === 0 && executorCount === 1 && staticCoverageCount === 3) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected one executor spawn and three per-event findings. Got exit=${result.code}, executorCount=${executorCount}, staticCoverageCount=${staticCoverageCount}, invocations=${JSON.stringify(invocations)}`,
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  } finally {
+    await tmp.cleanup();
+  }
+}
+
 async function main() {
   await testSafeHookIsInspectedWithoutExecution();
   await testMaliciousHandlerIsNotExecutedForPayloadChecks();
   await testTypeScriptHookIsStaticallyInspectedWithoutCompiler();
+  await testStaticInspectionRunsOncePerHook();
 
   report();
   exitWithResults();
