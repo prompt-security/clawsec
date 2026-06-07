@@ -1,6 +1,6 @@
 ---
 name: clawsec-clawhub-checker
-version: 0.0.4
+version: 0.0.5
 description: ClawHub reputation checker for clawsec-suite. Adds a standalone reputation gate before guarded skill installation.
 homepage: https://clawsec.prompt.security
 clawdis:

@@ -35,6 +35,12 @@ function blockOnMissingScannerData(result, warning) {
   result.blocked = true;
 }
 
+function blockOnMaliciousScannerData(result, warning) {
+  result.warnings.push(warning);
+  result.score = 0;
+  result.blocked = true;
+}
+
 function parseJson(raw, label, warnings) {
   try {
     return JSON.parse(raw);
@@ -58,7 +64,10 @@ function maybeApplyVersionSecuritySignals(result, versionDetails) {
     return;
   }
 
-  if (typeof security.status === "string" && security.status.toLowerCase() === "suspicious") {
+  const securityStatus = typeof security.status === "string" ? security.status.toLowerCase() : "";
+  if (securityStatus === "malicious") {
+    blockOnMaliciousScannerData(result, "ClawHub static moderation marked the version as malicious");
+  } else if (securityStatus === "suspicious") {
     result.warnings.push("ClawHub static moderation marked the version as suspicious");
     result.score -= 30;
   }
@@ -82,7 +91,15 @@ function maybeApplyVersionSecuritySignals(result, versionDetails) {
     "";
   const normalizedStatus = vtStatus.toLowerCase();
 
-  if (normalizedStatus === "suspicious") {
+  if (normalizedStatus === "malicious") {
+    result.virustotal.push("ClawHub VirusTotal scan returned malicious");
+    blockOnMaliciousScannerData(result, "ClawHub VirusTotal scan returned malicious");
+
+    const vtSummary = typeof vt.analysis === "string" ? vt.analysis.trim() : "";
+    if (vtSummary) {
+      result.virustotal.push(vtSummary.split("\n")[0]);
+    }
+  } else if (normalizedStatus === "suspicious") {
     result.virustotal.push("ClawHub VirusTotal scan returned suspicious");
     result.score -= 40;
 

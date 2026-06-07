@@ -11,6 +11,9 @@ import fs from 'fs';
 import path from 'path';
 import { IntegrityMonitor } from '../guardian/integrity-monitor';
 
+const RESULT_DIR = '/workspace/ipc/clawsec_results';
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+
 // ============================================================================
 // Integrity Service (Singleton)
 // ============================================================================
@@ -84,15 +87,21 @@ export async function handleIntegrityIpc(
   logger: any
 ): Promise<void> {
   const { type, requestId, groupFolder: _groupFolder } = task;
+  const validatedRequestId = validateRequestId(requestId);
+
+  if (!validatedRequestId) {
+    logger.warn({ type, requestId }, 'Invalid integrity IPC request id');
+    return;
+  }
+
+  const safeTask = { ...task, requestId: validatedRequestId };
 
   if (!deps.integrityService) {
     logger.warn({ task }, 'IntegrityService not available');
-    if (requestId) {
-      writeResult(requestId, {
-        success: false,
-        error: 'IntegrityService not initialized'
-      });
-    }
+    writeResult(validatedRequestId, {
+      success: false,
+      error: 'IntegrityService not initialized'
+    });
     return;
   }
 
@@ -103,31 +112,29 @@ export async function handleIntegrityIpc(
       await service.initialize();
     } catch (error) {
       logger.error({ error }, 'Failed to initialize IntegrityService');
-      if (requestId) {
-        writeResult(requestId, {
-          success: false,
-          error: `Initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        });
-      }
+      writeResult(validatedRequestId, {
+        success: false,
+        error: `Initialization failed: ${error instanceof Error ? error.message : String(error)}`
+      });
       return;
     }
   }
 
   switch (type) {
     case 'integrity_check':
-      await handleIntegrityCheck(task, service, logger);
+      await handleIntegrityCheck(safeTask, service, logger);
       break;
 
     case 'integrity_approve':
-      await handleIntegrityApprove(task, service, logger);
+      await handleIntegrityApprove(safeTask, service, logger);
       break;
 
     case 'integrity_status':
-      await handleIntegrityStatus(task, service, logger);
+      await handleIntegrityStatus(safeTask, service, logger);
       break;
 
     case 'integrity_verify_audit':
-      await handleIntegrityVerifyAudit(task, service, logger);
+      await handleIntegrityVerifyAudit(safeTask, service, logger);
       break;
 
     default:
@@ -280,15 +287,40 @@ async function handleIntegrityVerifyAudit(
 // Helper Functions
 // ============================================================================
 
+function validateRequestId(requestId: unknown): string | null {
+  if (typeof requestId !== 'string') return null;
+  const normalized = requestId.trim();
+  if (!REQUEST_ID_PATTERN.test(normalized)) return null;
+  return normalized;
+}
+
+function resolveResultPath(requestId: string): string {
+  const safeRequestId = validateRequestId(requestId);
+  if (!safeRequestId) {
+    throw new Error('Invalid integrity IPC request id');
+  }
+
+  const resultDir = RESULT_DIR;
+  const normalizedResultDir = path.resolve(resultDir);
+  const resultPath = path.resolve(normalizedResultDir, `${safeRequestId}.json`);
+  const relativePath = path.relative(normalizedResultDir, resultPath);
+
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    throw new Error('Integrity IPC result path escapes result directory');
+  }
+
+  return resultPath;
+}
+
 function writeResult(requestId: string, result: any): void {
-  const resultDir = '/workspace/ipc/clawsec_results';
+  const resultPath = resolveResultPath(requestId);
+  const resultDir = path.dirname(resultPath);
 
   // Ensure directory exists
   if (!fs.existsSync(resultDir)) {
     fs.mkdirSync(resultDir, { recursive: true });
   }
 
-  const resultPath = path.join(resultDir, `${requestId}.json`);
   fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
 }
 

@@ -86,16 +86,53 @@ export function versionMatches(version: string, versionSpec: string): boolean {
   if (v === spec) return true;
 
   // Parse semver components
-  const parseVersion = (ver: string): number[] => {
-    const match = ver.match(/^(\d+)\.(\d+)\.(\d+)/);
-    if (!match) return [];
+  const parseVersion = (ver: string): number[] | null => {
+    const match = ver.match(/^v?(\d+)\.(\d+)\.(\d+)(?:[-+][0-9A-Za-z.-]+)?$/);
+    if (!match) return null;
     return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
   };
 
-  const vParts = parseVersion(v);
-  const specParts = parseVersion(spec.replace(/^[~^]/, ''));
+  const compareVersions = (left: number[], right: number[]): number => {
+    for (let index = 0; index < 3; index += 1) {
+      if (left[index] > right[index]) return 1;
+      if (left[index] < right[index]) return -1;
+    }
+    return 0;
+  };
 
-  if (vParts.length === 0 || specParts.length === 0) return false;
+  const evaluateComparator = (comparator: string): boolean => {
+    const match = comparator.trim().match(/^(<=|>=|<|>|=)?\s*(v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/);
+    if (!match) return true;
+
+    const operator = match[1] || '=';
+    const comparatorParts = parseVersion(match[2]);
+    if (!comparatorParts) return true;
+
+    const comparison = compareVersions(vParts, comparatorParts);
+    if (operator === '<') return comparison < 0;
+    if (operator === '<=') return comparison <= 0;
+    if (operator === '>') return comparison > 0;
+    if (operator === '>=') return comparison >= 0;
+    return comparison === 0;
+  };
+
+  const vParts = parseVersion(v);
+  if (!vParts) return true;
+
+  const comparatorTokens = spec
+    .split(/[\s,]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+  if (
+    comparatorTokens.length > 0 &&
+    comparatorTokens.every((token) => /^(?:<=|>=|<|>|=)\s*v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(token))
+  ) {
+    return comparatorTokens.every((token) => evaluateComparator(token));
+  }
+
+  const specParts = parseVersion(spec.replace(/^[~^]/, ''));
+  if (!specParts) return true;
 
   // Caret range (^1.2.3): compatible with 1.x.x where x >= 2.3
   if (spec.startsWith('^')) {
@@ -118,7 +155,11 @@ export function versionMatches(version: string, versionSpec: string): boolean {
     return vParts[2] >= specParts[2];
   }
 
-  return false;
+  if (/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(spec)) {
+    return compareVersions(vParts, specParts) === 0;
+  }
+
+  return true;
 }
 
 /**

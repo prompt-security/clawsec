@@ -13,6 +13,8 @@
  */
 
 import { fileURLToPath } from "node:url";
+import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
@@ -56,6 +58,37 @@ function runScript(scriptPath, args, env) {
       resolve({ code, stdout, stderr });
     });
   });
+}
+
+async function createMockClawhub(payload) {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "clawhub-reputation-test-"));
+  const binDir = path.join(tmpDir, "bin");
+  const mockPath = path.join(binDir, "clawhub");
+  await fs.mkdir(binDir, { recursive: true });
+  await fs.writeFile(
+    mockPath,
+    `#!/usr/bin/env node
+const payload = ${JSON.stringify(JSON.stringify(payload))};
+const command = process.argv[2] || "";
+if (command === "inspect") {
+  process.stdout.write(payload);
+  process.exit(0);
+}
+if (command === "search") {
+  process.stdout.write("name\\nmock-skill\\nother-skill\\n");
+  process.exit(0);
+}
+process.stderr.write("unexpected clawhub command: " + process.argv.slice(2).join(" ") + "\\n");
+process.exit(2);
+`,
+    "utf8",
+  );
+  await fs.chmod(mockPath, 0o755);
+
+  return {
+    env: { PATH: `${binDir}:${process.env.PATH}` },
+    cleanup: async () => fs.rm(tmpDir, { recursive: true, force: true }),
+  };
 }
 
 // -----------------------------------------------------------------------------
@@ -205,6 +238,59 @@ async function testPreReleaseVersionAccepted() {
     }
   } catch (error) {
     fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Test: Explicit malicious scanner verdict blocks regardless of score
+// -----------------------------------------------------------------------------
+async function testMaliciousVirusTotalVerdictBlocks() {
+  const testName = "reputation_check: malicious VirusTotal verdict blocks install";
+  const now = Date.now();
+  const mock = await createMockClawhub({
+    skill: {
+      createdAt: now - (120 * 24 * 60 * 60 * 1000),
+      updatedAt: now - (2 * 24 * 60 * 60 * 1000),
+      stats: { downloads: 1000 },
+    },
+    owner: { handle: "trusted-publisher" },
+    version: {
+      security: {
+        status: "clean",
+        scanners: {
+          vt: {
+            normalizedStatus: "malicious",
+            analysis: "malicious verdict from scanner",
+          },
+        },
+      },
+    },
+  });
+
+  try {
+    const result = await runScript(CHECKER_SCRIPT, ['malicious-skill', '1.0.0', '70'], mock.env);
+    let parsed;
+    try {
+      parsed = JSON.parse(result.stdout);
+    } catch {
+      fail(testName, `Could not parse output: ${result.stdout}`);
+      return;
+    }
+
+    if (
+      result.code === 43 &&
+      parsed.safe === false &&
+      parsed.warnings.some((w) => w.toLowerCase().includes("malicious")) &&
+      parsed.virustotal.some((v) => v.toLowerCase().includes("malicious"))
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected malicious verdict to block, got code ${result.code}: ${JSON.stringify(parsed)}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  } finally {
+    await mock.cleanup();
   }
 }
 
@@ -411,6 +497,7 @@ async function runTests() {
   await testUppercaseSlugRejected();
   await testEmptySlugShowsUsage();
   await testPreReleaseVersionAccepted();
+  await testMaliciousVirusTotalVerdictBlocks();
   await testRelativePathCliEntrypointWorks();
   await testInvalidThresholdRejected();
   await testEnhancedInstallerRejectsInvalidSkill();

@@ -196,7 +196,7 @@ function buildAlertMessage(report: ScanReport, format: string): string {
 }
 
 const handler = async (event: HookEvent, _context: HookContext): Promise<void> => {
-  // DAST harness mode executes hook handlers directly; skip recursive scanner runs.
+  // Preserve the legacy DAST guard so older scanner harnesses cannot recurse.
   if (process.env.CLAWSEC_DAST_HARNESS === "1" || _context?.dastMode === true) {
     return;
   }
