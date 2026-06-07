@@ -111,6 +111,19 @@ test('advisory matcher handles comparator ranges and fails closed on malformed s
   assert.equal(versionMatches('1.2.3', 'not-a-range'), true, 'unparseable advisory specifiers must fail closed');
 });
 
+test('advisory matcher preserves semver prerelease precedence', () => {
+  const versionMatches = loadVersionMatcher();
+
+  assert.equal(versionMatches('1.2.3-beta.1', '1.2.3'), false, 'prereleases must not collapse into releases');
+  assert.equal(versionMatches('1.2.3-beta.1', '=1.2.3'), false, 'explicit equality must honor prerelease data');
+  assert.equal(versionMatches('1.2.3-beta.1', '<1.2.3'), true, 'prereleases must compare lower than releases');
+  assert.equal(versionMatches('1.2.3', '>1.2.3-beta.1'), true, 'releases must compare higher than prereleases');
+  assert.equal(versionMatches('1.2.3-beta.2', '<1.2.3-beta.10'), true, 'numeric prerelease identifiers must compare numerically');
+  assert.equal(versionMatches('1.2.3+build.1', '=1.2.3+build.2'), true, 'build metadata must not affect precedence');
+  assert.equal(versionMatches('1.2.3-beta.1', '^1.2.3'), false, 'caret lower bounds must honor prerelease precedence');
+  assert.equal(versionMatches('1.2.3-beta.1', '~1.2.3'), false, 'tilde lower bounds must honor prerelease precedence');
+});
+
 test('integrity IPC result writer validates request ids and result path containment', () => {
   const source = readSkillFile('host-services/integrity-handler.ts');
 

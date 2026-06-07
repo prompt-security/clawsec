@@ -86,21 +86,73 @@ export function versionMatches(version: string, versionSpec: string): boolean {
   if (v === spec) return true;
 
   // Parse semver components
-  const semverPattern = String.raw`v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?`;
-
-  const parseVersion = (ver: string): number[] | null => {
-    const match = ver.match(new RegExp(`^${semverPattern}$`));
-    if (!match) return null;
-    const parts = match[0].replace(/^v/, '').match(/^(\d+)\.(\d+)\.(\d+)/);
-    if (!parts) return null;
-    return [parseInt(parts[1], 10), parseInt(parts[2], 10), parseInt(parts[3], 10)];
+  type ParsedVersion = {
+    major: number;
+    minor: number;
+    patch: number;
+    prerelease: string[];
   };
 
-  const compareVersions = (left: number[], right: number[]): number => {
-    for (let index = 0; index < 3; index += 1) {
-      if (left[index] > right[index]) return 1;
-      if (left[index] < right[index]) return -1;
+  const semverPattern = String.raw`v?\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?`;
+  const semverRegex = new RegExp(
+    String.raw`^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`
+  );
+
+  const parseVersion = (ver: string): ParsedVersion | null => {
+    const match = ver.match(semverRegex);
+    if (!match) return null;
+
+    return {
+      major: parseInt(match[1], 10),
+      minor: parseInt(match[2], 10),
+      patch: parseInt(match[3], 10),
+      prerelease: match[4] ? match[4].split('.') : [],
+    };
+  };
+
+  const comparePrereleaseIdentifiers = (left: string, right: string): number => {
+    const leftIsNumeric = /^\d+$/.test(left);
+    const rightIsNumeric = /^\d+$/.test(right);
+
+    if (leftIsNumeric && rightIsNumeric) {
+      const leftValue = parseInt(left, 10);
+      const rightValue = parseInt(right, 10);
+      if (leftValue > rightValue) return 1;
+      if (leftValue < rightValue) return -1;
+      return 0;
     }
+
+    if (leftIsNumeric) return -1;
+    if (rightIsNumeric) return 1;
+    if (left > right) return 1;
+    if (left < right) return -1;
+    return 0;
+  };
+
+  const compareVersions = (left: ParsedVersion, right: ParsedVersion): number => {
+    if (left.major > right.major) return 1;
+    if (left.major < right.major) return -1;
+    if (left.minor > right.minor) return 1;
+    if (left.minor < right.minor) return -1;
+    if (left.patch > right.patch) return 1;
+    if (left.patch < right.patch) return -1;
+
+    if (left.prerelease.length === 0 && right.prerelease.length === 0) return 0;
+    if (left.prerelease.length === 0) return 1;
+    if (right.prerelease.length === 0) return -1;
+
+    const identifierCount = Math.max(left.prerelease.length, right.prerelease.length);
+    for (let index = 0; index < identifierCount; index += 1) {
+      const leftIdentifier = left.prerelease[index];
+      const rightIdentifier = right.prerelease[index];
+
+      if (leftIdentifier === undefined) return -1;
+      if (rightIdentifier === undefined) return 1;
+
+      const comparison = comparePrereleaseIdentifiers(leftIdentifier, rightIdentifier);
+      if (comparison !== 0) return comparison;
+    }
+
     return 0;
   };
 
@@ -153,23 +205,20 @@ export function versionMatches(version: string, versionSpec: string): boolean {
 
   // Caret range (^1.2.3): compatible with 1.x.x where x >= 2.3
   if (spec.startsWith('^')) {
-    if (vParts[0] !== specParts[0]) return false;
-    if (vParts[0] === 0) {
-      // ^0.2.3 means 0.2.x where x >= 3
-      if (vParts[1] !== specParts[1]) return false;
-      return vParts[2] >= specParts[2];
-    }
-    // ^1.2.3 means 1.x.x where x.x >= 2.3
-    if (vParts[1] > specParts[1]) return true;
-    if (vParts[1] < specParts[1]) return false;
-    return vParts[2] >= specParts[2];
+    const upperBound =
+      specParts.major > 0
+        ? { major: specParts.major + 1, minor: 0, patch: 0, prerelease: [] }
+        : specParts.minor > 0
+          ? { major: 0, minor: specParts.minor + 1, patch: 0, prerelease: [] }
+          : { major: 0, minor: 0, patch: specParts.patch + 1, prerelease: [] };
+
+    return compareVersions(vParts, specParts) >= 0 && compareVersions(vParts, upperBound) < 0;
   }
 
   // Tilde range (~1.2.3): patch-level compatibility (1.2.x where x >= 3)
   if (spec.startsWith('~')) {
-    if (vParts[0] !== specParts[0]) return false;
-    if (vParts[1] !== specParts[1]) return false;
-    return vParts[2] >= specParts[2];
+    const upperBound = { major: specParts.major, minor: specParts.minor + 1, patch: 0, prerelease: [] };
+    return compareVersions(vParts, specParts) >= 0 && compareVersions(vParts, upperBound) < 0;
   }
 
   if (new RegExp(`^${semverPattern}$`).test(spec)) {
