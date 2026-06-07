@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.4] - 2026-06-07
+
+### Security
+- Replaced DAST target hook execution with static hook source inspection so scanner runs never import, transpile, or invoke untrusted handler code.
+
 ## [0.0.3] - 2026-05-13
 
 ### Changed

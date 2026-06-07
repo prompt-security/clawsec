@@ -2,8 +2,6 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createRequire } from "node:module";
-import { pathToFileURL } from "node:url";
 
 function parseArgs(argv) {
   const parsed = {
@@ -47,24 +45,7 @@ function parseArgs(argv) {
     throw new Error("Missing required --handler");
   }
 
-  if (!parsed.eventB64) {
-    throw new Error("Missing required --event");
-  }
-
-  if (!parsed.contextB64) {
-    throw new Error("Missing required --context");
-  }
-
   return parsed;
-}
-
-function decodeBase64Json(value, label) {
-  try {
-    const decoded = Buffer.from(value, "base64").toString("utf8");
-    return JSON.parse(decoded);
-  } catch (error) {
-    throw new Error(`Failed to decode ${label}: ${error instanceof Error ? error.message : String(error)}`);
-  }
 }
 
 async function fileExists(filePath) {
@@ -76,69 +57,7 @@ async function fileExists(filePath) {
   }
 }
 
-async function loadTypeScriptCompiler() {
-  if (process.env.CLAWSEC_DAST_DISABLE_TYPESCRIPT === "1") {
-    return null;
-  }
-
-  try {
-    const imported = await import("typescript");
-    return imported.default || imported;
-  } catch {
-    // Ignore and try require path next.
-  }
-
-  try {
-    const req = createRequire(import.meta.url);
-    return req("typescript");
-  } catch {
-    return null;
-  }
-}
-
-async function importTypeScriptModule(tsPath) {
-  const tsCompiler = await loadTypeScriptCompiler();
-  if (!tsCompiler || typeof tsCompiler.transpileModule !== "function") {
-    throw new Error(
-      `Cannot execute TypeScript hook (${tsPath}): typescript compiler not available. ` +
-        "Install 'typescript' or provide a JavaScript handler file.",
-    );
-  }
-
-  const source = await fs.readFile(tsPath, "utf8");
-  const transpiled = tsCompiler.transpileModule(source, {
-    compilerOptions: {
-      module: tsCompiler.ModuleKind.ESNext,
-      target: tsCompiler.ScriptTarget.ES2022,
-      moduleResolution: tsCompiler.ModuleResolutionKind.NodeNext,
-      esModuleInterop: true,
-      sourceMap: false,
-      inlineSourceMap: false,
-      declaration: false,
-    },
-    fileName: tsPath,
-    reportDiagnostics: false,
-  });
-
-  const tempFile = path.join(
-    path.dirname(tsPath),
-    `.clawsec-dast-${path.basename(tsPath, ".ts")}-${process.pid}-${Date.now()}.mjs`,
-  );
-
-  await fs.writeFile(tempFile, transpiled.outputText, "utf8");
-
-  try {
-    return await import(`${pathToFileURL(tempFile).href}?ts=${Date.now()}`);
-  } finally {
-    try {
-      await fs.unlink(tempFile);
-    } catch {
-      // best-effort cleanup
-    }
-  }
-}
-
-async function loadHookModule(handlerPath) {
+async function readHookSource(handlerPath) {
   const fullPath = path.resolve(handlerPath);
   const exists = await fileExists(fullPath);
   if (!exists) {
@@ -146,120 +65,71 @@ async function loadHookModule(handlerPath) {
   }
 
   const ext = path.extname(fullPath).toLowerCase();
-
-  if (ext === ".ts") {
-    return importTypeScriptModule(fullPath);
+  const allowedExtensions = new Set([".cjs", ".js", ".mjs", ".ts"]);
+  if (!allowedExtensions.has(ext)) {
+    throw new Error(`Unsupported hook handler extension: ${ext || "(none)"}`);
   }
 
-  return import(`${pathToFileURL(fullPath).href}?v=${Date.now()}`);
+  const source = await fs.readFile(fullPath, "utf8");
+  return { fullPath, ext, source };
 }
 
-function resolveHandlerExport(mod, exportName) {
+function detectHandlerExport(source, exportName) {
   if (exportName && exportName !== "default") {
-    if (typeof mod?.[exportName] === "function") {
-      return mod[exportName];
-    }
-    throw new Error(`Hook export '${exportName}' is not a function`);
+    const escaped = exportName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`export\\s+(?:async\\s+)?function\\s+${escaped}\\b|export\\s*\\{[^}]*\\b${escaped}\\b`, "m").test(source);
   }
 
-  if (typeof mod?.default === "function") {
-    return mod.default;
-  }
-
-  if (typeof mod?.handler === "function") {
-    return mod.handler;
-  }
-
-  throw new Error("Hook module does not export a handler function");
+  return (
+    /\bexport\s+default\b/m.test(source) ||
+    /\bexport\s+(?:async\s+)?function\s+handler\b/m.test(source) ||
+    /\bmodule\.exports\s*=|\bexports\.handler\s*=/m.test(source)
+  );
 }
 
-function normalizeTimestamp(event) {
-  const timestamp = event?.timestamp;
-  if (typeof timestamp === "string" || typeof timestamp === "number") {
-    const parsed = new Date(timestamp);
-    if (!Number.isNaN(parsed.getTime())) {
-      event.timestamp = parsed;
+function collectRiskSignals(source) {
+  const rules = [
+    ["child_process", /\bchild_process\b|\bfrom\s+["']node:child_process["']|\brequire\(["']child_process["']\)/m],
+    ["dynamic-import", /\bimport\s*\(/m],
+    ["eval", /\beval\s*\(|\bnew\s+Function\s*\(/m],
+    ["shell-command", /\b(?:exec|spawn|execFile|fork)\s*\(/m],
+    ["environment-access", /\bprocess\.env\b/m],
+  ];
+
+  const signals = [];
+  for (const [name, pattern] of rules) {
+    if (pattern.test(source)) {
+      signals.push(name);
     }
   }
-}
-
-function summarizeMessages(messages) {
-  if (!Array.isArray(messages)) {
-    return {
-      count: 0,
-      charCount: 0,
-    };
-  }
-
-  let charCount = 0;
-
-  for (const message of messages) {
-    if (typeof message === "string") {
-      charCount += message.length;
-      continue;
-    }
-
-    try {
-      charCount += JSON.stringify(message).length;
-    } catch {
-      charCount += 0;
-    }
-  }
-
-  return {
-    count: messages.length,
-    charCount,
-  };
-}
-
-function coreEventShape(event) {
-  return {
-    type: event?.type ?? null,
-    action: event?.action ?? null,
-    sessionKey: event?.sessionKey ?? null,
-  };
+  return signals;
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const event = decodeBase64Json(args.eventB64, "event payload");
-  const context = decodeBase64Json(args.contextB64, "context payload");
-
-  normalizeTimestamp(event);
-
   const startedAt = Date.now();
-  const before = coreEventShape(event);
 
   try {
-    const mod = await loadHookModule(args.handler);
-    const handler = resolveHandlerExport(mod, args.exportName);
-
-    await handler(event, context);
-
-    const after = coreEventShape(event);
-    const messageSummary = summarizeMessages(event?.messages);
+    const inspected = await readHookSource(args.handler);
 
     const payload = {
       ok: true,
+      static_only: true,
       duration_ms: Date.now() - startedAt,
-      core_before: before,
-      core_after: after,
-      messages_count: messageSummary.count,
-      messages_char_count: messageSummary.charCount,
+      handler_path: inspected.fullPath,
+      handler_extension: inspected.ext,
+      source_bytes: Buffer.byteLength(inspected.source, "utf8"),
+      source_lines: inspected.source.split(/\r?\n/).length,
+      handler_export_declared: detectHandlerExport(inspected.source, args.exportName),
+      risk_signals: collectRiskSignals(inspected.source),
     };
 
     process.stdout.write(JSON.stringify(payload));
   } catch (error) {
-    const after = coreEventShape(event);
-    const messageSummary = summarizeMessages(event?.messages);
-
     const payload = {
       ok: false,
+      static_only: true,
       duration_ms: Date.now() - startedAt,
-      core_before: before,
-      core_after: after,
-      messages_count: messageSummary.count,
-      messages_char_count: messageSummary.charCount,
       error: error instanceof Error ? error.message : String(error),
     };
 

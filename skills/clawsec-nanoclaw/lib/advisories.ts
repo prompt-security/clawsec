@@ -86,39 +86,146 @@ export function versionMatches(version: string, versionSpec: string): boolean {
   if (v === spec) return true;
 
   // Parse semver components
-  const parseVersion = (ver: string): number[] => {
-    const match = ver.match(/^(\d+)\.(\d+)\.(\d+)/);
-    if (!match) return [];
-    return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+  type ParsedVersion = {
+    major: number;
+    minor: number;
+    patch: number;
+    prerelease: string[];
+  };
+
+  const semverPattern = String.raw`v?\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?`;
+  const semverRegex = new RegExp(
+    String.raw`^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`
+  );
+
+  const parseVersion = (ver: string): ParsedVersion | null => {
+    const match = ver.match(semverRegex);
+    if (!match) return null;
+
+    return {
+      major: parseInt(match[1], 10),
+      minor: parseInt(match[2], 10),
+      patch: parseInt(match[3], 10),
+      prerelease: match[4] ? match[4].split('.') : [],
+    };
+  };
+
+  const comparePrereleaseIdentifiers = (left: string, right: string): number => {
+    const leftIsNumeric = /^\d+$/.test(left);
+    const rightIsNumeric = /^\d+$/.test(right);
+
+    if (leftIsNumeric && rightIsNumeric) {
+      const leftValue = parseInt(left, 10);
+      const rightValue = parseInt(right, 10);
+      if (leftValue > rightValue) return 1;
+      if (leftValue < rightValue) return -1;
+      return 0;
+    }
+
+    if (leftIsNumeric) return -1;
+    if (rightIsNumeric) return 1;
+    if (left > right) return 1;
+    if (left < right) return -1;
+    return 0;
+  };
+
+  const compareVersions = (left: ParsedVersion, right: ParsedVersion): number => {
+    if (left.major > right.major) return 1;
+    if (left.major < right.major) return -1;
+    if (left.minor > right.minor) return 1;
+    if (left.minor < right.minor) return -1;
+    if (left.patch > right.patch) return 1;
+    if (left.patch < right.patch) return -1;
+
+    if (left.prerelease.length === 0 && right.prerelease.length === 0) return 0;
+    if (left.prerelease.length === 0) return 1;
+    if (right.prerelease.length === 0) return -1;
+
+    const identifierCount = Math.max(left.prerelease.length, right.prerelease.length);
+    for (let index = 0; index < identifierCount; index += 1) {
+      const leftIdentifier = left.prerelease[index];
+      const rightIdentifier = right.prerelease[index];
+
+      if (leftIdentifier === undefined) return -1;
+      if (rightIdentifier === undefined) return 1;
+
+      const comparison = comparePrereleaseIdentifiers(leftIdentifier, rightIdentifier);
+      if (comparison !== 0) return comparison;
+    }
+
+    return 0;
+  };
+
+  const evaluateComparator = (comparator: string): boolean => {
+    const match = comparator.trim().match(new RegExp(`^(<=|>=|<|>|=)?\\s*(${semverPattern})$`));
+    if (!match) return false;
+
+    const operator = match[1] || '=';
+    const comparatorParts = parseVersion(match[2]);
+    if (!comparatorParts) return false;
+
+    const comparison = compareVersions(vParts, comparatorParts);
+    if (operator === '<') return comparison < 0;
+    if (operator === '<=') return comparison <= 0;
+    if (operator === '>') return comparison > 0;
+    if (operator === '>=') return comparison >= 0;
+    return comparison === 0;
+  };
+
+  const extractComparatorTokens = (range: string): string[] | null => {
+    const tokenPattern = new RegExp(`(?:<=|>=|<|>|=)?\\s*${semverPattern}`, 'g');
+    const tokens: string[] = [];
+    let cursor = 0;
+    let match = tokenPattern.exec(range);
+
+    while (match) {
+      const gap = range.slice(cursor, match.index);
+      if (!/^[\s,]*$/.test(gap)) return null;
+
+      tokens.push(match[0].trim());
+      cursor = match.index + match[0].length;
+      match = tokenPattern.exec(range);
+    }
+
+    if (!/^[\s,]*$/.test(range.slice(cursor))) return null;
+    return tokens.length > 0 ? tokens : null;
   };
 
   const vParts = parseVersion(v);
-  const specParts = parseVersion(spec.replace(/^[~^]/, ''));
+  if (!vParts) return true;
 
-  if (vParts.length === 0 || specParts.length === 0) return false;
+  if (/(?:<=|>=|<|>|=)/.test(spec)) {
+    const comparatorTokens = extractComparatorTokens(spec);
+    if (!comparatorTokens) return false;
+    return comparatorTokens.every((token) => evaluateComparator(token));
+  }
+
+  const specParts = parseVersion(spec.replace(/^[~^]/, ''));
+  if (!specParts) return true;
 
   // Caret range (^1.2.3): compatible with 1.x.x where x >= 2.3
   if (spec.startsWith('^')) {
-    if (vParts[0] !== specParts[0]) return false;
-    if (vParts[0] === 0) {
-      // ^0.2.3 means 0.2.x where x >= 3
-      if (vParts[1] !== specParts[1]) return false;
-      return vParts[2] >= specParts[2];
-    }
-    // ^1.2.3 means 1.x.x where x.x >= 2.3
-    if (vParts[1] > specParts[1]) return true;
-    if (vParts[1] < specParts[1]) return false;
-    return vParts[2] >= specParts[2];
+    const upperBound =
+      specParts.major > 0
+        ? { major: specParts.major + 1, minor: 0, patch: 0, prerelease: [] }
+        : specParts.minor > 0
+          ? { major: 0, minor: specParts.minor + 1, patch: 0, prerelease: [] }
+          : { major: 0, minor: 0, patch: specParts.patch + 1, prerelease: [] };
+
+    return compareVersions(vParts, specParts) >= 0 && compareVersions(vParts, upperBound) < 0;
   }
 
   // Tilde range (~1.2.3): patch-level compatibility (1.2.x where x >= 3)
   if (spec.startsWith('~')) {
-    if (vParts[0] !== specParts[0]) return false;
-    if (vParts[1] !== specParts[1]) return false;
-    return vParts[2] >= specParts[2];
+    const upperBound = { major: specParts.major, minor: specParts.minor + 1, patch: 0, prerelease: [] };
+    return compareVersions(vParts, specParts) >= 0 && compareVersions(vParts, upperBound) < 0;
   }
 
-  return false;
+  if (new RegExp(`^${semverPattern}$`).test(spec)) {
+    return compareVersions(vParts, specParts) === 0;
+  }
+
+  return true;
 }
 
 /**

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.7] - 2026-06-07
+
+### Security
+- Added comparator range support for NanoClaw advisory matching and fail-closed handling for malformed affected specifiers.
+- Added strict integrity IPC request ID validation and result path containment before host-side result writes.
+
 ## [0.0.6] - 2026-05-24
 
 ### Changed

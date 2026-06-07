@@ -89,8 +89,13 @@ metadata: { "openclaw": { "events": [${eventsLiteral}] } }
   await fs.writeFile(path.join(hookDir, handlerFile), handlerSource, "utf8");
 }
 
-async function testSafeHookExecutesAndDoesNotReportMisleadingHigh() {
-  const testName = "DAST harness: executes real hook and reports no misleading high findings";
+async function writeExecutable(filePath, content) {
+  await fs.writeFile(filePath, content, "utf8");
+  await fs.chmod(filePath, 0o755);
+}
+
+async function testSafeHookIsInspectedWithoutExecution() {
+  const testName = "DAST harness: inspects hooks without executing target code";
   const tmp = await createTempDir();
 
   try {
@@ -125,19 +130,20 @@ export default handler;
       .then(() => true)
       .catch(() => false);
 
-    const cleanSummary =
+    const noHighSummary =
       result.report?.summary?.critical === 0
       && result.report?.summary?.high === 0
       && result.report?.summary?.medium === 0
-      && result.report?.summary?.low === 0
-      && result.report?.summary?.info === 0;
+      && result.report?.summary?.low === 0;
+    const hasStaticCoverageInfo = Array.isArray(result.report?.vulnerabilities)
+      && result.report.vulnerabilities.some((v) => String(v.id || "").includes("DAST-STATIC-COVERAGE"));
 
-    if (result.code === 0 && markerExists && cleanSummary) {
+    if (result.code === 0 && !markerExists && noHighSummary && hasStaticCoverageInfo) {
       pass(testName);
     } else {
       fail(
         testName,
-        `Expected exit=0, markerExists=true, clean summary. Got exit=${result.code}, markerExists=${markerExists}, summary=${JSON.stringify(result.report?.summary)} stderr=${result.stderr}`,
+        `Expected exit=0, markerExists=false, static coverage info, and no high findings. Got exit=${result.code}, markerExists=${markerExists}, summary=${JSON.stringify(result.report?.summary)} findings=${JSON.stringify(result.report?.vulnerabilities || [])} stderr=${result.stderr}`,
       );
     }
   } catch (error) {
@@ -147,18 +153,24 @@ export default handler;
   }
 }
 
-async function testMaliciousCrashProducesHighFinding() {
-  const testName = "DAST harness: malicious input crash is reported as high";
+async function testMaliciousHandlerIsNotExecutedForPayloadChecks() {
+  const testName = "DAST harness: malicious payload checks do not execute hook code";
   const tmp = await createTempDir();
 
   try {
     const targetPath = path.join(tmp.path, "skill");
     const hookDir = path.join(targetPath, "hooks", "crashy-hook");
+    const markerFile = path.join(hookDir, "executed.marker");
 
     await writeHookFixture(
       hookDir,
       '"message:preprocessed"',
-      `const handler = async (event) => {
+      `import fs from "node:fs";
+import path from "node:path";
+
+fs.writeFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), "executed.marker"), "top-level");
+
+const handler = async (event) => {
   const payload = String(event?.context?.content || "");
   if (payload.includes("<script>")) {
     throw new Error("Unhandled payload path");
@@ -170,16 +182,21 @@ export default handler;
     );
 
     const result = await runDast(targetPath, 2500);
-    const hasHigh = Number(result.report?.summary?.high || 0) > 0;
-    const hasCrashFinding = Array.isArray(result.report?.vulnerabilities)
-      && result.report.vulnerabilities.some((v) => String(v.id || "").includes("DAST-MALICIOUS-CRASH"));
+    const markerExists = await fs
+      .access(markerFile)
+      .then(() => true)
+      .catch(() => false);
+    const noHigh = Number(result.report?.summary?.high || 0) === 0
+      && Number(result.report?.summary?.critical || 0) === 0;
+    const hasStaticCoverageInfo = Array.isArray(result.report?.vulnerabilities)
+      && result.report.vulnerabilities.some((v) => String(v.id || "").includes("DAST-STATIC-COVERAGE"));
 
-    if (result.code === 1 && hasHigh && hasCrashFinding) {
+    if (result.code === 0 && !markerExists && noHigh && hasStaticCoverageInfo) {
       pass(testName);
     } else {
       fail(
         testName,
-        `Expected exit=1 and malicious crash high finding. Got exit=${result.code}, summary=${JSON.stringify(result.report?.summary)}, findings=${JSON.stringify(result.report?.vulnerabilities || [])}`,
+        `Expected static inspection without marker/high findings. Got exit=${result.code}, markerExists=${markerExists}, summary=${JSON.stringify(result.report?.summary)}, findings=${JSON.stringify(result.report?.vulnerabilities || [])}`,
       );
     }
   } catch (error) {
@@ -189,8 +206,8 @@ export default handler;
   }
 }
 
-async function testMissingTypeScriptCompilerIsCoverageInfo() {
-  const testName = "DAST harness: missing TypeScript compiler reports coverage info, not high";
+async function testTypeScriptHookIsStaticallyInspectedWithoutCompiler() {
+  const testName = "DAST harness: TypeScript hooks are statically inspected without compiler execution";
   const tmp = await createTempDir();
 
   try {
@@ -220,7 +237,7 @@ export default handler;
     const noHigh = Number(result.report?.summary?.high || 0) === 0
       && Number(result.report?.summary?.critical || 0) === 0;
     const hasCoverageInfo = Array.isArray(result.report?.vulnerabilities)
-      && result.report.vulnerabilities.some((v) => String(v.id || "").includes("DAST-COVERAGE"));
+      && result.report.vulnerabilities.some((v) => String(v.id || "").includes("DAST-STATIC-COVERAGE"));
     const hasInfoCount = Number(result.report?.summary?.info || 0) > 0;
 
     if (result.code === 0 && noHigh && hasCoverageInfo && hasInfoCount) {
@@ -238,10 +255,76 @@ export default handler;
   }
 }
 
+async function testStaticInspectionRunsOncePerHook() {
+  const testName = "DAST harness: static inspection runs once per hook across events";
+  const tmp = await createTempDir();
+
+  try {
+    const targetPath = path.join(tmp.path, "skill");
+    const hookDir = path.join(targetPath, "hooks", "multi-event-hook");
+    const binDir = path.join(tmp.path, "bin");
+    const nodeLogPath = path.join(tmp.path, "node-invocations.log");
+
+    await writeHookFixture(
+      hookDir,
+      '"agent:bootstrap", "command:new", "message:preprocessed"',
+      `export default async function handler() {
+  return;
+}
+`,
+    );
+
+    await fs.mkdir(binDir, { recursive: true });
+    await writeExecutable(
+      path.join(binDir, "node"),
+      `#!${process.execPath}
+import fs from "node:fs";
+import { spawnSync } from "node:child_process";
+
+fs.appendFileSync(${JSON.stringify(nodeLogPath)}, JSON.stringify(process.argv.slice(2)) + "\\n");
+const result = spawnSync(${JSON.stringify(process.execPath)}, process.argv.slice(2), {
+  env: process.env,
+  stdio: ["ignore", "inherit", "inherit"],
+});
+process.exit(result.status ?? 1);
+`,
+    );
+
+    const result = await runDast(targetPath, 2500, {
+      PATH: `${binDir}:${process.env.PATH}`,
+    });
+
+    const log = await fs.readFile(nodeLogPath, "utf8");
+    const invocations = log
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const executorCount = invocations.filter((args) => String(args[0] || "").endsWith("dast_hook_executor.mjs")).length;
+    const staticCoverageCount = Array.isArray(result.report?.vulnerabilities)
+      ? result.report.vulnerabilities.filter((v) => String(v.id || "").includes("DAST-STATIC-COVERAGE")).length
+      : 0;
+
+    if (result.code === 0 && executorCount === 1 && staticCoverageCount === 3) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected one executor spawn and three per-event findings. Got exit=${result.code}, executorCount=${executorCount}, staticCoverageCount=${staticCoverageCount}, invocations=${JSON.stringify(invocations)}`,
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  } finally {
+    await tmp.cleanup();
+  }
+}
+
 async function main() {
-  await testSafeHookExecutesAndDoesNotReportMisleadingHigh();
-  await testMaliciousCrashProducesHighFinding();
-  await testMissingTypeScriptCompilerIsCoverageInfo();
+  await testSafeHookIsInspectedWithoutExecution();
+  await testMaliciousHandlerIsNotExecutedForPayloadChecks();
+  await testTypeScriptHookIsStaticallyInspectedWithoutCompiler();
+  await testStaticInspectionRunsOncePerHook();
 
   report();
   exitWithResults();

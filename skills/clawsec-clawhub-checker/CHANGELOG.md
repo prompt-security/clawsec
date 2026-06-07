@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.5] - 2026-06-07
+
+### Security
+- Treat explicit malicious ClawHub and VirusTotal verdicts as blocking signals regardless of the numeric reputation score.
+
 ## [0.0.4] - 2026-05-13
 
 ### Security

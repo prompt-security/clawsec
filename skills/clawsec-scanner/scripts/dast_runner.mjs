@@ -24,8 +24,6 @@ import { getTimestamp } from "../lib/utils.mjs";
  */
 
 const DEFAULT_TIMEOUT_MS = 30000;
-const MAX_OUTPUT_MESSAGES = 25;
-const MAX_OUTPUT_CHARS = 20000;
 const SKIP_DIR_NAMES = new Set([
   ".git",
   ".github",
@@ -37,17 +35,6 @@ const SKIP_DIR_NAMES = new Set([
   "coverage",
   ".openclaw",
 ]);
-
-const MALICIOUS_PAYLOADS = [
-  "<script>alert('XSS')</script>",
-  "'; DROP TABLE users; --",
-  "; rm -rf /",
-  "$(whoami)",
-  "..\\..\\..\\windows\\system32\\config\\sam",
-  "../../../etc/passwd",
-  "test\0malicious",
-  "A".repeat(200000),
-];
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -321,43 +308,6 @@ export async function discoverHooks(targetPath) {
 }
 
 /**
- * @param {string} eventKey
- * @returns {{type: string, action: string}}
- */
-function splitEventKey(eventKey) {
-  const parts = String(eventKey ?? "").split(":");
-  const type = parts.shift() || "command";
-  const action = parts.join(":") || "new";
-  return { type, action };
-}
-
-/**
- * @param {string} eventKey
- * @param {string} payload
- * @param {string} targetPath
- * @returns {Record<string, unknown>}
- */
-export function buildEvent(eventKey, payload, targetPath) {
-  const { type, action } = splitEventKey(eventKey);
-
-  return {
-    type,
-    action,
-    sessionKey: "clawsec-dast-session",
-    timestamp: new Date().toISOString(),
-    messages: [],
-    context: {
-      content: payload,
-      transcript: payload,
-      workspaceDir: path.resolve(targetPath),
-      channelId: "dast-harness",
-      commandSource: "dast",
-      bootstrapFiles: [],
-    },
-  };
-}
-
-/**
  * @typedef {Object} HarnessInvocationResult
  * @property {boolean} timedOut
  * @property {number} exitCode
@@ -368,33 +318,24 @@ export function buildEvent(eventKey, payload, targetPath) {
 
 /**
  * @param {HookDescriptor} hook
- * @param {Record<string, unknown>} event
- * @param {Record<string, unknown>} context
  * @param {number} timeoutMs
  * @returns {Promise<HarnessInvocationResult>}
  */
-async function invokeHookHarness(hook, event, context, timeoutMs) {
-  const encodedEvent = Buffer.from(JSON.stringify(event), "utf8").toString("base64");
-  const encodedContext = Buffer.from(JSON.stringify(context), "utf8").toString("base64");
-
+async function inspectHookHandler(hook, timeoutMs) {
   const args = [
     HOOK_EXECUTOR_PATH,
     "--handler",
     hook.handlerPath,
     "--export",
     hook.exportName || "default",
-    "--event",
-    encodedEvent,
-    "--context",
-    encodedContext,
   ];
 
   return new Promise((resolve) => {
     const proc = spawn("node", args, {
       stdio: ["ignore", "pipe", "pipe"],
       env: {
-        ...process.env,
-        CLAWSEC_DAST_HARNESS: "1",
+        PATH: process.env.PATH || "",
+        CLAWSEC_DAST_STATIC_INSPECTION: "1",
       },
     });
 
@@ -462,31 +403,33 @@ function isObject(value) {
 
 /**
  * @param {unknown} parsed
- * @returns {{ok: boolean, error: string, messagesCount: number, messagesCharCount: number, coreAfter: Record<string, unknown>}}
+ * @returns {{ok: boolean, error: string, staticOnly: boolean, riskSignals: string[], handlerExportDeclared: boolean}}
  */
-function normalizeHarnessPayload(parsed) {
+function normalizeStaticPayload(parsed) {
   if (!isObject(parsed)) {
     return {
       ok: false,
       error: "Harness output is not an object",
-      messagesCount: 0,
-      messagesCharCount: 0,
-      coreAfter: {},
+      staticOnly: false,
+      riskSignals: [],
+      handlerExportDeclared: false,
     };
   }
 
   const ok = parsed.ok === true;
   const error = typeof parsed.error === "string" ? parsed.error : "";
-  const messagesCount = Number(parsed.messages_count ?? 0) || 0;
-  const messagesCharCount = Number(parsed.messages_char_count ?? 0) || 0;
-  const coreAfter = isObject(parsed.core_after) ? parsed.core_after : {};
+  const staticOnly = parsed.static_only === true;
+  const riskSignals = Array.isArray(parsed.risk_signals)
+    ? parsed.risk_signals.filter((signal) => typeof signal === "string")
+    : [];
+  const handlerExportDeclared = parsed.handler_export_declared === true;
 
   return {
     ok,
     error,
-    messagesCount,
-    messagesCharCount,
-    coreAfter,
+    staticOnly,
+    riskSignals,
+    handlerExportDeclared,
   };
 }
 
@@ -500,19 +443,6 @@ function slug(input) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-}
-
-/**
- * @param {string} reason
- * @returns {boolean}
- */
-function isHarnessCapabilityError(reason) {
-  const normalized = String(reason ?? "").toLowerCase();
-  return (
-    normalized.includes("typescript compiler not available")
-    || normalized.includes("does not export a handler function")
-    || normalized.includes("is not a function")
-  );
 }
 
 /**
@@ -541,178 +471,74 @@ function pushHookVulnerability(bucket, id, severity, hook, eventKey, title, desc
 
 /**
  * @param {HookDescriptor} hook
- * @param {string} targetPath
+ * @param {string} _targetPath
  * @param {number} timeoutMs
  * @returns {Promise<Vulnerability[]>}
  */
-async function evaluateHook(hook, targetPath, timeoutMs) {
+async function evaluateHook(hook, _targetPath, timeoutMs) {
   const findings = [];
   const invocationTimeoutMs = Math.max(1000, timeoutMs);
+  // Static inspection depends only on the handler source/export, so reuse it for all hook events.
+  const inspection = await inspectHookHandler(hook, invocationTimeoutMs);
 
   for (const eventKey of hook.events) {
-    const safeEvent = buildEvent(eventKey, "safe baseline input", targetPath);
-    const safeContext = {
-      skillPath: hook.hookDir,
-      agentPlatform: "openclaw",
-      dastMode: true,
-      targetPath: path.resolve(targetPath),
-      event: eventKey,
-    };
-
-    const safeResult = await invokeHookHarness(hook, safeEvent, safeContext, invocationTimeoutMs);
-
-    if (safeResult.timedOut) {
+    if (inspection.timedOut) {
       pushHookVulnerability(
         findings,
-        `DAST-TIMEOUT-${slug(`${hook.name}-${eventKey}`)}`,
-        "high",
-        hook,
-        eventKey,
-        "Hook times out under baseline input",
-        `Hook execution exceeded ${invocationTimeoutMs}ms for event '${eventKey}' under safe baseline input.`,
-      );
-      continue;
-    }
-
-    if (safeResult.parseError) {
-      pushHookVulnerability(
-        findings,
-        `DAST-HARNESS-${slug(`${hook.name}-${eventKey}`)}`,
+        `DAST-STATIC-TIMEOUT-${slug(`${hook.name}-${eventKey}`)}`,
         "medium",
         hook,
         eventKey,
-        "Hook harness output invalid",
-        `Could not parse harness output for event '${eventKey}': ${safeResult.parseError}. stderr: ${safeResult.stderr || "(empty)"}`,
+        "Hook static inspection timed out",
+        `Static hook inspection exceeded ${invocationTimeoutMs}ms for event '${eventKey}'. Target code was not executed.`,
       );
       continue;
     }
 
-    const normalizedSafe = normalizeHarnessPayload(safeResult.parsed);
-    if (!normalizedSafe.ok) {
-      const reason = normalizedSafe.error || safeResult.stderr || "unknown error";
-
-      if (isHarnessCapabilityError(reason)) {
-        pushHookVulnerability(
-          findings,
-          `DAST-COVERAGE-${slug(`${hook.name}-${eventKey}`)}`,
-          "info",
-          hook,
-          eventKey,
-          "Hook not executable in local DAST harness",
-          `DAST harness could not execute hook for event '${eventKey}' due to runtime capability limits: ${reason}`,
-        );
-      } else {
-        pushHookVulnerability(
-          findings,
-          `DAST-CRASH-${slug(`${hook.name}-${eventKey}`)}`,
-          "high",
-          hook,
-          eventKey,
-          "Hook throws on baseline input",
-          `Hook execution failed for event '${eventKey}' under safe baseline input: ${reason}`,
-        );
-      }
-      continue;
-    }
-
-    const mutationObserved =
-      normalizedSafe.coreAfter.type !== safeEvent.type ||
-      normalizedSafe.coreAfter.action !== safeEvent.action ||
-      normalizedSafe.coreAfter.sessionKey !== safeEvent.sessionKey;
-
-    if (mutationObserved) {
+    if (inspection.parseError) {
       pushHookVulnerability(
         findings,
-        `DAST-MUTATION-${slug(`${hook.name}-${eventKey}`)}`,
-        "low",
-        hook,
-        eventKey,
-        "Hook mutates core event identity fields",
-        `Hook changed one or more of type/action/sessionKey for event '${eventKey}'. This can cause routing side effects in OpenClaw hooks.`,
-      );
-    }
-
-    if (
-      normalizedSafe.messagesCount > MAX_OUTPUT_MESSAGES ||
-      normalizedSafe.messagesCharCount > MAX_OUTPUT_CHARS
-    ) {
-      pushHookVulnerability(
-        findings,
-        `DAST-OUTPUT-${slug(`${hook.name}-${eventKey}`)}`,
+        `DAST-STATIC-HARNESS-${slug(`${hook.name}-${eventKey}`)}`,
         "medium",
         hook,
         eventKey,
-        "Hook output exceeds safe bounds",
-        `Hook generated ${normalizedSafe.messagesCount} messages and ${normalizedSafe.messagesCharCount} chars for baseline input. Limits: ${MAX_OUTPUT_MESSAGES} messages / ${MAX_OUTPUT_CHARS} chars.`,
+        "Hook static inspection output invalid",
+        `Could not parse static inspection output for event '${eventKey}': ${inspection.parseError}. stderr: ${inspection.stderr || "(empty)"}`,
       );
+      continue;
     }
 
-    const maliciousFailures = [];
-    const maliciousTimeouts = [];
-
-    for (const payload of MALICIOUS_PAYLOADS) {
-      const event = buildEvent(eventKey, payload, targetPath);
-      const context = {
-        ...safeContext,
-        payloadLength: payload.length,
-      };
-
-      const result = await invokeHookHarness(hook, event, context, invocationTimeoutMs);
-
-      if (result.timedOut) {
-        maliciousTimeouts.push(`len=${payload.length}`);
-        continue;
-      }
-
-      if (result.parseError) {
-        maliciousFailures.push(`parse-error(${result.parseError})`);
-        continue;
-      }
-
-      const normalized = normalizeHarnessPayload(result.parsed);
-      if (!normalized.ok) {
-        maliciousFailures.push(normalized.error || "execution-error");
-      }
-
-      if (
-        normalized.messagesCount > MAX_OUTPUT_MESSAGES ||
-        normalized.messagesCharCount > MAX_OUTPUT_CHARS
-      ) {
-        pushHookVulnerability(
-          findings,
-          `DAST-OUTPUT-${slug(`${hook.name}-${eventKey}`)}-${payload.length}`,
-          "medium",
-          hook,
-          eventKey,
-          "Hook output amplification under malicious input",
-          `Hook generated ${normalized.messagesCount} messages and ${normalized.messagesCharCount} chars for payload length ${payload.length}.`,
-        );
-      }
-    }
-
-    if (maliciousTimeouts.length > 0) {
+    const normalized = normalizeStaticPayload(inspection.parsed);
+    if (!normalized.ok || !normalized.staticOnly) {
+      const reason = normalized.error || inspection.stderr || "unknown static inspection error";
       pushHookVulnerability(
         findings,
-        `DAST-MALICIOUS-TIMEOUT-${slug(`${hook.name}-${eventKey}`)}`,
-        "high",
+        `DAST-STATIC-COVERAGE-${slug(`${hook.name}-${eventKey}`)}`,
+        "info",
         hook,
         eventKey,
-        "Hook times out on malicious input",
-        `Hook exceeded ${invocationTimeoutMs}ms for malicious payloads (${maliciousTimeouts.slice(0, 3).join(", ")}${maliciousTimeouts.length > 3 ? `, +${maliciousTimeouts.length - 3} more` : ""}).`,
+        "Hook not executed during DAST static inspection",
+        `DAST did not execute hook code for event '${eventKey}'. Static inspection failed with: ${reason}`,
       );
+      continue;
     }
 
-    if (maliciousFailures.length > 0) {
-      pushHookVulnerability(
-        findings,
-        `DAST-MALICIOUS-CRASH-${slug(`${hook.name}-${eventKey}`)}`,
-        "high",
-        hook,
-        eventKey,
-        "Hook crashes on malicious input",
-        `Hook raised unhandled errors for malicious payloads. Sample errors: ${maliciousFailures.slice(0, 3).join(" | ")}${maliciousFailures.length > 3 ? ` (+${maliciousFailures.length - 3} more)` : ""}`,
-      );
-    }
+    const signalSuffix = normalized.riskSignals.length > 0
+      ? ` Static signals observed: ${normalized.riskSignals.join(", ")}.`
+      : "";
+    const exportSuffix = normalized.handlerExportDeclared
+      ? ""
+      : " The configured handler export was not obvious from static source inspection.";
+
+    pushHookVulnerability(
+      findings,
+      `DAST-STATIC-COVERAGE-${slug(`${hook.name}-${eventKey}`)}`,
+      "info",
+      hook,
+      eventKey,
+      "Hook inspected statically without executing target code",
+      `DAST inspected the hook source for event '${eventKey}' without importing, transpiling, or invoking the handler.${signalSuffix}${exportSuffix}`,
+    );
   }
 
   return findings;
@@ -777,8 +603,6 @@ async function main() {
     process.exit(1);
   }
 }
-
-export { MALICIOUS_PAYLOADS };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
