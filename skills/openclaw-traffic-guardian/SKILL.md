@@ -137,9 +137,10 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 3. Scope proxy environment variables to the target OpenClaw process.
 4. Inspect HTTP request/response text up to a bounded byte limit.
 5. Support optional HTTPS MITM only when the operator supplies per-process trust configuration.
-6. Flag TweetClaw or other X/Twitter automation write requests as operator-review findings when they post, reply, DM, upload media, schedule monitors, update webhooks, or run giveaway draws.
-7. Emit JSONL findings with redacted snippets.
-8. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.
+6. Flag TweetClaw or other X/Twitter automation write requests as operator-review findings when they post, reply, DM, upload media, schedule monitors, update webhooks, run giveaway draws, or repeat those mutations from a scheduler or background runner without a fresh operator-approval marker.
+7. Detect repeat/background-runner context from bounded request metadata such as paths, headers, user-agent, client context, tool invocation metadata, or scheduler identifiers.
+8. Emit JSONL findings with redacted snippets plus source type, mutation category, approval-marker presence, and direct-operator versus background-runner context.
+9. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.
 
 ## Out of Scope for v0.0.1 Implementation
 
