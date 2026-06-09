@@ -103,6 +103,7 @@ Builders should use this skill as the OpenClaw landing zone for runtime traffic 
 - optional HTTPS inspection with per-process CA trust
 - outbound exfiltration detection
 - inbound injection detection
+- approval-sensitive social-account mutation review
 - redacted local threat logs
 - optional OpenClaw hook/status integration
 
@@ -136,8 +137,9 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 3. Scope proxy environment variables to the target OpenClaw process.
 4. Inspect HTTP request/response text up to a bounded byte limit.
 5. Support optional HTTPS MITM only when the operator supplies per-process trust configuration.
-6. Emit JSONL findings with redacted snippets.
-7. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.
+6. Flag TweetClaw or other X/Twitter automation write requests as operator-review findings when they post, reply, DM, upload media, schedule monitors, update webhooks, or run giveaway draws.
+7. Emit JSONL findings with redacted snippets.
+8. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.
 
 ## Out of Scope for v0.0.1 Implementation
 
@@ -146,4 +148,3 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 - default blocking
 - sending traffic to external services
 - collecting full request/response bodies
-

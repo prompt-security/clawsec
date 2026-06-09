@@ -64,6 +64,12 @@ Inbound INJECTION:
 - destructive remove commands
 - SSH authorized-key injection shapes
 
+Outbound POLICY_REVIEW:
+
+- social-account write requests such as post, reply, repost, like, follow, unfollow, DM, media upload, monitor, webhook, or giveaway draw actions
+- OpenClaw plugin/tool requests that invoke TweetClaw or another X/Twitter automation plugin for account mutation
+- scheduler or background-runner requests that would repeat social-account mutations without a fresh operator approval
+
 ## Safety Requirements
 
 - Default mode is detect-and-log.
@@ -72,6 +78,7 @@ Inbound INJECTION:
 - Maximum scan bytes must be configurable and bounded.
 - CA trust must be per-process by default.
 - System trust-store instructions must require explicit operator confirmation and must never run automatically.
+- POLICY_REVIEW findings must create an operator-review record only; they must not auto-block, auto-approve, or rewrite the requested action.
 
 ## Tests Required Before Release
 
@@ -79,7 +86,7 @@ Inbound INJECTION:
 - redaction tests proving secrets are not persisted
 - proxy fixture tests for HTTP request and response inspection
 - no-false-positive tests for common benign traffic
+- policy-review fixture tests for TweetClaw/social-account mutation examples and benign read-only social research requests
 - lifecycle tests for stale PID/state cleanup
 - status output tests
 - OpenClaw hook integration tests if hook files are added
-
