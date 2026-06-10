@@ -12,6 +12,12 @@ assert.match(
 
 assert.match(
   workflow,
+  /pull_request:[\s\S]*paths:[\s\S]*- '\.github\/workflows\/skill-release\.yml'[\s\S]*- 'scripts\/ci\/\*\*'/,
+  'Skill release workflow must also run when the release pipeline itself changes',
+);
+
+assert.match(
+  workflow,
   /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
   'Skill release validation must ignore test-only skill changes while inspecting release-relevant skill files',
 );
@@ -76,4 +82,16 @@ assert.match(
   workflow,
   /add_release_asset_checksum "skillspector-report\.md"/,
   'SkillSpector report must be included in the signed checksums manifest',
+);
+
+assert.match(
+  workflow,
+  /Simulate beta tag release build/,
+  'Skill release workflow must simulate a beta tag release build during PR validation',
+);
+
+assert.match(
+  workflow,
+  /simulate_skill_tag_release\.mjs/,
+  'Skill release workflow must call the tag release simulation script',
 );

@@ -7,6 +7,9 @@ on:
   pull_request:
     paths:
       - 'skills/**'
+      - '.github/workflows/skill-release.yml'
+      - 'scripts/ci/**'
+      - 'scripts/test-skill-*.mjs'
   workflow_dispatch:
     inputs:
       tag:
@@ -739,6 +742,56 @@ jobs:
           fi
 
           echo "Release dry-run completed successfully for ${dry_run_count} changed skill(s)."
+
+  simulate-tag-release-build:
+    if: github.event_name == 'pull_request'
+    needs: validate-pr-version-sync
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Install SkillSpector
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/skillspector-venv
+          . /tmp/skillspector-venv/bin/activate
+          git clone --depth 1 https://github.com/NVIDIA/SkillSpector.git /tmp/skillspector
+          make -C /tmp/skillspector install
+          echo "/tmp/skillspector-venv/bin" >> "$GITHUB_PATH"
+          skillspector --help >/dev/null
+
+      - name: Simulate beta tag release build
+        run: |
+          set -euo pipefail
+          mkdir -p dist/tag-release-simulation
+
+          for skill_json in skills/*/skill.json; do
+            skill_dir="${skill_json%/skill.json}"
+            skill_name="$(basename "${skill_dir}")"
+            echo "::group::Simulate beta tag release build for ${skill_name}"
+            node scripts/ci/simulate_skill_tag_release.mjs \
+              "${skill_dir}" \
+              "dist/tag-release-simulation/${skill_name}" \
+              --repository "${{ github.repository }}" \
+              --source-ref "${{ github.event.pull_request.head.sha }}"
+            jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+-beta\\.1$")' \
+              "dist/tag-release-simulation/${skill_name}/simulation-summary.json" >/dev/null
+            test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.json"
+            test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.sig"
+            test -s "dist/tag-release-simulation/${skill_name}/release-assets/signing-public.pem"
+            test -s "dist/tag-release-simulation/${skill_name}/release-assets/skillspector-report.md"
+            echo "::endgroup::"
+          done
 
   release-tag:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
