@@ -1,0 +1,23 @@
+.github/workflows/archive-traffic.yml
+  9e88c827d629dced 57-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "3b6e5a007c3cb6b078c40d076beb9710c5437bff",
+  "prompts": {
+    "9e88c827d629dced": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6cde66f8-4ae5-4ded-add9-521481753a3b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 5,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    }
+  }
+}
