@@ -15,6 +15,13 @@ picoclaw:
 
 This is a baseline specification skill. It intentionally does not ship a proxy or runtime implementation yet.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill picoclaw-traffic-guardian -a openclaw -y
+```
 
 ## Release Artifact Verification
 
@@ -145,4 +152,3 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 - default blocking
 - sending traffic to external services
 - collecting full request/response bodies
-

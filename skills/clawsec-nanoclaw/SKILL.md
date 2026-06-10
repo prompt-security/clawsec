@@ -8,6 +8,14 @@ description: Use when checking for security vulnerabilities in NanoClaw skills, 
 
 Security advisory monitoring that protects your WhatsApp bot from known vulnerabilities in skills and dependencies.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-nanoclaw -a openclaw -y
+```
+
 ## Overview
 
 ClawSec provides MCP tools that check installed skills against a curated feed of security advisories. It prevents installation of vulnerable skills, includes exploitability context for triage, and alerts you to issues in existing ones.
@@ -200,7 +208,6 @@ See [INSTALL.md](./INSTALL.md) for setup and [docs/](./docs/) for advanced usage
 - Alerts to supply chain attacks in dependencies
 - Provides actionable remediation steps
 - Zero false positives (curated feed only)
-
 
 ## Release Artifact Verification
 

@@ -18,6 +18,13 @@ picoclaw:
 
 Detailed architecture/operator docs: `wiki/modules/picoclaw-security-guardian.md`.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill picoclaw-security-guardian -a openclaw -y
+```
 
 ## Release Artifact Verification
 

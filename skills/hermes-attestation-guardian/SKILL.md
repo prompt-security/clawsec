@@ -15,6 +15,13 @@ IMPORTANT SCOPE:
 - This skill targets Hermes infrastructure only (CLI/Gateway/profile-managed deployments).
 - This skill is not an OpenClaw runtime hook package.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill hermes-attestation-guardian -a hermes-agent -y
+```
 
 ## Release Artifact Verification
 

@@ -23,6 +23,14 @@ Internal tool for releasing skills and managing the ClawSec catalog.
 
 ---
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill claw-release -a openclaw -y
+```
+
 ## Operational Notes
 
 - Internal maintainer workflow only.
@@ -30,7 +38,6 @@ Internal tool for releasing skills and managing the ClawSec catalog.
 - Required credentials: authenticated GitHub CLI with permission to create releases
 - Side effects: creates commits, tags, pushes to remote, and publishes GitHub Releases
 - Trust model: run only from a trusted checkout with a clean working tree and maintainer approval
-
 
 ## Release Artifact Verification
 

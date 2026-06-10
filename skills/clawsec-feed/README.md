@@ -2,6 +2,14 @@
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-feed -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime for standalone installation: `bash`, `curl`, `jq`, `shasum`, `unzip`

@@ -2,6 +2,14 @@
 
 Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill openclaw-audit-watchdog -a openclaw -y
+```
+
 ## Overview
 
 The Audit Watchdog provides automated security monitoring for your OpenClaw agent deployments:

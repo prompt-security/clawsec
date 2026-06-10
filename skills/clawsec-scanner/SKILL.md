@@ -20,6 +20,14 @@ Comprehensive security scanner for agent platforms that automates vulnerability 
 - **Unified Reporting**: Consolidated vulnerability reports with severity classification and remediation guidance
 - **Continuous Monitoring**: OpenClaw hook integration for automated periodic scanning
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-scanner -a openclaw -y
+```
+
 ## Features
 
 ### Multi-Engine Scanning

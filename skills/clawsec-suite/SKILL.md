@@ -11,6 +11,14 @@ clawdis:
 
 # ClawSec Suite
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime: `node`, `npx`, `openclaw`, `curl`, `jq`, `shasum`, `openssl`, `unzip`

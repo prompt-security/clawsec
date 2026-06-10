@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 const tempRoot = await mkdtemp(path.join(tmpdir(), "clawsec-tag-release-sim-"));
 const fakeSkillspector = path.join(tempRoot, "skillspector");
 
-async function runSimulation({ skillDir, outputDir, expectedOriginal, expectedSimulated }) {
+async function runSimulation({ skillDir, outputDir, expectedOriginal, expectedSimulated, expectedAgent }) {
   const result = spawnSync(
     process.execPath,
     [
@@ -67,7 +67,9 @@ async function runSimulation({ skillDir, outputDir, expectedOriginal, expectedSi
   const install = await readFile(path.join(releaseAssetsDir, "install.md"), "utf8");
   assert.match(
     install,
-    new RegExp(`npx skills add prompt-security/clawsec#pull-request-head --skill ${skillName} --agent codex --global --yes`),
+    new RegExp(
+      `npx skills add prompt-security/clawsec#pull-request-head --skill ${skillName} --agent ${expectedAgent} --global --yes`,
+    ),
   );
   assert.match(install, new RegExp(`npx skills update ${skillName}`));
 }
@@ -95,6 +97,7 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
     outputDir: path.join(tempRoot, "stable"),
     expectedOriginal: "0.1.10",
     expectedSimulated: "0.1.11",
+    expectedAgent: "openclaw",
   });
 
   await runSimulation({
@@ -102,6 +105,7 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
     outputDir: path.join(tempRoot, "beta"),
     expectedOriginal: "0.0.1-beta3",
     expectedSimulated: "0.0.1-beta4",
+    expectedAgent: "hermes-agent",
   });
 } finally {
   await rm(tempRoot, { recursive: true, force: true });

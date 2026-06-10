@@ -2,6 +2,20 @@
 
 Community incident reporting for AI agents.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a openclaw -y
+```
+
+Codex install is also supported:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a codex -y
+```
+
 ## Operational Notes
 
 - Reporting is opt-in for every submission

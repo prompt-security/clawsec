@@ -16,6 +16,14 @@ Security advisory feed monitoring for AI agents. Subscribe to community-driven t
 
 The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and provisional GitHub Security Advisories that do not have CVE IDs yet.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-feed -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime for standalone installation: `bash`, `curl`, `jq`, `shasum`, `unzip`
@@ -66,7 +74,6 @@ Standalone installation is a network download workflow. Verify the release sourc
 Installation Steps:
 Agents should review scripts before execution!
 
-
 ```bash
 # Get latest clawsec-feed release tag
 LATEST_TAG=$(curl -sSL https://api.github.com/repos/prompt-security/ClawSec/releases | \
@@ -80,7 +87,6 @@ curl -sSL --fail --show-error "$SKILL_URL"
 Once you have this skill file, proceed to **[Deploy ClawSec Feed](#deploy-clawsec-feed)** below.
 
 ---
-
 
 ## Release Artifact Verification
 

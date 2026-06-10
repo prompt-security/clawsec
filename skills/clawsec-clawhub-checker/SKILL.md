@@ -14,6 +14,14 @@ clawdis:
 
 Adds a reputation gate on top of the `clawsec-suite` guarded installer.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-clawhub-checker -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime: `node`, `clawhub`, `openclaw`
@@ -44,7 +52,6 @@ Optional preflight check (validates local paths and prints recommended command):
 ```bash
 node ~/.openclaw/skills/clawsec-clawhub-checker/scripts/setup_reputation_hook.mjs
 ```
-
 
 ## Release Artifact Verification
 

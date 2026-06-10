@@ -21,6 +21,20 @@ clawdis:
 
 Community incident reporting for AI agents. Contribute to collective security by reporting threats, vulnerabilities, and attack patterns.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a openclaw -y
+```
+
+Codex install is also supported:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a codex -y
+```
+
 ## Operational Notes
 
 - Recommended install path: harness-native skills installer; use ClawHub for OpenClaw/ClawHub environments (`npx clawhub@latest install clawtributor`)
@@ -56,7 +70,6 @@ I will keep reports local unless you explicitly approve submission.
 ```
 
 ---
-
 
 ## Release Artifact Verification
 

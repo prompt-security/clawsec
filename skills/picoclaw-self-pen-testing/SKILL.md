@@ -18,6 +18,13 @@ picoclaw:
 
 Purpose: keep Picoclaw posture-review checks isolated from the broader guardian package so moderation-sensitive checks can be versioned/published independently.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill picoclaw-self-pen-testing -a openclaw -y
+```
 
 ## Release Artifact Verification
 

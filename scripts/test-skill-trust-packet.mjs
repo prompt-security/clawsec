@@ -6,22 +6,26 @@ import { spawnSync } from "node:child_process";
 
 const outputDir = await mkdtemp(path.join(tmpdir(), "clawsec-trust-packet-"));
 
-try {
-  const result = spawnSync(
+function runTrustPacket(skillDir, targetDir, tag) {
+  return spawnSync(
     process.execPath,
     [
       "scripts/ci/generate_skill_release_trust_packet.mjs",
-      "skills/clawsec-suite",
-      outputDir,
+      skillDir,
+      targetDir,
       "--repository",
       "prompt-security/clawsec",
       "--tag",
-      "clawsec-suite-v0.1.10",
+      tag,
       "--source-ref",
       "main",
     ],
     { encoding: "utf8" },
   );
+}
+
+try {
+  const result = runTrustPacket("skills/clawsec-suite", outputDir, "clawsec-suite-v0.1.10");
 
   assert.equal(
     result.status,
@@ -51,9 +55,25 @@ try {
   assert.ok(Array.isArray(permissions.operator_review));
   assert.ok(permissions.operator_review.length > 0);
 
-  assert.match(install, /npx skills add prompt-security\/clawsec --skill clawsec-suite --agent codex --global --yes/);
-  assert.match(install, /npx skills update clawsec-suite/);
   assert.match(install, /npx skills add prompt-security\/clawsec --skill clawsec-suite --agent openclaw --global --yes/);
+  assert.match(install, /npx skills update clawsec-suite/);
+
+  const hermesOutputDir = path.join(outputDir, "hermes");
+  const hermesResult = runTrustPacket(
+    "skills/hermes-attestation-guardian",
+    hermesOutputDir,
+    "hermes-attestation-guardian-v0.1.4",
+  );
+  assert.equal(
+    hermesResult.status,
+    0,
+    `Hermes trust packet generator failed\nstdout:\n${hermesResult.stdout}\nstderr:\n${hermesResult.stderr}`,
+  );
+  const hermesInstall = await readFile(path.join(hermesOutputDir, "install.md"), "utf8");
+  assert.match(
+    hermesInstall,
+    /npx skills add prompt-security\/clawsec --skill hermes-attestation-guardian --agent hermes-agent --global --yes/,
+  );
 } finally {
   await rm(outputDir, { recursive: true, force: true });
 }

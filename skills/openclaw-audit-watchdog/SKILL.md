@@ -29,6 +29,14 @@ clawdis:
 
 # Prompt Security Audit (openclaw)
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill openclaw-audit-watchdog -a openclaw -y
+```
+
 ## Installation Options
 
 You can get openclaw-audit-watchdog in two ways:
@@ -64,7 +72,6 @@ Standalone installation usually involves a network download from the published G
 Continue below for standalone installation instructions.
 
 ---
-
 
 ## Release Artifact Verification
 
