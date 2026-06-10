@@ -1,16 +1,24 @@
 {
   "name": "clawtributor",
-  "version": "0.0.6",
-  "description": "Community incident reporting for AI agents. Contribute to collective security by reporting threats.",
+  "version": "0.0.7",
+  "description": "Harness-neutral community incident reporting for AI agents. Contribute to collective security by reporting threats.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security",
+  "platforms": [
+    "openclaw",
+    "nanoclaw",
+    "hermes",
+    "picoclaw"
+  ],
   "keywords": [
     "security",
     "reporting",
     "community",
     "agents",
     "ai",
+    "global",
+    "harness-neutral",
     "vulnerability",
     "contribution"
   ],
@@ -36,11 +44,6 @@
   "openclaw": {
     "emoji": "🤝",
     "category": "security",
-    "requires": {
-      "bins": [
-        "openclaw"
-      ]
-    },
     "execution": {
       "always": false,
       "persistence": "Stores local report/state files only; no recurring automation is created by default.",

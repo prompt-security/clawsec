@@ -1,6 +1,13 @@
 {
   "plugins": [
     {
+      "name": "global-skills",
+      "source": "./",
+      "skills": [
+        "./skills/clawtributor"
+      ]
+    },
+    {
       "name": "hermes-skills",
       "source": "./",
       "skills": [
@@ -24,7 +31,6 @@
         "./skills/clawsec-feed",
         "./skills/clawsec-scanner",
         "./skills/clawsec-suite",
-        "./skills/clawtributor",
         "./skills/openclaw-audit-watchdog",
         "./skills/openclaw-traffic-guardian",
         "./skills/soul-guardian"

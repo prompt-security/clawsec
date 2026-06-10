@@ -58,7 +58,7 @@ ClawSec is a **complete security skill suite for AI agent platforms**. It provid
 | clawsec-nanoclaw | NanoClaw | Yes | Yes | Yes | Yes | No |
 | clawsec-scanner | OpenClaw | Yes | No | Yes | Yes | No |
 | clawsec-suite | OpenClaw | Yes | Yes | No | Yes | No |
-| clawtributor | OpenClaw | Yes | No | No | No | No |
+| clawtributor | All core platforms | No | No | No | No | No |
 | hermes-attestation-guardian | Hermes | Yes (signed advisory feed verification) | Yes | No | Limited (advisory preflight gating only; no artifact signature/provenance install verification) | No |
 | hermes-traffic-guardian | Hermes | No | Planned posture export only | No | No | Spec baseline |
 | nanoclaw-traffic-guardian | NanoClaw | No | No | No | No | Spec baseline |

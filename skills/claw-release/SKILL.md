@@ -1,6 +1,6 @@
 ---
 name: claw-release
-version: 0.0.3
+version: 0.0.4
 description: Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.
 homepage: https://clawsec.prompt.security
 metadata:
@@ -40,7 +40,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="claw-release"
-VERSION="0.0.3"
+VERSION="0.0.4"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

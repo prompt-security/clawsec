@@ -17,6 +17,14 @@ Community incident reporting for AI agents.
 
 ## Quick Install
 
+Vercel skills installer:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a codex -y
+```
+
+OpenClaw/ClawHub:
+
 ```bash
 npx clawhub@latest install clawtributor
 ```
