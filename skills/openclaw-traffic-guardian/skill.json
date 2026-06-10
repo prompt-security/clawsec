@@ -1,7 +1,7 @@
 {
   "name": "openclaw-traffic-guardian",
-  "version": "0.0.1-beta2",
-  "description": "OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, and inbound injection detection.",
+  "version": "0.0.1-beta3",
+  "description": "OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, inbound injection detection, and social-account policy review.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security/",
@@ -15,7 +15,10 @@
     "injection",
     "proxy",
     "mitm",
-    "runtime"
+    "runtime",
+    "policy-review",
+    "operator-review",
+    "social-account-mutation"
   ],
   "sbom": {
     "files": [
@@ -84,6 +87,7 @@
       "https_mitm_inspection": "planned_optional",
       "egress_exfiltration_detection": "planned",
       "inbound_injection_detection": "planned",
+      "social_account_policy_review": "planned",
       "blocking": "future_version"
     },
     "execution": {
@@ -96,6 +100,7 @@
       "Default to detect-and-log mode; blocking is out of scope for v0.0.1 implementation.",
       "Scope HTTP_PROXY/HTTPS_PROXY to the OpenClaw process being monitored.",
       "Redact secret snippets before writing logs or sending conversation alerts.",
+      "Record POLICY_REVIEW findings for approval-sensitive social-account mutations without auto-blocking, auto-approving, or rewriting requests.",
       "Integrate with clawsec-suite as an optional add-on, not a default install."
     ],
     "triggers": [
@@ -103,7 +108,9 @@
       "openclaw traffic monitoring",
       "monitor openclaw egress",
       "inspect openclaw http traffic",
-      "detect openclaw exfiltration"
+      "detect openclaw exfiltration",
+      "review social account mutations",
+      "detect tweetclaw write actions"
     ]
   }
 }

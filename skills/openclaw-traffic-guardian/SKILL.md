@@ -1,7 +1,7 @@
 ---
 name: openclaw-traffic-guardian
-version: 0.0.1-beta2
-description: OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, and inbound injection detection.
+version: 0.0.1-beta3
+description: OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, inbound injection detection, and social-account policy review.
 homepage: https://clawsec.prompt.security
 author: prompt-security
 license: AGPL-3.0-or-later
@@ -24,7 +24,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="openclaw-traffic-guardian"
-VERSION="0.0.1-beta2"
+VERSION="0.0.1-beta3"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -137,7 +137,7 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 3. Scope proxy environment variables to the target OpenClaw process.
 4. Inspect HTTP request/response text up to a bounded byte limit.
 5. Support optional HTTPS MITM only when the operator supplies per-process trust configuration.
-6. Flag TweetClaw or other X/Twitter automation write requests as operator-review findings when they post, reply, DM, upload media, schedule monitors, update webhooks, run giveaway draws, or repeat those mutations from a scheduler or background runner without a fresh operator-approval marker.
+6. Flag TweetClaw or other X/Twitter automation write requests as operator-review findings when they post, reply, DM, upload media, create or update persistent social monitors, update webhook configuration, run giveaway draws, or repeat those mutations from a scheduler or background runner without a fresh operator-approval marker.
 7. Detect repeat/background-runner context from bounded request metadata such as paths, headers, user-agent, client context, tool invocation metadata, or scheduler identifiers.
 8. Emit JSONL findings with redacted snippets plus source type, mutation category, approval-marker presence, and direct-operator versus background-runner context.
 9. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.

@@ -45,6 +45,24 @@ Findings must be JSON objects with these fields:
 }
 ```
 
+`POLICY_REVIEW` findings must keep the same base schema and add these fields:
+
+```json
+{
+  "threat_type": "POLICY_REVIEW",
+  "pattern": "social_account_mutation",
+  "source_type": "openclaw_tool_request",
+  "mutation_category": "post",
+  "approval_marker_present": false,
+  "execution_context": "background_runner"
+}
+```
+
+- `source_type`: `http_request`, `openclaw_tool_request`, or `unknown`.
+- `mutation_category`: `post`, `reply`, `repost`, `like`, `follow`, `unfollow`, `dm`, `media_upload`, `persistent_monitor`, `webhook_config`, `giveaway_draw`, or `other_social_account_mutation`.
+- `approval_marker_present`: boolean; do not persist marker secrets or full approval tokens.
+- `execution_context`: `direct_operator`, `scheduler`, `background_runner`, or `unknown`.
+
 ## Minimum Detection Set
 
 Outbound EXFIL:
@@ -66,7 +84,7 @@ Inbound INJECTION:
 
 Outbound POLICY_REVIEW:
 
-- social-account write requests such as post, reply, repost, like, follow, unfollow, DM, media upload, monitor, webhook, or giveaway draw actions
+- social-account write requests such as post, reply, repost, like, follow, unfollow, DM, media upload, persistent monitor creation/update, webhook configuration changes, or giveaway draw actions
 - OpenClaw plugin/tool requests that invoke TweetClaw or another X/Twitter automation plugin for account mutation
 - scheduler or background-runner requests that would repeat social-account mutations without a fresh operator approval
 

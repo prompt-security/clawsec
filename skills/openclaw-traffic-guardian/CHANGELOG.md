@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.1-beta3] - 2026-06-10
+
+### Security
+- Added the `POLICY_REVIEW` scope for approval-sensitive social-account mutation requests.
+- Defined required JSONL metadata for social-account mutation findings, including source type, mutation category, approval-marker presence, and execution context.
+
+### Changed
+- Clarified that persistent social monitor and webhook configuration changes are review findings, while read-only social research should remain covered by no-false-positive tests.
+
 ## [0.0.1-beta2] - 2026-05-13
 
 ### Security
