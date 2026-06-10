@@ -469,7 +469,7 @@ async function main() {
 
     await runSkillSpector({
       skillspectorBin: args.skillspectorBin,
-      skillDir: tempSkillDir,
+      skillDir: innerDir,
       reportPath: path.join(releaseAssetsDir, "skillspector-report.md"),
     });
 

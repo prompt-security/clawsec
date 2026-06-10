@@ -710,7 +710,7 @@ jobs:
               --source-ref "${HEAD_SHA}"
 
             # --- Generate SkillSpector report ---
-            if ! generate_skillspector_report "${skill_dir}" "${out_assets}/skillspector-report.md"; then
+            if ! generate_skillspector_report "${inner_dir}" "${out_assets}/skillspector-report.md"; then
               failures=$((failures + 1))
               rm -rf "${staging_dir}"
               echo "::endgroup::"
@@ -1221,7 +1221,7 @@ jobs:
             --source-ref "$TAG"
 
           # --- Generate SkillSpector report ---
-          generate_skillspector_report "$SKILL_PATH" "release-assets/skillspector-report.md"
+          generate_skillspector_report "$INNER_DIR" "release-assets/skillspector-report.md"
 
           test -s release-assets/skill-card.md
           test -s release-assets/permissions.json
@@ -1415,6 +1415,10 @@ jobs:
             ${{ steps.changelog.outputs.changelog }}
 
             ${{ steps.install.outputs.quick_install }}
+
+            ### SkillSpector Security Report
+
+            Review the generated release-payload scan: [skillspector-report.md](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skillspector-report.md)
 
             ### Verification
 

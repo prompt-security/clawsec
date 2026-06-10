@@ -90,6 +90,36 @@ assert.match(
 
 assert.match(
   workflow,
+  /### SkillSpector Security Report[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{\{ github\.repository \}\}\/releases\/download\/\$\{\{ github\.ref_name \}\}\/skillspector-report\.md\)/,
+  'GitHub release notes must display a direct SkillSpector report link',
+);
+
+assert.match(
+  workflow,
+  /generate_skillspector_report "\$\{inner_dir\}" "\$\{out_assets\}\/skillspector-report\.md"/,
+  'PR dry-run SkillSpector scan must target the staged release payload, not the source skill directory',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /generate_skillspector_report "\$\{skill_dir\}" "\$\{out_assets\}\/skillspector-report\.md"/,
+  'PR dry-run SkillSpector scan must not include source-only test directories',
+);
+
+assert.match(
+  workflow,
+  /generate_skillspector_report "\$INNER_DIR" "release-assets\/skillspector-report\.md"/,
+  'Tag release SkillSpector scan must target the staged release payload, not the source skill directory',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /generate_skillspector_report "\$SKILL_PATH" "release-assets\/skillspector-report\.md"/,
+  'Tag release SkillSpector scan must not include source-only test directories',
+);
+
+assert.match(
+  workflow,
   /Generate release trust packet/,
   'Skill release workflow must generate skill cards, permission summaries, and npx install instructions',
 );

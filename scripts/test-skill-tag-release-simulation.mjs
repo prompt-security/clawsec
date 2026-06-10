@@ -94,7 +94,36 @@ try {
   await writeFile(
     fakeSkillspector,
     `#!/usr/bin/env node
-import { writeFileSync } from "node:fs";
+import { readdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+const scanIndex = process.argv.indexOf("scan");
+if (scanIndex === -1 || !process.argv[scanIndex + 1]) {
+  console.error("missing scan target");
+  process.exit(2);
+}
+
+function containsTestDirectory(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+    const lowerName = entry.name.toLowerCase();
+    if (lowerName === "test" || lowerName === "tests") {
+      return true;
+    }
+    if (containsTestDirectory(path.join(dir, entry.name))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const scanTarget = process.argv[scanIndex + 1];
+if (containsTestDirectory(scanTarget)) {
+  console.error("SkillSpector test fixture must scan the staged release payload, not source test directories.");
+  process.exit(42);
+}
 
 const outputIndex = process.argv.indexOf("--output");
 if (outputIndex === -1 || !process.argv[outputIndex + 1]) {
