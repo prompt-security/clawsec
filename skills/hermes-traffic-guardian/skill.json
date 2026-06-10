@@ -1,6 +1,6 @@
 {
   "name": "hermes-traffic-guardian",
-  "version": "0.0.1-beta2",
+  "version": "0.0.1-beta3",
   "description": "Hermes runtime traffic monitoring baseline for opt-in proxy inspection, egress detection, and attestation-aware traffic posture.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.7] - 2026-06-10
+
+### Changed
+
+- Re-released skill package with updated marketplace grouping and signed release trust artifacts for Vercel-compatible skill installation.
+- Marked Clawtributor as a harness-neutral global skill for OpenClaw, NanoClaw, Hermes, and Picoclaw installer grouping.
+- Removed OpenClaw CLI as a declared runtime requirement because reporting is manual, approval-gated, and not tied to an OpenClaw command path.
+- Documented Vercel skills installer usage alongside the OpenClaw/ClawHub install path.
+- Moved local report/state guidance to `~/.clawsec/clawtributor/`.
+
 ## [0.0.6] - 2026-05-14
 
 ### Security

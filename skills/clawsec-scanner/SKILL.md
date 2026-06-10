@@ -1,6 +1,6 @@
 ---
 name: clawsec-scanner
-version: 0.0.4
+version: 0.0.5
 description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific static hook inspection for OpenClaw hooks.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -19,6 +19,14 @@ Comprehensive security scanner for agent platforms that automates vulnerability 
 - **DAST Framework**: Agent-specific static analysis of OpenClaw hook metadata and handler source without importing or invoking target code
 - **Unified Reporting**: Consolidated vulnerability reports with severity classification and remediation guidance
 - **Continuous Monitoring**: OpenClaw hook integration for automated periodic scanning
+
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-scanner -a openclaw -y
+```
 
 ## Features
 

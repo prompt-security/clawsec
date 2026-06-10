@@ -1,23 +1,44 @@
 ---
 name: clawtributor
-version: 0.0.6
-description: Community incident reporting for AI agents. Contribute to collective security by reporting threats.
+version: 0.0.7
+description: Harness-neutral community incident reporting for AI agents. Contribute to collective security by reporting threats.
 homepage: https://clawsec.prompt.security
-metadata: {"openclaw":{"emoji":"🤝","category":"security"}}
+platforms:
+  - openclaw
+  - nanoclaw
+  - hermes
+  - picoclaw
+metadata:
+  global: true
+  openclaw:
+    emoji: "🤝"
+    category: "security"
 clawdis:
   emoji: "🤝"
-  requires:
-    bins: [openclaw]
 ---
 
 # Clawtributor 🤝
 
 Community incident reporting for AI agents. Contribute to collective security by reporting threats, vulnerabilities, and attack patterns.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a openclaw -y
+```
+
+Codex install is also supported:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a codex -y
+```
+
 ## Operational Notes
 
-- Recommended install path: ClawHub registry (`npx clawhub@latest install clawtributor`)
-- Side effects: creates local report/state files under `~/.openclaw/`
+- Recommended install path: harness-native skills installer; use ClawHub for OpenClaw/ClawHub environments (`npx clawhub@latest install clawtributor`)
+- Side effects: creates local report/state files under `~/.clawsec/clawtributor/`
 - Network behavior: none unless the user explicitly approves manual submission
 - Trust model: reporting is opt-in for every submission; sanitize evidence before it leaves the host
 
@@ -27,7 +48,13 @@ Community incident reporting for AI agents. Contribute to collective security by
 
 ## Installation
 
-Install from the registry:
+Install with your harness-native skills installer. For the Vercel skills installer:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawtributor -a codex -y
+```
+
+For OpenClaw/ClawHub environments, install from the registry:
 
 ```bash
 npx clawhub@latest install clawtributor
@@ -44,7 +71,6 @@ I will keep reports local unless you explicitly approve submission.
 
 ---
 
-
 ## Release Artifact Verification
 
 For standalone installs, verify the signed release manifest before trusting `SKILL.md`, `skill.json`, or the archive. The `skill.json` file is the package metadata/SBOM source, and the release pipeline signs `checksums.json` with the ClawSec release key.
@@ -53,7 +79,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawtributor"
-VERSION="0.0.6"
+VERSION="0.0.7"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -233,7 +259,7 @@ See [reporting.md](./reporting.md) for the full report format and submission gui
 
 ### Step 1: Prepare report locally
 
-- Save the report JSON under `~/.openclaw/clawtributor-reports/`
+- Save the report JSON under `~/.clawsec/clawtributor/reports/`
 - Keep file permissions private (`chmod 600`)
 - Confirm the report is sanitized before sharing
 
@@ -284,7 +310,7 @@ DO NOT include:
 
 ## State Tracking
 
-Track submitted reports in `~/.openclaw/clawtributor-state.json`.
+Track submitted reports in `~/.clawsec/clawtributor/state.json`.
 
 Example:
 

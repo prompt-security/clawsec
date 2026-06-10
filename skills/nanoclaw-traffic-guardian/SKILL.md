@@ -1,6 +1,6 @@
 ---
 name: nanoclaw-traffic-guardian
-version: 0.0.1-beta2
+version: 0.0.1-beta3
 description: NanoClaw runtime traffic monitoring baseline for host-side proxy inspection with container-safe MCP and IPC status surfaces.
 homepage: https://clawsec.prompt.security
 author: prompt-security
@@ -14,6 +14,13 @@ nanoclaw:
 
 This is a baseline specification skill. It intentionally does not ship a proxy or runtime implementation yet.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill nanoclaw-traffic-guardian -a openclaw -y
+```
 
 ## Release Artifact Verification
 
@@ -23,7 +30,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="nanoclaw-traffic-guardian"
-VERSION="0.0.1-beta2"
+VERSION="0.0.1-beta3"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -146,4 +153,3 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 - default blocking
 - sending traffic to external services
 - exposing raw request/response bodies to the container
-

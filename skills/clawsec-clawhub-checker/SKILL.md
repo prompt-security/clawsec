@@ -1,6 +1,6 @@
 ---
 name: clawsec-clawhub-checker
-version: 0.0.5
+version: 0.0.6
 description: ClawHub reputation checker for clawsec-suite. Adds a standalone reputation gate before guarded skill installation.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -13,6 +13,14 @@ clawdis:
 # ClawSec ClawHub Checker
 
 Adds a reputation gate on top of the `clawsec-suite` guarded installer.
+
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-clawhub-checker -a openclaw -y
+```
 
 ## Operational Notes
 
@@ -44,7 +52,6 @@ Optional preflight check (validates local paths and prints recommended command):
 ```bash
 node ~/.openclaw/skills/clawsec-clawhub-checker/scripts/setup_reputation_hook.mjs
 ```
-
 
 ## Release Artifact Verification
 

@@ -1,6 +1,6 @@
 ---
 name: hermes-traffic-guardian
-version: 0.0.1-beta2
+version: 0.0.1-beta3
 description: Hermes runtime traffic monitoring baseline for opt-in proxy inspection, egress detection, and attestation-aware traffic posture.
 homepage: https://clawsec.prompt.security
 author: prompt-security
@@ -15,6 +15,13 @@ hermes:
 
 This is a baseline specification skill. It intentionally does not ship a proxy or runtime implementation yet.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill hermes-traffic-guardian -a hermes-agent -y
+```
 
 ## Release Artifact Verification
 
@@ -24,7 +31,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="hermes-traffic-guardian"
-VERSION="0.0.1-beta2"
+VERSION="0.0.1-beta3"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -145,4 +152,3 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 - default blocking
 - sending traffic to external services
 - collecting full request/response bodies
-

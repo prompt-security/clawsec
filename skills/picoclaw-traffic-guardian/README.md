@@ -4,6 +4,14 @@ Baseline skill for Picoclaw runtime traffic monitoring.
 
 This package is intentionally a spec scaffold. Builders should add the Picoclaw-specific monitor implementation here while preserving the safety contract in `SKILL.md` and `SPEC.md`.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill picoclaw-traffic-guardian -a openclaw -y
+```
+
 ## Intended Capability
 
 - detect outbound secret exfiltration in Picoclaw gateway HTTP/HTTPS traffic
@@ -15,4 +23,3 @@ This package is intentionally a spec scaffold. Builders should add the Picoclaw-
 ## Builder Notes
 
 Keep runtime ownership in this skill. `picoclaw-security-guardian` should only profile and drift-check this skill's state, config, and output fingerprints.
-

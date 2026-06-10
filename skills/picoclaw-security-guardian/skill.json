@@ -1,6 +1,6 @@
 {
   "name": "picoclaw-security-guardian",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Picoclaw security posture skill with advisory awareness, configuration drift detection, and supply-chain verification guidance.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

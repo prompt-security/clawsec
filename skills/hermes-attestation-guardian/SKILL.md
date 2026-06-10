@@ -1,6 +1,6 @@
 ---
 name: hermes-attestation-guardian
-version: 0.1.3
+version: 0.1.4
 description: Hermes-only runtime security attestation and drift detection skill for operator-managed Hermes infrastructure.
 homepage: https://clawsec.prompt.security
 hermes:
@@ -15,6 +15,13 @@ IMPORTANT SCOPE:
 - This skill targets Hermes infrastructure only (CLI/Gateway/profile-managed deployments).
 - This skill is not an OpenClaw runtime hook package.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill hermes-attestation-guardian -a hermes-agent -y
+```
 
 ## Release Artifact Verification
 
@@ -24,7 +31,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="hermes-attestation-guardian"
-VERSION="0.1.3"
+VERSION="0.1.4"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

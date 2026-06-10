@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.9
+version: 0.1.10
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -10,6 +10,14 @@ clawdis:
 ---
 
 # ClawSec Suite
+
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
+```
 
 ## Operational Notes
 

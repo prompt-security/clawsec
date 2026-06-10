@@ -4,6 +4,14 @@ Baseline skill for NanoClaw runtime traffic monitoring.
 
 This package is intentionally a spec scaffold. Builders should add the NanoClaw-specific host-service, IPC, and MCP implementation here while preserving the safety contract in `SKILL.md` and `SPEC.md`.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill nanoclaw-traffic-guardian -a openclaw -y
+```
+
 ## Intended Capability
 
 - detect outbound secret exfiltration in NanoClaw host-managed traffic
@@ -15,4 +23,3 @@ This package is intentionally a spec scaffold. Builders should add the NanoClaw-
 ## Builder Notes
 
 Follow the existing `clawsec-nanoclaw` pattern: host services own privileged operations, while MCP tools expose bounded requests and redacted responses.
-

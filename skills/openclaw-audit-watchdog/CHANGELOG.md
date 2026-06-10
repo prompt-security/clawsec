@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.7] - 2026-06-10
+
+### Changed
+
+- Re-released skill package with updated marketplace grouping and signed release trust artifacts for Vercel-compatible skill installation.
+
 ## [0.1.6] - 2026-05-16
 
 ### Fixed

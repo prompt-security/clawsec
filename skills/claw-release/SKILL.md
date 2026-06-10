@@ -1,9 +1,14 @@
 ---
 name: claw-release
-version: 0.0.3
+version: 0.0.4
 description: Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.
 homepage: https://clawsec.prompt.security
-metadata: {"openclaw":{"emoji":"🚀","category":"utility","internal":true}}
+metadata:
+  internal: true
+  openclaw:
+    emoji: "🚀"
+    category: "utility"
+    internal: true
 clawdis:
   emoji: "🚀"
   requires:
@@ -18,6 +23,14 @@ Internal tool for releasing skills and managing the ClawSec catalog.
 
 ---
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill claw-release -a openclaw -y
+```
+
 ## Operational Notes
 
 - Internal maintainer workflow only.
@@ -25,7 +38,6 @@ Internal tool for releasing skills and managing the ClawSec catalog.
 - Required credentials: authenticated GitHub CLI with permission to create releases
 - Side effects: creates commits, tags, pushes to remote, and publishes GitHub Releases
 - Trust model: run only from a trusted checkout with a clean working tree and maintainer approval
-
 
 ## Release Artifact Verification
 
@@ -35,7 +47,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="claw-release"
-VERSION="0.0.3"
+VERSION="0.0.4"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

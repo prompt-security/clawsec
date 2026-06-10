@@ -2,6 +2,14 @@
 
 ClawSec now supports NanoClaw, a containerized WhatsApp bot powered by Claude agents.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-nanoclaw -a openclaw -y
+```
+
 ## What Changed
 
 ### Advisory Feed Monitoring

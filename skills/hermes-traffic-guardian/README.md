@@ -4,6 +4,14 @@ Baseline skill for Hermes runtime traffic monitoring.
 
 This package is intentionally a spec scaffold. Builders should add the Hermes-specific monitor implementation here while preserving the safety contract in `SKILL.md` and `SPEC.md`.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill hermes-traffic-guardian -a hermes-agent -y
+```
+
 ## Intended Capability
 
 - detect outbound secret exfiltration in Hermes HTTP/HTTPS traffic
@@ -15,4 +23,3 @@ This package is intentionally a spec scaffold. Builders should add the Hermes-sp
 ## Builder Notes
 
 Keep runtime ownership in this skill. `hermes-attestation-guardian` should only attest this skill's state, config, and output fingerprints.
-
