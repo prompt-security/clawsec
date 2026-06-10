@@ -1,6 +1,6 @@
 ---
 name: soul-guardian
-version: 0.0.6
+version: 0.0.7
 description: Drift detection + baseline integrity guard for agent workspace files with automatic alerting support
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"👻","category":"security"}}
@@ -14,6 +14,14 @@ clawdis:
 
 Protects your agent's core files (SOUL.md, AGENTS.md, etc.) from unauthorized changes with automatic detection, restoration, and **user alerting**.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill soul-guardian -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime: `python3`
@@ -21,7 +29,6 @@ Protects your agent's core files (SOUL.md, AGENTS.md, etc.) from unauthorized ch
 - Side effects: can auto-restore protected files to their approved baseline and writes audit/quarantine state locally
 - Network behavior: none by default
 - Trust model: any scheduling is opt-in, but restore mode intentionally overwrites drifted files
-
 
 ## Release Artifact Verification
 
@@ -31,7 +38,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="soul-guardian"
-VERSION="0.0.6"
+VERSION="0.0.7"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

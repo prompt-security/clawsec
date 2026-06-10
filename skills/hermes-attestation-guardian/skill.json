@@ -1,6 +1,6 @@
 {
   "name": "hermes-attestation-guardian",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Hermes-only runtime security attestation and drift detection skill. Generates deterministic posture artifacts, verifies integrity fail-closed, and classifies baseline drift severity.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

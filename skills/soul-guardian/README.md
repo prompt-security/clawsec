@@ -2,6 +2,14 @@
 
 A small, dependency-free integrity guard for OpenClaw agent workspaces.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill soul-guardian -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime: `python3`

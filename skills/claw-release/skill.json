@@ -1,6 +1,6 @@
 {
   "name": "claw-release",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

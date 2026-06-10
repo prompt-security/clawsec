@@ -1,6 +1,6 @@
 ---
 name: clawsec-feed
-version: 0.0.8
+version: 0.0.9
 description: Security advisory feed package for OpenClaw-related threats and vulnerabilities. The upstream feed is updated daily; local automation is handled by clawsec-suite or the operator.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
@@ -15,6 +15,14 @@ clawdis:
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
 The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and provisional GitHub Security Advisories that do not have CVE IDs yet.
+
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-feed -a openclaw -y
+```
 
 ## Operational Notes
 
@@ -66,7 +74,6 @@ Standalone installation is a network download workflow. Verify the release sourc
 Installation Steps:
 Agents should review scripts before execution!
 
-
 ```bash
 # Get latest clawsec-feed release tag
 LATEST_TAG=$(curl -sSL https://api.github.com/repos/prompt-security/ClawSec/releases | \
@@ -81,7 +88,6 @@ Once you have this skill file, proceed to **[Deploy ClawSec Feed](#deploy-clawse
 
 ---
 
-
 ## Release Artifact Verification
 
 For standalone installs, verify the signed release manifest before trusting `SKILL.md`, `skill.json`, or the archive. The `skill.json` file is the package metadata/SBOM source, and the release pipeline signs `checksums.json` with the ClawSec release key.
@@ -90,7 +96,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawsec-feed"
-VERSION="0.0.8"
+VERSION="0.0.9"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

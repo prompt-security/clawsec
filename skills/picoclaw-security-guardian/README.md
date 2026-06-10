@@ -6,6 +6,14 @@ Status: implemented (v0.0.1), Picoclaw-specific.
 
 Detailed architecture/operator docs: `wiki/modules/picoclaw-security-guardian.md`.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill picoclaw-security-guardian -a openclaw -y
+```
+
 ## Support matrix mapping
 
 | Skill name | supported platform | security feed | config drift | agent posture-review lane | chain of supply verification |
@@ -48,4 +56,3 @@ test/picoclaw_security_guardian_sandbox_regression.sh
 ```
 
 It uses Docker to publish the skill through a local ClawHub-compatible registry, installs it with Picoclaw's own `find_skills` / `install_skill` flow into an isolated Picoclaw workspace, confirms Picoclaw's skill loader can list/load it, then verifies the installed copy's profile, drift, advisory, and supply-chain paths.
-

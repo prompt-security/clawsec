@@ -1,6 +1,6 @@
 ---
 name: openclaw-audit-watchdog
-version: 0.1.6
+version: 0.1.7
 description: Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Runs deep audits, creates or updates a recurring cron job, and sends formatted reports to configured recipients.
 homepage: https://clawsec.prompt.security
 metadata:
@@ -28,6 +28,14 @@ clawdis:
 ---
 
 # Prompt Security Audit (openclaw)
+
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill openclaw-audit-watchdog -a openclaw -y
+```
 
 ## Installation Options
 
@@ -65,7 +73,6 @@ Continue below for standalone installation instructions.
 
 ---
 
-
 ## Release Artifact Verification
 
 For standalone installs, verify the signed release manifest before trusting `SKILL.md`, `skill.json`, or the archive. The `skill.json` file is the package metadata/SBOM source, and the release pipeline signs `checksums.json` with the ClawSec release key.
@@ -74,7 +81,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="openclaw-audit-watchdog"
-VERSION="0.1.6"
+VERSION="0.1.7"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

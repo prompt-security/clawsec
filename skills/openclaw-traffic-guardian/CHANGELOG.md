@@ -8,6 +8,7 @@
 
 ### Changed
 - Clarified that persistent social monitor and webhook configuration changes are review findings, while read-only social research should remain covered by no-false-positive tests.
+- Re-released skill package with updated marketplace grouping and signed release trust artifacts for Vercel-compatible skill installation.
 
 ## [0.0.1-beta2] - 2026-05-13
 

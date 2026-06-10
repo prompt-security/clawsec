@@ -1,6 +1,6 @@
 ---
 name: picoclaw-self-pen-testing
-version: 0.0.2
+version: 0.0.3
 description: Picoclaw-only local posture-review skill focused on read-only findings and safe operator remediation guidance.
 homepage: https://clawsec.prompt.security
 author: prompt-security
@@ -18,6 +18,13 @@ picoclaw:
 
 Purpose: keep Picoclaw posture-review checks isolated from the broader guardian package so moderation-sensitive checks can be versioned/published independently.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill picoclaw-self-pen-testing -a openclaw -y
+```
 
 ## Release Artifact Verification
 
@@ -27,7 +34,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="picoclaw-self-pen-testing"
-VERSION="0.0.2"
+VERSION="0.0.3"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

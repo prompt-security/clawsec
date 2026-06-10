@@ -1,6 +1,6 @@
 {
   "name": "nanoclaw-traffic-guardian",
-  "version": "0.0.1-beta2",
+  "version": "0.0.1-beta3",
   "description": "NanoClaw runtime traffic monitoring baseline for host-side proxy inspection with container-safe MCP and IPC status surfaces.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

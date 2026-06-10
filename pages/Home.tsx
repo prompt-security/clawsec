@@ -13,7 +13,7 @@ export const Home: React.FC = () => {
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [currentPlatformIndex, setCurrentPlatformIndex] = useState(0);
 
-  const curlCommand = `npx clawhub@latest install clawsec-suite`;
+  const curlCommand = `npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y`;
 
   // Rotate file names every 2-3 seconds
   useEffect(() => {
@@ -44,7 +44,7 @@ export const Home: React.FC = () => {
     };
   }, []);
 
-  const humanInstruction = `Please install clawsec-suite from clawhubnpx clawhub@latest install clawsec-suite`;
+  const humanInstruction = `Please install clawsec-suite with npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y`;
 
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
@@ -285,6 +285,18 @@ export const Home: React.FC = () => {
                 </div>
               </>
             )}
+            <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
+              * For harnesses other than OpenClaw, consult the{' '}
+              <a
+                href="https://github.com/prompt-security/clawsec#skill-feature-matrix"
+                target="_blank"
+                rel="noreferrer"
+                className="text-clawd-accent hover:text-clawd-accent/80 underline underline-offset-2"
+              >
+                README Skill Feature Matrix
+              </a>
+              .
+            </p>
           </div>
         </div>
       </section>

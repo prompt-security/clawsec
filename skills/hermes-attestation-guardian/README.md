@@ -4,6 +4,14 @@ Hermes-only attestation, advisory verification, and guarded verification workflo
 
 Status: implemented (v0.1.0), Hermes-only.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill hermes-attestation-guardian -a hermes-agent -y
+```
+
 ## Capabilities
 
 This skill now covers the full Hermes-side capability set expected from the clawsec-suite parity workstream:

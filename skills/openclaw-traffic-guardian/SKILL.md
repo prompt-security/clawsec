@@ -15,6 +15,13 @@ clawdis:
 
 This is a baseline specification skill. It intentionally does not ship a proxy or runtime implementation yet.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill openclaw-traffic-guardian -a openclaw -y
+```
 
 ## Release Artifact Verification
 

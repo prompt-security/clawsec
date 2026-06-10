@@ -2,6 +2,14 @@
 
 A `clawsec-suite` companion skill that adds a standalone reputation gate before guarded installs.
 
+## Vercel Skills Installation
+
+Install with the Vercel Skills CLI for this harness:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-clawhub-checker -a openclaw -y
+```
+
 ## Operational Notes
 
 - Required runtime: `node`, `clawhub`, `openclaw`

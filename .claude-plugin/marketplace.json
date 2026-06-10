@@ -1,0 +1,56 @@
+{
+  "plugins": [
+    {
+      "name": "global-skills",
+      "source": "./",
+      "skills": [
+        "./skills/clawtributor"
+      ]
+    },
+    {
+      "name": "hermes-skills",
+      "source": "./",
+      "skills": [
+        "./skills/hermes-attestation-guardian",
+        "./skills/hermes-traffic-guardian"
+      ]
+    },
+    {
+      "name": "nano-claw-skills",
+      "source": "./",
+      "skills": [
+        "./skills/clawsec-nanoclaw",
+        "./skills/nanoclaw-traffic-guardian"
+      ]
+    },
+    {
+      "name": "open-claw-skills",
+      "source": "./",
+      "skills": [
+        "./skills/clawsec-clawhub-checker",
+        "./skills/clawsec-feed",
+        "./skills/clawsec-scanner",
+        "./skills/clawsec-suite",
+        "./skills/openclaw-audit-watchdog",
+        "./skills/openclaw-traffic-guardian",
+        "./skills/soul-guardian"
+      ]
+    },
+    {
+      "name": "pico-claw-skills",
+      "source": "./",
+      "skills": [
+        "./skills/picoclaw-security-guardian",
+        "./skills/picoclaw-self-pen-testing",
+        "./skills/picoclaw-traffic-guardian"
+      ]
+    },
+    {
+      "name": "repo-internal-skills",
+      "source": "./",
+      "skills": [
+        "./skills/claw-release"
+      ]
+    }
+  ]
+}

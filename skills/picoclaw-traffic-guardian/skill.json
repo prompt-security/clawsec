@@ -1,6 +1,6 @@
 {
   "name": "picoclaw-traffic-guardian",
-  "version": "0.0.1-beta2",
+  "version": "0.0.1-beta3",
   "description": "Picoclaw runtime traffic monitoring baseline for lightweight AI gateway proxy inspection, egress detection, and posture integration.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
