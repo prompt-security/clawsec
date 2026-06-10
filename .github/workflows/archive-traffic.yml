@@ -53,9 +53,22 @@ jobs:
 
       - name: Collect traffic
         env:
-          GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_ARCHIVE_TOKEN || github.token }}
+          # Traffic endpoints reject the Actions GITHUB_TOKEN ("Resource not
+          # accessible by integration") — a PAT with push access is required.
+          # POLL_NVD_CVES_PAT is a stopgap fallback until a dedicated
+          # TRAFFIC_ARCHIVE_TOKEN secret (fine-grained, Administration:read)
+          # is provisioned.
+          GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_ARCHIVE_TOKEN || secrets.POLL_NVD_CVES_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node scripts/archive-github-traffic.mjs --archive-dir "${TRAFFIC_ARCHIVE_DIR}"
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_TRAFFIC_TOKEN}" ]; then
+            echo "::error::No traffic-capable token configured. Set the TRAFFIC_ARCHIVE_TOKEN secret to a PAT with push access (classic: repo scope; fine-grained: Administration read)."
+            exit 1
+          fi
+
+          node scripts/archive-github-traffic.mjs --archive-dir "${TRAFFIC_ARCHIVE_DIR}"
 
       - name: Commit archive
         run: |
