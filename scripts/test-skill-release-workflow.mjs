@@ -86,8 +86,8 @@ assert.match(
 
 assert.match(
   workflow,
-  /Simulate beta tag release build/,
-  'Skill release workflow must simulate a beta tag release build during PR validation',
+  /Simulate tag release build/,
+  'Skill release workflow must simulate a tag release build during PR validation',
 );
 
 assert.match(

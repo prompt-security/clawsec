@@ -770,7 +770,7 @@ jobs:
           echo "/tmp/skillspector-venv/bin" >> "$GITHUB_PATH"
           skillspector --help >/dev/null
 
-      - name: Simulate beta tag release build
+      - name: Simulate tag release build
         run: |
           set -euo pipefail
           mkdir -p dist/tag-release-simulation
@@ -778,13 +778,13 @@ jobs:
           for skill_json in skills/*/skill.json; do
             skill_dir="${skill_json%/skill.json}"
             skill_name="$(basename "${skill_dir}")"
-            echo "::group::Simulate beta tag release build for ${skill_name}"
+            echo "::group::Simulate tag release build for ${skill_name}"
             node scripts/ci/simulate_skill_tag_release.mjs \
               "${skill_dir}" \
               "dist/tag-release-simulation/${skill_name}" \
               --repository "${{ github.repository }}" \
               --source-ref "${{ github.event.pull_request.head.sha }}"
-            jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+-beta\\.1$")' \
+            jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-beta[0-9]+)?$")' \
               "dist/tag-release-simulation/${skill_name}/simulation-summary.json" >/dev/null
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.json"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.sig"

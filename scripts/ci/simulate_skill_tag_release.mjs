@@ -95,14 +95,20 @@ function runAllowFailure(command, args, options = {}) {
   });
 }
 
-function nextBetaPatchVersion(version) {
-  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/);
-  if (!match) {
-    throw new Error(`Cannot derive beta patch version from non-semver value: ${version}`);
+function nextSimulatedReleaseVersion(version) {
+  const betaMatch = version.match(/^(\d+\.\d+\.\d+)-beta\.?(\d+)$/i);
+  if (betaMatch) {
+    const [, baseVersion, betaNumber] = betaMatch;
+    return `${baseVersion}-beta${Number(betaNumber) + 1}`;
   }
 
-  const [, major, minor, patch] = match;
-  return `${major}.${minor}.${Number(patch) + 1}-beta.1`;
+  const stableMatch = version.match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (stableMatch) {
+    const [, major, minor, patch] = stableMatch;
+    return `${major}.${minor}.${Number(patch) + 1}`;
+  }
+
+  throw new Error(`Cannot derive simulated release version from unsupported version: ${version}`);
 }
 
 function normalizeReleasePath(rawPath) {
@@ -382,7 +388,7 @@ async function main() {
     const skillMdPath = path.join(tempSkillDir, "SKILL.md");
     const skill = JSON.parse(await readFile(skillJsonPath, "utf8"));
     const originalVersion = skill.version;
-    const simulatedVersion = nextBetaPatchVersion(originalVersion);
+    const simulatedVersion = nextSimulatedReleaseVersion(originalVersion);
     const tag = `${skillName}-v${simulatedVersion}`;
     const zipName = `${tag}.zip`;
 
