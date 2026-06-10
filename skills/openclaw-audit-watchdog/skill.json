@@ -1,6 +1,6 @@
 {
   "name": "openclaw-audit-watchdog",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Automated daily security audits for OpenClaw agents with DM delivery and optional email reporting. Creates or updates an unattended cron job and sends formatted reports to configured recipients.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

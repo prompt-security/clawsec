@@ -1,6 +1,6 @@
 ---
 name: picoclaw-security-guardian
-version: 0.0.3
+version: 0.0.4
 description: Picoclaw security posture skill with advisory awareness, configuration drift detection, and supply-chain verification guidance.
 homepage: https://clawsec.prompt.security
 author: prompt-security
@@ -27,7 +27,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="picoclaw-security-guardian"
-VERSION="0.0.3"
+VERSION="0.0.4"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

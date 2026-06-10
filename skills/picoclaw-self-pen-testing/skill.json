@@ -1,6 +1,6 @@
 {
   "name": "picoclaw-self-pen-testing",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Picoclaw-only local posture-review skill focused on read-only findings and safe operator remediation guidance.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",

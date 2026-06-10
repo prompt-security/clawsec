@@ -16,7 +16,7 @@ try {
       "--repository",
       "prompt-security/clawsec",
       "--tag",
-      "clawsec-suite-v0.1.9",
+      "clawsec-suite-v0.1.10",
       "--source-ref",
       "main",
     ],
@@ -37,10 +37,10 @@ try {
   assert.match(skillCard, /## License\/Terms of Use/);
   assert.match(skillCard, /AGPL-3\.0-or-later/);
   assert.match(skillCard, /skillspector-report\.md/);
-  assert.match(skillCard, /clawsec-suite-v0\.1\.9/);
+  assert.match(skillCard, /clawsec-suite-v0\.1\.10/);
 
   assert.equal(permissions.skill, "clawsec-suite");
-  assert.equal(permissions.version, "0.1.9");
+  assert.equal(permissions.version, "0.1.10");
   assert.equal(permissions.platform, "openclaw");
   assert.deepEqual(
     permissions.required_binaries,
