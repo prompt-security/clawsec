@@ -1,0 +1,27 @@
+scripts/test-github-traffic-archive.mjs
+  9e88c827d629dced 79-112,269-270
+.github/workflows/archive-traffic.yml
+  9e88c827d629dced 56-61,63-70
+scripts/archive-github-traffic.mjs
+  9e88c827d629dced 324-331
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "4624c7826c94123d89a6a996abe3ab060e1b074d",
+  "prompts": {
+    "9e88c827d629dced": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6cde66f8-4ae5-4ded-add9-521481753a3b",
+        "model": "claude-fable-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 62,
+      "total_deletions": 7,
+      "accepted_lines": 58,
+      "overriden_lines": 0
+    }
+  }
+}
