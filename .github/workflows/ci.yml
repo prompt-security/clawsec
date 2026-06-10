@@ -111,8 +111,12 @@ jobs:
         run: node scripts/test-nvd-ghsa-consolidation-workflow.mjs
       - name: NVD + GHSA Pipeline Dry Run
         run: node scripts/test-nvd-ghsa-pipeline-dry-run.mjs
-      - name: Skill Release Workflow Tests
-        run: node scripts/test-skill-release-workflow.mjs
+      - name: Skill Release Tooling Tests
+        run: |
+          set -euo pipefail
+          for test_file in scripts/test-skill-*.mjs; do
+            node "$test_file"
+          done
       - name: Deploy Pages Advisory Checksums Tests
         run: node scripts/test-deploy-pages-checksums.mjs
       - name: GitHub Traffic Archive Tests

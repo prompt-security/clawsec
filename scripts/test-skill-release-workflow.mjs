@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const workflowPath = new URL('../.github/workflows/skill-release.yml', import.meta.url);
+const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
+const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 
 assert.match(
   workflow,
@@ -14,6 +16,16 @@ assert.match(
   workflow,
   /pull_request:[\s\S]*paths:[\s\S]*- '\.github\/workflows\/skill-release\.yml'[\s\S]*- 'scripts\/ci\/\*\*'/,
   'Skill release workflow must also run when the release pipeline itself changes',
+);
+
+assert.ok(
+  ciWorkflow.includes(`      - name: Skill Release Tooling Tests
+        run: |
+          set -euo pipefail
+          for test_file in scripts/test-skill-*.mjs; do
+            node "$test_file"
+          done`),
+  'CI must run every scripts/test-skill-*.mjs file so new skill release tests are not orphaned',
 );
 
 assert.match(
