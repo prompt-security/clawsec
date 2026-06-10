@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { collectDeclaredPlatforms, PLATFORM_KEYS } from "./skill_platforms.mjs";
 
-const PLATFORM_KEYS = ["openclaw", "hermes", "nanoclaw", "picoclaw"];
 const EXPLICIT_SLUGS = new Map([
   ["openclaw-traffic-guardian", "clawsec-openclaw-traffic-guardian"],
   ["openclaw-audit-watchdog", "clawsec-openclaw-audit-watchdog"],
@@ -24,28 +24,6 @@ function usage() {
   ].join("\n");
 }
 
-function asStringArray(value) {
-  if (Array.isArray(value)) {
-    return value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim());
-  }
-  if (typeof value === "string" && value.trim()) {
-    return [value.trim()];
-  }
-  return [];
-}
-
-function unique(values) {
-  return [...new Set(values.filter(Boolean))];
-}
-
-function collectPlatforms(skill) {
-  return unique([
-    ...asStringArray(skill.platform),
-    ...asStringArray(skill.platforms),
-    ...PLATFORM_KEYS.filter((key) => skill[key] && typeof skill[key] === "object"),
-  ]);
-}
-
 function loadSkill(input) {
   const skillJsonPath = existsSync(path.join(input, "skill.json")) ? path.join(input, "skill.json") : null;
   if (!skillJsonPath) {
@@ -57,7 +35,7 @@ function loadSkill(input) {
     throw new Error(`${skillJsonPath} missing string field: name`);
   }
 
-  return { name: skill.name, platforms: collectPlatforms(skill) };
+  return { name: skill.name, platforms: collectDeclaredPlatforms(skill) };
 }
 
 export function resolveClawHubSlug({ name, platforms = [] }) {
@@ -77,7 +55,7 @@ export function resolveClawHubSlug({ name, platforms = [] }) {
     return `clawsec-${name}`;
   }
 
-  const declaredPlatforms = unique(platforms);
+  const declaredPlatforms = collectDeclaredPlatforms({ platforms });
   if (declaredPlatforms.length === 1 && PLATFORM_KEYS.includes(declaredPlatforms[0])) {
     return `clawsec-${declaredPlatforms[0]}-${name}`;
   }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { resolveClawHubSlug } from "./ci/resolve_clawhub_slug.mjs";
+import { collectDeclaredPlatforms, installAgentForSkill } from "./ci/skill_platforms.mjs";
 
 const cases = [
   ["openclaw-traffic-guardian", ["openclaw"], "clawsec-openclaw-traffic-guardian"],
@@ -25,4 +26,20 @@ assert.throws(
   () => resolveClawHubSlug({ name: "../openclaw-traffic-guardian", platforms: ["openclaw"] }),
   /Invalid skill name/,
   "unsafe skill names must be rejected",
+);
+
+assert.deepEqual(
+  collectDeclaredPlatforms({
+    platform: "openclaw",
+    platforms: ["hermes", "openclaw", ""],
+    picoclaw: { requires: {} },
+  }),
+  ["openclaw", "hermes", "picoclaw"],
+  "declared platform parsing should combine legacy fields, arrays, and platform metadata keys",
+);
+
+assert.equal(
+  installAgentForSkill({ platform: "hermes" }, new Set(["codex", "hermes-agent", "openclaw"])),
+  "hermes-agent",
+  "install agent selection should reuse platform aliases",
 );
