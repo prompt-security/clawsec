@@ -96,19 +96,23 @@ function runAllowFailure(command, args, options = {}) {
 }
 
 function nextSimulatedReleaseVersion(version) {
-  const betaMatch = version.match(/^(\d+\.\d+\.\d+)-beta\.?(\d+)$/i);
-  if (betaMatch) {
-    const [, baseVersion, betaNumber] = betaMatch;
-    return `${baseVersion}-beta${Number(betaNumber) + 1}`;
+  const versionMatch = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+))?$/);
+  if (!versionMatch) {
+    throw new Error(`Cannot derive simulated release version from unsupported version: ${version}`);
   }
 
-  const stableMatch = version.match(/^(\d+)\.(\d+)\.(\d+)$/);
-  if (stableMatch) {
-    const [, major, minor, patch] = stableMatch;
+  const [, major, minor, patch, prerelease] = versionMatch;
+  if (!prerelease) {
     return `${major}.${minor}.${Number(patch) + 1}`;
   }
 
-  throw new Error(`Cannot derive simulated release version from unsupported version: ${version}`);
+  const prereleaseMatch = prerelease.match(/^(.*?)(\d+)$/);
+  if (prereleaseMatch) {
+    const [, label, number] = prereleaseMatch;
+    return `${major}.${minor}.${patch}-${label}${Number(number) + 1}`;
+  }
+
+  return `${major}.${minor}.${patch}-${prerelease}1`;
 }
 
 function normalizeReleasePath(rawPath) {

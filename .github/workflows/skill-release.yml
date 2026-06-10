@@ -795,7 +795,7 @@ jobs:
               "dist/tag-release-simulation/${skill_name}" \
               --repository "${{ github.repository }}" \
               --source-ref "${{ github.event.pull_request.head.sha }}"
-            jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-beta[0-9]+)?$")' \
+            jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9]+)?$")' \
               "dist/tag-release-simulation/${skill_name}/simulation-summary.json" >/dev/null
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.json"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.sig"

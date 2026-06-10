@@ -95,3 +95,8 @@ assert.match(
   /simulate_skill_tag_release\.mjs/,
   'Skill release workflow must call the tag release simulation script',
 );
+
+assert.ok(
+  workflow.includes('simulated_version | test("^[0-9]+\\\\.[0-9]+\\\\.[0-9]+(-[a-zA-Z0-9]+)?$")'),
+  'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
+);
