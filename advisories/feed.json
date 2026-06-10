@@ -1,8 +1,43 @@
 {
   "version": "0.0.3",
-  "updated": "2026-06-03T07:38:12Z",
+  "updated": "2026-06-10T08:30:16Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-11461",
+      "severity": "medium",
+      "type": "improper_authorization",
+      "nvd_category_id": "CWE-285",
+      "title": "A vulnerability has been found in NousResearch hermes-agent up to 0.12.0. This affects the function ...",
+      "description": "A vulnerability has been found in NousResearch hermes-agent up to 0.12.0. This affects the function resolve_session_by_title of the file hermes_state.py of the component resume Endpoint. Such manipulation of the argument Title leads to authorization bypass. It is possible to launch the attack remotely. The exploit has been disclosed to the public and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-07T22:16:22.547",
+      "references": [
+        "https://gist.github.com/YLChen-007/7951b3dc39193fb675914cc5d8b672fa",
+        "https://gist.github.com/YLChen-007/c2d162e9c8d39584223683cdcba98607",
+        "https://vuldb.com/cve/CVE-2026-11461"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-11461",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-10548",
       "severity": "medium",
@@ -12216,8 +12251,8 @@
       "id": "GHSA-jf56-mccx-5f3f",
       "ghsa_id": "GHSA-jf56-mccx-5f3f",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "high",
       "type": "github_security_advisory",
@@ -12260,8 +12295,8 @@
       "id": "GHSA-gfmx-pph7-g46x",
       "ghsa_id": "GHSA-gfmx-pph7-g46x",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "high",
       "type": "github_security_advisory",
