@@ -37,13 +37,43 @@ assert.match(
 assert.doesNotMatch(
   workflow,
   /No version bump detected for \$\{skill_dir\}; skipping\./,
-  'Changed skill directories without a version bump must fail validation instead of being skipped',
+  'Changed skill directories without a version bump must not be skipped without release-tag validation',
 );
 
 assert.match(
   workflow,
-  /::error file=\$\{skill_dir\}::Changed skill package has no version bump\./,
-  'Skill release validation must emit an explicit missing-version-bump error',
+  /skill_release_name="\$\(basename "\$\{skill_dir\}"\)"/,
+  'Skill release validation must derive the release tag prefix from the skill package directory',
+);
+
+assert.match(
+  workflow,
+  /release_tag="\$\{skill_release_name\}-v\$\{head_json_version\}"/,
+  'Skill release validation must use the skill package directory name for release tag checks',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /release_tag="\$\{head_skill_name\}-v\$\{head_json_version\}"/,
+  'Skill release validation must not use skill.json name for release tag checks because release tags resolve to skill directories',
+);
+
+assert.match(
+  workflow,
+  /git show-ref --verify --quiet "refs\/tags\/\$\{release_tag\}"/,
+  'Skill release validation must check whether the current skill version has already been tagged',
+);
+
+assert.match(
+  workflow,
+  /No version bump detected for \$\{skill_dir\}, but release tag \$\{release_tag\} does not exist; treating \$\{head_json_version\} as unreleased\./,
+  'Skill release validation must allow edits to an unchanged version when that release tag does not exist yet',
+);
+
+assert.match(
+  workflow,
+  /::error file=\$\{skill_dir\}::Changed skill package has no version bump and release tag \$\{release_tag\} already exists\./,
+  'Skill release validation must still fail unchanged versions after their release tag exists',
 );
 
 assert.match(

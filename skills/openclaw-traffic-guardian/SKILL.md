@@ -1,7 +1,7 @@
 ---
 name: openclaw-traffic-guardian
 version: 0.0.1-beta3
-description: OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, and inbound injection detection.
+description: OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, inbound injection detection, and social-account policy review.
 homepage: https://clawsec.prompt.security
 author: prompt-security
 license: AGPL-3.0-or-later
@@ -110,6 +110,7 @@ Builders should use this skill as the OpenClaw landing zone for runtime traffic 
 - optional HTTPS inspection with per-process CA trust
 - outbound exfiltration detection
 - inbound injection detection
+- approval-sensitive social-account mutation review
 - redacted local threat logs
 - optional OpenClaw hook/status integration
 
@@ -143,8 +144,10 @@ Read `SPEC.md` before implementing. Use the placeholder folders as follows:
 3. Scope proxy environment variables to the target OpenClaw process.
 4. Inspect HTTP request/response text up to a bounded byte limit.
 5. Support optional HTTPS MITM only when the operator supplies per-process trust configuration.
-6. Emit JSONL findings with redacted snippets.
-7. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.
+6. Flag requests matching `SPEC.md`'s Outbound POLICY_REVIEW cases as operator-review findings, including TweetClaw or other X/Twitter automation writes and scheduler/background-runner repeats without a fresh operator-approval marker.
+7. Detect repeat/background-runner context from bounded request metadata such as paths, headers, user-agent, client context, tool invocation metadata, or scheduler identifiers.
+8. Emit JSONL findings with redacted snippets plus source type, mutation category, approval-marker presence, and direct-operator versus background-runner context.
+9. Provide a `status` command that reports mode, listener, CA fingerprint if present, and last findings.
 
 ## Out of Scope for v0.0.1 Implementation
 

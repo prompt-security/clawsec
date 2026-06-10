@@ -16,6 +16,7 @@ npx skills add prompt-security/clawsec --skill openclaw-traffic-guardian -a open
 
 - detect outbound secret exfiltration in agent HTTP/HTTPS traffic
 - detect inbound command-injection and tool-abuse payloads
+- record operator-review findings for approval-sensitive social-account mutations
 - write redacted local JSONL findings
 - provide explicit start, stop, status, and log-query commands
 - integrate with `clawsec-suite` as an optional add-on
