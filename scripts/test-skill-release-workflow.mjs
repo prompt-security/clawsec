@@ -90,6 +90,54 @@ assert.match(
 
 assert.match(
   workflow,
+  /### SkillSpector Security Report[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{process\.env\.REPO\}\/releases\/download\/\$\{process\.env\.TAG\}\/skillspector-report\.md\)/,
+  'GitHub release notes must include a direct SkillSpector report link',
+);
+
+assert.match(
+  workflow,
+  /readFileSync\("release-assets\/skillspector-report\.md", "utf8"\)/,
+  'GitHub release notes must load the generated SkillSpector report content into the release body file',
+);
+
+assert.match(
+  workflow,
+  /body_path: \$\{\{ runner\.temp \}\}\/skill-release-body\.md/,
+  'GitHub release creation must use body_path for the generated release body file',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /SKILLSPECTOR_REPORT_EOF|\$\{\{ steps\.skillspector_report\.outputs\.body \}\}|cat release-assets\/skillspector-report\.md[\s\S]*>> "\$GITHUB_OUTPUT"/,
+  'SkillSpector report content must not be sent through GitHub Actions step outputs',
+);
+
+assert.match(
+  workflow,
+  /generate_skillspector_report "\$\{inner_dir\}" "\$\{out_assets\}\/skillspector-report\.md"/,
+  'PR dry-run SkillSpector scan must target the staged release payload, not the source skill directory',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /generate_skillspector_report "\$\{skill_dir\}" "\$\{out_assets\}\/skillspector-report\.md"/,
+  'PR dry-run SkillSpector scan must not include source-only test directories',
+);
+
+assert.match(
+  workflow,
+  /generate_skillspector_report "\$INNER_DIR" "release-assets\/skillspector-report\.md"/,
+  'Tag release SkillSpector scan must target the staged release payload, not the source skill directory',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /generate_skillspector_report "\$SKILL_PATH" "release-assets\/skillspector-report\.md"/,
+  'Tag release SkillSpector scan must not include source-only test directories',
+);
+
+assert.match(
+  workflow,
   /Generate release trust packet/,
   'Skill release workflow must generate skill cards, permission summaries, and npx install instructions',
 );

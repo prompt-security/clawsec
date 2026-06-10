@@ -710,7 +710,7 @@ jobs:
               --source-ref "${HEAD_SHA}"
 
             # --- Generate SkillSpector report ---
-            if ! generate_skillspector_report "${skill_dir}" "${out_assets}/skillspector-report.md"; then
+            if ! generate_skillspector_report "${inner_dir}" "${out_assets}/skillspector-report.md"; then
               failures=$((failures + 1))
               rm -rf "${staging_dir}"
               echo "::endgroup::"
@@ -1221,7 +1221,7 @@ jobs:
             --source-ref "$TAG"
 
           # --- Generate SkillSpector report ---
-          generate_skillspector_report "$SKILL_PATH" "release-assets/skillspector-report.md"
+          generate_skillspector_report "$INNER_DIR" "release-assets/skillspector-report.md"
 
           test -s release-assets/skill-card.md
           test -s release-assets/permissions.json
@@ -1403,38 +1403,63 @@ jobs:
             echo "INSTALL_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Prepare GitHub release body
+        env:
+          SKILL_NAME: ${{ steps.parse.outputs.skill_name }}
+          VERSION: ${{ steps.parse.outputs.version }}
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
+          QUICK_INSTALL: ${{ steps.install.outputs.quick_install }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          node -e '
+          const { readFileSync, writeFileSync } = require("node:fs");
+          const bodyPath = `${process.env.RUNNER_TEMP}/skill-release-body.md`;
+          const report = readFileSync("release-assets/skillspector-report.md", "utf8").trimEnd();
+          const body = [
+            `## ${process.env.SKILL_NAME} ${process.env.VERSION}`,
+            "",
+            process.env.CHANGELOG || "",
+            "",
+            process.env.QUICK_INSTALL || "",
+            "",
+            "### SkillSpector Security Report",
+            "",
+            report,
+            "",
+            `Download the generated release-payload scan: [skillspector-report.md](https://github.com/${process.env.REPO}/releases/download/${process.env.TAG}/skillspector-report.md)`,
+            "",
+            "### Verification",
+            "",
+            "`checksums.json` is cryptographically signed (`checksums.sig`) using the ClawSec CI signing key.",
+            "Verify the signature first, then trust hashes from `checksums.json`:",
+            "```bash",
+            `curl -sLO https://github.com/${process.env.REPO}/releases/download/${process.env.TAG}/checksums.json`,
+            `curl -sLO https://github.com/${process.env.REPO}/releases/download/${process.env.TAG}/checksums.sig`,
+            `curl -sLO https://github.com/${process.env.REPO}/releases/download/${process.env.TAG}/signing-public.pem`,
+            "openssl base64 -d -A -in checksums.sig -out checksums.sig.bin",
+            "openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json",
+            "```",
+            "",
+            "### Files",
+            "",
+            "See `checksums.json` for the complete file manifest with SHA256 hashes.",
+            "The zip archive preserves the full directory structure of the skill.",
+            "",
+            "---",
+            "*Released by ClawSec skill distribution pipeline*",
+          ].join("\n");
+          writeFileSync(bodyPath, `${body}\n`);
+          '
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: "${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}"
           tag_name: ${{ github.ref_name }}
           files: release-assets/*
-          body: |
-            ## ${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}
-
-            ${{ steps.changelog.outputs.changelog }}
-
-            ${{ steps.install.outputs.quick_install }}
-
-            ### Verification
-
-            `checksums.json` is cryptographically signed (`checksums.sig`) using the ClawSec CI signing key.
-            Verify the signature first, then trust hashes from `checksums.json`:
-            ```bash
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.json
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/checksums.sig
-            curl -sLO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/signing-public.pem
-            openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
-            openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
-            ```
-
-            ### Files
-
-            See `checksums.json` for the complete file manifest with SHA256 hashes.
-            The zip archive preserves the full directory structure of the skill.
-
-            ---
-            *Released by ClawSec skill distribution pipeline*
+          body_path: ${{ runner.temp }}/skill-release-body.md
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
