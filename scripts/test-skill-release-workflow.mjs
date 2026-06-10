@@ -60,6 +60,19 @@ for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skil
   );
 }
 
+const escapeRegExp = (literal) => literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skillspector-report.md']) {
+  assert.match(
+    workflow,
+    new RegExp(
+      String.raw`if ! add_release_asset_checksum "\$\{out_assets\}" "${escapeRegExp(artifact)}"; then` +
+        String.raw`[\s\S]*?failures=\$\(\(failures \+ 1\)\)[\s\S]*?continue[\s\S]*?fi`,
+    ),
+    `PR dry-run validation must aggregate and continue when ${artifact} cannot be checksummed`,
+  );
+}
+
 assert.match(
   workflow,
   /add_release_asset_checksum "skill-card\.md"/,

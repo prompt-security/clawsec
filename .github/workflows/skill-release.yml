@@ -711,10 +711,33 @@ jobs:
               continue
             fi
 
-            add_release_asset_checksum "${out_assets}" "skill-card.md"
-            add_release_asset_checksum "${out_assets}" "permissions.json"
-            add_release_asset_checksum "${out_assets}" "install.md"
-            add_release_asset_checksum "${out_assets}" "skillspector-report.md"
+            if ! add_release_asset_checksum "${out_assets}" "skill-card.md"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! add_release_asset_checksum "${out_assets}" "permissions.json"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! add_release_asset_checksum "${out_assets}" "install.md"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! add_release_asset_checksum "${out_assets}" "skillspector-report.md"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
 
             if ! jq -e . "${out_assets}/checksums.json" >/dev/null 2>&1; then
               echo "::error::Generated checksums.json is invalid JSON after adding release trust artifacts."
