@@ -47,6 +47,16 @@ assert.match(
   /git add "\$FEED_PATH" "\$FEED_SIG_PATH" "\$GHSA_FEED_PATH" "\$GHSA_FEED_SIG_PATH" "\$SKILL_FEED_PATH" "\$SKILL_FEED_SIG_PATH"/,
   'NVD workflow PR must include both NVD and GHSA feed artifacts',
 );
+assert.doesNotMatch(
+  workflow,
+  /gh run list[\s\S]*--jq --arg/,
+  'CodeQL run lookup must not pass jq CLI flags through gh --jq',
+);
+assert.match(
+  workflow,
+  /gh run list[\s\S]*--json databaseId,createdAt,headSha \\\s*\n\s+\| jq -r --arg since "\$DISPATCHED_AT" --arg sha "\$EXPECTED_HEAD_SHA"/,
+  'CodeQL run lookup must filter the gh JSON output with jq variables',
+);
 assert.match(
   ciWorkflow,
   /name: NVD \+ GHSA Pipeline Dry Run[\s\S]*node scripts\/test-nvd-ghsa-pipeline-dry-run\.mjs/,
