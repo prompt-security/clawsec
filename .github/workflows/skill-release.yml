@@ -241,6 +241,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Install SkillSpector
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/skillspector-venv
+          . /tmp/skillspector-venv/bin/activate
+          git clone --depth 1 https://github.com/NVIDIA/SkillSpector.git /tmp/skillspector
+          make -C /tmp/skillspector install
+          echo "/tmp/skillspector-venv/bin" >> "$GITHUB_PATH"
+          skillspector --help >/dev/null
+
       - name: Generate test signing key for dry-run
         run: |
           set -euo pipefail
@@ -397,6 +412,50 @@ jobs:
           is_test_release_path() {
             local lower="${1,,}"
             [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == */test/* || "$lower" == */tests/* ]]
+          }
+
+          generate_skillspector_report() {
+            local skill_dir="$1"
+            local report_path="$2"
+
+            set +e
+            skillspector scan "${skill_dir}" --no-llm --format markdown --output "${report_path}"
+            local status=$?
+            set -e
+
+            if [ ! -s "${report_path}" ]; then
+              echo "::error file=${skill_dir}::SkillSpector did not produce a report."
+              return 1
+            fi
+
+            if [ "${status}" -ne 0 ]; then
+              echo "::warning file=${report_path}::SkillSpector returned exit code ${status}; report is included for review."
+            fi
+          }
+
+          add_release_asset_checksum() {
+            local out_assets="$1"
+            local asset="$2"
+            local file_path="${out_assets}/${asset}"
+            local sha256
+            local size
+            local tmp_json
+
+            if [ ! -s "${file_path}" ]; then
+              echo "::error file=${file_path}::Required release trust artifact is missing or empty."
+              return 1
+            fi
+
+            sha256="$(sha256sum "${file_path}" | awk '{print $1}')"
+            size="$(stat -c%s "${file_path}" 2>/dev/null || stat -f%z "${file_path}")"
+            tmp_json="$(mktemp)"
+            jq \
+              --arg key "${asset}" \
+              --arg sha "${sha256}" \
+              --argjson sz "${size}" \
+              '.files += {($key): {sha256: $sha, size: $sz, path: $key}}' \
+              "${out_assets}/checksums.json" > "${tmp_json}"
+            mv "${tmp_json}" "${out_assets}/checksums.json"
           }
 
           while IFS= read -r skill_dir; do
@@ -622,6 +681,35 @@ jobs:
               continue
             fi
 
+            # --- Generate release trust packet and include it in signed checksums ---
+            node scripts/ci/generate_skill_release_trust_packet.mjs \
+              "${skill_dir}" \
+              "${out_assets}" \
+              --repository "${{ github.repository }}" \
+              --tag "${tag}" \
+              --source-ref "${HEAD_SHA}"
+
+            # --- Generate SkillSpector report ---
+            if ! generate_skillspector_report "${skill_dir}" "${out_assets}/skillspector-report.md"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            add_release_asset_checksum "${out_assets}" "skill-card.md"
+            add_release_asset_checksum "${out_assets}" "permissions.json"
+            add_release_asset_checksum "${out_assets}" "install.md"
+            add_release_asset_checksum "${out_assets}" "skillspector-report.md"
+
+            if ! jq -e . "${out_assets}/checksums.json" >/dev/null 2>&1; then
+              echo "::error::Generated checksums.json is invalid JSON after adding release trust artifacts."
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
             # --- Copy skill.json and root-level docs alongside the zip ---
             cp "${json_path}" "${out_assets}/skill.json"
             if [ -f "${skill_dir}/SKILL.md" ]; then
@@ -771,6 +859,16 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install SkillSpector
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/skillspector-venv
+          . /tmp/skillspector-venv/bin/activate
+          git clone --depth 1 https://github.com/NVIDIA/SkillSpector.git /tmp/skillspector
+          make -C /tmp/skillspector install
+          echo "/tmp/skillspector-venv/bin" >> "$GITHUB_PATH"
+          skillspector --help >/dev/null
+
       - name: Sign embedded advisory feed and verify
         if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
         uses: ./.github/actions/sign-and-verify
@@ -868,6 +966,49 @@ jobs:
           is_test_release_path() {
             local lower="${1,,}"
             [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == */test/* || "$lower" == */tests/* ]]
+          }
+
+          generate_skillspector_report() {
+            local skill_dir="$1"
+            local report_path="$2"
+
+            set +e
+            skillspector scan "${skill_dir}" --no-llm --format markdown --output "${report_path}"
+            local status=$?
+            set -e
+
+            if [ ! -s "${report_path}" ]; then
+              echo "::error file=${skill_dir}::SkillSpector did not produce a report."
+              return 1
+            fi
+
+            if [ "${status}" -ne 0 ]; then
+              echo "::warning file=${report_path}::SkillSpector returned exit code ${status}; report is included for review."
+            fi
+          }
+
+          add_release_asset_checksum() {
+            local asset="$1"
+            local file_path="release-assets/${asset}"
+            local sha256
+            local size
+            local tmp_json
+
+            if [ ! -s "${file_path}" ]; then
+              echo "::error file=${file_path}::Required release trust artifact is missing or empty."
+              return 1
+            fi
+
+            sha256="$(sha256sum "${file_path}" | awk '{print $1}')"
+            size="$(stat -c%s "${file_path}" 2>/dev/null || stat -f%z "${file_path}")"
+            tmp_json="$(mktemp)"
+            jq \
+              --arg key "${asset}" \
+              --arg sha "${sha256}" \
+              --argjson sz "${size}" \
+              '.files += {($key): {sha256: $sha, size: $sz, path: $key}}' \
+              release-assets/checksums.json > "${tmp_json}"
+            mv "${tmp_json}" release-assets/checksums.json
           }
 
           # --- Stage SBOM files preserving directory structure ---
@@ -971,6 +1112,32 @@ jobs:
               files: $files
             }' > "release-assets/checksums.json"
 
+          # --- Generate release trust packet and include it in signed checksums ---
+          node scripts/ci/generate_skill_release_trust_packet.mjs \
+            "$SKILL_PATH" \
+            release-assets \
+            --repository "${{ github.repository }}" \
+            --tag "$TAG" \
+            --source-ref "$TAG"
+
+          # --- Generate SkillSpector report ---
+          generate_skillspector_report "$SKILL_PATH" "release-assets/skillspector-report.md"
+
+          test -s release-assets/skill-card.md
+          test -s release-assets/permissions.json
+          test -s release-assets/install.md
+          test -s release-assets/skillspector-report.md
+
+          add_release_asset_checksum "skill-card.md"
+          add_release_asset_checksum "permissions.json"
+          add_release_asset_checksum "install.md"
+          add_release_asset_checksum "skillspector-report.md"
+
+          if ! jq -e . "release-assets/checksums.json" >/dev/null 2>&1; then
+            echo "::error::Generated checksums.json is invalid JSON after adding release trust artifacts."
+            exit 1
+          fi
+
           # --- Copy skill.json and root-level docs alongside the zip ---
           cp "$SKILL_PATH/skill.json" release-assets/skill.json
           if [ -f "$SKILL_PATH/SKILL.md" ]; then
@@ -1061,6 +1228,26 @@ jobs:
 
           {
             echo "quick_install<<INSTALL_EOF"
+
+            cat <<EOF
+          ### Agent Skills CLI
+
+          **Codex global install:**
+          \`\`\`bash
+          npx skills add ${REPO} --skill ${SKILL_NAME} --agent codex --global --yes
+          \`\`\`
+
+          **OpenClaw global install:**
+          \`\`\`bash
+          npx skills add ${REPO} --skill ${SKILL_NAME} --agent openclaw --global --yes
+          \`\`\`
+
+          **Update an installed skill:**
+          \`\`\`bash
+          npx skills update ${SKILL_NAME}
+          \`\`\`
+
+          EOF
 
             if [ "${{ steps.publishable.outputs.publish_clawhub }}" = "true" ] && [ "${{ steps.publishable.outputs.openclaw_skill }}" = "true" ]; then
               cat <<EOF
