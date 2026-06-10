@@ -113,6 +113,8 @@ jobs:
         run: node scripts/test-nvd-ghsa-pipeline-dry-run.mjs
       - name: Skill Release Workflow Tests
         run: node scripts/test-skill-release-workflow.mjs
+      - name: Homepage Install Copy Tests
+        run: node scripts/test-homepage-install-copy.mjs
       - name: Deploy Pages Advisory Checksums Tests
         run: node scripts/test-deploy-pages-checksums.mjs
       - name: GitHub Traffic Archive Tests
