@@ -155,3 +155,57 @@ assert.ok(
   workflow.includes('simulated_version | test("^[0-9]+\\\\.[0-9]+\\\\.[0-9]+(-[a-zA-Z0-9]+)?$")'),
   'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
 );
+
+assert.match(
+  workflow,
+  /clawhub_slug: \$\{\{ steps\.publishable\.outputs\.clawhub_slug \}\}/,
+  'Skill release workflow must expose the resolved ClawHub slug from release-tag outputs',
+);
+
+assert.match(
+  workflow,
+  /CLAWHUB_SLUG=\$\(node scripts\/ci\/resolve_clawhub_slug\.mjs "\$SKILL_PATH"\)/,
+  'Skill release workflow must resolve the ClawHub slug from the skill package path',
+);
+
+assert.match(
+  workflow,
+  /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"/,
+  'Manual ClawHub republish must preserve the current slug helper before checking out an older release tag',
+);
+
+assert.match(
+  workflow,
+  /CLAWHUB_SLUG=\$\(node "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs" "\$SKILL_PATH"\)/,
+  'Manual ClawHub republish must resolve slugs with the preserved helper against the checked-out tag metadata',
+);
+
+assert.match(
+  workflow,
+  /npx clawhub@latest install \$\{CLAWHUB_SLUG\}/,
+  'GitHub release quick install instructions must use the resolved ClawHub slug',
+);
+
+assert.match(
+  workflow,
+  /clawhub inspect "\$CLAWHUB_SLUG" --version "\$VERSION" --json/,
+  'Duplicate ClawHub version guard must inspect the resolved ClawHub slug',
+);
+
+assert.match(
+  workflow,
+  /--slug "\$CLAWHUB_SLUG"/,
+  'ClawHub publish must use the resolved ClawHub slug',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /clawhub inspect "\$SKILL_NAME" --version "\$VERSION" --json/,
+  'Duplicate ClawHub version guard must not inspect the raw skill package name',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /--slug "\$SKILL_NAME"/,
+  'ClawHub publish must not use the raw skill package name as the ClawHub slug',
+);

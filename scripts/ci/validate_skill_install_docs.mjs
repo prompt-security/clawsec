@@ -4,12 +4,11 @@ import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import https from "node:https";
 import path from "node:path";
+import { installAgentForSkill } from "./skill_platforms.mjs";
 
 const DEFAULT_REPOSITORY = "prompt-security/clawsec";
 const DEFAULT_AGENT_TYPES_URL = "https://raw.githubusercontent.com/vercel-labs/skills/main/src/types.ts";
 const DOC_FILENAMES = ["README.md", "SKILL.md"];
-const KNOWN_PLATFORM_KEYS = ["openclaw", "nanoclaw", "picoclaw", "hermes"];
-const PLATFORM_AGENT_ALIASES = new Map([["hermes", "hermes-agent"]]);
 
 function usage() {
   return [
@@ -170,55 +169,6 @@ async function readJson(filePath) {
   return JSON.parse(await readFile(filePath, "utf8"));
 }
 
-function collectDeclaredPlatforms(skill) {
-  const platforms = new Set();
-
-  if (typeof skill.platform === "string" && skill.platform.trim()) {
-    platforms.add(skill.platform.trim());
-  }
-
-  if (Array.isArray(skill.platforms)) {
-    for (const platform of skill.platforms) {
-      if (typeof platform === "string" && platform.trim()) {
-        platforms.add(platform.trim());
-      }
-    }
-  }
-
-  for (const key of KNOWN_PLATFORM_KEYS) {
-    if (skill[key] && typeof skill[key] === "object") {
-      platforms.add(key);
-    }
-  }
-
-  return [...platforms];
-}
-
-function agentForSkill(skill, agentTypes) {
-  const platforms = collectDeclaredPlatforms(skill);
-  if (platforms.length === 0) {
-    return "openclaw";
-  }
-
-  const matchedAgents = new Set();
-  let allPlatformsMatched = true;
-
-  for (const platform of platforms) {
-    const aliasedPlatform = PLATFORM_AGENT_ALIASES.get(platform) || platform;
-    if (agentTypes.has(aliasedPlatform)) {
-      matchedAgents.add(aliasedPlatform);
-    } else {
-      allPlatformsMatched = false;
-    }
-  }
-
-  if (allPlatformsMatched && matchedAgents.size === 1) {
-    return [...matchedAgents][0];
-  }
-
-  return "openclaw";
-}
-
 function hasRequiredCommand(markdown, { repository, skillName, agent }) {
   return markdown
     .split("\n")
@@ -238,7 +188,7 @@ async function validateSkill({ root, skillDir, repository, agentTypes }) {
   const skillJsonPath = path.join(root, skillDir, "skill.json");
   const skill = await readJson(skillJsonPath);
   const skillName = skill.name || path.basename(skillDir);
-  const agent = agentForSkill(skill, agentTypes);
+  const agent = installAgentForSkill(skill, agentTypes);
   const command = `npx skills add ${repository} --skill ${skillName} -a ${agent} -y`;
   const failures = [];
 

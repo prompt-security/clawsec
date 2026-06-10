@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { installAgentForSkill, PLATFORM_KEYS } from "./skill_platforms.mjs";
 
-const PLATFORM_KEYS = ["openclaw", "nanoclaw", "hermes", "picoclaw"];
 const KNOWN_AGENT_TYPES = new Set(["codex", "hermes-agent", "openclaw", "universal"]);
-const PLATFORM_AGENT_ALIASES = new Map([["hermes", "hermes-agent"]]);
 
 function usage() {
   return [
@@ -96,50 +95,6 @@ function detectPlatform(skill) {
     }
   }
   return skill.platform || "agent-skills";
-}
-
-function collectDeclaredPlatforms(skill) {
-  const platforms = new Set();
-  if (typeof skill.platform === "string" && skill.platform.trim()) {
-    platforms.add(skill.platform.trim());
-  }
-  if (Array.isArray(skill.platforms)) {
-    for (const platform of skill.platforms) {
-      if (typeof platform === "string" && platform.trim()) {
-        platforms.add(platform.trim());
-      }
-    }
-  }
-  for (const key of PLATFORM_KEYS) {
-    if (skill[key] && typeof skill[key] === "object") {
-      platforms.add(key);
-    }
-  }
-  return [...platforms];
-}
-
-function installAgentForSkill(skill) {
-  const platforms = collectDeclaredPlatforms(skill);
-  if (platforms.length === 0) {
-    return "openclaw";
-  }
-
-  const matchedAgents = new Set();
-  let allPlatformsMatched = true;
-  for (const platform of platforms) {
-    const candidate = PLATFORM_AGENT_ALIASES.get(platform) || platform;
-    if (KNOWN_AGENT_TYPES.has(candidate)) {
-      matchedAgents.add(candidate);
-    } else {
-      allPlatformsMatched = false;
-    }
-  }
-
-  if (allPlatformsMatched && matchedAgents.size === 1) {
-    return [...matchedAgents][0];
-  }
-
-  return "openclaw";
 }
 
 function platformMetadata(skill, platform) {
@@ -309,7 +264,7 @@ function buildInstallDoc({ skill, repository, tag, sourceRef }) {
   const refSuffix = sourceRef && sourceRef !== "main" ? `#${sourceRef}` : "";
   const source = `${repository}${refSuffix}`;
   const releaseUrl = tag ? `https://github.com/${repository}/releases/tag/${tag}` : `https://github.com/${repository}`;
-  const agent = installAgentForSkill(skill);
+  const agent = installAgentForSkill(skill, KNOWN_AGENT_TYPES);
 
   return `# Install and Update ${skill.name}
 
