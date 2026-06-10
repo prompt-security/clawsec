@@ -90,20 +90,26 @@ assert.match(
 
 assert.match(
   workflow,
-  /### SkillSpector Security Report[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{\{ github\.repository \}\}\/releases\/download\/\$\{\{ github\.ref_name \}\}\/skillspector-report\.md\)/,
+  /### SkillSpector Security Report[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{process\.env\.REPO\}\/releases\/download\/\$\{process\.env\.TAG\}\/skillspector-report\.md\)/,
   'GitHub release notes must include a direct SkillSpector report link',
 );
 
 assert.match(
   workflow,
-  /id: skillspector_report[\s\S]*cat release-assets\/skillspector-report\.md[\s\S]*>> "\$GITHUB_OUTPUT"/,
-  'GitHub release notes must load the generated SkillSpector report content',
+  /readFileSync\("release-assets\/skillspector-report\.md", "utf8"\)/,
+  'GitHub release notes must load the generated SkillSpector report content into the release body file',
 );
 
 assert.match(
   workflow,
-  /### SkillSpector Security Report[\s\S]*\$\{\{ steps\.skillspector_report\.outputs\.body \}\}/,
-  'GitHub release notes must display the generated SkillSpector report content inline',
+  /body_path: \$\{\{ runner\.temp \}\}\/skill-release-body\.md/,
+  'GitHub release creation must use body_path for the generated release body file',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /SKILLSPECTOR_REPORT_EOF|\$\{\{ steps\.skillspector_report\.outputs\.body \}\}|cat release-assets\/skillspector-report\.md[\s\S]*>> "\$GITHUB_OUTPUT"/,
+  'SkillSpector report content must not be sent through GitHub Actions step outputs',
 );
 
 assert.match(
