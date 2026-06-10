@@ -1069,7 +1069,7 @@ jobs:
               --event workflow_dispatch \
               --limit 50 \
               --json databaseId,createdAt,headSha \
-              --jq --arg since "$DISPATCHED_AT" --arg sha "$EXPECTED_HEAD_SHA" '
+              | jq -r --arg since "$DISPATCHED_AT" --arg sha "$EXPECTED_HEAD_SHA" '
                 map(select(.createdAt >= $since and .headSha == $sha))
                 | sort_by(.createdAt)
                 | last
