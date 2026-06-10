@@ -107,10 +107,12 @@ jobs:
             md_path="${skill_dir}/SKILL.md"
 
             head_json_version=""
+            head_skill_name=""
             head_has_json=false
             if [ -f "${json_path}" ]; then
               head_has_json=true
               head_json_version="$(jq -r '.version // empty' "${json_path}" 2>/dev/null || true)"
+              head_skill_name="$(jq -r '.name // empty' "${json_path}" 2>/dev/null || true)"
             fi
 
             head_md_version=""
@@ -152,14 +154,6 @@ jobs:
               md_version_changed=true
             fi
 
-            if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
-              echo "::error file=${skill_dir}::Changed skill package has no version bump. Update skill.json and SKILL.md versions and add CHANGELOG.md release notes."
-              failures=$((failures + 1))
-              continue
-            fi
-
-            echo "Version bump detected for ${skill_dir} (skill.json changed: ${json_version_changed}, SKILL.md changed: ${md_version_changed})"
-
             if [ ! -f "${json_path}" ]; then
               echo "::error file=${json_path}::Missing skill.json after version bump."
               failures=$((failures + 1))
@@ -184,10 +178,29 @@ jobs:
               continue
             fi
 
+            if [ -z "${head_skill_name}" ]; then
+              echo "::error file=${json_path}::Missing .name in skill.json."
+              failures=$((failures + 1))
+              continue
+            fi
+
             if [ "${head_json_version}" != "${head_md_version}" ]; then
               echo "::error file=${json_path}::Version mismatch. skill.json=${head_json_version}, SKILL.md=${head_md_version}"
               failures=$((failures + 1))
               continue
+            fi
+
+            release_tag="${head_skill_name}-v${head_json_version}"
+            if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
+              if git show-ref --verify --quiet "refs/tags/${release_tag}"; then
+                echo "::error file=${skill_dir}::Changed skill package has no version bump and release tag ${release_tag} already exists. Update skill.json and SKILL.md versions and add CHANGELOG.md release notes."
+                failures=$((failures + 1))
+                continue
+              fi
+
+              echo "No version bump detected for ${skill_dir}, but release tag ${release_tag} does not exist; treating ${head_json_version} as unreleased."
+            else
+              echo "Version bump detected for ${skill_dir} (skill.json changed: ${json_version_changed}, SKILL.md changed: ${md_version_changed})"
             fi
 
             echo "Version parity OK for ${skill_dir}: ${head_json_version}"
@@ -231,11 +244,11 @@ jobs:
           fi
 
           if [ "${failures}" -gt 0 ]; then
-            echo "::error::Found ${failures} skill metadata/release-notes issue(s) across ${checked_skills} bumped skill(s)."
+            echo "::error::Found ${failures} skill metadata/release-notes issue(s) across ${checked_skills} changed skill(s)."
             exit 1
           fi
 
-          echo "Validated ${checked_skills} bumped skill(s): version parity and changelog release notes are present."
+          echo "Validated ${checked_skills} changed skill(s): version parity and changelog release notes are present."
 
       - name: Validate npx skills install docs
         env:
