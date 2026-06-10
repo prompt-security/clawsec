@@ -54,11 +54,10 @@ jobs:
       - name: Collect traffic
         env:
           # Traffic endpoints reject the Actions GITHUB_TOKEN ("Resource not
-          # accessible by integration") — a PAT with push access is required.
-          # POLL_NVD_CVES_PAT is a stopgap fallback until a dedicated
-          # TRAFFIC_ARCHIVE_TOKEN secret (fine-grained, Administration:read)
-          # is provisioned.
-          GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_ARCHIVE_TOKEN || secrets.POLL_NVD_CVES_PAT }}
+          # accessible by integration") — a PAT from a user with push access
+          # is required: classic with repo scope, or fine-grained with read
+          # access to Administration on this repository.
+          GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_ARCHIVE_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
