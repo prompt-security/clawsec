@@ -107,12 +107,10 @@ jobs:
             md_path="${skill_dir}/SKILL.md"
 
             head_json_version=""
-            head_skill_name=""
             head_has_json=false
             if [ -f "${json_path}" ]; then
               head_has_json=true
               head_json_version="$(jq -r '.version // empty' "${json_path}" 2>/dev/null || true)"
-              head_skill_name="$(jq -r '.name // empty' "${json_path}" 2>/dev/null || true)"
             fi
 
             head_md_version=""
@@ -178,19 +176,14 @@ jobs:
               continue
             fi
 
-            if [ -z "${head_skill_name}" ]; then
-              echo "::error file=${json_path}::Missing .name in skill.json."
-              failures=$((failures + 1))
-              continue
-            fi
-
             if [ "${head_json_version}" != "${head_md_version}" ]; then
               echo "::error file=${json_path}::Version mismatch. skill.json=${head_json_version}, SKILL.md=${head_md_version}"
               failures=$((failures + 1))
               continue
             fi
 
-            release_tag="${head_skill_name}-v${head_json_version}"
+            skill_release_name="$(basename "${skill_dir}")"
+            release_tag="${skill_release_name}-v${head_json_version}"
             if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
               if git show-ref --verify --quiet "refs/tags/${release_tag}"; then
                 echo "::error file=${skill_dir}::Changed skill package has no version bump and release tag ${release_tag} already exists. Update skill.json and SKILL.md versions and add CHANGELOG.md release notes."

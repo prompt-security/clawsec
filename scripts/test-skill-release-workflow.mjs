@@ -42,8 +42,20 @@ assert.doesNotMatch(
 
 assert.match(
   workflow,
+  /skill_release_name="\$\(basename "\$\{skill_dir\}"\)"/,
+  'Skill release validation must derive the release tag prefix from the skill package directory',
+);
+
+assert.match(
+  workflow,
+  /release_tag="\$\{skill_release_name\}-v\$\{head_json_version\}"/,
+  'Skill release validation must use the skill package directory name for release tag checks',
+);
+
+assert.doesNotMatch(
+  workflow,
   /release_tag="\$\{head_skill_name\}-v\$\{head_json_version\}"/,
-  'Skill release validation must derive the release tag from skill.json name and version',
+  'Skill release validation must not use skill.json name for release tag checks because release tags resolve to skill directories',
 );
 
 assert.match(
