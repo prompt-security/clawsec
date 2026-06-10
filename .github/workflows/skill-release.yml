@@ -1403,6 +1403,16 @@ jobs:
             echo "INSTALL_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Prepare SkillSpector report for release notes
+        id: skillspector_report
+        run: |
+          set -euo pipefail
+          {
+            echo "body<<SKILLSPECTOR_REPORT_EOF"
+            cat release-assets/skillspector-report.md
+            echo "SKILLSPECTOR_REPORT_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
@@ -1418,7 +1428,9 @@ jobs:
 
             ### SkillSpector Security Report
 
-            Review the generated release-payload scan: [skillspector-report.md](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skillspector-report.md)
+            ${{ steps.skillspector_report.outputs.body }}
+
+            Download the generated release-payload scan: [skillspector-report.md](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/skillspector-report.md)
 
             ### Verification
 

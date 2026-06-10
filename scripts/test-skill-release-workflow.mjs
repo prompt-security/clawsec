@@ -91,7 +91,19 @@ assert.match(
 assert.match(
   workflow,
   /### SkillSpector Security Report[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{\{ github\.repository \}\}\/releases\/download\/\$\{\{ github\.ref_name \}\}\/skillspector-report\.md\)/,
-  'GitHub release notes must display a direct SkillSpector report link',
+  'GitHub release notes must include a direct SkillSpector report link',
+);
+
+assert.match(
+  workflow,
+  /id: skillspector_report[\s\S]*cat release-assets\/skillspector-report\.md[\s\S]*>> "\$GITHUB_OUTPUT"/,
+  'GitHub release notes must load the generated SkillSpector report content',
+);
+
+assert.match(
+  workflow,
+  /### SkillSpector Security Report[\s\S]*\$\{\{ steps\.skillspector_report\.outputs\.body \}\}/,
+  'GitHub release notes must display the generated SkillSpector report content inline',
 );
 
 assert.match(
