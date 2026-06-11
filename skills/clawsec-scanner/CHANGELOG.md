@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.6] - 2026-06-11
+
+### Changed
+
+- Updated shipped documentation (hook HOOK.md, dast_runner.mjs header, SKILL.md roadmap heading) to describe the static hook source inspection model introduced in 0.0.4, removing stale references to executing target hook handlers.
+
 ## [0.0.5] - 2026-06-10
 
 ### Changed

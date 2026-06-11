@@ -1,6 +1,6 @@
 ---
 name: clawsec-scanner
-version: 0.0.5
+version: 0.0.6
 description: Automated vulnerability scanner for agent platforms. Performs dependency scanning (npm audit, pip-audit), multi-database CVE lookup (OSV, NVD, GitHub Advisory), SAST analysis (Semgrep, Bandit), and agent-specific static hook inspection for OpenClaw hooks.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -50,7 +50,7 @@ The scanner orchestrates four complementary scan types to provide comprehensive 
    - **Bandit** for Python: Leverages existing `pyproject.toml` configuration
    - Identifies: hardcoded secrets (API keys, tokens), command injection (`eval`, `exec`), path traversal, unsafe deserialization
 
-4. **Dynamic Analysis (DAST)**
+4. **DAST (Static Hook Inspection)**
    - Static hook inspection for OpenClaw hook handlers discovered from `HOOK.md` metadata
    - Verifies coverage and source-level risk signals without importing, transpiling, or invoking target handlers
    - Note: Traditional web DAST tools (ZAP, Burp) do not apply to agent platforms - this provides agent-specific testing
@@ -464,7 +464,7 @@ npx clawhub@latest install clawsec-suite
 
 ## Roadmap
 
-### v0.0.4 (Current)
+### v0.0.6 (Current)
 - [x] Dependency scanning (npm audit, pip-audit)
 - [x] CVE database integration (OSV, NVD, GitHub Advisory)
 - [x] SAST analysis (Semgrep, Bandit)

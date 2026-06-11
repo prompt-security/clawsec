@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * DAST (Dynamic Application Security Testing) Runner for ClawSec Scanner.
+ * DAST Runner for ClawSec Scanner (static OpenClaw hook inspection).
  *
  * Scope:
  * - Discover OpenClaw hooks from target directories
- * - Execute real hook handlers in an isolated harness process
- * - Validate malicious-input resilience, timeout behavior, output bounds,
- *   and event mutation safety
+ * - Inspect hook handler source in an isolated helper process without
+ *   importing, transpiling, or invoking target handler code
+ * - Report coverage and source-level risk signals as DAST-STATIC-* findings
  */
 
 import fs from "node:fs/promises";
