@@ -88,10 +88,16 @@ assert.match(
   'Skill release workflow must generate a SkillSpector report for each released skill',
 );
 
+assert.doesNotMatch(
+  workflow,
+  /"### SkillSpector Security Report"/,
+  'GitHub release notes must not add a duplicate SkillSpector heading before the generated report',
+);
+
 assert.match(
   workflow,
-  /### SkillSpector Security Report[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{process\.env\.REPO\}\/releases\/download\/\$\{process\.env\.TAG\}\/skillspector-report\.md\)/,
-  'GitHub release notes must include a direct SkillSpector report link',
+  /readFileSync\("release-assets\/skillspector-report\.md", "utf8"\)[\s\S]*report,[\s\S]*\[skillspector-report\.md\]\(https:\/\/github\.com\/\$\{process\.env\.REPO\}\/releases\/download\/\$\{process\.env\.TAG\}\/skillspector-report\.md\)/,
+  'GitHub release notes must embed the generated SkillSpector report and include a direct report link',
 );
 
 assert.match(
@@ -116,6 +122,12 @@ assert.match(
   workflow,
   /generate_skillspector_report "\$\{inner_dir\}" "\$\{out_assets\}\/skillspector-report\.md"/,
   'PR dry-run SkillSpector scan must target the staged release payload, not the source skill directory',
+);
+
+assert.match(
+  workflow,
+  /Run release dry-run for changed skills[\s\S]*git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
+  'PR dry-run SkillSpector scan must run when any release-relevant skill package file changes',
 );
 
 assert.doesNotMatch(
@@ -185,6 +197,24 @@ assert.match(
   workflow,
   /add_release_asset_checksum "skillspector-report\.md"/,
   'SkillSpector report must be included in the signed checksums manifest',
+);
+
+assert.match(
+  workflow,
+  /Upload SkillSpector PR reports[\s\S]*actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7\.0\.1[\s\S]*name: skillspector-pr-reports/,
+  'PR dry-run must upload generated SkillSpector reports as workflow artifacts',
+);
+
+assert.match(
+  workflow,
+  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
+  'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with comment permissions',
+);
+
+assert.match(
+  workflow,
+  /clawsec-skillspector-report:\$\{tag\}[\s\S]*github\.rest\.issues\.updateComment[\s\S]*github\.rest\.issues\.createComment/,
+  'SkillSpector PR comments must use stable per-skill markers and update existing comments before creating new ones',
 );
 
 assert.match(
