@@ -19,8 +19,8 @@ on:
 
 permissions: read-all
 
-env:
-  CLAWHUB_CLI_VERSION: 0.7.0
+# The clawhub CLI version is pinned (with integrity hashes) in
+# .github/clawhub-cli/package-lock.json — bump it there.
 
 concurrency:
   group: skill-release-${{ github.ref }}
@@ -1704,18 +1704,19 @@ jobs:
 
       - name: Install clawhub CLI
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
-        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+        run: |
+          npm ci --prefix .github/clawhub-cli
+          echo "${GITHUB_WORKSPACE}/.github/clawhub-cli/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Patch clawhub publish payload workaround
         # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
           node <<'NODE'
-          const { execSync } = require("node:child_process");
           const fs = require("node:fs");
           const path = require("node:path");
 
-          const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+          const npmRoot = path.join(process.env.GITHUB_WORKSPACE, ".github", "clawhub-cli", "node_modules");
           const publishScriptPath = path.join(
             npmRoot,
             "clawhub",
@@ -1894,17 +1895,18 @@ jobs:
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
 
       - name: Install clawhub CLI
-        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+        run: |
+          npm ci --prefix .github/clawhub-cli
+          echo "${GITHUB_WORKSPACE}/.github/clawhub-cli/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Patch clawhub publish payload workaround
         # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
         run: |
           node <<'NODE'
-          const { execSync } = require("node:child_process");
           const fs = require("node:fs");
           const path = require("node:path");
 
-          const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+          const npmRoot = path.join(process.env.GITHUB_WORKSPACE, ".github", "clawhub-cli", "node_modules");
           const publishScriptPath = path.join(
             npmRoot,
             "clawhub",
