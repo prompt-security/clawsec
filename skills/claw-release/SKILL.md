@@ -1,6 +1,6 @@
 ---
 name: claw-release
-version: 0.0.4
+version: 0.0.5
 description: Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.
 homepage: https://clawsec.prompt.security
 metadata:
