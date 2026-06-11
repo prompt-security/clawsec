@@ -321,7 +321,14 @@ const fetchJson = async ({ repo, token, pathname, fetchImpl }) => {
   if (!response.ok) {
     const body = await response.text().catch(() => '');
     const suffix = body ? ` ${body.slice(0, 500)}` : '';
-    throw new Error(`GitHub traffic API request failed for ${repo}: ${url.pathname}${url.search} returned ${response.status}.${suffix}`);
+    const lacksPushAccess = response.status === 403
+      && /resource not accessible|must have push access/i.test(body);
+    const hint = lacksPushAccess
+      ? ' Traffic endpoints require a token with push access to the repository; the Actions GITHUB_TOKEN is always rejected. Use a classic PAT with the repo scope or a fine-grained PAT with read access to Administration.'
+      : response.status === 401
+        ? ' The token was rejected as invalid — it may be expired or revoked. Rotate the TRAFFIC_ARCHIVE_TOKEN secret.'
+        : '';
+    throw new Error(`GitHub traffic API request failed for ${repo}: ${url.pathname}${url.search} returned ${response.status}.${suffix}${hint}`);
   }
 
   return response.json();

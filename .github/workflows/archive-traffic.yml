@@ -53,9 +53,21 @@ jobs:
 
       - name: Collect traffic
         env:
-          GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_ARCHIVE_TOKEN || github.token }}
+          # Traffic endpoints reject the Actions GITHUB_TOKEN ("Resource not
+          # accessible by integration") — a PAT from a user with push access
+          # is required: classic with repo scope, or fine-grained with read
+          # access to Administration on this repository.
+          GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_ARCHIVE_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node scripts/archive-github-traffic.mjs --archive-dir "${TRAFFIC_ARCHIVE_DIR}"
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_TRAFFIC_TOKEN}" ]; then
+            echo "::error::No traffic-capable token configured. Set the TRAFFIC_ARCHIVE_TOKEN secret to a PAT with push access (classic: repo scope; fine-grained: Administration read)."
+            exit 1
+          fi
+
+          node scripts/archive-github-traffic.mjs --archive-dir "${TRAFFIC_ARCHIVE_DIR}"
 
       - name: Commit archive
         run: |

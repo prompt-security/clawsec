@@ -76,6 +76,40 @@ test('fetchGitHubTraffic requests the daily GitHub traffic endpoints with auth',
   assert.deepEqual(snapshot.clones.clones, responses[`/repos/${TEST_REPOSITORY}/traffic/clones?per=day`].clones);
 });
 
+test('fetchGitHubTraffic explains traffic token requirements on 403', async () => {
+  const fetchImpl = async () => new globalThis.Response(
+    JSON.stringify({ message: 'Resource not accessible by integration' }),
+    { status: 403 },
+  );
+
+  await assert.rejects(
+    fetchGitHubTraffic({
+      repo: TEST_REPOSITORY,
+      token: 'installation-token',
+      capturedAt,
+      fetchImpl,
+    }),
+    /returned 403\..*push access/,
+  );
+});
+
+test('fetchGitHubTraffic flags invalid tokens on 401', async () => {
+  const fetchImpl = async () => new globalThis.Response(
+    JSON.stringify({ message: 'Bad credentials' }),
+    { status: 401 },
+  );
+
+  await assert.rejects(
+    fetchGitHubTraffic({
+      repo: TEST_REPOSITORY,
+      token: 'expired-token',
+      capturedAt,
+      fetchImpl,
+    }),
+    /returned 401\..*expired or revoked/,
+  );
+});
+
 test('mergeTrafficArchive upserts daily views and clones without double-counting overlapping windows', () => {
   const archive = mergeTrafficArchive(
     {
@@ -232,7 +266,8 @@ test('traffic archive workflow uses a daily schedule and a dedicated archive bra
 
   assert.match(workflow, /cron:\s+'17 3 \* \* \*'/);
   assert.match(workflow, /TRAFFIC_ARCHIVE_BRANCH:\s+traffic-archive/);
-  assert.match(workflow, /TRAFFIC_ARCHIVE_TOKEN/);
+  assert.match(workflow, /GH_TRAFFIC_TOKEN:\s*\$\{\{\s*secrets\.TRAFFIC_ARCHIVE_TOKEN\b/);
+  assert.doesNotMatch(workflow, /GH_TRAFFIC_TOKEN:[^\n]*github\.token/);
   assert.match(workflow, /node scripts\/archive-github-traffic\.mjs/);
   assert.match(workflow, /git add traffic\/archive\.json traffic\/summary\.json/);
   assert.match(workflow, /git rm --ignore-unmatch traffic\/README\.md/);
