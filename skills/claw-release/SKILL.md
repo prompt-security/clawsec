@@ -240,13 +240,17 @@ This skill (`claw-release`) is an internal skill.
 
 ## Existing Skills
 
-| Skill | Category | Internal |
-|-------|----------|----------|
-| clawsec-feed | security | No |
-| clawtributor | security | No |
-| openclaw-audit-watchdog | security | No |
-| soul-guardian | security | No |
-| claw-release | utility | Yes |
+Do not rely on a hardcoded list here — it drifts out of date as skills are
+added. Enumerate the live set from the repo instead:
+
+```bash
+for f in skills/*/skill.json; do
+  jq -r '"\(.name)\t\(.openclaw.category // "-")\tinternal=\(.openclaw.internal // false)"' "$f"
+done
+```
+
+Each skill's category and internal flag are the source of truth in its own
+`skills/<name>/skill.json` (`.openclaw.category` and `.openclaw.internal`).
 
 ---
 
