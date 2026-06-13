@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-06-12T04:56:27.532Z",
+  "updated_at": "2026-06-13T04:51:25.473Z",
   "daily": {
     "views": [
       {
@@ -282,6 +282,62 @@
             "uniques": 2
           }
         ]
+      },
+      {
+        "captured_at": "2026-06-13T04:51:25.473Z",
+        "date": "2026-06-13",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 209,
+            "uniques": 125
+          },
+          {
+            "referrer": "Google",
+            "count": 171,
+            "uniques": 104
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 13,
+            "uniques": 8
+          },
+          {
+            "referrer": "Bing",
+            "count": 9,
+            "uniques": 7
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 7,
+            "uniques": 6
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "moge.ai",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "reddit.com",
+            "count": 2,
+            "uniques": 2
+          }
+        ]
       }
     ],
     "paths": [
@@ -416,6 +472,72 @@
             "uniques": 1
           }
         ]
+      },
+      {
+        "captured_at": "2026-06-13T04:51:25.473Z",
+        "date": "2026-06-13",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 517,
+            "uniques": 371
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 28,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 22,
+            "uniques": 11
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 17,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 16,
+            "uniques": 13
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/modules/hermes-attestation-guardian.md",
+            "title": "/blob/main/wiki/modules/hermes-attestation-guardian.md",
+            "count": 10,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 10,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/261",
+            "title": "/pull/261",
+            "count": 8,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/261/changes",
+            "title": "/pull/261/changes",
+            "count": 8,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/262",
+            "title": "/pull/262",
+            "count": 8,
+            "uniques": 1
+          }
+        ]
       }
     ]
   },
@@ -435,6 +557,18 @@
     {
       "captured_at": "2026-06-12T04:56:27.532Z",
       "date": "2026-06-12",
+      "views_window": {
+        "count": 919,
+        "uniques": 389
+      },
+      "clones_window": {
+        "count": 3557,
+        "uniques": 898
+      }
+    },
+    {
+      "captured_at": "2026-06-13T04:51:25.473Z",
+      "date": "2026-06-13",
       "views_window": {
         "count": 919,
         "uniques": 389

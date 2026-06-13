@@ -1,9 +1,9 @@
 {
   "version": 1,
   "repository": "prompt-security/clawsec",
-  "generated_at": "2026-06-12T04:56:27.532Z",
+  "generated_at": "2026-06-13T04:51:25.473Z",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-06-12T04:56:27.532Z",
+  "updated_at": "2026-06-13T04:51:25.473Z",
   "source": {
     "api": "GitHub REST repository traffic endpoints",
     "retention_limit": "GitHub exposes roughly the last 14 days; this archive keeps daily snapshots long term.",
@@ -13,10 +13,10 @@
     "views": {
       "last_14_days": {
         "days": 14,
-        "count": 787,
-        "sum_daily_uniques": 432,
+        "count": 740,
+        "sum_daily_uniques": 406,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-05-30",
+        "first_date": "2026-05-31",
         "last_date": "2026-06-10"
       },
       "last_30_days": {
@@ -54,10 +54,10 @@
     "clones": {
       "last_14_days": {
         "days": 14,
-        "count": 3100,
-        "sum_daily_uniques": 886,
+        "count": 3020,
+        "sum_daily_uniques": 842,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-05-30",
+        "first_date": "2026-05-31",
         "last_date": "2026-06-10"
       },
       "last_30_days": {
@@ -261,8 +261,8 @@
   },
   "latest_snapshots": {
     "referrers": {
-      "captured_at": "2026-06-12T04:56:27.532Z",
-      "date": "2026-06-12",
+      "captured_at": "2026-06-13T04:51:25.473Z",
+      "date": "2026-06-13",
       "entries": [
         {
           "referrer": "github.com",
@@ -317,8 +317,8 @@
       ]
     },
     "paths": {
-      "captured_at": "2026-06-12T04:56:27.532Z",
-      "date": "2026-06-12",
+      "captured_at": "2026-06-13T04:51:25.473Z",
+      "date": "2026-06-13",
       "entries": [
         {
           "path": "/prompt-security/clawsec",
@@ -384,8 +384,8 @@
     }
   },
   "snapshot_counts": {
-    "referrers": 2,
-    "paths": 2,
-    "captures": 2
+    "referrers": 3,
+    "paths": 3,
+    "captures": 3
   }
 }
