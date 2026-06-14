@@ -142,9 +142,25 @@ Current release generator:
 - `.github/workflows/skill-release.yml`
 
 Current behavior:
+- builds release payloads from staged, SBOM-scoped files rather than scanning raw source directories
+- runs [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector) against the staged payload with `--no-llm --format markdown`
+- publishes `skillspector-report.md` as a GitHub Release asset
+- includes `skillspector-report.md` in the signed checksum manifest
 - creates `checksums.json`, signs it as `checksums.sig`, and verifies signature before publish
 - includes `signing-public.pem` in release assets
 - validates generated public-key fingerprint against canonical key material
+
+PR validation behavior:
+- dry-run builds changed release-relevant skill packages before publish
+- uploads generated SkillSpector reports as `skillspector-pr-reports`
+- posts sanitized SkillSpector report comments with stable per-skill markers
+- omits raw code blocks, inline snippets, emails, and token-like values from PR comments
+
+Operator review points:
+- verify the workflow run generated `skillspector-report.md`
+- verify `checksums.json` includes the `skillspector-report.md` hash
+- verify `checksums.sig` validates against `signing-public.pem`
+- review the PR comment for summary signal and download the artifact when raw SkillSpector detail is needed
 
 ## 8) Rotation policy and runbook
 

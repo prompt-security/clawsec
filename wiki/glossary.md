@@ -15,6 +15,7 @@
 | --- | --- |
 | Skill Tag | Git tag formatted as `<skill>-v<semver>` used by release automation. |
 | Release Assets | Files attached to GitHub release (zip, `skill.json`, checksums, signatures). |
+| SkillSpector Report | Markdown security scan evidence generated from a staged skill release payload. |
 | Catalog Index | `public/skills/index.json`, generated list consumed by web catalog. |
 | Embedded Components | Capability bundle from one skill included in another (for example feed embedded in suite). |
 
@@ -39,7 +40,7 @@
 | --- | --- |
 | Poll NVD CVEs Workflow | Scheduled workflow that fetches and transforms NVD CVEs into advisories. |
 | Community Advisory Workflow | Issue-label-triggered workflow that publishes approved community advisories. |
-| Skill Release Workflow | Tag-triggered packaging/signing/publishing pipeline for skills. |
+| Skill Release Workflow | PR and tag-triggered packaging/signing/publishing pipeline for skills. |
 | Deploy Pages Workflow | Workflow that builds site assets and mirrors release/advisory artifacts. |
 
 ## Source References

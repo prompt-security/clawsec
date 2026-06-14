@@ -32,10 +32,21 @@
 
 ## Release Workflow Details
 - Version bump and docs parity are enforced for PR/tag paths.
-- Skill packaging includes SBOM-declared files and integrity manifests.
+- PR runs validate changed skill packages with a dry-run build before anything is published.
+- PR runs generate a SkillSpector report from the staged release payload and attach a sanitized report summary as a PR comment.
+- Tag pushes matching `<skill>-v<semver>` build the real release payload, generate a SkillSpector report, sign `checksums.json`, verify the signature, and publish GitHub Release assets.
+- Skill packaging includes SBOM-declared files, release trust packet files, install instructions, `skillspector-report.md`, and integrity manifests.
 - `checksums.json` is signed and immediately verified in workflow execution.
 - Optional publish-to-ClawHub job runs after successful GitHub release when configured.
 - Older releases within same major line can be superseded/deleted by automation.
+
+## SkillSpector Release Scans
+- The workflow installs [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector) in PR dry-run, tag simulation, and real tag-release jobs.
+- SkillSpector runs with `--no-llm --format markdown` so CI produces deterministic Markdown evidence without requiring an external LLM service.
+- The scan target is the staged release payload, not the raw skill source tree. This keeps source-only test fixtures and development files out of release scan evidence.
+- `skillspector-report.md` is included in release assets and added to the signed checksum manifest.
+- GitHub release notes embed the generated report directly and link to the downloadable `skillspector-report.md` asset.
+- PR comments use sanitized report content and point reviewers to the `skillspector-pr-reports` workflow artifact for raw details.
 
 ## Advisory Workflow Details
 - NVD workflow determines incremental window from previous feed `updated` timestamp.
@@ -74,6 +85,7 @@ on:
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/skill-release.yml
+- https://github.com/NVIDIA/SkillSpector
 - .github/workflows/deploy-pages.yml
 - .github/workflows/pages-verify.yml
 - .github/workflows/wiki-sync.yml
