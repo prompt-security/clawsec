@@ -34,6 +34,13 @@ assert.match(
   'Skill release validation must ignore test-only skill changes while inspecting release-relevant skill files',
 );
 
+assert.ok(
+  workflow.includes('name = tolower($NF)')
+    && workflow.includes('name ~ /^(test|spec)[_-]/')
+    && workflow.includes('name ~ /\\.(test|spec)\\./'),
+  'Skill release validation must filter test-named skill files such as scripts/test_*.py before selecting dry-run skill directories',
+);
+
 assert.doesNotMatch(
   workflow,
   /No version bump detected for \$\{skill_dir\}; skipping\./,
@@ -130,6 +137,14 @@ assert.match(
   'PR dry-run SkillSpector scan must run when any release-relevant skill package file changes',
 );
 
+assert.ok(
+  workflow.includes('local name="${lower##*/}"')
+    && workflow.includes('"$name" == test_*')
+    && workflow.includes('"$name" == *.test.*')
+    && workflow.includes('(__tests__|test|tests)/|(^|/)(test|spec)[_-]|(^|/).*\\.(test|spec)\\.'),
+  'Skill release archives must exclude test directories and test-named files from staged release payloads',
+);
+
 assert.doesNotMatch(
   workflow,
   /generate_skillspector_report "\$\{skill_dir\}" "\$\{out_assets\}\/skillspector-report\.md"/,
@@ -209,6 +224,30 @@ assert.match(
   workflow,
   /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
   'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with comment permissions',
+);
+
+assert.match(
+  workflow,
+  /comment-skillspector-report:[\s\S]*if: always\(\) && github\.event_name == 'pull_request' && needs\.release\.result != 'cancelled'[\s\S]*Download SkillSpector reports[\s\S]*continue-on-error: true/,
+  'SkillSpector PR comments must still run when the release dry-run produced reports but the release job failed later',
+);
+
+assert.match(
+  workflow,
+  /function sanitizeReportForComment\(report\)[\s\S]*code block omitted from PR comment[\s\S]*inline snippet omitted[\s\S]*redacted-email[\s\S]*redacted-token/,
+  'SkillSpector PR comments must sanitize raw report content before posting to the PR',
+);
+
+assert.match(
+  workflow,
+  /const sanitizedReport = sanitizeReportForComment\(report\);[\s\S]*`\$\{marker\}\\n\$\{sanitizedReport\}/,
+  'SkillSpector PR comments must use the sanitized report body, not the raw artifact text',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /`\$\{marker\}\\n\$\{report\.trimEnd\(\)\}/,
+  'SkillSpector PR comments must not post report.trimEnd() verbatim',
 );
 
 assert.match(
