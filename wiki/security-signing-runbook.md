@@ -141,10 +141,17 @@ Current behavior:
 Current release generator:
 - `.github/workflows/skill-release.yml`
 
-Current behavior:
+Detailed packaging and SkillSpector behavior lives in [Automation and Release Pipelines](modules/automation-release.md). This runbook only records the signing controls operators must verify.
+
+Signing controls:
 - creates `checksums.json`, signs it as `checksums.sig`, and verifies signature before publish
 - includes `signing-public.pem` in release assets
 - validates generated public-key fingerprint against canonical key material
+
+Operator review points:
+- verify `checksums.json` includes the release-evidence files documented in `wiki/modules/automation-release.md`
+- verify `checksums.sig` validates against `signing-public.pem`
+- review the release workflow run and PR evidence links before pushing or approving follow-up release tags
 
 ## 8) Rotation policy and runbook
 

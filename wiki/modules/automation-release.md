@@ -19,11 +19,38 @@ This module intentionally focuses on automation/release-specific workflow behavi
 When a skill is tagged (for example, `soul-guardian-v1.0.0`), the pipeline:
 1. Validates `skill.json` version/tag alignment.
 2. Enforces signing-key consistency against canonical repo key material.
-3. Generates `checksums.json` for SBOM files.
-4. Signs and verifies release checksum artifacts.
-5. Publishes GitHub Release assets.
-6. Supersedes older releases within the same major version (tags remain).
-7. Triggers website catalog refresh.
+3. Stages the release payload from SBOM-scoped files and root skill docs.
+4. Generates release trust packet files, install instructions, and a SkillSpector security report.
+5. Generates `checksums.json` for the archive and release assets.
+6. Signs and verifies release checksum artifacts.
+7. Publishes GitHub Release assets.
+8. Supersedes older releases within the same major version (tags remain).
+9. Triggers website catalog refresh.
+
+### PR dry-run behavior
+PRs that touch skill packages run the release workflow in validation mode:
+- `validate-pr-version-sync` checks changed skill metadata and documentation parity.
+- `release` builds dry-run release assets for changed release-relevant skill files.
+- `comment-skillspector-report` posts a sanitized SkillSpector summary back to the PR when reports are available.
+- `simulate-tag-release-build` exercises the tag-release builder across skills without publishing.
+
+The PR path exists to catch packaging, signing, and release-evidence regressions before a maintainer pushes a real release tag.
+
+### SkillSpector release evidence
+The pipeline installs [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector) inside GitHub Actions and runs:
+
+```bash
+skillspector scan <staged-release-payload> --no-llm --format markdown --output skillspector-report.md
+```
+
+The scan target is the staged payload, not the raw `skills/<name>/` source directory. That matters because release evidence should describe what users install, while source-only tests and fixtures stay outside the packaged payload.
+
+SkillSpector output is used in three places:
+- PR dry-run artifact: `skillspector-pr-reports`
+- GitHub release asset: `skillspector-report.md`
+- Signed checksum manifest: `checksums.json` includes the SkillSpector report hash
+
+PR comments intentionally use a sanitized summary. Raw code blocks, inline snippets, emails, and token-like values are omitted from the comment body, and reviewers can download the workflow artifact when they need the full report.
 
 ### Signing-key consistency guardrails
 Guardrail script:
@@ -40,9 +67,16 @@ Enforced in:
 
 ### Release artifacts
 Each skill release includes:
+- `<skill>-v<version>.zip`
 - `checksums.json`
+- `checksums.sig`
+- `signing-public.pem`
 - `skill.json`
 - `SKILL.md`
+- `skill-card.md`
+- `permissions.json`
+- `install.md`
+- `skillspector-report.md`
 - Additional SBOM-scoped files
 
 Operational docs:
@@ -58,6 +92,7 @@ Operational docs:
 - `.github/workflows/deploy-pages.yml`: site build + asset mirroring to GitHub Pages.
 - `.github/workflows/wiki-sync.yml`: syncs repository `wiki/` into GitHub Wiki.
 - `.github/actions/sign-and-verify/action.yml`: shared Ed25519 sign/verify composite action.
+- `https://github.com/NVIDIA/SkillSpector`: upstream SkillSpector scanner installed by the release workflow.
 - `scripts/prepare-to-push.sh`: local CI-like quality gate.
 - `scripts/release-skill.sh`: manual helper for version bump + tag workflow.
 

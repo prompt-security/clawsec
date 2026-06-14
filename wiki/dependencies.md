@@ -35,6 +35,7 @@
 | GitHub API | Deploy/release workflows | Discover releases, download assets, publish outputs. |
 | GitHub Pages | Deploy workflow | Serve static site and mirrored artifacts. |
 | ClawHub CLI/registry | Install scripts + optional publish jobs | Install and publish skills. |
+| [NVIDIA SkillSpector](https://github.com/NVIDIA/SkillSpector) | Skill release workflow | Scan staged skill release payloads and produce Markdown release evidence. |
 | Optional local SMTP/sendmail | `openclaw-audit-watchdog` scripts | Deliver audit reports by email. |
 
 ## Development Tools
@@ -46,6 +47,7 @@
 | Bandit | `bandit -r utils/ -ll` | Python security checks. |
 | Trivy | Workflow + optional local run | FS/config vulnerability scans. |
 | Gitleaks | `scripts/prepare-to-push.sh` optional local run | Secret leak detection before push. |
+| SkillSpector | `.github/workflows/skill-release.yml` | Release-payload scanner used for PR comments and signed release artifacts. |
 
 ## Example Snippets
 ```json
@@ -83,6 +85,7 @@ skips = ["B101"]
 - PR validation enforces version parity between `skill.json` and `SKILL.md` frontmatter for bumped skills.
 - The public skills index keeps latest discovered version per skill for UI display.
 - Signed artifact manifests (`checksums.json`) are versioned per release and include file hashes and URLs.
+- SkillSpector reports are generated per release payload and included in signed artifact manifests.
 
 ## Source References
 - package.json

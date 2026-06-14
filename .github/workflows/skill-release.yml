@@ -90,7 +90,15 @@ jobs:
             'skills/*/**' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
-            | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
+            | awk -F/ '
+              NF >= 3 {
+                path = tolower($0)
+                name = tolower($NF)
+                if (path ~ /(^|\/)(__tests__|test|tests)\//) next
+                if (name ~ /^(test|spec)[_-]/ || name ~ /\.(test|spec)\./) next
+                print $1 "/" $2
+              }
+            ' \
             | sort -u > "${touched_skills_file}"
 
           if [ ! -s "${touched_skills_file}" ]; then
@@ -400,12 +408,15 @@ jobs:
           }
 
           touched_skills_file="$(mktemp)"
-          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- 'skills/*/skill.json' 'skills/*/SKILL.md' \
+          git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- \
+            'skills/*/**' \
+            ':(exclude)skills/*/test/**' \
+            ':(exclude)skills/*/tests/**' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
             | sort -u > "${touched_skills_file}"
 
           if [ ! -s "${touched_skills_file}" ]; then
-            echo "No skill metadata files changed in this PR."
+            echo "No release-relevant skill package files changed in this PR."
             rm -f "${touched_skills_file}"
             exit 0
           fi
@@ -431,7 +442,8 @@ jobs:
 
           is_test_release_path() {
             local lower="${1,,}"
-            [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == */test/* || "$lower" == */tests/* ]]
+            local name="${lower##*/}"
+            [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == __tests__/* || "$lower" == */test/* || "$lower" == */tests/* || "$lower" == */__tests__/* || "$name" == test_* || "$name" == test-* || "$name" == spec_* || "$name" == spec-* || "$name" == *.test.* || "$name" == *.spec.* ]]
           }
 
           generate_skillspector_report() {
@@ -526,11 +538,6 @@ jobs:
               md_version_changed=true
             fi
 
-            if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
-              echo "No version bump detected for ${skill_dir}; skipping dry-run."
-              continue
-            fi
-
             if [ -z "${head_json_version}" ] || [ -z "${head_md_version}" ] || [ "${head_json_version}" != "${head_md_version}" ]; then
               echo "::error file=${skill_dir}::Version metadata is invalid for dry-run. Ensure validate-pr-version-sync passes."
               failures=$((failures + 1))
@@ -619,9 +626,9 @@ jobs:
             # --- Create zip preserving directory structure ---
             zip_name="${skill_name}-v${version}.zip"
             (cd "${staging_dir}" && zip -qr "${OLDPWD}/${out_assets}/${zip_name}" .)
-            if unzip -Z1 "${out_assets}/${zip_name}" | grep -Eiq '(^|/)(test|tests)/'; then
+            if unzip -Z1 "${out_assets}/${zip_name}" | grep -Eiq '(^|/)(__tests__|test|tests)/|(^|/)(test|spec)[_-]|(^|/).*\.(test|spec)\.'; then
               echo "::error::Dry-run release archive contains test-only files: ${zip_name}"
-              unzip -Z1 "${out_assets}/${zip_name}" | grep -Ei '(^|/)(test|tests)/' || true
+              unzip -Z1 "${out_assets}/${zip_name}" | grep -Ei '(^|/)(__tests__|test|tests)/|(^|/)(test|spec)[_-]|(^|/).*\.(test|spec)\.' || true
               failures=$((failures + 1))
             fi
 
@@ -777,11 +784,176 @@ jobs:
           fi
 
           if [ "${dry_run_count}" -eq 0 ]; then
-            echo "No version bumps detected in changed skill metadata files."
+            echo "No changed skill directories required dry-run assets."
             exit 0
           fi
 
           echo "Release dry-run completed successfully for ${dry_run_count} changed skill(s)."
+
+      - name: Prepare SkillSpector PR report artifact
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -rf dist/skillspector-pr-reports
+          mkdir -p dist/dry-run dist/skillspector-pr-reports
+
+          found_reports=false
+          while IFS= read -r report_path; do
+            tag="${report_path#dist/dry-run/}"
+            tag="${tag%%/*}"
+            mkdir -p "dist/skillspector-pr-reports/${tag}"
+            cp "${report_path}" "dist/skillspector-pr-reports/${tag}/skillspector-report.md"
+            found_reports=true
+          done < <(find dist/dry-run -path '*/release-assets/skillspector-report.md' -type f | sort)
+
+          if [ "${found_reports}" != "true" ]; then
+            printf 'No SkillSpector reports were generated for this pull request.\n' > dist/skillspector-pr-reports/NO_SKILLSPECTOR_REPORTS.txt
+          fi
+
+      - name: Upload SkillSpector PR reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skillspector-pr-reports
+          path: dist/skillspector-pr-reports
+          retention-days: 14
+
+  comment-skillspector-report:
+    if: always() && github.event_name == 'pull_request' && needs.release.result != 'cancelled'
+    needs: release
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Download SkillSpector reports
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skillspector-pr-reports
+          path: skillspector-pr-reports
+
+      - name: Comment SkillSpector reports
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require("node:fs/promises");
+            const path = require("node:path");
+
+            const root = "skillspector-pr-reports";
+            const maxCommentLength = 65000;
+
+            async function findReports(dir) {
+              let entries;
+              try {
+                entries = await fs.readdir(dir, { withFileTypes: true });
+              } catch (error) {
+                if (error.code === "ENOENT") {
+                  return [];
+                }
+                throw error;
+              }
+
+              const reports = [];
+              for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                  reports.push(...await findReports(fullPath));
+                } else if (entry.isFile() && entry.name === "skillspector-report.md") {
+                  reports.push(fullPath);
+                }
+              }
+              return reports;
+            }
+
+            function tagFromReportPath(reportPath) {
+              const parts = reportPath.split(path.sep);
+              const releaseAssetsIndex = parts.lastIndexOf("release-assets");
+              if (releaseAssetsIndex > 0) {
+                return parts[releaseAssetsIndex - 1];
+              }
+              return path.basename(path.dirname(reportPath));
+            }
+
+            function sanitizeReportForComment(report) {
+              const omittedBlock = "_[code block omitted from PR comment; download the workflow artifact for raw details]_";
+              return report
+                .replace(/```[\s\S]*?```/g, omittedBlock)
+                .split(/\r?\n/)
+                .filter((line) => !/^\s{4,}\S/.test(line))
+                .join("\n")
+                .replace(/`[^`\n]*`/g, "`[inline snippet omitted]`")
+                .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[redacted-email]")
+                .replace(/\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g, "[redacted-aws-key]")
+                .replace(/\b(?:ghp|gho|ghu|ghs|ghr|github_pat|glpat|xox[baprs]?|sk|pk)_[A-Za-z0-9_=-]{12,}\b/gi, "[redacted-token]")
+                .replace(/\b[A-Za-z0-9+/]{40,}={0,2}\b/g, "[redacted-secret-like-value]")
+                .trimEnd();
+            }
+
+            function buildComment({ tag, report }) {
+              const marker = `<!-- clawsec-skillspector-report:${tag} -->`;
+              const sanitizedReport = sanitizeReportForComment(report);
+              const footer = [
+                "_Generated by the Skill Release dry-run for `" + tag + "`._",
+                "_Raw snippets, code blocks, inline code, emails, and token-like values are omitted from this PR comment._",
+                "_Download the `skillspector-pr-reports` workflow artifact for the full report._",
+              ].join("\n");
+              let body = `${marker}\n${sanitizedReport}\n\n${footer}`;
+
+              if (body.length <= maxCommentLength) {
+                return body;
+              }
+
+              const truncatedFooter = [
+                "_Report truncated because it exceeds GitHub's comment size limit._",
+                "_Download the `skillspector-pr-reports` workflow artifact for the full report._",
+                footer,
+              ].join("\n");
+              const budget = maxCommentLength - marker.length - truncatedFooter.length - 8;
+              return `${marker}\n${sanitizedReport.slice(0, Math.max(0, budget)).trimEnd()}\n\n${truncatedFooter}`;
+            }
+
+            const reports = await findReports(root);
+            if (reports.length === 0) {
+              core.info("No SkillSpector reports found; nothing to comment.");
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+
+            for (const reportPath of reports.sort()) {
+              const tag = tagFromReportPath(reportPath);
+              const report = await fs.readFile(reportPath, "utf8");
+              const marker = `<!-- clawsec-skillspector-report:${tag} -->`;
+              const body = buildComment({ tag, report });
+              const existing = comments.find((comment) => comment.body?.includes(marker));
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+                core.info(`Updated SkillSpector PR comment for ${tag}.`);
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+                core.info(`Created SkillSpector PR comment for ${tag}.`);
+              }
+            }
 
   simulate-tag-release-build:
     if: github.event_name == 'pull_request'
@@ -1065,7 +1237,8 @@ jobs:
 
           is_test_release_path() {
             local lower="${1,,}"
-            [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == */test/* || "$lower" == */tests/* ]]
+            local name="${lower##*/}"
+            [[ "$lower" == test/* || "$lower" == tests/* || "$lower" == __tests__/* || "$lower" == */test/* || "$lower" == */tests/* || "$lower" == */__tests__/* || "$name" == test_* || "$name" == test-* || "$name" == spec_* || "$name" == spec-* || "$name" == *.test.* || "$name" == *.spec.* ]]
           }
 
           generate_skillspector_report() {
@@ -1146,9 +1319,9 @@ jobs:
           # --- Create zip preserving directory structure ---
           ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
           (cd "$STAGING_DIR" && zip -qr "$OLDPWD/release-assets/$ZIP_NAME" .)
-          if unzip -Z1 "release-assets/$ZIP_NAME" | grep -Eiq '(^|/)(test|tests)/'; then
+          if unzip -Z1 "release-assets/$ZIP_NAME" | grep -Eiq '(^|/)(__tests__|test|tests)/|(^|/)(test|spec)[_-]|(^|/).*\.(test|spec)\.'; then
             echo "::error::Release archive contains test-only files: $ZIP_NAME"
-            unzip -Z1 "release-assets/$ZIP_NAME" | grep -Ei '(^|/)(test|tests)/' || true
+            unzip -Z1 "release-assets/$ZIP_NAME" | grep -Ei '(^|/)(__tests__|test|tests)/|(^|/)(test|spec)[_-]|(^|/).*\.(test|spec)\.' || true
             exit 1
           fi
 
@@ -1423,8 +1596,6 @@ jobs:
             process.env.CHANGELOG || "",
             "",
             process.env.QUICK_INSTALL || "",
-            "",
-            "### SkillSpector Security Report",
             "",
             report,
             "",

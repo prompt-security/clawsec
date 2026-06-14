@@ -32,10 +32,15 @@
 
 ## Release Workflow Details
 - Version bump and docs parity are enforced for PR/tag paths.
-- Skill packaging includes SBOM-declared files and integrity manifests.
+- PR runs validate changed skill packages with a dry-run build before anything is published.
+- Tag pushes matching `<skill>-v<semver>` build the real release payload, sign `checksums.json`, verify the signature, and publish GitHub Release assets.
+- Skill packaging includes SBOM-declared files, release trust packet files, install instructions, security scan evidence, and integrity manifests.
 - `checksums.json` is signed and immediately verified in workflow execution.
 - Optional publish-to-ClawHub job runs after successful GitHub release when configured.
 - Older releases within same major line can be superseded/deleted by automation.
+
+## SkillSpector Release Evidence
+Detailed SkillSpector release behavior lives in [Automation and Release Pipelines](modules/automation-release.md). Keep the detailed scanner command, staged-payload rules, PR comment behavior, and release-asset list there so scanner changes have one primary documentation owner.
 
 ## Advisory Workflow Details
 - NVD workflow determines incremental window from previous feed `updated` timestamp.
@@ -74,6 +79,7 @@ on:
 - .github/workflows/poll-nvd-cves.yml
 - .github/workflows/community-advisory.yml
 - .github/workflows/skill-release.yml
+- https://github.com/NVIDIA/SkillSpector
 - .github/workflows/deploy-pages.yml
 - .github/workflows/pages-verify.yml
 - .github/workflows/wiki-sync.yml

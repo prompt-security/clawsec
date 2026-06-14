@@ -2,7 +2,7 @@
 
 Track translation coverage and freshness versus English source docs.
 
-_Last updated: 2026-04-27_
+_Last updated: 2026-06-14_
 
 ## README Coverage
 
@@ -23,6 +23,12 @@ _Last updated: 2026-04-27_
 | `wiki/configuration.md` | — | pending |
 | `wiki/testing.md` | — | pending |
 | `wiki/workflow.md` | — | pending |
+
+## English Source Freshness Notes
+
+| Date | Changed pages | Translation impact |
+| --- | --- | --- |
+| 2026-06-14 | `wiki/workflow.md`, `wiki/modules/automation-release.md`, `wiki/security-signing-runbook.md`, `wiki/dependencies.md`, `wiki/glossary.md` | Added SkillSpector release-pipeline documentation, signed-report behavior, and PR comment behavior. Translation refresh pending. |
 
 ## Wiki Coverage (KO)
 
