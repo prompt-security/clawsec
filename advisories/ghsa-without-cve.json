@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated": "2026-06-10T08:30:16Z",
+  "updated": "2026-06-14T07:33:37Z",
   "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
   "stale_after_days": 60,
   "semantics": {
@@ -39,8 +39,8 @@
     {
       "id": "GHSA-275c-xpvc-jgfw",
       "ghsa_id": "GHSA-275c-xpvc-jgfw",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53830",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -57,16 +57,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53830 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:40:10Z",
       "updated": "2026-05-28T17:40:10Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-275c-xpvc-jgfw"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-275c-xpvc-jgfw",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53830"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-275c-xpvc-jgfw",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53830",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -74,14 +75,15 @@
         "feynman-hou"
       ],
       "aliases": [
-        "GHSA-275c-xpvc-jgfw"
+        "GHSA-275c-xpvc-jgfw",
+        "CVE-2026-53830"
       ]
     },
     {
       "id": "GHSA-rj6p-xmxr-qj4h",
       "ghsa_id": "GHSA-rj6p-xmxr-qj4h",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53818",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -98,16 +100,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53818 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:40:09Z",
       "updated": "2026-05-28T17:40:10Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rj6p-xmxr-qj4h"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rj6p-xmxr-qj4h",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53818"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rj6p-xmxr-qj4h",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53818",
       "cvss_score": 6.6,
       "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:L",
       "cwe_ids": [
@@ -119,14 +122,15 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-rj6p-xmxr-qj4h"
+        "GHSA-rj6p-xmxr-qj4h",
+        "CVE-2026-53818"
       ]
     },
     {
       "id": "GHSA-4m3v-q747-pc6h",
       "ghsa_id": "GHSA-4m3v-q747-pc6h",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53824",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -143,16 +147,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53824 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:40:08Z",
       "updated": "2026-05-28T17:40:08Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4m3v-q747-pc6h"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4m3v-q747-pc6h",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53824"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4m3v-q747-pc6h",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53824",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -160,7 +165,8 @@
         "feynman-hou"
       ],
       "aliases": [
-        "GHSA-4m3v-q747-pc6h"
+        "GHSA-4m3v-q747-pc6h",
+        "CVE-2026-53824"
       ]
     },
     {
@@ -209,8 +215,8 @@
     {
       "id": "GHSA-p39j-x9h5-q66m",
       "ghsa_id": "GHSA-p39j-x9h5-q66m",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53809",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -227,16 +233,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53809 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:40:05Z",
       "updated": "2026-05-28T17:40:05Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p39j-x9h5-q66m"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p39j-x9h5-q66m",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53809"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-p39j-x9h5-q66m",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53809",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -246,7 +253,8 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-p39j-x9h5-q66m"
+        "GHSA-p39j-x9h5-q66m",
+        "CVE-2026-53809"
       ]
     },
     {
@@ -381,8 +389,8 @@
     {
       "id": "GHSA-6c4r-g249-wv3c",
       "ghsa_id": "GHSA-6c4r-g249-wv3c",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53826",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -399,16 +407,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53826 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:59Z",
       "updated": "2026-05-28T17:39:59Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-6c4r-g249-wv3c"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-6c4r-g249-wv3c",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53826"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-6c4r-g249-wv3c",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53826",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -418,7 +427,8 @@
         "anshumanbh"
       ],
       "aliases": [
-        "GHSA-6c4r-g249-wv3c"
+        "GHSA-6c4r-g249-wv3c",
+        "CVE-2026-53826"
       ]
     },
     {
@@ -504,8 +514,8 @@
     {
       "id": "GHSA-v8cx-933x-r976",
       "ghsa_id": "GHSA-v8cx-933x-r976",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53813",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -522,16 +532,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53813 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:56Z",
       "updated": "2026-05-28T17:39:56Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v8cx-933x-r976"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v8cx-933x-r976",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53813"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-v8cx-933x-r976",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53813",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -539,7 +550,8 @@
         "feynman-hou"
       ],
       "aliases": [
-        "GHSA-v8cx-933x-r976"
+        "GHSA-v8cx-933x-r976",
+        "CVE-2026-53813"
       ]
     },
     {
@@ -627,8 +639,8 @@
     {
       "id": "GHSA-8wg3-5mcm-fjq8",
       "ghsa_id": "GHSA-8wg3-5mcm-fjq8",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53819",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -645,16 +657,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53819 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:53Z",
       "updated": "2026-05-28T17:39:53Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-8wg3-5mcm-fjq8"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-8wg3-5mcm-fjq8",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53819"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-8wg3-5mcm-fjq8",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53819",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -662,14 +675,15 @@
         "feynman-hou"
       ],
       "aliases": [
-        "GHSA-8wg3-5mcm-fjq8"
+        "GHSA-8wg3-5mcm-fjq8",
+        "CVE-2026-53819"
       ]
     },
     {
       "id": "GHSA-77pv-3w4q-vrj5",
       "ghsa_id": "GHSA-77pv-3w4q-vrj5",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53834",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -686,16 +700,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53834 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:52Z",
       "updated": "2026-05-28T17:39:52Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-77pv-3w4q-vrj5"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-77pv-3w4q-vrj5",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53834"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-77pv-3w4q-vrj5",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53834",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -705,7 +720,8 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-77pv-3w4q-vrj5"
+        "GHSA-77pv-3w4q-vrj5",
+        "CVE-2026-53834"
       ]
     },
     {
@@ -798,8 +814,8 @@
     {
       "id": "GHSA-grc3-2j34-p6gm",
       "ghsa_id": "GHSA-grc3-2j34-p6gm",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53827",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -816,16 +832,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53827 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:47Z",
       "updated": "2026-05-28T17:39:47Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-grc3-2j34-p6gm"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-grc3-2j34-p6gm",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53827"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-grc3-2j34-p6gm",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53827",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -833,14 +850,15 @@
         "anshumanbh"
       ],
       "aliases": [
-        "GHSA-grc3-2j34-p6gm"
+        "GHSA-grc3-2j34-p6gm",
+        "CVE-2026-53827"
       ]
     },
     {
       "id": "GHSA-jvm4-4j77-39p6",
       "ghsa_id": "GHSA-jvm4-4j77-39p6",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53833",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -857,16 +875,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53833 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:46Z",
       "updated": "2026-05-28T17:39:46Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jvm4-4j77-39p6"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jvm4-4j77-39p6",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53833"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-jvm4-4j77-39p6",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53833",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -874,7 +893,8 @@
         "anshumanbh"
       ],
       "aliases": [
-        "GHSA-jvm4-4j77-39p6"
+        "GHSA-jvm4-4j77-39p6",
+        "CVE-2026-53833"
       ]
     },
     {
@@ -923,8 +943,8 @@
     {
       "id": "GHSA-qjpc-qf9m-xwmr",
       "ghsa_id": "GHSA-qjpc-qf9m-xwmr",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53821",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -941,16 +961,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53821 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:42Z",
       "updated": "2026-05-28T17:39:42Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qjpc-qf9m-xwmr"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qjpc-qf9m-xwmr",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53821"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-qjpc-qf9m-xwmr",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53821",
       "cvss_score": 8.8,
       "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
       "cwe_ids": [
@@ -962,7 +983,8 @@
         "handmilkingsoftware"
       ],
       "aliases": [
-        "GHSA-qjpc-qf9m-xwmr"
+        "GHSA-qjpc-qf9m-xwmr",
+        "CVE-2026-53821"
       ]
     },
     {
@@ -1011,8 +1033,8 @@
     {
       "id": "GHSA-c29c-2q9c-pc86",
       "ghsa_id": "GHSA-c29c-2q9c-pc86",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53823",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1029,16 +1051,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53823 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:40Z",
       "updated": "2026-05-28T17:39:40Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-c29c-2q9c-pc86"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-c29c-2q9c-pc86",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53823"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-c29c-2q9c-pc86",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53823",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -1048,14 +1071,15 @@
         "PhilipPhil"
       ],
       "aliases": [
-        "GHSA-c29c-2q9c-pc86"
+        "GHSA-c29c-2q9c-pc86",
+        "CVE-2026-53823"
       ]
     },
     {
       "id": "GHSA-gp79-m99v-gjmh",
       "ghsa_id": "GHSA-gp79-m99v-gjmh",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53837",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1072,16 +1096,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53837 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:39Z",
       "updated": "2026-05-28T17:39:39Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-gp79-m99v-gjmh"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-gp79-m99v-gjmh",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53837"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-gp79-m99v-gjmh",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53837",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -1091,7 +1116,8 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-gp79-m99v-gjmh"
+        "GHSA-gp79-m99v-gjmh",
+        "CVE-2026-53837"
       ]
     },
     {
@@ -1140,8 +1166,8 @@
     {
       "id": "GHSA-3wqp-prf6-2m72",
       "ghsa_id": "GHSA-3wqp-prf6-2m72",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53835",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "low",
@@ -1158,16 +1184,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53835 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:37Z",
       "updated": "2026-05-28T17:39:37Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3wqp-prf6-2m72"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3wqp-prf6-2m72",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53835"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-3wqp-prf6-2m72",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53835",
       "cvss_score": 3.1,
       "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:L/A:N",
       "cwe_ids": [],
@@ -1177,14 +1204,15 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-3wqp-prf6-2m72"
+        "GHSA-3wqp-prf6-2m72",
+        "CVE-2026-53835"
       ]
     },
     {
       "id": "GHSA-cqwv-9qjx-vxw2",
       "ghsa_id": "GHSA-cqwv-9qjx-vxw2",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53808",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1201,16 +1229,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53808 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:35Z",
       "updated": "2026-05-28T17:39:35Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cqwv-9qjx-vxw2"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cqwv-9qjx-vxw2",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53808"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-cqwv-9qjx-vxw2",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53808",
       "cvss_score": 5.3,
       "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:N/I:H/A:N",
       "cwe_ids": [],
@@ -1220,7 +1249,8 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-cqwv-9qjx-vxw2"
+        "GHSA-cqwv-9qjx-vxw2",
+        "CVE-2026-53808"
       ]
     },
     {
@@ -1312,8 +1342,8 @@
     {
       "id": "GHSA-w5ww-7chg-mxcq",
       "ghsa_id": "GHSA-w5ww-7chg-mxcq",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53807",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1330,16 +1360,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53807 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:32Z",
       "updated": "2026-05-28T17:39:32Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w5ww-7chg-mxcq"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w5ww-7chg-mxcq",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53807"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-w5ww-7chg-mxcq",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53807",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -1349,14 +1380,15 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-w5ww-7chg-mxcq"
+        "GHSA-w5ww-7chg-mxcq",
+        "CVE-2026-53807"
       ]
     },
     {
       "id": "GHSA-p73f-w79w-jqr5",
       "ghsa_id": "GHSA-p73f-w79w-jqr5",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53828",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1373,16 +1405,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53828 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:31Z",
       "updated": "2026-05-29T03:36:40Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p73f-w79w-jqr5"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p73f-w79w-jqr5",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53828"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-p73f-w79w-jqr5",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53828",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [],
@@ -1392,14 +1425,15 @@
         "qclawer"
       ],
       "aliases": [
-        "GHSA-p73f-w79w-jqr5"
+        "GHSA-p73f-w79w-jqr5",
+        "CVE-2026-53828"
       ]
     },
     {
       "id": "GHSA-7hxm-f538-3xp6",
       "ghsa_id": "GHSA-7hxm-f538-3xp6",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53811",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1416,16 +1450,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53811 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:30Z",
       "updated": "2026-05-28T17:39:30Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7hxm-f538-3xp6"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7hxm-f538-3xp6",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53811"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-7hxm-f538-3xp6",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53811",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -1435,7 +1470,8 @@
         "PhilipPhil"
       ],
       "aliases": [
-        "GHSA-7hxm-f538-3xp6"
+        "GHSA-7hxm-f538-3xp6",
+        "CVE-2026-53811"
       ]
     },
     {
@@ -1484,8 +1520,8 @@
     {
       "id": "GHSA-p2fh-f5fc-44hr",
       "ghsa_id": "GHSA-p2fh-f5fc-44hr",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53825",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1502,16 +1538,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53825 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:28Z",
       "updated": "2026-05-28T17:39:28Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p2fh-f5fc-44hr"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p2fh-f5fc-44hr",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53825"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-p2fh-f5fc-44hr",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53825",
       "cvss_score": 6.5,
       "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
       "cwe_ids": [
@@ -1521,14 +1558,15 @@
         "Blee72"
       ],
       "aliases": [
-        "GHSA-p2fh-f5fc-44hr"
+        "GHSA-p2fh-f5fc-44hr",
+        "CVE-2026-53825"
       ]
     },
     {
       "id": "GHSA-77q5-rr5v-x43q",
       "ghsa_id": "GHSA-77q5-rr5v-x43q",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53839",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1543,16 +1581,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53839 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:26Z",
       "updated": "2026-05-28T17:39:27Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-77q5-rr5v-x43q"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-77q5-rr5v-x43q",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53839"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-77q5-rr5v-x43q",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53839",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -1564,14 +1603,15 @@
         "ccy41928-del"
       ],
       "aliases": [
-        "GHSA-77q5-rr5v-x43q"
+        "GHSA-77q5-rr5v-x43q",
+        "CVE-2026-53839"
       ]
     },
     {
       "id": "GHSA-83w9-h5wv-j9xm",
       "ghsa_id": "GHSA-83w9-h5wv-j9xm",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53838",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1588,16 +1628,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53838 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:25Z",
       "updated": "2026-05-28T17:39:25Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-83w9-h5wv-j9xm"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-83w9-h5wv-j9xm",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53838"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-83w9-h5wv-j9xm",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53838",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -1607,14 +1648,15 @@
         "YLChen-007"
       ],
       "aliases": [
-        "GHSA-83w9-h5wv-j9xm"
+        "GHSA-83w9-h5wv-j9xm",
+        "CVE-2026-53838"
       ]
     },
     {
       "id": "GHSA-j472-gf56-x589",
       "ghsa_id": "GHSA-j472-gf56-x589",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53836",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1631,16 +1673,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53836 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:25Z",
       "updated": "2026-05-28T17:39:25Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-j472-gf56-x589"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-j472-gf56-x589",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53836"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-j472-gf56-x589",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53836",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -1650,7 +1693,8 @@
         "YLChen-007"
       ],
       "aliases": [
-        "GHSA-j472-gf56-x589"
+        "GHSA-j472-gf56-x589",
+        "CVE-2026-53836"
       ]
     },
     {
@@ -1914,8 +1958,8 @@
     {
       "id": "GHSA-chr9-m4q2-76hw",
       "ghsa_id": "GHSA-chr9-m4q2-76hw",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53817",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -1932,16 +1976,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53817 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:12Z",
       "updated": "2026-05-28T17:39:12Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-chr9-m4q2-76hw"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-chr9-m4q2-76hw",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53817"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-chr9-m4q2-76hw",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53817",
       "cvss_score": 8,
       "cvss_vector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
       "cwe_ids": [
@@ -1954,14 +1999,15 @@
         "cantinagen"
       ],
       "aliases": [
-        "GHSA-chr9-m4q2-76hw"
+        "GHSA-chr9-m4q2-76hw",
+        "CVE-2026-53817"
       ]
     },
     {
       "id": "GHSA-rggc-m335-3wvj",
       "ghsa_id": "GHSA-rggc-m335-3wvj",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53832",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -1978,16 +2024,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53832 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:11Z",
       "updated": "2026-05-28T17:39:11Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rggc-m335-3wvj"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rggc-m335-3wvj",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53832"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rggc-m335-3wvj",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53832",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -2002,14 +2049,15 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-rggc-m335-3wvj"
+        "GHSA-rggc-m335-3wvj",
+        "CVE-2026-53832"
       ]
     },
     {
       "id": "GHSA-6fvr-66p3-3qj4",
       "ghsa_id": "GHSA-6fvr-66p3-3qj4",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53814",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -2026,16 +2074,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53814 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:09Z",
       "updated": "2026-05-28T17:39:09Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-6fvr-66p3-3qj4"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-6fvr-66p3-3qj4",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53814"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-6fvr-66p3-3qj4",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53814",
       "cvss_score": 8.4,
       "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:L",
       "cwe_ids": [
@@ -2047,7 +2096,8 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-6fvr-66p3-3qj4"
+        "GHSA-6fvr-66p3-3qj4",
+        "CVE-2026-53814"
       ]
     },
     {
@@ -2098,8 +2148,8 @@
     {
       "id": "GHSA-3c6j-hq33-3jv4",
       "ghsa_id": "GHSA-3c6j-hq33-3jv4",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53816",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -2116,16 +2166,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53816 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:06Z",
       "updated": "2026-05-28T17:39:06Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3c6j-hq33-3jv4"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3c6j-hq33-3jv4",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53816"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-3c6j-hq33-3jv4",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53816",
       "cvss_score": 7.2,
       "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H",
       "cwe_ids": [
@@ -2137,14 +2188,15 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-3c6j-hq33-3jv4"
+        "GHSA-3c6j-hq33-3jv4",
+        "CVE-2026-53816"
       ]
     },
     {
       "id": "GHSA-2hfg-4fh4-qp7f",
       "ghsa_id": "GHSA-2hfg-4fh4-qp7f",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53812",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -2161,16 +2213,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53812 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:04Z",
       "updated": "2026-05-28T17:39:04Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2hfg-4fh4-qp7f"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2hfg-4fh4-qp7f",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53812"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-2hfg-4fh4-qp7f",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53812",
       "cvss_score": 7.7,
       "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N",
       "cwe_ids": [
@@ -2182,14 +2235,15 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-2hfg-4fh4-qp7f"
+        "GHSA-2hfg-4fh4-qp7f",
+        "CVE-2026-53812"
       ]
     },
     {
       "id": "GHSA-v6r2-jh58-xx6w",
       "ghsa_id": "GHSA-v6r2-jh58-xx6w",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53810",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -2206,16 +2260,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53810 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:03Z",
       "updated": "2026-05-28T17:39:03Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v6r2-jh58-xx6w"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v6r2-jh58-xx6w",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53810"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-v6r2-jh58-xx6w",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53810",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -2229,14 +2284,15 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-v6r2-jh58-xx6w"
+        "GHSA-v6r2-jh58-xx6w",
+        "CVE-2026-53810"
       ]
     },
     {
       "id": "GHSA-mhq8-78pj-5j79",
       "ghsa_id": "GHSA-mhq8-78pj-5j79",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53831",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -2253,16 +2309,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53831 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:39:01Z",
       "updated": "2026-05-28T17:39:01Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-mhq8-78pj-5j79"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-mhq8-78pj-5j79",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53831"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-mhq8-78pj-5j79",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53831",
       "cvss_score": 7.1,
       "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:L",
       "cwe_ids": [
@@ -2275,7 +2332,8 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-mhq8-78pj-5j79"
+        "GHSA-mhq8-78pj-5j79",
+        "CVE-2026-53831"
       ]
     },
     {
@@ -2328,8 +2386,8 @@
     {
       "id": "GHSA-xww8-gqvh-92x9",
       "ghsa_id": "GHSA-xww8-gqvh-92x9",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53829",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "high",
@@ -2346,16 +2404,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53829 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:38:57Z",
       "updated": "2026-05-28T17:38:57Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-xww8-gqvh-92x9"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-xww8-gqvh-92x9",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53829"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-xww8-gqvh-92x9",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53829",
       "cvss_score": 8,
       "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:H",
       "cwe_ids": [
@@ -2367,14 +2426,15 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-xww8-gqvh-92x9"
+        "GHSA-xww8-gqvh-92x9",
+        "CVE-2026-53829"
       ]
     },
     {
       "id": "GHSA-qh2f-99mv-mrcf",
       "ghsa_id": "GHSA-qh2f-99mv-mrcf",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53820",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -2391,16 +2451,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53820 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:38:55Z",
       "updated": "2026-05-28T17:38:55Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qh2f-99mv-mrcf"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qh2f-99mv-mrcf",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53820"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-qh2f-99mv-mrcf",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53820",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -2412,14 +2473,15 @@
         "Ellahinator"
       ],
       "aliases": [
-        "GHSA-qh2f-99mv-mrcf"
+        "GHSA-qh2f-99mv-mrcf",
+        "CVE-2026-53820"
       ]
     },
     {
       "id": "GHSA-vxx3-6hc9-7cc3",
       "ghsa_id": "GHSA-vxx3-6hc9-7cc3",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53806",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -2436,16 +2498,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53806 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:38:54Z",
       "updated": "2026-05-28T17:38:54Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-vxx3-6hc9-7cc3"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-vxx3-6hc9-7cc3",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53806"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-vxx3-6hc9-7cc3",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53806",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -2455,14 +2518,15 @@
         "YLChen-007"
       ],
       "aliases": [
-        "GHSA-vxx3-6hc9-7cc3"
+        "GHSA-vxx3-6hc9-7cc3",
+        "CVE-2026-53806"
       ]
     },
     {
       "id": "GHSA-2j8v-hwgc-x698",
       "ghsa_id": "GHSA-2j8v-hwgc-x698",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53822",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -2479,16 +2543,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53822 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:38:52Z",
       "updated": "2026-05-28T17:38:52Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2j8v-hwgc-x698"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2j8v-hwgc-x698",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53822"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-2j8v-hwgc-x698",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53822",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -2496,14 +2561,15 @@
       ],
       "credits": [],
       "aliases": [
-        "GHSA-2j8v-hwgc-x698"
+        "GHSA-2j8v-hwgc-x698",
+        "CVE-2026-53822"
       ]
     },
     {
       "id": "GHSA-q7q8-3mgw-q67r",
       "ghsa_id": "GHSA-q7q8-3mgw-q67r",
-      "cve_id": null,
-      "status": "active",
+      "cve_id": "CVE-2026-53815",
+      "status": "matured",
       "stale": false,
       "stale_after_days": 60,
       "severity": "medium",
@@ -2521,16 +2587,17 @@
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "action": "Track CVE-2026-53815 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-05-28T17:38:50Z",
       "updated": "2026-05-28T17:38:50Z",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-q7q8-3mgw-q67r"
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-q7q8-3mgw-q67r",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-53815"
       ],
       "source": "GitHub Security Advisory",
       "repository": "openclaw/openclaw",
       "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-q7q8-3mgw-q67r",
-      "nvd_url": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53815",
       "cvss_score": null,
       "cvss_vector": null,
       "cwe_ids": [
@@ -2541,7 +2608,8 @@
         "samchodev"
       ],
       "aliases": [
-        "GHSA-q7q8-3mgw-q67r"
+        "GHSA-q7q8-3mgw-q67r",
+        "CVE-2026-53815"
       ]
     },
     {
@@ -5439,7 +5507,7 @@
         "CWE-184"
       ],
       "credits": [
-        "FailButWin",
+        "xelitte777",
         "Redgrave961"
       ],
       "aliases": [
