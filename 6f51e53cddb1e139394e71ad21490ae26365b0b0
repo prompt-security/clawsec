@@ -1,0 +1,9 @@
+.github/workflows/skill-release.yml
+  9e88c827d629dced 793-858,1707,1718,1897,1907
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "6f51e53cddb1e139394e71ad21490ae26365b0b0",
+  "prompts": {}
+}
