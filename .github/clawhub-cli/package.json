@@ -1,0 +1,8 @@
+{
+  "name": "clawhub-cli-pin",
+  "private": true,
+  "description": "Pins the clawhub CLI used by skill-release.yml; package-lock.json provides the integrity hashes. Bump the version here and regenerate the lockfile with: npm install --package-lock-only",
+  "dependencies": {
+    "clawhub": "0.7.0"
+  }
+}

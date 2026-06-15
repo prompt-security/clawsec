@@ -19,8 +19,8 @@ on:
 
 permissions: read-all
 
-env:
-  CLAWHUB_CLI_VERSION: 0.7.0
+# The clawhub CLI version is pinned (with integrity hashes) in
+# .github/clawhub-cli/package-lock.json — bump it there.
 
 concurrency:
   group: skill-release-${{ github.ref }}
@@ -1685,6 +1685,10 @@ jobs:
       contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: eu-north-1
     steps:
       - name: Check if publishable
         if: needs.release-tag.outputs.publish_clawhub != 'true'
@@ -1704,51 +1708,12 @@ jobs:
 
       - name: Install clawhub CLI
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
-        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+        run: bash scripts/ci/install_clawhub_cli.sh
 
       - name: Patch clawhub publish payload workaround
         # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
-        run: |
-          node <<'NODE'
-          const { execSync } = require("node:child_process");
-          const fs = require("node:fs");
-          const path = require("node:path");
-
-          const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
-          const publishScriptPath = path.join(
-            npmRoot,
-            "clawhub",
-            "dist",
-            "cli",
-            "commands",
-            "publish.js"
-          );
-
-          if (!fs.existsSync(publishScriptPath)) {
-            throw new Error(`clawhub publish script not found: ${publishScriptPath}`);
-          }
-
-          const original = fs.readFileSync(publishScriptPath, "utf8");
-          if (original.includes("acceptLicenseTerms: true")) {
-            console.log(`[patch-clawhub] Already patched: ${publishScriptPath}`);
-            process.exit(0);
-          }
-
-          const payloadPattern = /changelog,\r?\n(\s*)tags,/;
-          if (!payloadPattern.test(original)) {
-            throw new Error(
-              `[patch-clawhub] Could not find expected publish payload pattern in ${publishScriptPath}`
-            );
-          }
-
-          const patched = original.replace(
-            payloadPattern,
-            (_, indent) => `changelog,\n${indent}acceptLicenseTerms: true,\n${indent}tags,`
-          );
-          fs.writeFileSync(publishScriptPath, patched, "utf8");
-          console.log(`[patch-clawhub] Patched: ${publishScriptPath}`);
-          NODE
+        run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1830,6 +1795,10 @@ jobs:
       contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: eu-north-1
     steps:
       - name: Parse tag
         id: parse
@@ -1894,50 +1863,11 @@ jobs:
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
 
       - name: Install clawhub CLI
-        run: npm install -g clawhub@${CLAWHUB_CLI_VERSION}
+        run: bash scripts/ci/install_clawhub_cli.sh
 
       - name: Patch clawhub publish payload workaround
         # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
-        run: |
-          node <<'NODE'
-          const { execSync } = require("node:child_process");
-          const fs = require("node:fs");
-          const path = require("node:path");
-
-          const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
-          const publishScriptPath = path.join(
-            npmRoot,
-            "clawhub",
-            "dist",
-            "cli",
-            "commands",
-            "publish.js"
-          );
-
-          if (!fs.existsSync(publishScriptPath)) {
-            throw new Error(`clawhub publish script not found: ${publishScriptPath}`);
-          }
-
-          const original = fs.readFileSync(publishScriptPath, "utf8");
-          if (original.includes("acceptLicenseTerms: true")) {
-            console.log(`[patch-clawhub] Already patched: ${publishScriptPath}`);
-            process.exit(0);
-          }
-
-          const payloadPattern = /changelog,\r?\n(\s*)tags,/;
-          if (!payloadPattern.test(original)) {
-            throw new Error(
-              `[patch-clawhub] Could not find expected publish payload pattern in ${publishScriptPath}`
-            );
-          }
-
-          const patched = original.replace(
-            payloadPattern,
-            (_, indent) => `changelog,\n${indent}acceptLicenseTerms: true,\n${indent}tags,`
-          );
-          fs.writeFileSync(publishScriptPath, patched, "utf8");
-          console.log(`[patch-clawhub] Patched: ${publishScriptPath}`);
-          NODE
+        run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
       - name: Login to ClawHub
         run: |
