@@ -143,6 +143,8 @@ function changedSkillDirs({ root, base, head }) {
       `${base}...${head}`,
       "--",
       "skills/*/**",
+      ":(exclude)skills/clawsec-feed/advisories/feed.json",
+      ":(exclude)skills/clawsec-feed/advisories/feed.json.sig",
       ":(exclude)skills/*/test/**",
       ":(exclude)skills/*/tests/**",
     ],
