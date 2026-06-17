@@ -3,10 +3,12 @@ import { readFile } from 'node:fs/promises';
 
 const workflowPath = new URL('../.github/workflows/skill-release.yml', import.meta.url);
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
+const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
 const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
+const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'utf8');
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
 const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
 
@@ -15,6 +17,16 @@ assert.match(
   /pull_request:[\s\S]*paths:[\s\S]*- 'skills\/\*\*'/,
   'Skill release workflow must run when any skill package file changes',
 );
+
+for (const generatedFeedPath of [
+  'skills/clawsec-feed/advisories/feed.json',
+  'skills/clawsec-feed/advisories/feed.json.sig',
+]) {
+  assert.ok(
+    workflow.includes(`      - '!${generatedFeedPath}'`),
+    `Skill release workflow must not run for generated advisory mirror-only changes to ${generatedFeedPath}`,
+  );
+}
 
 assert.match(
   workflow,
@@ -34,9 +46,19 @@ assert.ok(
 
 assert.match(
   workflow,
-  /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
-  'Skill release validation must ignore test-only skill changes while inspecting release-relevant skill files',
+  /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
+  'Skill release validation must ignore generated clawsec-feed advisory mirror and test-only changes while inspecting release-relevant skill files',
 );
+
+for (const generatedFeedPath of [
+  ':(exclude)skills/clawsec-feed/advisories/feed.json',
+  ':(exclude)skills/clawsec-feed/advisories/feed.json.sig',
+]) {
+  assert.ok(
+    validateSkillInstallDocs.includes(`"${generatedFeedPath}"`),
+    `Install-doc validation changed-skill detection must ignore generated advisory mirror-only changes to ${generatedFeedPath}`,
+  );
+}
 
 assert.ok(
   workflow.includes('name = tolower($NF)')
@@ -137,8 +159,8 @@ assert.match(
 
 assert.match(
   workflow,
-  /Run release dry-run for changed skills[\s\S]*git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
-  'PR dry-run SkillSpector scan must run when any release-relevant skill package file changes',
+  /Run release dry-run for changed skills[\s\S]*git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
+  'PR dry-run SkillSpector scan must run when any release-relevant skill package file changes except generated advisory mirror files',
 );
 
 assert.ok(

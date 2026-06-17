@@ -7,6 +7,8 @@ on:
   pull_request:
     paths:
       - 'skills/**'
+      - '!skills/clawsec-feed/advisories/feed.json'
+      - '!skills/clawsec-feed/advisories/feed.json.sig'
       - '.github/workflows/skill-release.yml'
       - 'scripts/ci/**'
       - 'scripts/test-skill-*.mjs'
@@ -88,6 +90,8 @@ jobs:
           touched_skills_file="$(mktemp)"
           git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- \
             'skills/*/**' \
+            ':(exclude)skills/clawsec-feed/advisories/feed.json' \
+            ':(exclude)skills/clawsec-feed/advisories/feed.json.sig' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
             | awk -F/ '
@@ -410,6 +414,8 @@ jobs:
           touched_skills_file="$(mktemp)"
           git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- \
             'skills/*/**' \
+            ':(exclude)skills/clawsec-feed/advisories/feed.json' \
+            ':(exclude)skills/clawsec-feed/advisories/feed.json.sig' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
