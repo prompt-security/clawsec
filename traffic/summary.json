@@ -1,9 +1,9 @@
 {
   "version": 1,
   "repository": "prompt-security/clawsec",
-  "generated_at": "2026-06-18T04:55:37.136Z",
+  "generated_at": "2026-06-19T04:57:41.584Z",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-06-18T04:55:37.136Z",
+  "updated_at": "2026-06-19T04:57:41.584Z",
   "source": {
     "api": "GitHub REST repository traffic endpoints",
     "retention_limit": "GitHub exposes roughly the last 14 days; this archive keeps daily snapshots long term.",
@@ -13,83 +13,83 @@
     "views": {
       "last_14_days": {
         "days": 14,
-        "count": 783,
-        "sum_daily_uniques": 421,
+        "count": 824,
+        "sum_daily_uniques": 420,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-06-05",
-        "last_date": "2026-06-16"
+        "first_date": "2026-06-06",
+        "last_date": "2026-06-17"
       },
       "last_30_days": {
         "days": 30,
-        "count": 1398,
-        "sum_daily_uniques": 764,
+        "count": 1491,
+        "sum_daily_uniques": 801,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       },
       "last_90_days": {
         "days": 90,
-        "count": 1398,
-        "sum_daily_uniques": 764,
+        "count": 1491,
+        "sum_daily_uniques": 801,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       },
       "last_365_days": {
         "days": 365,
-        "count": 1398,
-        "sum_daily_uniques": 764,
+        "count": 1491,
+        "sum_daily_uniques": 801,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       },
       "all_time": {
-        "count": 1398,
-        "sum_daily_uniques": 764,
+        "count": 1491,
+        "sum_daily_uniques": 801,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       }
     },
     "clones": {
       "last_14_days": {
         "days": 14,
-        "count": 4268,
-        "sum_daily_uniques": 914,
+        "count": 4384,
+        "sum_daily_uniques": 936,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-06-05",
-        "last_date": "2026-06-16"
+        "first_date": "2026-06-06",
+        "last_date": "2026-06-17"
       },
       "last_30_days": {
         "days": 30,
-        "count": 6416,
-        "sum_daily_uniques": 1690,
+        "count": 6607,
+        "sum_daily_uniques": 1755,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       },
       "last_90_days": {
         "days": 90,
-        "count": 6416,
-        "sum_daily_uniques": 1690,
+        "count": 6607,
+        "sum_daily_uniques": 1755,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       },
       "last_365_days": {
         "days": 365,
-        "count": 6416,
-        "sum_daily_uniques": 1690,
+        "count": 6607,
+        "sum_daily_uniques": 1755,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       },
       "all_time": {
-        "count": 6416,
-        "sum_daily_uniques": 1690,
+        "count": 6607,
+        "sum_daily_uniques": 1755,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-06-16"
+        "last_date": "2026-06-17"
       }
     }
   },
@@ -204,6 +204,11 @@
         "timestamp": "2026-06-16T00:00:00Z",
         "count": 30,
         "uniques": 21
+      },
+      {
+        "timestamp": "2026-06-17T00:00:00Z",
+        "count": 93,
+        "uniques": 37
       }
     ],
     "clones": [
@@ -316,23 +321,28 @@
         "timestamp": "2026-06-16T00:00:00Z",
         "count": 199,
         "uniques": 54
+      },
+      {
+        "timestamp": "2026-06-17T00:00:00Z",
+        "count": 191,
+        "uniques": 65
       }
     ]
   },
   "latest_snapshots": {
     "referrers": {
-      "captured_at": "2026-06-18T04:55:37.136Z",
-      "date": "2026-06-18",
+      "captured_at": "2026-06-19T04:57:41.584Z",
+      "date": "2026-06-19",
       "entries": [
         {
           "referrer": "github.com",
-          "count": 163,
-          "uniques": 112
+          "count": 174,
+          "uniques": 120
         },
         {
           "referrer": "Google",
-          "count": 153,
-          "uniques": 96
+          "count": 159,
+          "uniques": 98
         },
         {
           "referrer": "learnopenclaw.waytoagi.com",
@@ -341,8 +351,8 @@
         },
         {
           "referrer": "linkedin.com",
-          "count": 18,
-          "uniques": 14
+          "count": 17,
+          "uniques": 15
         },
         {
           "referrer": "Bing",
@@ -351,18 +361,13 @@
         },
         {
           "referrer": "chatgpt.com",
-          "count": 9,
-          "uniques": 8
+          "count": 10,
+          "uniques": 9
         },
         {
           "referrer": "search.brave.com",
-          "count": 6,
-          "uniques": 6
-        },
-        {
-          "referrer": "DuckDuckGo",
-          "count": 3,
-          "uniques": 2
+          "count": 7,
+          "uniques": 7
         },
         {
           "referrer": "instagram.com",
@@ -373,42 +378,47 @@
           "referrer": "reddit.com",
           "count": 2,
           "uniques": 2
+        },
+        {
+          "referrer": "statics.teams.cdn.office.net",
+          "count": 2,
+          "uniques": 2
         }
       ]
     },
     "paths": {
-      "captured_at": "2026-06-18T04:55:37.136Z",
-      "date": "2026-06-18",
+      "captured_at": "2026-06-19T04:57:41.584Z",
+      "date": "2026-06-19",
       "entries": [
         {
           "path": "/prompt-security/clawsec",
           "title": "Overview",
-          "count": 497,
-          "uniques": 353
+          "count": 510,
+          "uniques": 361
         },
         {
           "path": "/prompt-security/clawsec/pulls",
           "title": "/pulls",
-          "count": 40,
-          "uniques": 11
+          "count": 42,
+          "uniques": 12
+        },
+        {
+          "path": "/prompt-security/clawsec/tree/main/skills",
+          "title": "/tree/main/skills",
+          "count": 17,
+          "uniques": 14
         },
         {
           "path": "/prompt-security/clawsec/issues",
           "title": "/issues",
           "count": 16,
-          "uniques": 10
-        },
-        {
-          "path": "/prompt-security/clawsec/tree/main/skills",
-          "title": "/tree/main/skills",
-          "count": 14,
-          "uniques": 12
+          "uniques": 11
         },
         {
           "path": "/prompt-security/clawsec/discussions",
           "title": "/discussions",
-          "count": 14,
-          "uniques": 5
+          "count": 13,
+          "uniques": 4
         },
         {
           "path": "/prompt-security/clawsec/actions",
@@ -444,8 +454,8 @@
     }
   },
   "snapshot_counts": {
-    "referrers": 8,
-    "paths": 8,
-    "captures": 8
+    "referrers": 9,
+    "paths": 9,
+    "captures": 9
   }
 }
