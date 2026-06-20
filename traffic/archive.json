@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-06-19T04:57:41.584Z",
+  "updated_at": "2026-06-20T04:46:08.395Z",
   "daily": {
     "views": [
       {
@@ -119,6 +119,11 @@
         "timestamp": "2026-06-17T00:00:00Z",
         "count": 93,
         "uniques": 37
+      },
+      {
+        "timestamp": "2026-06-18T00:00:00Z",
+        "count": 73,
+        "uniques": 39
       }
     ],
     "clones": [
@@ -236,6 +241,11 @@
         "timestamp": "2026-06-17T00:00:00Z",
         "count": 191,
         "uniques": 65
+      },
+      {
+        "timestamp": "2026-06-18T00:00:00Z",
+        "count": 87,
+        "uniques": 50
       }
     ]
   },
@@ -732,6 +742,62 @@
             "referrer": "instagram.com",
             "count": 2,
             "uniques": 2
+          },
+          {
+            "referrer": "reddit.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "statics.teams.cdn.office.net",
+            "count": 2,
+            "uniques": 2
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-06-20T04:46:08.395Z",
+        "date": "2026-06-20",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 197,
+            "uniques": 127
+          },
+          {
+            "referrer": "Google",
+            "count": 168,
+            "uniques": 103
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 20,
+            "uniques": 9
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 17,
+            "uniques": 15
+          },
+          {
+            "referrer": "Bing",
+            "count": 16,
+            "uniques": 7
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 10,
+            "uniques": 9
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 7,
+            "uniques": 7
+          },
+          {
+            "referrer": "doubao.com",
+            "count": 3,
+            "uniques": 1
           },
           {
             "referrer": "reddit.com",
@@ -1340,6 +1406,72 @@
             "uniques": 1
           }
         ]
+      },
+      {
+        "captured_at": "2026-06-20T04:46:08.395Z",
+        "date": "2026-06-20",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 523,
+            "uniques": 373
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 37,
+            "uniques": 11
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 19,
+            "uniques": 15
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 18,
+            "uniques": 13
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 14,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/modules/hermes-attestation-guardian.md",
+            "title": "/blob/main/wiki/modules/hermes-attestation-guardian.md",
+            "count": 12,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/actions",
+            "title": "/actions",
+            "count": 10,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/267",
+            "title": "/pull/267",
+            "count": 10,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/261",
+            "title": "/pull/261",
+            "count": 8,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/261/changes",
+            "title": "/pull/261/changes",
+            "count": 8,
+            "uniques": 1
+          }
+        ]
       }
     ]
   },
@@ -1450,6 +1582,18 @@
       "clones_window": {
         "count": 4644,
         "uniques": 890
+      }
+    },
+    {
+      "captured_at": "2026-06-20T04:46:08.395Z",
+      "date": "2026-06-20",
+      "views_window": {
+        "count": 949,
+        "uniques": 428
+      },
+      "clones_window": {
+        "count": 4546,
+        "uniques": 884
       }
     }
   ]
