@@ -455,13 +455,13 @@ assert.doesNotMatch(
 
 assert.match(
   workflow,
-  /export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ needs\.release-tag\.outputs\.clawhub_slug \}\}/,
+  /SITE=\$\{CLAWHUB_SITE:-https:\/\/clawhub\.ai\}[\s\S]*REGISTRY=\$\{CLAWHUB_REGISTRY:-\$SITE\}[\s\S]*export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*export CLAWHUB_SITE="\$SITE"[\s\S]*export CLAWHUB_REGISTRY="\$REGISTRY"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ needs\.release-tag\.outputs\.clawhub_slug \}\}/,
   'ClawHub publish job must guard the resolved publish slug with the authenticated ClawHub config path',
 );
 
 assert.match(
   workflow,
-  /export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ steps\.publishable\.outputs\.clawhub_slug \}\}/,
+  /SITE=\$\{CLAWHUB_SITE:-https:\/\/clawhub\.ai\}[\s\S]*REGISTRY=\$\{CLAWHUB_REGISTRY:-\$SITE\}[\s\S]*export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*export CLAWHUB_SITE="\$SITE"[\s\S]*export CLAWHUB_REGISTRY="\$REGISTRY"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ steps\.publishable\.outputs\.clawhub_slug \}\}/,
   'ClawHub republish job must guard the resolved publish slug with the authenticated ClawHub config path',
 );
 

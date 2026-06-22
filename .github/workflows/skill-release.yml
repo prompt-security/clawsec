@@ -1735,7 +1735,12 @@ jobs:
       - name: Guard ClawHub slug ownership
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
           export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          export CLAWHUB_SITE="$SITE"
+          export CLAWHUB_REGISTRY="$REGISTRY"
           bash scripts/ci/guard_clawhub_slug_owner.sh \
             "${{ needs.release-tag.outputs.clawhub_slug }}"
 
@@ -1899,7 +1904,12 @@ jobs:
 
       - name: Guard ClawHub slug ownership
         run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
           export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          export CLAWHUB_SITE="$SITE"
+          export CLAWHUB_REGISTRY="$REGISTRY"
           bash scripts/ci/guard_clawhub_slug_owner.sh \
             "${{ steps.publishable.outputs.clawhub_slug }}"
 
