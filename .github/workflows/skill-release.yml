@@ -1716,6 +1716,11 @@ jobs:
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: bash scripts/ci/install_clawhub_cli.sh
 
+      - name: Patch clawhub publish payload workaround
+        # Idempotent compatibility guard: older clawhub@0.7.0 builds omitted acceptLicenseTerms.
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        run: node scripts/ci/patch_clawhub_publish_payload.mjs
+
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
@@ -1726,6 +1731,13 @@ jobs:
           mkdir -p "$(dirname "$CLAWHUB_CONFIG_PATH")"
           CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
+
+      - name: Guard ClawHub slug ownership
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        run: |
+          bash scripts/ci/guard_clawhub_slug_owner.sh \
+            "${{ needs.release-tag.outputs.skill_name }}" \
+            "${{ needs.release-tag.outputs.clawhub_slug }}"
 
       - name: Guard duplicate ClawHub version
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1866,6 +1878,10 @@ jobs:
       - name: Install clawhub CLI
         run: bash scripts/ci/install_clawhub_cli.sh
 
+      - name: Patch clawhub publish payload workaround
+        # Idempotent compatibility guard: older clawhub@0.7.0 builds omitted acceptLicenseTerms.
+        run: node scripts/ci/patch_clawhub_publish_payload.mjs
+
       - name: Login to ClawHub
         run: |
           set -euo pipefail
@@ -1880,6 +1896,12 @@ jobs:
           mkdir -p "$(dirname "$CLAWHUB_CONFIG_PATH")"
           CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
+
+      - name: Guard ClawHub slug ownership
+        run: |
+          bash scripts/ci/guard_clawhub_slug_owner.sh \
+            "${{ steps.parse.outputs.skill_name }}" \
+            "${{ steps.publishable.outputs.clawhub_slug }}"
 
       - name: Publish to ClawHub
         run: |

@@ -5,10 +5,14 @@ const workflowPath = new URL('../.github/workflows/skill-release.yml', import.me
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
 const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
+const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
+const guardClawhubSlugOwnerPath = new URL('./ci/guard_clawhub_slug_owner.sh', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'utf8');
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
+const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
+const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 
 assert.match(
   workflow,
@@ -351,6 +355,18 @@ assert.equal(
   'ClawHub publish and republish jobs must share the same pinned CLI installer',
 );
 
+assert.equal(
+  workflow.match(/node scripts\/ci\/patch_clawhub_publish_payload\.mjs/g)?.length,
+  2,
+  'ClawHub publish and republish jobs must share the same payload patch helper',
+);
+
+assert.equal(
+  workflow.match(/bash scripts\/ci\/guard_clawhub_slug_owner\.sh/g)?.length,
+  2,
+  'ClawHub publish and republish jobs must guard mapped slug ownership before publishing',
+);
+
 assert.doesNotMatch(
   workflow,
   /npm ci --prefix \.github\/clawhub-cli/,
@@ -361,12 +377,6 @@ assert.doesNotMatch(
   workflow,
   /node <<'NODE'[\s\S]*acceptLicenseTerms: true/,
   'ClawHub payload patching must not be duplicated inline in the workflow',
-);
-
-assert.doesNotMatch(
-  workflow,
-  /patch_clawhub_publish_payload\.mjs|Patch clawhub publish payload workaround/,
-  'Current ClawHub CLI publish flow must not rely on the retired acceptLicenseTerms payload patch workaround',
 );
 
 for (const secret of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']) {
@@ -393,6 +403,42 @@ assert.match(
   installClawhubCli,
   /"\$\{workspace\}\/\$\{CLI_PREFIX\}\/node_modules\/\.bin" >> "\$GITHUB_PATH"/,
   'ClawHub CLI installer must expose the pinned clawhub binary on GITHUB_PATH',
+);
+
+assert.match(
+  patchClawhubPayload,
+  /const payloadPattern = \/changelog,\\r\?\\n\(\\s\*\)tags,\/;/,
+  'ClawHub payload patch helper must target the expected publish payload shape',
+);
+
+assert.match(
+  patchClawhubPayload,
+  /acceptLicenseTerms: true/,
+  'ClawHub payload patch helper must preserve the acceptLicenseTerms workaround',
+);
+
+assert.match(
+  patchClawhubPayload,
+  /Already patched/,
+  'ClawHub payload patch helper must stay idempotent when the pinned CLI already includes acceptLicenseTerms',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /inspect_slug "\$TARGET_SLUG" "\$target_json" "\$target_err"/,
+  'ClawHub slug ownership guard must inspect the resolved target slug before publishing',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /inspect_slug "\$SOURCE_SLUG" "\$source_json" "\$source_err"/,
+  'ClawHub slug ownership guard must inspect the source skill slug before approving a mapped publish slug',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /\[ "\$target_owner" != "\$source_owner" \]/,
+  'ClawHub slug ownership guard must reject mapped slugs owned by a different registry account',
 );
 
 assert.doesNotMatch(
