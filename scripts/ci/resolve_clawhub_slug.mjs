@@ -4,7 +4,6 @@ import path from "node:path";
 import { collectDeclaredPlatforms, PLATFORM_KEYS } from "./skill_platforms.mjs";
 
 const EXPLICIT_SLUGS = new Map([
-  ["clawsec-suite", "clawsec"],
   ["openclaw-traffic-guardian", "clawsec-openclaw-traffic-guardian"],
   ["openclaw-audit-watchdog", "clawsec-openclaw-audit-watchdog"],
   ["soul-guardian", "clawsec-openclaw-soul-guardian"],

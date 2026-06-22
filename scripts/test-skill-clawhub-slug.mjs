@@ -14,7 +14,7 @@ const cases = [
   ["picoclaw-traffic-guardian", ["picoclaw"], "clawsec-picoclaw-traffic-guardian"],
   ["clawtributor", ["openclaw", "nanoclaw", "hermes", "picoclaw"], "clawsec-clawtributor"],
   ["clawsec-feed", ["openclaw"], "clawsec-feed"],
-  ["clawsec-suite", ["openclaw"], "clawsec"],
+  ["clawsec-suite", ["openclaw"], "clawsec-suite"],
 ];
 
 for (const [name, platforms, expected] of cases) {
