@@ -62,7 +62,7 @@ try {
   const hermesResult = runTrustPacket(
     "skills/hermes-attestation-guardian",
     hermesOutputDir,
-    "hermes-attestation-guardian-v0.1.4",
+    "hermes-attestation-guardian-v0.1.5",
   );
   assert.equal(
     hermesResult.status,

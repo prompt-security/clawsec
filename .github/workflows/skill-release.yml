@@ -833,7 +833,6 @@ jobs:
       actions: read
       contents: read
       issues: write
-      pull-requests: write
     steps:
       - name: Download SkillSpector reports
         continue-on-error: true

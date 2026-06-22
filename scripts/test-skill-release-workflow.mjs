@@ -250,8 +250,15 @@ assert.match(
 
 assert.match(
   workflow,
-  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*pull-requests: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
+  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
   'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with comment permissions',
+);
+
+const commentJob = workflow.match(/[ ]{2}comment-skillspector-report:[\s\S]*?\n[ ]{2}[a-z][^:\n]*:/)?.[0] || "";
+assert.doesNotMatch(
+  commentJob,
+  /pull-requests: write/,
+  'SkillSpector PR comment publishing should not request redundant pull-requests write permissions',
 );
 
 assert.match(
