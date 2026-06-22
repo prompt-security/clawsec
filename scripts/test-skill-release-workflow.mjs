@@ -5,12 +5,10 @@ const workflowPath = new URL('../.github/workflows/skill-release.yml', import.me
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
 const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
-const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'utf8');
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
-const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
 
 assert.match(
   workflow,
@@ -341,16 +339,16 @@ assert.match(
   'ClawHub publish must use the resolved ClawHub slug',
 );
 
+assert.match(
+  workflow,
+  /clawhub publish "\$SKILL_PATH"[\s\S]*--slug "\$CLAWHUB_SLUG"/,
+  'ClawHub publish must use the resolved ClawHub slug',
+);
+
 assert.equal(
   workflow.match(/bash scripts\/ci\/install_clawhub_cli\.sh/g)?.length,
   2,
   'ClawHub publish and republish jobs must share the same pinned CLI installer',
-);
-
-assert.equal(
-  workflow.match(/node scripts\/ci\/patch_clawhub_publish_payload\.mjs/g)?.length,
-  2,
-  'ClawHub publish and republish jobs must share the same payload patch helper',
 );
 
 assert.doesNotMatch(
@@ -363,6 +361,12 @@ assert.doesNotMatch(
   workflow,
   /node <<'NODE'[\s\S]*acceptLicenseTerms: true/,
   'ClawHub payload patching must not be duplicated inline in the workflow',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /patch_clawhub_publish_payload\.mjs|Patch clawhub publish payload workaround/,
+  'Current ClawHub CLI publish flow must not rely on the retired acceptLicenseTerms payload patch workaround',
 );
 
 for (const secret of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']) {
@@ -389,18 +393,6 @@ assert.match(
   installClawhubCli,
   /"\$\{workspace\}\/\$\{CLI_PREFIX\}\/node_modules\/\.bin" >> "\$GITHUB_PATH"/,
   'ClawHub CLI installer must expose the pinned clawhub binary on GITHUB_PATH',
-);
-
-assert.match(
-  patchClawhubPayload,
-  /const payloadPattern = \/changelog,\\r\?\\n\(\\s\*\)tags,\/;/,
-  'ClawHub payload patch helper must target the expected publish payload shape',
-);
-
-assert.match(
-  patchClawhubPayload,
-  /acceptLicenseTerms: true/,
-  'ClawHub payload patch helper must preserve the acceptLicenseTerms workaround',
 );
 
 assert.doesNotMatch(

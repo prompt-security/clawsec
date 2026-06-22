@@ -1716,11 +1716,6 @@ jobs:
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: bash scripts/ci/install_clawhub_cli.sh
 
-      - name: Patch clawhub publish payload workaround
-        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
-        run: node scripts/ci/patch_clawhub_publish_payload.mjs
-
       - name: Login to ClawHub
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
@@ -1870,10 +1865,6 @@ jobs:
 
       - name: Install clawhub CLI
         run: bash scripts/ci/install_clawhub_cli.sh
-
-      - name: Patch clawhub publish payload workaround
-        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
-        run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
       - name: Login to ClawHub
         run: |

@@ -4,6 +4,7 @@ import path from "node:path";
 import { collectDeclaredPlatforms, PLATFORM_KEYS } from "./skill_platforms.mjs";
 
 const EXPLICIT_SLUGS = new Map([
+  ["clawsec-suite", "clawsec"],
   ["openclaw-traffic-guardian", "clawsec-openclaw-traffic-guardian"],
   ["openclaw-audit-watchdog", "clawsec-openclaw-audit-watchdog"],
   ["soul-guardian", "clawsec-openclaw-soul-guardian"],
@@ -43,12 +44,12 @@ export function resolveClawHubSlug({ name, platforms = [] }) {
     throw new Error(`Invalid skill name for ClawHub slug mapping: ${name}`);
   }
 
-  if (name.startsWith("clawsec-")) {
-    return name;
-  }
-
   if (EXPLICIT_SLUGS.has(name)) {
     return EXPLICIT_SLUGS.get(name);
+  }
+
+  if (name.startsWith("clawsec-")) {
+    return name;
   }
 
   if (PLATFORM_KEYS.some((platform) => name.startsWith(`${platform}-`))) {
