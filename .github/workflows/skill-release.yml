@@ -1735,8 +1735,8 @@ jobs:
       - name: Guard ClawHub slug ownership
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: |
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
           bash scripts/ci/guard_clawhub_slug_owner.sh \
-            "${{ needs.release-tag.outputs.skill_name }}" \
             "${{ needs.release-tag.outputs.clawhub_slug }}"
 
       - name: Guard duplicate ClawHub version
@@ -1899,8 +1899,8 @@ jobs:
 
       - name: Guard ClawHub slug ownership
         run: |
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
           bash scripts/ci/guard_clawhub_slug_owner.sh \
-            "${{ steps.parse.outputs.skill_name }}" \
             "${{ steps.publishable.outputs.clawhub_slug }}"
 
       - name: Publish to ClawHub

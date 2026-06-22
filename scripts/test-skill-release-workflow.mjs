@@ -425,20 +425,44 @@ assert.match(
 
 assert.match(
   guardClawhubSlugOwner,
-  /inspect_slug "\$TARGET_SLUG" "\$target_json" "\$target_err"/,
-  'ClawHub slug ownership guard must inspect the resolved target slug before publishing',
+  /api_get "\/api\/v1\/whoami" "\$whoami_json"/,
+  'ClawHub slug ownership guard must verify the authenticated publisher through the ClawHub API',
 );
 
 assert.match(
   guardClawhubSlugOwner,
-  /inspect_slug "\$SOURCE_SLUG" "\$source_json" "\$source_err"/,
-  'ClawHub slug ownership guard must inspect the source skill slug before approving a mapped publish slug',
+  /api_get "\/api\/v1\/skills\/\$\{TARGET_SLUG\}" "\$target_json"/,
+  'ClawHub slug ownership guard must inspect the resolved publish slug through the ClawHub API',
 );
 
 assert.match(
   guardClawhubSlugOwner,
-  /\[ "\$target_owner" != "\$source_owner" \]/,
-  'ClawHub slug ownership guard must reject mapped slugs owned by a different registry account',
+  /\[ "\$target_status" = "404" \]/,
+  'ClawHub slug ownership guard must treat HTTP 404 as the structured unpublished-slug signal',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /\[ "\$target_owner" != "\$publisher_handle" \]/,
+  'ClawHub slug ownership guard must reject slugs owned by a different authenticated registry publisher',
+);
+
+assert.doesNotMatch(
+  guardClawhubSlugOwner,
+  /SOURCE_SLUG|source_owner|grep -Eqi[\s\S]*Skill not found/,
+  'ClawHub slug ownership guard must not inspect raw source names or depend on stderr wording',
+);
+
+assert.match(
+  workflow,
+  /export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ needs\.release-tag\.outputs\.clawhub_slug \}\}/,
+  'ClawHub publish job must guard the resolved publish slug with the authenticated ClawHub config path',
+);
+
+assert.match(
+  workflow,
+  /export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ steps\.publishable\.outputs\.clawhub_slug \}\}/,
+  'ClawHub republish job must guard the resolved publish slug with the authenticated ClawHub config path',
 );
 
 assert.doesNotMatch(
