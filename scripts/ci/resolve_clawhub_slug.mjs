@@ -43,12 +43,12 @@ export function resolveClawHubSlug({ name, platforms = [] }) {
     throw new Error(`Invalid skill name for ClawHub slug mapping: ${name}`);
   }
 
-  if (name.startsWith("clawsec-")) {
-    return name;
-  }
-
   if (EXPLICIT_SLUGS.has(name)) {
     return EXPLICIT_SLUGS.get(name);
+  }
+
+  if (name.startsWith("clawsec-")) {
+    return name;
   }
 
   if (PLATFORM_KEYS.some((platform) => name.startsWith(`${platform}-`))) {

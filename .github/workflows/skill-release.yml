@@ -1717,7 +1717,7 @@ jobs:
         run: bash scripts/ci/install_clawhub_cli.sh
 
       - name: Patch clawhub publish payload workaround
-        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
+        # Idempotent compatibility guard: older clawhub@0.7.0 builds omitted acceptLicenseTerms.
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
         run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
@@ -1731,6 +1731,18 @@ jobs:
           mkdir -p "$(dirname "$CLAWHUB_CONFIG_PATH")"
           CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
+
+      - name: Guard ClawHub slug ownership
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          export CLAWHUB_SITE="$SITE"
+          export CLAWHUB_REGISTRY="$REGISTRY"
+          bash scripts/ci/guard_clawhub_slug_owner.sh \
+            "${{ needs.release-tag.outputs.clawhub_slug }}"
 
       - name: Guard duplicate ClawHub version
         if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
@@ -1872,7 +1884,7 @@ jobs:
         run: bash scripts/ci/install_clawhub_cli.sh
 
       - name: Patch clawhub publish payload workaround
-        # Temporary: clawhub@0.7.0 publish payload is missing acceptLicenseTerms.
+        # Idempotent compatibility guard: older clawhub@0.7.0 builds omitted acceptLicenseTerms.
         run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
       - name: Login to ClawHub
@@ -1889,6 +1901,17 @@ jobs:
           mkdir -p "$(dirname "$CLAWHUB_CONFIG_PATH")"
           CLAWHUB_DISABLE_TELEMETRY=1 CLAWHUB_SITE="$SITE" CLAWHUB_REGISTRY="$REGISTRY" \
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
+
+      - name: Guard ClawHub slug ownership
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          export CLAWHUB_SITE="$SITE"
+          export CLAWHUB_REGISTRY="$REGISTRY"
+          bash scripts/ci/guard_clawhub_slug_owner.sh \
+            "${{ steps.publishable.outputs.clawhub_slug }}"
 
       - name: Publish to ClawHub
         run: |

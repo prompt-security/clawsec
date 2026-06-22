@@ -6,11 +6,13 @@ const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
 const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
 const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
+const guardClawhubSlugOwnerPath = new URL('./ci/guard_clawhub_slug_owner.sh', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'utf8');
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
 const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
+const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 
 assert.match(
   workflow,
@@ -341,6 +343,12 @@ assert.match(
   'ClawHub publish must use the resolved ClawHub slug',
 );
 
+assert.match(
+  workflow,
+  /clawhub publish "\$SKILL_PATH"[\s\S]*--slug "\$CLAWHUB_SLUG"/,
+  'ClawHub publish must use the resolved ClawHub slug',
+);
+
 assert.equal(
   workflow.match(/bash scripts\/ci\/install_clawhub_cli\.sh/g)?.length,
   2,
@@ -351,6 +359,12 @@ assert.equal(
   workflow.match(/node scripts\/ci\/patch_clawhub_publish_payload\.mjs/g)?.length,
   2,
   'ClawHub publish and republish jobs must share the same payload patch helper',
+);
+
+assert.equal(
+  workflow.match(/bash scripts\/ci\/guard_clawhub_slug_owner\.sh/g)?.length,
+  2,
+  'ClawHub publish and republish jobs must guard mapped slug ownership before publishing',
 );
 
 assert.doesNotMatch(
@@ -401,6 +415,54 @@ assert.match(
   patchClawhubPayload,
   /acceptLicenseTerms: true/,
   'ClawHub payload patch helper must preserve the acceptLicenseTerms workaround',
+);
+
+assert.match(
+  patchClawhubPayload,
+  /Already patched/,
+  'ClawHub payload patch helper must stay idempotent when the pinned CLI already includes acceptLicenseTerms',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /api_get "\/api\/v1\/whoami" "\$whoami_json"/,
+  'ClawHub slug ownership guard must verify the authenticated publisher through the ClawHub API',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /api_get "\/api\/v1\/skills\/\$\{TARGET_SLUG\}" "\$target_json"/,
+  'ClawHub slug ownership guard must inspect the resolved publish slug through the ClawHub API',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /\[ "\$target_status" = "404" \]/,
+  'ClawHub slug ownership guard must treat HTTP 404 as the structured unpublished-slug signal',
+);
+
+assert.match(
+  guardClawhubSlugOwner,
+  /\[ "\$target_owner" != "\$publisher_handle" \]/,
+  'ClawHub slug ownership guard must reject slugs owned by a different authenticated registry publisher',
+);
+
+assert.doesNotMatch(
+  guardClawhubSlugOwner,
+  /SOURCE_SLUG|source_owner|grep -Eqi[\s\S]*Skill not found/,
+  'ClawHub slug ownership guard must not inspect raw source names or depend on stderr wording',
+);
+
+assert.match(
+  workflow,
+  /SITE=\$\{CLAWHUB_SITE:-https:\/\/clawhub\.ai\}[\s\S]*REGISTRY=\$\{CLAWHUB_REGISTRY:-\$SITE\}[\s\S]*export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*export CLAWHUB_SITE="\$SITE"[\s\S]*export CLAWHUB_REGISTRY="\$REGISTRY"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ needs\.release-tag\.outputs\.clawhub_slug \}\}/,
+  'ClawHub publish job must guard the resolved publish slug with the authenticated ClawHub config path',
+);
+
+assert.match(
+  workflow,
+  /SITE=\$\{CLAWHUB_SITE:-https:\/\/clawhub\.ai\}[\s\S]*REGISTRY=\$\{CLAWHUB_REGISTRY:-\$SITE\}[\s\S]*export CLAWHUB_CONFIG_PATH="\$HOME\/\.clawhub-ci\/config\.json"[\s\S]*export CLAWHUB_SITE="\$SITE"[\s\S]*export CLAWHUB_REGISTRY="\$REGISTRY"[\s\S]*bash scripts\/ci\/guard_clawhub_slug_owner\.sh[\s\S]*\$\{\{ steps\.publishable\.outputs\.clawhub_slug \}\}/,
+  'ClawHub republish job must guard the resolved publish slug with the authenticated ClawHub config path',
 );
 
 assert.doesNotMatch(
