@@ -1,6 +1,6 @@
 ---
 name: openclaw-traffic-guardian
-version: 0.0.1-beta3
+version: 0.0.1-beta4
 description: OpenClaw runtime traffic monitoring baseline for opt-in HTTP/HTTPS proxy inspection, egress detection, inbound injection detection, and social-account policy review.
 homepage: https://clawsec.prompt.security
 author: prompt-security

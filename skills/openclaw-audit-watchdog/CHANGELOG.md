@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.8] - 2026-06-22
+
+### Changed
+
+- Re-released skill metadata to publish through the updated ClawHub pipeline without runtime changes.
+
 ## [0.1.7] - 2026-06-10
 
 ### Changed
