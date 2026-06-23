@@ -330,8 +330,8 @@ assert.match(
 
 assert.match(
   workflow,
-  /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"/,
-  'Manual ClawHub republish must preserve the current slug helper before checking out an older release tag',
+  /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"[\s\S]*cp scripts\/ci\/skill_platforms\.mjs "\$RUNNER_TEMP\/skill_platforms\.mjs"/,
+  'Manual ClawHub republish must preserve the current slug helper and its local module dependency before checking out an older release tag',
 );
 
 assert.match(

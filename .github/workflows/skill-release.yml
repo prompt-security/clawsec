@@ -1829,7 +1829,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Prepare ClawHub slug helper
-        run: cp scripts/ci/resolve_clawhub_slug.mjs "$RUNNER_TEMP/resolve_clawhub_slug.mjs"
+        run: |
+          cp scripts/ci/resolve_clawhub_slug.mjs "$RUNNER_TEMP/resolve_clawhub_slug.mjs"
+          cp scripts/ci/skill_platforms.mjs "$RUNNER_TEMP/skill_platforms.mjs"
 
       - name: Checkout tag
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
