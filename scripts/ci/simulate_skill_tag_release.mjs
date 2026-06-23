@@ -484,6 +484,13 @@ async function main() {
       await cp(path.join(tempSkillDir, "README.md"), path.join(releaseAssetsDir, "README.md"));
     }
 
+    for (const artifact of ["skill.json", "SKILL.md", "README.md"]) {
+      if (existsSync(path.join(releaseAssetsDir, artifact))) {
+        await addReleaseAssetChecksum({ releaseAssetsDir, manifest, asset: artifact });
+      }
+    }
+    await writeJson(path.join(releaseAssetsDir, "checksums.json"), manifest);
+
     const { privateKeyPath, publicKeyPath } = await createSigningKeyPair(tempRoot);
     await signFileBase64({
       keyPath: privateKeyPath,

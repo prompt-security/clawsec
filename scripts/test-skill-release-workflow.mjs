@@ -222,6 +222,29 @@ for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skil
   );
 }
 
+for (const artifact of ['skill.json', 'SKILL.md']) {
+  assert.match(
+    workflow,
+    new RegExp(
+      String.raw`cp [\s\S]*? "\$\{out_assets\}/${escapeRegExp(artifact)}"[\s\S]*?` +
+        String.raw`if ! add_release_asset_checksum "\$\{out_assets\}" "${escapeRegExp(artifact)}"; then`,
+    ),
+    `PR dry-run validation must checksum standalone downloadable ${artifact} after copying it to release assets`,
+  );
+}
+
+assert.match(
+  workflow,
+  /if \[ -f "\$\{out_assets\}\/README\.md" \] && ! add_release_asset_checksum "\$\{out_assets\}" "README\.md"; then/,
+  'PR dry-run validation must checksum standalone downloadable README.md when it is shipped',
+);
+
+assert.match(
+  workflow,
+  /cp "\$SKILL_PATH\/skill\.json" release-assets\/skill\.json[\s\S]*add_release_asset_checksum "skill\.json"[\s\S]*add_release_asset_checksum "SKILL\.md"[\s\S]*add_release_asset_checksum "README\.md"/,
+  'Tag release validation must checksum standalone downloadable skill files before signing checksums.json',
+);
+
 assert.match(
   workflow,
   /add_release_asset_checksum "skill-card\.md"/,

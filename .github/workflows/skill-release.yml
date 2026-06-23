@@ -775,6 +775,35 @@ jobs:
               cp "${skill_dir}/README.md" "${out_assets}/README.md"
             fi
 
+            if ! add_release_asset_checksum "${out_assets}" "skill.json"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! add_release_asset_checksum "${out_assets}" "SKILL.md"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if [ -f "${out_assets}/README.md" ] && ! add_release_asset_checksum "${out_assets}" "README.md"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            if ! jq -e . "${out_assets}/checksums.json" >/dev/null 2>&1; then
+              echo "::error::Generated checksums.json is invalid JSON after adding standalone release assets."
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
             rm -rf "${staging_dir}"
 
             echo "Prepared dry-run assets for ${tag}:"
@@ -1422,6 +1451,17 @@ jobs:
           fi
           if [ -f "$SKILL_PATH/README.md" ]; then
             cp "$SKILL_PATH/README.md" release-assets/
+          fi
+
+          add_release_asset_checksum "skill.json"
+          add_release_asset_checksum "SKILL.md"
+          if [ -f release-assets/README.md ]; then
+            add_release_asset_checksum "README.md"
+          fi
+
+          if ! jq -e . "release-assets/checksums.json" >/dev/null 2>&1; then
+            echo "::error::Generated checksums.json is invalid JSON after adding standalone release assets."
+            exit 1
           fi
 
           rm -rf "$STAGING_DIR"
