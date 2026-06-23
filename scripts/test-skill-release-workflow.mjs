@@ -8,6 +8,7 @@ const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.m
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
 const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
 const guardClawhubSlugOwnerPath = new URL('./ci/guard_clawhub_slug_owner.sh', import.meta.url);
+const releaseSkillScriptPath = new URL('./release-skill.sh', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 const clawhubLock = JSON.parse(await readFile(clawhubLockPath, 'utf8'));
@@ -15,6 +16,7 @@ const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'u
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
 const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
+const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
 assert.match(
   workflow,
@@ -320,6 +322,16 @@ assert.match(
 assert.ok(
   workflow.includes('simulated_version | test("^[0-9]+\\\\.[0-9]+\\\\.[0-9]+(-[a-zA-Z0-9]+)?$")'),
   'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
+);
+
+assert.ok(
+  releaseSkillScript.includes(`VERSION_ASSIGNMENT_PATTERN='^VERSION="[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.]+)?"$'`),
+  'release-skill.sh must detect hardcoded release verification VERSION assignments in SKILL.md',
+);
+
+assert.ok(
+  releaseSkillScript.includes('sed -E "s|$VERSION_ASSIGNMENT_PATTERN|VERSION=\\"$VERSION\\"|g"'),
+  'release-skill.sh must update hardcoded release verification VERSION assignments when bumping a skill',
 );
 
 assert.match(
