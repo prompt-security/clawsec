@@ -3,12 +3,14 @@ import { readFile } from 'node:fs/promises';
 
 const workflowPath = new URL('../.github/workflows/skill-release.yml', import.meta.url);
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
+const clawhubLockPath = new URL('../.github/clawhub-cli/package-lock.json', import.meta.url);
 const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
 const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
 const guardClawhubSlugOwnerPath = new URL('./ci/guard_clawhub_slug_owner.sh', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
+const clawhubLock = JSON.parse(await readFile(clawhubLockPath, 'utf8'));
 const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'utf8');
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
 const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
@@ -394,13 +396,7 @@ assert.doesNotMatch(
 
 assert.match(
   installClawhubCli,
-  /NPM_REGISTRY="\$\{CLAWHUB_NPM_REGISTRY:-https:\/\/registry\.npmjs\.org\}"/,
-  'ClawHub CLI installer must default to the public npm registry',
-);
-
-assert.match(
-  installClawhubCli,
-  /npm ci --prefix "\$CLI_PREFIX" --registry="\$NPM_REGISTRY"/,
+  /npm ci --prefix "\$CLI_PREFIX"/,
   'ClawHub CLI installer must install from the committed lockfile prefix',
 );
 
@@ -408,6 +404,15 @@ assert.doesNotMatch(
   installClawhubCli,
   /aws codeartifact login|AWS credentials are required/,
   'ClawHub CLI installer must not require AWS secrets that are not configured for release workflows',
+);
+
+const clawhubLockResolvedUrls = Object.values(clawhubLock.packages ?? {})
+  .map((entry) => entry.resolved)
+  .filter(Boolean);
+assert.ok(clawhubLockResolvedUrls.length > 0, 'ClawHub CLI lockfile must contain resolved tarball URLs');
+assert.ok(
+  clawhubLockResolvedUrls.every((url) => url.startsWith('https://registry.npmjs.org/')),
+  'ClawHub CLI lockfile must use public npm tarballs because release workflows do not have AWS CodeArtifact secrets',
 );
 
 assert.match(

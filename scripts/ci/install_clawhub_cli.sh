@@ -2,9 +2,8 @@
 set -euo pipefail
 
 CLI_PREFIX="${CLAWHUB_CLI_PREFIX:-.github/clawhub-cli}"
-NPM_REGISTRY="${CLAWHUB_NPM_REGISTRY:-https://registry.npmjs.org}"
 
-npm ci --prefix "$CLI_PREFIX" --registry="$NPM_REGISTRY"
+npm ci --prefix "$CLI_PREFIX"
 
 if [ -n "${GITHUB_PATH:-}" ]; then
   workspace="${GITHUB_WORKSPACE:-$(pwd)}"
