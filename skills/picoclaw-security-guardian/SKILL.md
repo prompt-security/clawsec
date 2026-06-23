@@ -1,6 +1,6 @@
 ---
 name: picoclaw-security-guardian
-version: 0.0.4
+version: 0.0.5
 description: Picoclaw security posture skill with advisory awareness, configuration drift detection, and supply-chain verification guidance.
 homepage: https://clawsec.prompt.security
 author: prompt-security

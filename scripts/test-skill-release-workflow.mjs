@@ -254,10 +254,23 @@ assert.match(
   'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with comment permissions',
 );
 
+const commentJob = workflow.match(/[ ]{2}comment-skillspector-report:[\s\S]*?\n[ ]{2}[a-z][^:\n]*:/)?.[0] || "";
+assert.doesNotMatch(
+  commentJob,
+  /pull-requests: write/,
+  'SkillSpector PR comment publishing should not request redundant pull-requests write permissions',
+);
+
 assert.match(
   workflow,
   /comment-skillspector-report:[\s\S]*if: always\(\) && github\.event_name == 'pull_request' && needs\.release\.result != 'cancelled'[\s\S]*Download SkillSpector reports[\s\S]*continue-on-error: true/,
   'SkillSpector PR comments must still run when the release dry-run produced reports but the release job failed later',
+);
+
+assert.match(
+  workflow,
+  /Comment SkillSpector reports[\s\S]*continue-on-error: true[\s\S]*actions\/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9\.0\.0/,
+  'SkillSpector PR comment publishing must not fail the release dry-run check',
 );
 
 assert.match(
