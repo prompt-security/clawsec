@@ -8,6 +8,7 @@ const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.m
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
 const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
 const guardClawhubSlugOwnerPath = new URL('./ci/guard_clawhub_slug_owner.sh', import.meta.url);
+const releaseSkillScriptPath = new URL('./release-skill.sh', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
 const ciWorkflow = await readFile(ciWorkflowPath, 'utf8');
 const clawhubLock = JSON.parse(await readFile(clawhubLockPath, 'utf8'));
@@ -15,6 +16,7 @@ const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'u
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
 const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
+const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
 assert.match(
   workflow,
@@ -220,6 +222,29 @@ for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skil
   );
 }
 
+for (const artifact of ['skill.json', 'SKILL.md']) {
+  assert.match(
+    workflow,
+    new RegExp(
+      String.raw`cp [\s\S]*? "\$\{out_assets\}/${escapeRegExp(artifact)}"[\s\S]*?` +
+        String.raw`if ! add_release_asset_checksum "\$\{out_assets\}" "${escapeRegExp(artifact)}"; then`,
+    ),
+    `PR dry-run validation must checksum standalone downloadable ${artifact} after copying it to release assets`,
+  );
+}
+
+assert.match(
+  workflow,
+  /if \[ -f "\$\{out_assets\}\/README\.md" \] && ! add_release_asset_checksum "\$\{out_assets\}" "README\.md"; then/,
+  'PR dry-run validation must checksum standalone downloadable README.md when it is shipped',
+);
+
+assert.match(
+  workflow,
+  /cp "\$SKILL_PATH\/skill\.json" release-assets\/skill\.json[\s\S]*add_release_asset_checksum "skill\.json"[\s\S]*add_release_asset_checksum "SKILL\.md"[\s\S]*add_release_asset_checksum "README\.md"/,
+  'Tag release validation must checksum standalone downloadable skill files before signing checksums.json',
+);
+
 assert.match(
   workflow,
   /add_release_asset_checksum "skill-card\.md"/,
@@ -253,26 +278,38 @@ assert.match(
 assert.match(
   workflow,
   /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
-  'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with comment permissions',
+  'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with issue-comment permissions',
 );
 
 const commentJob = workflow.match(/[ ]{2}comment-skillspector-report:[\s\S]*?\n[ ]{2}[a-z][^:\n]*:/)?.[0] || "";
+assert.match(
+  commentJob,
+  /issues: write/,
+  'SkillSpector PR comment publishing must request issues write permissions so report comments can be created',
+);
+
 assert.doesNotMatch(
   commentJob,
   /pull-requests: write/,
-  'SkillSpector PR comment publishing should not request redundant pull-requests write permissions',
+  'SkillSpector PR comment publishing must not broaden the token with pull-requests write permissions',
 );
 
 assert.match(
   workflow,
-  /comment-skillspector-report:[\s\S]*if: always\(\) && github\.event_name == 'pull_request' && needs\.release\.result != 'cancelled'[\s\S]*Download SkillSpector reports[\s\S]*continue-on-error: true/,
+  /comment-skillspector-report:[\s\S]*if: always\(\) && github\.event_name == 'pull_request' && needs\.release\.result != 'cancelled'[\s\S]*Download SkillSpector reports/,
   'SkillSpector PR comments must still run when the release dry-run produced reports but the release job failed later',
 );
 
 assert.match(
   workflow,
-  /Comment SkillSpector reports[\s\S]*continue-on-error: true[\s\S]*actions\/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9\.0\.0/,
-  'SkillSpector PR comment publishing must not fail the release dry-run check',
+  /Comment SkillSpector reports[\s\S]*actions\/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9\.0\.0/,
+  'SkillSpector PR comment publishing must use the pinned GitHub script action',
+);
+
+assert.doesNotMatch(
+  commentJob,
+  /continue-on-error: true/,
+  'SkillSpector PR comment publishing must fail visibly when report artifacts or PR comments cannot be created',
 );
 
 assert.match(
@@ -314,6 +351,16 @@ assert.match(
 assert.ok(
   workflow.includes('simulated_version | test("^[0-9]+\\\\.[0-9]+\\\\.[0-9]+(-[a-zA-Z0-9]+)?$")'),
   'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
+);
+
+assert.ok(
+  releaseSkillScript.includes(`VERSION_ASSIGNMENT_PATTERN='^VERSION="[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.]+)?"$'`),
+  'release-skill.sh must detect hardcoded release verification VERSION assignments in SKILL.md',
+);
+
+assert.ok(
+  releaseSkillScript.includes('sed -E "s|$VERSION_ASSIGNMENT_PATTERN|VERSION=\\"$VERSION\\"|g"'),
+  'release-skill.sh must update hardcoded release verification VERSION assignments when bumping a skill',
 );
 
 assert.match(

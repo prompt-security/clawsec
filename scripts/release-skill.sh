@@ -141,6 +141,23 @@ if [ -f "$SKILL_PATH/SKILL.md" ]; then
 
   echo "  ✓ Version updated to $VERSION"
 
+  echo "Updating release verification VERSION assignments in SKILL.md..."
+  VERSION_ASSIGNMENT_PATTERN='^VERSION="[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?"$'
+  if grep -qE "$VERSION_ASSIGNMENT_PATTERN" "$TEMP_DIR/SKILL.md"; then
+    sed -E "s|$VERSION_ASSIGNMENT_PATTERN|VERSION=\"$VERSION\"|g" "$TEMP_DIR/SKILL.md" > "$TEMP_DIR/SKILL.md.tmp"
+
+    if ! grep -qF "VERSION=\"$VERSION\"" "$TEMP_DIR/SKILL.md.tmp"; then
+      echo "Warning: VERSION assignment found but substitution may have failed" >&2
+    else
+      VERSION_ASSIGNMENT_COUNT=$(grep -cF "VERSION=\"$VERSION\"" "$TEMP_DIR/SKILL.md.tmp")
+      echo "  ✓ Updated $VERSION_ASSIGNMENT_COUNT VERSION assignment(s)"
+    fi
+
+    mv "$TEMP_DIR/SKILL.md.tmp" "$TEMP_DIR/SKILL.md"
+  else
+    echo "  ℹ No hardcoded release verification VERSION assignments found"
+  fi
+
   echo "Updating hardcoded version URLs in SKILL.md to use tag $TAG..."
   # Replace all hardcoded version URLs: download/SKILLNAME-vX.Y.Z(-prerelease)?/ -> download/TAG/
   # This handles patterns like: download/clawsec-feed-v1.0.0/ or download/prompt-agent-v1.0.0-beta1/

@@ -1,6 +1,6 @@
 ---
 name: hermes-attestation-guardian
-version: 0.1.5
+version: 0.1.6
 description: Hermes-only runtime security attestation and drift detection skill for operator-managed Hermes infrastructure.
 homepage: https://clawsec.prompt.security
 hermes:
@@ -31,7 +31,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="hermes-attestation-guardian"
-VERSION="0.1.5"
+VERSION="0.1.6"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

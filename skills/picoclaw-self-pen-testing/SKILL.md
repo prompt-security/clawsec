@@ -1,6 +1,6 @@
 ---
 name: picoclaw-self-pen-testing
-version: 0.0.4
+version: 0.0.5
 description: Picoclaw-only local posture-review skill focused on read-only findings and safe operator remediation guidance.
 homepage: https://clawsec.prompt.security
 author: prompt-security
@@ -34,7 +34,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="picoclaw-self-pen-testing"
-VERSION="0.0.3"
+VERSION="0.0.5"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

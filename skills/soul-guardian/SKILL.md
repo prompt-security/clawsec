@@ -1,6 +1,6 @@
 ---
 name: soul-guardian
-version: 0.0.8
+version: 0.0.9
 description: Drift detection + baseline integrity guard for agent workspace files with automatic alerting support
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"👻","category":"security"}}
@@ -38,7 +38,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="soul-guardian"
-VERSION="0.0.7"
+VERSION="0.0.9"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

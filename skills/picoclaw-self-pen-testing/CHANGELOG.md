@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.5] - 2026-06-23
+
+### Changed
+
+- Re-released skill metadata to run through the corrected normal tag publish pipeline without runtime changes.
+
 ## [0.0.4] - 2026-06-22
 
 ### Changed

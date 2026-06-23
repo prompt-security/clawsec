@@ -1,6 +1,6 @@
 ---
 name: clawtributor
-version: 0.0.8
+version: 0.0.9
 description: Harness-neutral community incident reporting for AI agents. Contribute to collective security by reporting threats.
 homepage: https://clawsec.prompt.security
 platforms:
@@ -79,7 +79,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawtributor"
-VERSION="0.0.7"
+VERSION="0.0.9"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"

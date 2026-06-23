@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { chmod, cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), "clawsec-tag-release-sim-"));
 const fakeSkillspector = path.join(tempRoot, "skillspector");
+
+function sha256(buffer) {
+  return createHash("sha256").update(buffer).digest("hex");
+}
 
 async function prereleaseFixture(sourceSkillDir, version, fixtureGroup) {
   const fixtureDir = path.join(tempRoot, fixtureGroup, path.basename(sourceSkillDir));
@@ -77,6 +83,24 @@ async function runSimulation({ skillDir, outputDir, expectedOriginal, expectedSi
     assert.ok(file.length > 0, `${artifact} should not be empty`);
   }
 
+  for (const artifact of ["skill.json", "SKILL.md", "skillspector-report.md"]) {
+    const file = await readFile(path.join(releaseAssetsDir, artifact));
+    assert.equal(
+      checksums.files[artifact]?.sha256,
+      sha256(file),
+      `${artifact} must be downloadable and covered by checksums.json`,
+    );
+  }
+
+  if (existsSync(path.join(releaseAssetsDir, "README.md"))) {
+    const file = await readFile(path.join(releaseAssetsDir, "README.md"));
+    assert.equal(
+      checksums.files["README.md"]?.sha256,
+      sha256(file),
+      "README.md must be downloadable and covered by checksums.json when shipped",
+    );
+  }
+
   const archive = await readFile(path.join(releaseAssetsDir, `${expectedTag}.zip`));
   assert.ok(archive.length > 0, "release archive should not be empty");
 
@@ -140,16 +164,16 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.11",
-    expectedSimulated: "0.1.12",
+    expectedOriginal: "0.1.12",
+    expectedSimulated: "0.1.13",
     expectedAgent: "openclaw",
   });
 
   await runSimulation({
     skillDir: "skills/hermes-traffic-guardian",
     outputDir: path.join(tempRoot, "beta"),
-    expectedOriginal: "0.0.1-beta4",
-    expectedSimulated: "0.0.1-beta5",
+    expectedOriginal: "0.0.1-beta5",
+    expectedSimulated: "0.0.1-beta6",
     expectedAgent: "hermes-agent",
   });
 

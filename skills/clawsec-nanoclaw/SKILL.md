@@ -1,6 +1,6 @@
 ---
 name: clawsec-nanoclaw
-version: 0.0.9
+version: 0.0.10
 description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
 ---
 
@@ -217,7 +217,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawsec-nanoclaw"
-VERSION="0.0.6"
+VERSION="0.0.10"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
