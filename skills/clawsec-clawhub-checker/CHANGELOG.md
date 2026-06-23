@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.8] - 2026-06-23
+
+### Changed
+
+- Re-released skill metadata to run through the normal tag publish path after the earlier `0.0.7` ClawHub publish failed before upload.
+
 ## [0.0.7] - 2026-06-22
 
 ### Changed
