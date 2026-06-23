@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Re-released skill metadata to run through the normal tag publish path after the earlier `0.0.7` ClawHub publish failed before upload.
+- Re-released skill metadata to run through the corrected normal tag publish pipeline without runtime changes.
 
 ## [0.0.7] - 2026-06-22
 

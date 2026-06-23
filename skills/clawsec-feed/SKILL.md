@@ -1,6 +1,6 @@
 ---
 name: clawsec-feed
-version: 0.0.10
+version: 0.0.11
 description: Security advisory feed package for OpenClaw-related threats and vulnerabilities. The upstream feed is updated daily; local automation is handled by clawsec-suite or the operator.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}

@@ -1,6 +1,6 @@
 ---
 name: clawtributor
-version: 0.0.8
+version: 0.0.9
 description: Harness-neutral community incident reporting for AI agents. Contribute to collective security by reporting threats.
 homepage: https://clawsec.prompt.security
 platforms:

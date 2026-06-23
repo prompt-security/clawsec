@@ -1,6 +1,6 @@
 ---
 name: hermes-traffic-guardian
-version: 0.0.1-beta4
+version: 0.0.1-beta5
 description: Hermes runtime traffic monitoring baseline for opt-in proxy inspection, egress detection, and attestation-aware traffic posture.
 homepage: https://clawsec.prompt.security
 author: prompt-security

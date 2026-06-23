@@ -140,16 +140,16 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.11",
-    expectedSimulated: "0.1.12",
+    expectedOriginal: "0.1.12",
+    expectedSimulated: "0.1.13",
     expectedAgent: "openclaw",
   });
 
   await runSimulation({
     skillDir: "skills/hermes-traffic-guardian",
     outputDir: path.join(tempRoot, "beta"),
-    expectedOriginal: "0.0.1-beta4",
-    expectedSimulated: "0.0.1-beta5",
+    expectedOriginal: "0.0.1-beta5",
+    expectedSimulated: "0.0.1-beta6",
     expectedAgent: "hermes-agent",
   });
 
