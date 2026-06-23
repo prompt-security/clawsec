@@ -392,24 +392,22 @@ assert.doesNotMatch(
   'ClawHub payload patching must not be duplicated inline in the workflow',
 );
 
-for (const secret of ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']) {
-  assert.match(
-    workflow,
-    new RegExp(`${secret}: \\$\\{\\{ secrets\\.${secret} \\}\\}`),
-    `ClawHub jobs must expose ${secret} for CodeArtifact npm authentication`,
-  );
-}
-
 assert.match(
   installClawhubCli,
-  /aws codeartifact login[\s\S]*--domain "\$CODEARTIFACT_DOMAIN"[\s\S]*--domain-owner "\$CODEARTIFACT_DOMAIN_OWNER"[\s\S]*--repository "\$CODEARTIFACT_REPOSITORY"[\s\S]*--region "\$AWS_REGION"/,
-  'ClawHub CLI installer must authenticate npm against CodeArtifact before npm ci',
+  /NPM_REGISTRY="\$\{CLAWHUB_NPM_REGISTRY:-https:\/\/registry\.npmjs\.org\}"/,
+  'ClawHub CLI installer must default to the public npm registry',
 );
 
 assert.match(
   installClawhubCli,
-  /npm ci --prefix "\$CLI_PREFIX"/,
+  /npm ci --prefix "\$CLI_PREFIX" --registry="\$NPM_REGISTRY"/,
   'ClawHub CLI installer must install from the committed lockfile prefix',
+);
+
+assert.doesNotMatch(
+  installClawhubCli,
+  /aws codeartifact login|AWS credentials are required/,
+  'ClawHub CLI installer must not require AWS secrets that are not configured for release workflows',
 );
 
 assert.match(

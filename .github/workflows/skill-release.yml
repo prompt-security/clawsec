@@ -21,7 +21,7 @@ on:
 
 permissions: read-all
 
-# The clawhub CLI version is pinned (with integrity hashes) in
+# The ClawHub CLI version is pinned (with integrity hashes) in
 # .github/clawhub-cli/package-lock.json — bump it there.
 
 concurrency:
@@ -1691,10 +1691,6 @@ jobs:
       contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_REGION: eu-north-1
     steps:
       - name: Check if publishable
         if: needs.release-tag.outputs.publish_clawhub != 'true'
@@ -1813,10 +1809,6 @@ jobs:
       contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_REGION: eu-north-1
     steps:
       - name: Parse tag
         id: parse
