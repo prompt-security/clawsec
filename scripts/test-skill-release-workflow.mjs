@@ -252,27 +252,33 @@ assert.match(
 
 assert.match(
   workflow,
-  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
+  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*pull-requests: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
   'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with comment permissions',
 );
 
 const commentJob = workflow.match(/[ ]{2}comment-skillspector-report:[\s\S]*?\n[ ]{2}[a-z][^:\n]*:/)?.[0] || "";
-assert.doesNotMatch(
+assert.match(
   commentJob,
   /pull-requests: write/,
-  'SkillSpector PR comment publishing should not request redundant pull-requests write permissions',
+  'SkillSpector PR comment publishing must request pull-requests write permissions so new report comments can be created',
 );
 
 assert.match(
   workflow,
-  /comment-skillspector-report:[\s\S]*if: always\(\) && github\.event_name == 'pull_request' && needs\.release\.result != 'cancelled'[\s\S]*Download SkillSpector reports[\s\S]*continue-on-error: true/,
+  /comment-skillspector-report:[\s\S]*if: always\(\) && github\.event_name == 'pull_request' && needs\.release\.result != 'cancelled'[\s\S]*Download SkillSpector reports/,
   'SkillSpector PR comments must still run when the release dry-run produced reports but the release job failed later',
 );
 
 assert.match(
   workflow,
-  /Comment SkillSpector reports[\s\S]*continue-on-error: true[\s\S]*actions\/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9\.0\.0/,
-  'SkillSpector PR comment publishing must not fail the release dry-run check',
+  /Comment SkillSpector reports[\s\S]*actions\/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9\.0\.0/,
+  'SkillSpector PR comment publishing must use the pinned GitHub script action',
+);
+
+assert.doesNotMatch(
+  commentJob,
+  /continue-on-error: true/,
+  'SkillSpector PR comment publishing must fail visibly when report artifacts or PR comments cannot be created',
 );
 
 assert.match(
