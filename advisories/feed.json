@@ -1,8 +1,181 @@
 {
   "version": "0.0.3",
-  "updated": "2026-06-21T07:41:37Z",
+  "updated": "2026-06-25T07:09:37Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-55249",
+      "severity": "medium",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "@rtk-ai/rtk-rewrite transparently rewrites shell commands executed via OpenClaw's exec tool to their...",
+      "description": "@rtk-ai/rtk-rewrite transparently rewrites shell commands executed via OpenClaw's exec tool to their RTK equivalents. In 1.0.0, the @rtk-ai/rtk-rewrite OpenClaw plugin passes attacker-controlled input directly into a shell-backed execSync() template string without shell-safe escaping. JSON.stringify() wraps the value in double quotes and escapes inner double-quotes and backslashes, but leaves $() and backtick shell metacharacters untouched. Because execSync delegates execution to /bin/sh -c, the shell expands $(...) substitutions even inside double-quoted strings, causing the injected subcommand to execute before rtk is invoked. An attacker who can influence the exec tool's command parameter (e.g., via an LLM agent prompt or gateway/tool-call input) achieves arbitrary OS command execution with the privileges of the plugin/gateway process.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-23T19:17:11.713",
+      "references": [
+        "https://github.com/rtk-ai/rtk/security/advisories/GHSA-fqgj-m2gp-mr3q"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-55249",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-56694",
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "NanoClaw before 2.1.0 contains a privilege escalation vulnerability in the channel-registration appr...",
+      "description": "NanoClaw before 2.1.0 contains a privilege escalation vulnerability in the channel-registration approval flow where handleChannelApprovalResponse fails to validate admin privileges over target agent groups. Scoped admins can submit forged or stale connect callback values to wire messaging channels into out-of-scope agent groups, exposing unauthorized groups to unapproved channels and enabling unauthorized observation or control of restricted agent group activity.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-23T16:17:06.040",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/commit/0eef8fafdd7c475ab5fd8d37ea566a81e74cd834",
+        "https://github.com/nanocoai/nanoclaw/pull/2566",
+        "https://www.vulncheck.com/advisories/nanoclaw-privilege-escalation-via-forged-channel-approval-callback"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-56694",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-56693",
+      "severity": "medium",
+      "type": "unknown_cwe_602",
+      "nvd_category_id": "CWE-602",
+      "title": "NanoClaw before 2.1.17 contains a privilege escalation vulnerability in the create_agent delivery-ac...",
+      "description": "NanoClaw before 2.1.17 contains a privilege escalation vulnerability in the create_agent delivery-action handler that performs privileged central-database writes without host-side authorization checks. Confined agent containers can invoke create_agent to create arbitrary agent groups, container configurations, and destinations, escalating beyond their intended confinement boundary.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-23T16:17:05.887",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/commit/ac37ecbfd6b9d14fdfa1598a6412a8ffdbeaef45",
+        "https://github.com/nanocoai/nanoclaw/pull/2720",
+        "https://www.vulncheck.com/advisories/nanoclaw-privilege-escalation-via-unauthorized-create-agent-system-action"
+      ],
+      "cvss_score": 5.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-56693",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-56692",
+      "severity": "medium",
+      "type": "unknown_cwe_59",
+      "nvd_category_id": "CWE-59",
+      "title": "NanoClaw before 2.1.17 contains a symlink following vulnerability in forwardAttachedFiles that allow...",
+      "description": "NanoClaw before 2.1.17 contains a symlink following vulnerability in forwardAttachedFiles that allows container-controlled agents to exfiltrate host-readable files. The host validates attachment filenames using only isSafeAttachmentName before copying with fs.copyFileSync, which follows symlinks without containment checks, allowing malicious agents to disclose arbitrary host files.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-23T16:17:05.753",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/commit/28032bc0eca76c91fb3d8be0013e8bcaf2f5aeae",
+        "https://github.com/nanocoai/nanoclaw/pull/2468",
+        "https://www.vulncheck.com/advisories/nanoclaw-arbitrary-file-read-via-symlink-following-in-forwardattachedfiles"
+      ],
+      "cvss_score": 5.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-56692",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-56402",
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "NanoClaw before 2.1.17 contains a privilege escalation vulnerability in the handleApprovalsResponse ...",
+      "description": "NanoClaw before 2.1.17 contains a privilege escalation vulnerability in the handleApprovalsResponse function that fails to verify responder role authorization. Attackers with a valid questionId can approve or reject privileged actions like package installation by submitting approval response payloads without proper role validation.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-06-23T16:17:05.397",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/commit/6227bd1a5b016fb1eb76411bb6681b4c924a51a0",
+        "https://github.com/nanocoai/nanoclaw/pull/2478",
+        "https://www.vulncheck.com/advisories/nanoclaw-privilege-escalation-via-unverified-approval-response-handler"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-56402",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.5); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-53866",
       "severity": "high",

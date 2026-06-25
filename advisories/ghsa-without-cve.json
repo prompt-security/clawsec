@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated": "2026-06-17T07:45:48Z",
+  "updated": "2026-06-25T07:09:37Z",
   "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
   "stale_after_days": 60,
   "semantics": {
@@ -779,7 +779,7 @@
         "CWE-863"
       ],
       "credits": [
-        "Curly-Haired-Baboon"
+        "amwhoi"
       ],
       "aliases": [
         "GHSA-v2ww-5rh7-2h5v",
