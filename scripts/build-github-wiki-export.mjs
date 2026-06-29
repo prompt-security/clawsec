@@ -8,7 +8,6 @@ import {
 
 const MARKDOWN_EXTENSION = /\.md$/i;
 const MARKDOWN_LINK_PATTERN = /(\]\()([^)\s]+)(\))/g;
-const LEGACY_ALIAS_MARKER = '<!-- LEGACY-WIKI-ALIAS -->';
 
 const listFiles = async (rootDir) => {
   const files = [];
@@ -74,15 +73,6 @@ const buildMarkdownPathMap = (markdownFiles) => {
 const toGithubWikiPageHref = (outputPath) =>
   outputPath.replace(MARKDOWN_EXTENSION, '');
 
-const toRelativeWikiHref = (fromPath, outputPath) => {
-  const fromDir = path.posix.dirname(normalizeWikiPath(fromPath));
-  const target = toGithubWikiPageHref(outputPath);
-  const relative = fromDir === '.'
-    ? target
-    : path.posix.relative(fromDir, target);
-  return relative || toGithubWikiPageHref('Home.md');
-};
-
 const rewriteMarkdownLinks = ({ content, sourcePath, sourceToOutput, assetPaths }) =>
   content.replace(MARKDOWN_LINK_PATTERN, (match, prefix, href, suffix) => {
     const target = resolveWikiLinkTarget(sourcePath, href);
@@ -102,26 +92,12 @@ const rewriteMarkdownLinks = ({ content, sourcePath, sourceToOutput, assetPaths 
     return `${prefix}${outputPath}${target.hash}${suffix}`;
   });
 
-const buildLegacyAliasContent = ({ sourcePath, outputPath }) => {
-  const targetHref = toRelativeWikiHref(sourcePath, outputPath);
-  const targetLabel = toGithubWikiPageHref(outputPath);
-
-  return [
-    LEGACY_ALIAS_MARKER,
-    '',
-    '# Page moved',
-    '',
-    `This GitHub Wiki page moved to [${targetLabel}](${targetHref}).`,
-    '',
-  ].join('\n');
-};
-
 /**
  * Build the flattened markdown tree that GitHub Wiki can display without
  * duplicate basename entries.
  *
  * @param {{ sourceDir: string, outputDir: string }} options
- * @returns {Promise<{ files: Array<{ sourcePath: string, outputPath: string }>, aliases: Array<{ sourcePath: string, outputPath: string }>, assets: string[] }>}
+ * @returns {Promise<{ files: Array<{ sourcePath: string, outputPath: string }>, assets: string[] }>}
  */
 export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
   if (!sourceDir) throw new Error('sourceDir is required');
@@ -137,7 +113,6 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
   await mkdir(outputDir, { recursive: true });
 
   const exportedFiles = [];
-  const exportedAliases = [];
   for (const sourcePath of markdownFiles) {
     const outputPath = sourceToOutput.get(sourcePath.toLowerCase());
     const sourceFullPath = path.join(sourceDir, sourcePath);
@@ -151,17 +126,6 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
       'utf8',
     );
     exportedFiles.push({ sourcePath, outputPath });
-
-    if (sourcePath.includes('/')) {
-      const aliasFullPath = path.join(outputDir, sourcePath);
-      await mkdir(path.dirname(aliasFullPath), { recursive: true });
-      await writeFile(
-        aliasFullPath,
-        buildLegacyAliasContent({ sourcePath, outputPath }),
-        'utf8',
-      );
-      exportedAliases.push({ sourcePath, outputPath: sourcePath });
-    }
   }
 
   for (const sourcePath of assetFiles) {
@@ -173,7 +137,6 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
 
   return {
     files: exportedFiles,
-    aliases: exportedAliases,
     assets: assetFiles,
   };
 };
@@ -213,7 +176,5 @@ const isDirectRun = () => {
 
 if (isDirectRun()) {
   const result = await buildGithubWikiExport(parseArgs(process.argv.slice(2)));
-  console.log(
-    `Exported ${result.files.length} wiki pages, ${result.aliases.length} legacy aliases, and ${result.assets.length} assets.`,
-  );
+  console.log(`Exported ${result.files.length} wiki pages and ${result.assets.length} assets.`);
 }

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -18,6 +19,20 @@ const listFiles = async (root) => {
     .filter((entry) => entry.isFile())
     .map((entry) => path.join(entry.parentPath, entry.name))
     .map((fullPath) => path.relative(root, fullPath).replace(/\\/g, '/'))
+    .sort();
+};
+
+const listDuplicatePageBasenames = (files) => {
+  const counts = new Map();
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const basename = path.basename(file, '.md').toLowerCase();
+    counts.set(basename, (counts.get(basename) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([basename, count]) => `${basename}:${count}`)
     .sort();
 };
 
@@ -66,11 +81,7 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
     'es-Home.md',
     'es-media.md',
     'es-overview.md',
-    'es/INDEX.md',
-    'es/media.md',
-    'es/overview.md',
     'modules-automation-release.md',
-    'modules/automation-release.md',
     'overview.md',
   ]);
   assert.deepEqual(
@@ -82,15 +93,6 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
       ['es/overview.md', 'es-overview.md'],
       ['modules/automation-release.md', 'modules-automation-release.md'],
       ['overview.md', 'overview.md'],
-    ],
-  );
-  assert.deepEqual(
-    result.aliases.map((file) => [file.sourcePath, file.outputPath]),
-    [
-      ['es/INDEX.md', 'es/INDEX.md'],
-      ['es/media.md', 'es/media.md'],
-      ['es/overview.md', 'es/overview.md'],
-      ['modules/automation-release.md', 'modules/automation-release.md'],
     ],
   );
 
@@ -108,10 +110,6 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
   assert.match(media, /!\[Logo\]\(assets\/logo\.png\)/);
   assert.match(media, /\[Logo download\]\(assets\/logo\.png\)/);
   assert.doesNotMatch(media, /\.\.\/assets\/logo\.png/);
-
-  const moduleAlias = await readFile(path.join(outputDir, 'modules/automation-release.md'), 'utf8');
-  assert.match(moduleAlias, /LEGACY-WIKI-ALIAS/);
-  assert.match(moduleAlias, /\[modules-automation-release\]\(\.\.\/modules-automation-release\)/);
 });
 
 test('buildGithubWikiExport rejects flattened filename collisions', async () => {
@@ -125,6 +123,27 @@ test('buildGithubWikiExport rejects flattened filename collisions', async () => 
   await assert.rejects(
     buildGithubWikiExport({ sourceDir, outputDir }),
     /Flattened wiki export collision/,
+  );
+});
+
+test('buildGithubWikiExport exports the repository wiki without duplicate GitHub page names', async () => {
+  const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-export-real-'));
+  const outputDir = path.join(tmpRoot, 'export');
+  const sourceDir = fileURLToPath(new URL('../wiki', import.meta.url));
+
+  await buildGithubWikiExport({ sourceDir, outputDir });
+  const files = await listFiles(outputDir);
+  const nestedMarkdownFiles = files.filter((file) => file.includes('/') && file.endsWith('.md'));
+
+  assert.deepEqual(
+    nestedMarkdownFiles,
+    [],
+    'GitHub Wiki export must not include nested markdown files because they produce duplicate page-list entries',
+  );
+  assert.deepEqual(
+    listDuplicatePageBasenames(files),
+    [],
+    'GitHub Wiki export must not include duplicate markdown basenames',
   );
 });
 
@@ -165,8 +184,8 @@ test('wiki workflows verify pull requests without publishing and publish flatten
   );
   assert.match(
     verifyWorkflow,
-    /LEGACY-WIKI-ALIAS/,
-    'wiki export verification must allow only generated legacy alias markdown below nested paths',
+    /Flattened GitHub Wiki export contains nested markdown files/,
+    'wiki export verification must reject nested markdown files because GitHub lists them as duplicate page names',
   );
   assert.doesNotMatch(
     syncWorkflow,

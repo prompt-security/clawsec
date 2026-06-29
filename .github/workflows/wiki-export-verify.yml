@@ -43,9 +43,8 @@ jobs:
           node scripts/build-github-wiki-export.mjs --source wiki --output "$EXPORT_DIR"
 
           test -f "${EXPORT_DIR}/Home.md"
-          while IFS= read -r nested_file; do
-            if ! grep -q '<!-- LEGACY-WIKI-ALIAS -->' "$nested_file"; then
-              echo "::error::Nested markdown file is not a generated legacy alias: ${nested_file}"
-              exit 1
-            fi
-          done < <(find "$EXPORT_DIR" -mindepth 2 -type f -name '*.md')
+          if find "$EXPORT_DIR" -mindepth 2 -type f -name '*.md' | grep -q .; then
+            echo "::error::Flattened GitHub Wiki export contains nested markdown files"
+            find "$EXPORT_DIR" -mindepth 2 -type f -name '*.md'
+            exit 1
+          fi
