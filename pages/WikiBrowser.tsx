@@ -14,8 +14,7 @@ import {
 import {
   isExternalHref,
   isWikiIndexSlug,
-  resolveWikiPathFromFile,
-  splitWikiHash,
+  resolveWikiLinkTarget,
   toWikiLlmsPath,
   toWikiRoute,
 } from '../utils/wikiPathHelpers.mjs';
@@ -230,24 +229,21 @@ export const WikiBrowser: React.FC = () => {
   });
 
   const resolveWikiRouteFromHref = (href: string): string | null => {
-    if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
-      return null;
-    }
-    const { path, hash } = splitWikiHash(href);
+    const target = resolveWikiLinkTarget(selectedDoc.filePath, href);
+    if (!target) return null;
+
+    const { path, hash } = target;
     if (!path || !path.toLowerCase().endsWith('.md')) return null;
 
-    const resolvedFilePath = resolveWikiPathFromFile(selectedDoc.filePath, path).toLowerCase();
-    const targetDoc = wikiDocByFilePath.get(resolvedFilePath);
+    const targetDoc = wikiDocByFilePath.get(path.toLowerCase());
     if (!targetDoc) return null;
     return `${toWikiRoute(targetDoc.slug)}${hash}`;
   };
 
   const resolveAssetUrl = (srcOrHref: string): string | null => {
-    if (!srcOrHref || isExternalHref(srcOrHref) || srcOrHref.startsWith('/')) return null;
-    const { path } = splitWikiHash(srcOrHref);
-    if (!path) return null;
-    const resolvedAssetPath = resolveWikiPathFromFile(selectedDoc.filePath, path).toLowerCase();
-    return wikiAssetByPath.get(resolvedAssetPath) ?? null;
+    const target = resolveWikiLinkTarget(selectedDoc.filePath, srcOrHref);
+    if (!target) return null;
+    return wikiAssetByPath.get(target.path.toLowerCase()) ?? null;
   };
 
   const wikiMarkdownComponents: Components = {

@@ -62,6 +62,28 @@ export const isExternalHref = (href) =>
   /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(String(href ?? '')) || String(href ?? '').startsWith('//');
 
 /**
+ * Resolve an internal wiki link target from the file that contains it.
+ * External URLs, root-absolute URLs, and same-page hash links return null.
+ * @param {string} currentFilePath
+ * @param {string} href
+ * @returns {{ path: string, hash: string } | null}
+ */
+export const resolveWikiLinkTarget = (currentFilePath, href) => {
+  const text = String(href ?? '');
+  if (!text || isExternalHref(text) || text.startsWith('#') || text.startsWith('/')) {
+    return null;
+  }
+
+  const { path, hash } = splitWikiHash(text);
+  if (!path) return null;
+
+  return {
+    path: resolveWikiPathFromFile(currentFilePath, path),
+    hash,
+  };
+};
+
+/**
  * Normalize a wiki slug for route/path construction.
  * @param {string} slug
  * @returns {string}

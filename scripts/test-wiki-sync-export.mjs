@@ -48,13 +48,23 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
     '',
   ].join('\n'));
   await writeFixture(sourceDir, 'es/overview.md', '# Resumen\n');
+  await writeFixture(sourceDir, 'es/media.md', [
+    '# Media',
+    '',
+    '![Logo](../assets/logo.png)',
+    '[Logo download](../assets/logo.png)',
+    '',
+  ].join('\n'));
   await writeFixture(sourceDir, 'modules/automation-release.md', '# Automation\n');
+  await writeFixture(sourceDir, 'assets/logo.png', 'fake-png');
 
   const result = await buildGithubWikiExport({ sourceDir, outputDir });
 
   assert.deepEqual(await listFiles(outputDir), [
     'Home.md',
+    'assets/logo.png',
     'es-Home.md',
+    'es-media.md',
     'es-overview.md',
     'modules-automation-release.md',
     'overview.md',
@@ -64,6 +74,7 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
     [
       ['INDEX.md', 'Home.md'],
       ['es/INDEX.md', 'es-Home.md'],
+      ['es/media.md', 'es-media.md'],
       ['es/overview.md', 'es-overview.md'],
       ['modules/automation-release.md', 'modules-automation-release.md'],
       ['overview.md', 'overview.md'],
@@ -79,6 +90,11 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
   const spanishHome = await readFile(path.join(outputDir, 'es-Home.md'), 'utf8');
   assert.match(spanishHome, /\[Resumen\]\(es-overview\.md\)/);
   assert.match(spanishHome, /\[English overview\]\(overview\.md\)/);
+
+  const media = await readFile(path.join(outputDir, 'es-media.md'), 'utf8');
+  assert.match(media, /!\[Logo\]\(assets\/logo\.png\)/);
+  assert.match(media, /\[Logo download\]\(assets\/logo\.png\)/);
+  assert.doesNotMatch(media, /\.\.\/assets\/logo\.png/);
 });
 
 test('buildGithubWikiExport rejects flattened filename collisions', async () => {

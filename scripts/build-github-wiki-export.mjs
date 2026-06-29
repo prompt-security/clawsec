@@ -2,14 +2,12 @@ import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promi
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  isExternalHref,
   normalizeWikiPath,
-  resolveWikiPathFromFile,
-  splitWikiHash,
+  resolveWikiLinkTarget,
 } from '../utils/wikiPathHelpers.mjs';
 
 const MARKDOWN_EXTENSION = /\.md$/i;
-const MARKDOWN_LINK_PATTERN = /(\]\()([^)\s]+\.md(?:#[^)]+)?)(\))/g;
+const MARKDOWN_LINK_PATTERN = /(\]\()([^)\s]+)(\))/g;
 
 const listFiles = async (rootDir) => {
   const files = [];
@@ -72,26 +70,16 @@ const buildMarkdownPathMap = (markdownFiles) => {
   return sourceToOutput;
 };
 
-const resolveMarkdownTarget = (sourcePath, href) => {
-  if (!href || isExternalHref(href) || href.startsWith('#') || href.startsWith('/')) {
-    return null;
-  }
-
-  const { path: targetPath, hash } = splitWikiHash(href);
-  if (!MARKDOWN_EXTENSION.test(targetPath)) return null;
-
-  return {
-    sourcePath: resolveWikiPathFromFile(sourcePath, targetPath),
-    hash,
-  };
-};
-
-const rewriteMarkdownLinks = ({ content, sourcePath, sourceToOutput }) =>
+const rewriteMarkdownLinks = ({ content, sourcePath, sourceToOutput, assetPaths }) =>
   content.replace(MARKDOWN_LINK_PATTERN, (match, prefix, href, suffix) => {
-    const target = resolveMarkdownTarget(sourcePath, href);
+    const target = resolveWikiLinkTarget(sourcePath, href);
     if (!target) return match;
 
-    const outputPath = sourceToOutput.get(target.sourcePath.toLowerCase());
+    const targetKey = target.path.toLowerCase();
+    const outputPath = MARKDOWN_EXTENSION.test(target.path)
+      ? sourceToOutput.get(targetKey)
+      : assetPaths.has(targetKey) ? target.path : null;
+
     if (!outputPath) return match;
 
     return `${prefix}${outputPath}${target.hash}${suffix}`;
@@ -112,6 +100,7 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
   const markdownFiles = files.filter((file) => MARKDOWN_EXTENSION.test(file));
   const assetFiles = files.filter((file) => !MARKDOWN_EXTENSION.test(file));
   const sourceToOutput = buildMarkdownPathMap(markdownFiles);
+  const assetPaths = new Set(assetFiles.map((file) => file.toLowerCase()));
 
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
@@ -126,7 +115,7 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
     await mkdir(path.dirname(outputFullPath), { recursive: true });
     await writeFile(
       outputFullPath,
-      rewriteMarkdownLinks({ content, sourcePath, sourceToOutput }),
+      rewriteMarkdownLinks({ content, sourcePath, sourceToOutput, assetPaths }),
       'utf8',
     );
     exportedFiles.push({ sourcePath, outputPath });
