@@ -66,7 +66,11 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
     'es-Home.md',
     'es-media.md',
     'es-overview.md',
+    'es/INDEX.md',
+    'es/media.md',
+    'es/overview.md',
     'modules-automation-release.md',
+    'modules/automation-release.md',
     'overview.md',
   ]);
   assert.deepEqual(
@@ -80,21 +84,34 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
       ['overview.md', 'overview.md'],
     ],
   );
+  assert.deepEqual(
+    result.aliases.map((file) => [file.sourcePath, file.outputPath]),
+    [
+      ['es/INDEX.md', 'es/INDEX.md'],
+      ['es/media.md', 'es/media.md'],
+      ['es/overview.md', 'es/overview.md'],
+      ['modules/automation-release.md', 'modules/automation-release.md'],
+    ],
+  );
 
   const home = await readFile(path.join(outputDir, 'Home.md'), 'utf8');
-  assert.match(home, /\[Overview\]\(overview\.md\)/);
-  assert.match(home, /\[Spanish\]\(es-Home\.md\)/);
-  assert.match(home, /\[Automation\]\(modules-automation-release\.md#dry-run\)/);
+  assert.match(home, /\[Overview\]\(overview\)/);
+  assert.match(home, /\[Spanish\]\(es-Home\)/);
+  assert.match(home, /\[Automation\]\(modules-automation-release#dry-run\)/);
   assert.doesNotMatch(home, /es\/INDEX\.md|modules\/automation-release\.md/);
 
   const spanishHome = await readFile(path.join(outputDir, 'es-Home.md'), 'utf8');
-  assert.match(spanishHome, /\[Resumen\]\(es-overview\.md\)/);
-  assert.match(spanishHome, /\[English overview\]\(overview\.md\)/);
+  assert.match(spanishHome, /\[Resumen\]\(es-overview\)/);
+  assert.match(spanishHome, /\[English overview\]\(overview\)/);
 
   const media = await readFile(path.join(outputDir, 'es-media.md'), 'utf8');
   assert.match(media, /!\[Logo\]\(assets\/logo\.png\)/);
   assert.match(media, /\[Logo download\]\(assets\/logo\.png\)/);
   assert.doesNotMatch(media, /\.\.\/assets\/logo\.png/);
+
+  const moduleAlias = await readFile(path.join(outputDir, 'modules/automation-release.md'), 'utf8');
+  assert.match(moduleAlias, /LEGACY-WIKI-ALIAS/);
+  assert.match(moduleAlias, /\[modules-automation-release\]\(\.\.\/modules-automation-release\)/);
 });
 
 test('buildGithubWikiExport rejects flattened filename collisions', async () => {
@@ -145,6 +162,11 @@ test('wiki workflows verify pull requests without publishing and publish flatten
     syncWorkflow,
     /node scripts\/build-github-wiki-export\.mjs --source wiki --output "\$WIKI_EXPORT"/,
     'wiki sync workflow must publish the flattened export directory',
+  );
+  assert.match(
+    verifyWorkflow,
+    /LEGACY-WIKI-ALIAS/,
+    'wiki export verification must allow only generated legacy alias markdown below nested paths',
   );
   assert.doesNotMatch(
     syncWorkflow,
