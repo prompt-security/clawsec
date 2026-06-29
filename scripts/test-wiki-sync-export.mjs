@@ -95,34 +95,43 @@ test('buildGithubWikiExport rejects flattened filename collisions', async () => 
   );
 });
 
-test('wiki-sync workflow verifies the flattened export in pull requests before syncing', async () => {
-  const workflow = await readFile(
+test('wiki workflows verify pull requests without publishing and publish flattened sync output', async () => {
+  const verifyWorkflow = await readFile(
+    new URL('../.github/workflows/wiki-export-verify.yml', import.meta.url),
+    'utf8',
+  );
+  const syncWorkflow = await readFile(
     new URL('../.github/workflows/wiki-sync.yml', import.meta.url),
     'utf8',
   );
 
   assert.match(
-    workflow,
+    verifyWorkflow,
     /pull_request:[\s\S]*scripts\/test-wiki-sync-export\.mjs/,
-    'wiki sync workflow must run on pull requests that change the export test',
+    'wiki export verification workflow must run on pull requests that change the export test',
   );
   assert.match(
-    workflow,
+    verifyWorkflow,
     /name: Test wiki export transform[\s\S]*node scripts\/test-wiki-sync-export\.mjs/,
-    'wiki sync workflow must run the deterministic export test before merge',
+    'wiki export verification workflow must run the deterministic export test before merge',
+  );
+  assert.doesNotMatch(
+    syncWorkflow,
+    /pull_request:/,
+    'wiki sync workflow must not run on pull_request events',
   );
   assert.match(
-    workflow,
-    /sync-wiki:[\s\S]*if: github\.event_name != 'pull_request'/,
-    'wiki sync workflow must not push to the GitHub Wiki from pull_request events',
+    syncWorkflow,
+    /name: Test wiki export transform[\s\S]*node scripts\/test-wiki-sync-export\.mjs/,
+    'wiki sync workflow must run the deterministic export test before publishing',
   );
   assert.match(
-    workflow,
+    syncWorkflow,
     /node scripts\/build-github-wiki-export\.mjs --source wiki --output "\$WIKI_EXPORT"/,
     'wiki sync workflow must publish the flattened export directory',
   );
   assert.doesNotMatch(
-    workflow,
+    syncWorkflow,
     /rsync -a --delete --exclude '\.git\/' wiki\/ "\$WIKI_TMP\/"/,
     'wiki sync workflow must not rsync the nested source wiki directly',
   );

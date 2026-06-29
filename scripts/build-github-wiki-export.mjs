@@ -1,23 +1,15 @@
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  isExternalHref,
+  normalizeWikiPath,
+  resolveWikiPathFromFile,
+  splitWikiHash,
+} from '../utils/wikiPathHelpers.mjs';
 
 const MARKDOWN_EXTENSION = /\.md$/i;
 const MARKDOWN_LINK_PATTERN = /(\]\()([^)\s]+\.md(?:#[^)]+)?)(\))/g;
-const EXTERNAL_HREF_PATTERN = /^[a-zA-Z][a-zA-Z0-9+.-]*:|^\/\//;
-
-const toPosixPath = (value) => String(value ?? '').replace(/\\/g, '/');
-
-const normalizeRelativePath = (value) => path.posix.normalize(toPosixPath(value)).replace(/^\.\//, '');
-
-const splitHash = (value) => {
-  const hashIndex = value.indexOf('#');
-  if (hashIndex === -1) return { pathname: value, hash: '' };
-  return {
-    pathname: value.slice(0, hashIndex),
-    hash: value.slice(hashIndex),
-  };
-};
 
 const listFiles = async (rootDir) => {
   const files = [];
@@ -27,7 +19,7 @@ const listFiles = async (rootDir) => {
     const entries = await readdir(absoluteDir, { withFileTypes: true });
     for (const entry of entries) {
       const relativePath = relativeDir
-        ? path.posix.join(toPosixPath(relativeDir), entry.name)
+        ? normalizeWikiPath(`${relativeDir}/${entry.name}`)
         : entry.name;
 
       if (entry.isDirectory()) {
@@ -81,20 +73,15 @@ const buildMarkdownPathMap = (markdownFiles) => {
 };
 
 const resolveMarkdownTarget = (sourcePath, href) => {
-  if (!href || EXTERNAL_HREF_PATTERN.test(href) || href.startsWith('#') || href.startsWith('/')) {
+  if (!href || isExternalHref(href) || href.startsWith('#') || href.startsWith('/')) {
     return null;
   }
 
-  const { pathname, hash } = splitHash(href);
-  if (!MARKDOWN_EXTENSION.test(pathname)) return null;
-
-  const sourceDir = path.posix.dirname(sourcePath);
-  const resolvedPath = normalizeRelativePath(
-    sourceDir === '.' ? pathname : path.posix.join(sourceDir, pathname),
-  );
+  const { path: targetPath, hash } = splitWikiHash(href);
+  if (!MARKDOWN_EXTENSION.test(targetPath)) return null;
 
   return {
-    sourcePath: resolvedPath,
+    sourcePath: resolveWikiPathFromFile(sourcePath, targetPath),
     hash,
   };
 };

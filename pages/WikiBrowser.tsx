@@ -12,7 +12,10 @@ import {
   stripFrontmatter,
 } from '../utils/markdownHelpers.mjs';
 import {
+  isExternalHref,
   isWikiIndexSlug,
+  resolveWikiPathFromFile,
+  splitWikiHash,
   toWikiLlmsPath,
   toWikiRoute,
 } from '../utils/wikiPathHelpers.mjs';
@@ -24,44 +27,8 @@ interface WikiDoc {
   content: string;
 }
 
-const normalizePath = (path: string): string => {
-  const clean = path.replace(/\\/g, '/');
-  const parts: string[] = [];
-  for (const part of clean.split('/')) {
-    if (!part || part === '.') continue;
-    if (part === '..') {
-      if (parts.length > 0) parts.pop();
-      continue;
-    }
-    parts.push(part);
-  }
-  return parts.join('/');
-};
-
-const dirname = (path: string): string => {
-  const idx = path.lastIndexOf('/');
-  return idx === -1 ? '' : path.slice(0, idx);
-};
-
-const resolveFromFile = (currentFilePath: string, targetPath: string): string => {
-  if (!targetPath) return currentFilePath;
-  if (targetPath.startsWith('/')) return normalizePath(targetPath.slice(1));
-  const baseDir = dirname(currentFilePath);
-  const joined = baseDir ? `${baseDir}/${targetPath}` : targetPath;
-  return normalizePath(joined);
-};
-
-const splitHash = (href: string): { path: string; hash: string } => {
-  const idx = href.indexOf('#');
-  if (idx === -1) return { path: href, hash: '' };
-  return { path: href.slice(0, idx), hash: href.slice(idx) };
-};
-
 const toWikiRelativePath = (globPath: string): string =>
   globPath.replace(/^\.\.\/wiki\//, '').replace(/\\/g, '/');
-
-const isExternalHref = (href: string): boolean =>
-  /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) || href.startsWith('//');
 
 const ALLOWED_LINK_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 const ALLOWED_IMAGE_SCHEMES = new Set(['http:', 'https:']);
@@ -266,10 +233,10 @@ export const WikiBrowser: React.FC = () => {
     if (!href || isExternalHref(href) || href.startsWith('mailto:') || href.startsWith('tel:')) {
       return null;
     }
-    const { path, hash } = splitHash(href);
+    const { path, hash } = splitWikiHash(href);
     if (!path || !path.toLowerCase().endsWith('.md')) return null;
 
-    const resolvedFilePath = resolveFromFile(selectedDoc.filePath, path).toLowerCase();
+    const resolvedFilePath = resolveWikiPathFromFile(selectedDoc.filePath, path).toLowerCase();
     const targetDoc = wikiDocByFilePath.get(resolvedFilePath);
     if (!targetDoc) return null;
     return `${toWikiRoute(targetDoc.slug)}${hash}`;
@@ -277,9 +244,9 @@ export const WikiBrowser: React.FC = () => {
 
   const resolveAssetUrl = (srcOrHref: string): string | null => {
     if (!srcOrHref || isExternalHref(srcOrHref) || srcOrHref.startsWith('/')) return null;
-    const { path } = splitHash(srcOrHref);
+    const { path } = splitWikiHash(srcOrHref);
     if (!path) return null;
-    const resolvedAssetPath = resolveFromFile(selectedDoc.filePath, path).toLowerCase();
+    const resolvedAssetPath = resolveWikiPathFromFile(selectedDoc.filePath, path).toLowerCase();
     return wikiAssetByPath.get(resolvedAssetPath) ?? null;
   };
 
