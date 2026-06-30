@@ -12,6 +12,7 @@ permissions: read-all
 jobs:
   analyze:
     name: Analyze (CodeQL)
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'automated/nvd-cve-update')
     runs-on: ubuntu-latest
     permissions:
       actions: read
