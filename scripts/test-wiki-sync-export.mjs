@@ -44,8 +44,13 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
   await writeFixture(sourceDir, 'INDEX.md', [
     '# Wiki Index',
     '',
+    '## Start Here',
     '- [Overview](overview.md)',
+    '',
+    '## Translations',
     '- [Spanish](es/INDEX.md)',
+    '',
+    '## Modules',
     '- [Automation](modules/automation-release.md#dry-run)',
     '',
   ].join('\n'));
@@ -77,6 +82,7 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
 
   assert.deepEqual(await listFiles(outputDir), [
     'Home.md',
+    '_Sidebar.md',
     'assets/logo.png',
     'es-Home.md',
     'es-media.md',
@@ -95,6 +101,7 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
       ['overview.md', 'overview.md'],
     ],
   );
+  assert.equal(result.sidebar, '_Sidebar.md');
 
   const home = await readFile(path.join(outputDir, 'Home.md'), 'utf8');
   assert.match(home, /\[Overview\]\(overview\)/);
@@ -110,6 +117,17 @@ test('buildGithubWikiExport flattens nested wiki pages and rewrites markdown lin
   assert.match(media, /!\[Logo\]\(assets\/logo\.png\)/);
   assert.match(media, /\[Logo download\]\(assets\/logo\.png\)/);
   assert.doesNotMatch(media, /\.\.\/assets\/logo\.png/);
+
+  const sidebar = await readFile(path.join(outputDir, '_Sidebar.md'), 'utf8');
+  assert.match(sidebar, /^# ClawSec Wiki$/m);
+  assert.match(sidebar, /^- \[Home\]\(Home\)$/m);
+  assert.match(sidebar, /^## Start Here$/m);
+  assert.match(sidebar, /^- \[Overview\]\(overview\)$/m);
+  assert.match(sidebar, /^- \[Automation\]\(modules-automation-release\)$/m);
+  assert.match(sidebar, /^## Translations$/m);
+  assert.match(sidebar, /^- \*\*\[es\]\(es-Home\)\*\*$/m);
+  assert.match(sidebar, /^\s{2}- \[overview\]\(es-overview\)$/m);
+  assert.match(sidebar, /^\s{2}- \[media\]\(es-media\)$/m);
 });
 
 test('buildGithubWikiExport rejects flattened filename collisions', async () => {
@@ -144,6 +162,18 @@ test('buildGithubWikiExport exports the repository wiki without duplicate GitHub
     listDuplicatePageBasenames(files),
     [],
     'GitHub Wiki export must not include duplicate markdown basenames',
+  );
+
+  const sidebar = await readFile(path.join(outputDir, '_Sidebar.md'), 'utf8');
+  assert.match(
+    sidebar,
+    /^- \*\*\[de\]\(de-Home\)\*\*[\s\S]*^\s{2}- \[architecture\]\(de-architecture\)$/m,
+    'GitHub Wiki sidebar must group translated pages below their language code',
+  );
+  assert.match(
+    sidebar,
+    /^- \*\*\[ja\]\(ja-Home\)\*\*[\s\S]*^\s{2}- \[configuration\]\(ja-configuration\)$/m,
+    'GitHub Wiki sidebar must keep every language as a parent section',
   );
 });
 
@@ -186,6 +216,11 @@ test('wiki workflows verify pull requests without publishing and publish flatten
     verifyWorkflow,
     /Flattened GitHub Wiki export contains nested markdown files/,
     'wiki export verification must reject nested markdown files because GitHub lists them as duplicate page names',
+  );
+  assert.match(
+    verifyWorkflow,
+    /test -f "\$\{EXPORT_DIR\}\/_Sidebar\.md"/,
+    'wiki export verification must require the custom GitHub Wiki sidebar',
   );
   assert.doesNotMatch(
     syncWorkflow,
