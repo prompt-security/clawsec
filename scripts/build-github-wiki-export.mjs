@@ -8,6 +8,34 @@ import {
 
 const MARKDOWN_EXTENSION = /\.md$/i;
 const MARKDOWN_LINK_PATTERN = /(\]\()([^)\s]+)(\))/g;
+const SIDEBAR_OUTPUT_PATH = '_Sidebar.md';
+const ROOT_SIDEBAR_SECTIONS = [
+  'Start Here',
+  'Guides',
+  'Operations',
+  'Modules',
+  'Glossary',
+  'Generation Metadata',
+];
+const LANGUAGE_PAGE_ORDER = [
+  'INDEX.md',
+  'overview.md',
+  'architecture.md',
+  'localization.md',
+  'dependencies.md',
+  'data-flow.md',
+  'configuration.md',
+  'testing.md',
+  'workflow.md',
+  'security.md',
+  'security-signing-runbook.md',
+  'migration-signed-feed.md',
+  'platform-verification.md',
+  'remediation-plan.md',
+  'exploitability-scoring.md',
+  'glossary.md',
+  'GENERATION.md',
+];
 
 const listFiles = async (rootDir) => {
   const files = [];
@@ -73,6 +101,139 @@ const buildMarkdownPathMap = (markdownFiles) => {
 const toGithubWikiPageHref = (outputPath) =>
   outputPath.replace(MARKDOWN_EXTENSION, '');
 
+const formatLanguagePageLabel = (relativePath) => {
+  if (relativePath.toLowerCase() === 'index.md') return 'Home';
+  return relativePath
+    .replace(MARKDOWN_EXTENSION, '')
+    .replace(/\//g, ' / ')
+    .replace(/-/g, ' ');
+};
+
+const compareLanguagePages = (left, right) => {
+  const leftIndex = LANGUAGE_PAGE_ORDER.findIndex(
+    (page) => page.toLowerCase() === left.toLowerCase(),
+  );
+  const rightIndex = LANGUAGE_PAGE_ORDER.findIndex(
+    (page) => page.toLowerCase() === right.toLowerCase(),
+  );
+
+  if (leftIndex !== -1 || rightIndex !== -1) {
+    if (leftIndex === -1) return 1;
+    if (rightIndex === -1) return -1;
+    return leftIndex - rightIndex;
+  }
+
+  return left.localeCompare(right);
+};
+
+const extractLinkedSections = ({ content, currentFilePath, sourceToOutput }) => {
+  const sections = new Map();
+  let currentSection = '';
+
+  for (const line of content.split(/\r?\n/)) {
+    const headingMatch = /^##\s+(.+?)\s*$/.exec(line);
+    if (headingMatch) {
+      currentSection = headingMatch[1];
+      if (!sections.has(currentSection)) sections.set(currentSection, []);
+      continue;
+    }
+
+    const linkMatch = /^\s*-\s+\[([^\]]+)\]\(([^)\s]+)\)/.exec(line);
+    if (!currentSection || !linkMatch) continue;
+
+    const [, label, href] = linkMatch;
+    const target = resolveWikiLinkTarget(currentFilePath, href);
+    if (!target || !MARKDOWN_EXTENSION.test(target.path)) continue;
+
+    const outputPath = sourceToOutput.get(target.path.toLowerCase());
+    if (!outputPath) continue;
+
+    sections.get(currentSection).push({
+      label,
+      sourcePath: target.path,
+      href: toGithubWikiPageHref(outputPath),
+    });
+  }
+
+  return sections;
+};
+
+const buildLanguageGroups = ({ markdownFiles, rootSections, sourceToOutput }) => {
+  const translations = rootSections.get('Translations') ?? [];
+  const orderedLanguageCodes = translations
+    .map(({ sourcePath }) => /^([^/]+)\/INDEX\.md$/i.exec(sourcePath)?.[1])
+    .filter(Boolean);
+  const languageCodes = orderedLanguageCodes.length > 0
+    ? orderedLanguageCodes
+    : markdownFiles
+      .map((sourcePath) => /^([^/]+)\/INDEX\.md$/i.exec(sourcePath)?.[1])
+      .filter(Boolean)
+      .sort();
+
+  return languageCodes.map((languageCode) => {
+    const languagePrefix = `${languageCode}/`;
+    const pages = markdownFiles
+      .filter((sourcePath) => sourcePath.startsWith(languagePrefix))
+      .map((sourcePath) => ({
+        sourcePath,
+        relativePath: sourcePath.slice(languagePrefix.length),
+      }))
+      .sort((left, right) => compareLanguagePages(left.relativePath, right.relativePath))
+      .map(({ sourcePath, relativePath }) => ({
+        label: formatLanguagePageLabel(relativePath),
+        href: toGithubWikiPageHref(sourceToOutput.get(sourcePath.toLowerCase())),
+      }));
+
+    return {
+      code: languageCode,
+      pages,
+    };
+  });
+};
+
+const appendSidebarEntries = (lines, entries) => {
+  for (const entry of entries) {
+    lines.push(`- [${entry.label}](${entry.href})`);
+  }
+};
+
+const buildSidebarContent = ({ rootIndexContent, markdownFiles, sourceToOutput }) => {
+  const rootSections = extractLinkedSections({
+    content: rootIndexContent,
+    currentFilePath: 'INDEX.md',
+    sourceToOutput,
+  });
+  const languageGroups = buildLanguageGroups({ markdownFiles, rootSections, sourceToOutput });
+  const lines = [
+    '# ClawSec Wiki',
+    '',
+    '- [Home](Home)',
+    '',
+  ];
+
+  for (const sectionTitle of ROOT_SIDEBAR_SECTIONS) {
+    const entries = rootSections.get(sectionTitle) ?? [];
+    if (entries.length === 0) continue;
+    lines.push(`## ${sectionTitle}`);
+    appendSidebarEntries(lines, entries);
+    lines.push('');
+  }
+
+  if (languageGroups.length > 0) {
+    lines.push('## Translations');
+    for (const group of languageGroups) {
+      const homeHref = group.pages.find((page) => page.label === 'Home')?.href;
+      lines.push(homeHref ? `- **[${group.code}](${homeHref})**` : `- **${group.code}**`);
+      for (const page of group.pages.filter((entry) => entry.label !== 'Home')) {
+        lines.push(`  - [${page.label}](${page.href})`);
+      }
+    }
+    lines.push('');
+  }
+
+  return `${lines.join('\n').trimEnd()}\n`;
+};
+
 const rewriteMarkdownLinks = ({ content, sourcePath, sourceToOutput, assetPaths }) =>
   content.replace(MARKDOWN_LINK_PATTERN, (match, prefix, href, suffix) => {
     const target = resolveWikiLinkTarget(sourcePath, href);
@@ -97,7 +258,7 @@ const rewriteMarkdownLinks = ({ content, sourcePath, sourceToOutput, assetPaths 
  * duplicate basename entries.
  *
  * @param {{ sourceDir: string, outputDir: string }} options
- * @returns {Promise<{ files: Array<{ sourcePath: string, outputPath: string }>, assets: string[] }>}
+ * @returns {Promise<{ files: Array<{ sourcePath: string, outputPath: string }>, sidebar: string, assets: string[] }>}
  */
 export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
   if (!sourceDir) throw new Error('sourceDir is required');
@@ -128,6 +289,14 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
     exportedFiles.push({ sourcePath, outputPath });
   }
 
+  const rootIndexPath = path.join(sourceDir, 'INDEX.md');
+  const rootIndexContent = await readFile(rootIndexPath, 'utf8');
+  await writeFile(
+    path.join(outputDir, SIDEBAR_OUTPUT_PATH),
+    buildSidebarContent({ rootIndexContent, markdownFiles, sourceToOutput }),
+    'utf8',
+  );
+
   for (const sourcePath of assetFiles) {
     const sourceFullPath = path.join(sourceDir, sourcePath);
     const outputFullPath = path.join(outputDir, sourcePath);
@@ -137,6 +306,7 @@ export const buildGithubWikiExport = async ({ sourceDir, outputDir }) => {
 
   return {
     files: exportedFiles,
+    sidebar: SIDEBAR_OUTPUT_PATH,
     assets: assetFiles,
   };
 };
@@ -176,5 +346,7 @@ const isDirectRun = () => {
 
 if (isDirectRun()) {
   const result = await buildGithubWikiExport(parseArgs(process.argv.slice(2)));
-  console.log(`Exported ${result.files.length} wiki pages and ${result.assets.length} assets.`);
+  console.log(
+    `Exported ${result.files.length} wiki pages, ${result.sidebar}, and ${result.assets.length} assets.`,
+  );
 }
