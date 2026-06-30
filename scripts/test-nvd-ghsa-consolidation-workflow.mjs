@@ -61,6 +61,16 @@ assert.match(
 );
 assert.match(
   workflow,
+  /node scripts\/ci\/repair_stale_exploitability\.mjs[\s\S]*--feed "\$FEED_PATH"[\s\S]*--updates tmp\/updated_advisories\.json[\s\S]*--output tmp\/updated_advisories\.json[\s\S]*--nvd-json tmp\/filtered_cves\.json/,
+  'NVD delta updates must repair stale exploitability enrichment before publishing the feed',
+);
+assert.match(
+  workflow,
+  /id: nvd_counts[\s\S]*Final NVD advisories to update:[\s\S]*nvd_updated_count=\$UPDATE_COUNT/,
+  'NVD workflow must finalize updated counts after enrichment and full-scan rebuild comparison',
+);
+assert.match(
+  workflow,
   /REBUILT_COUNT=/,
   'NVD full-scan mode must report rebuilt CVEs separately from net-new CVEs',
 );
@@ -86,7 +96,7 @@ assert.match(
 );
 assert.match(
   workflow,
-  /TITLE="chore: update NVD\/GHSA advisories - \$\{\{ steps\.transform\.outputs\.nvd_new_to_feed_count \}\} NVD new, \$\{\{ steps\.updates\.outputs\.nvd_updated_count \}\} NVD updated, \$\{\{ steps\.feed_changes\.outputs\.ghsa_added_to_consolidated_count \}\} GHSA active added"/,
+  /TITLE="chore: update NVD\/GHSA advisories - \$\{\{ steps\.transform\.outputs\.nvd_new_to_feed_count \}\} NVD new, \$\{\{ steps\.nvd_counts\.outputs\.nvd_updated_count \}\} NVD updated, \$\{\{ steps\.feed_changes\.outputs\.ghsa_added_to_consolidated_count \}\} GHSA active added"/,
   'Generated PR titles must include net-new NVD, updated NVD, and GHSA-only addition counts',
 );
 assert.match(
