@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-07-06T04:46:57.906Z",
+  "updated_at": "2026-07-07T04:37:16.250Z",
   "daily": {
     "views": [
       {
@@ -204,6 +204,11 @@
         "timestamp": "2026-07-04T00:00:00Z",
         "count": 43,
         "uniques": 30
+      },
+      {
+        "timestamp": "2026-07-05T00:00:00Z",
+        "count": 41,
+        "uniques": 27
       }
     ],
     "clones": [
@@ -406,6 +411,11 @@
         "timestamp": "2026-07-04T00:00:00Z",
         "count": 172,
         "uniques": 60
+      },
+      {
+        "timestamp": "2026-07-05T00:00:00Z",
+        "count": 81,
+        "uniques": 48
       }
     ]
   },
@@ -1849,6 +1859,62 @@
             "referrer": "linkedin.com",
             "count": 4,
             "uniques": 2
+          },
+          {
+            "referrer": "rentamac.io",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 2,
+            "uniques": 2
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-07-07T04:37:16.250Z",
+        "date": "2026-07-07",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 212,
+            "uniques": 106
+          },
+          {
+            "referrer": "Google",
+            "count": 125,
+            "uniques": 82
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 14,
+            "uniques": 8
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 6,
+            "uniques": 5
+          },
+          {
+            "referrer": "Bing",
+            "count": 6,
+            "uniques": 2
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "referrer": "statics.teams.cdn.office.net",
+            "count": 5,
+            "uniques": 3
           },
           {
             "referrer": "rentamac.io",
@@ -3584,6 +3650,72 @@
             "uniques": 6
           }
         ]
+      },
+      {
+        "captured_at": "2026-07-07T04:37:16.250Z",
+        "date": "2026-07-07",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 448,
+            "uniques": 305
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 38,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/actions/runs/28426361118",
+            "title": "/actions/runs/28426361118",
+            "count": 28,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 26,
+            "uniques": 22
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 18,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 14,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 13,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/wiki",
+            "title": "/wiki",
+            "count": 11,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/actions",
+            "title": "/actions",
+            "count": 11,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 8,
+            "uniques": 6
+          }
+        ]
       }
     ]
   },
@@ -3898,6 +4030,18 @@
       "clones_window": {
         "count": 4793,
         "uniques": 903
+      }
+    },
+    {
+      "captured_at": "2026-07-07T04:37:16.250Z",
+      "date": "2026-07-07",
+      "views_window": {
+        "count": 868,
+        "uniques": 357
+      },
+      "clones_window": {
+        "count": 4330,
+        "uniques": 878
       }
     }
   ]
