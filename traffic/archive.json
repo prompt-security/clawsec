@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-07-10T04:38:07.700Z",
+  "updated_at": "2026-07-11T04:24:01.874Z",
   "daily": {
     "views": [
       {
@@ -224,6 +224,11 @@
         "timestamp": "2026-07-08T00:00:00Z",
         "count": 30,
         "uniques": 23
+      },
+      {
+        "timestamp": "2026-07-09T00:00:00Z",
+        "count": 44,
+        "uniques": 38
       }
     ],
     "clones": [
@@ -446,6 +451,11 @@
         "timestamp": "2026-07-08T00:00:00Z",
         "count": 114,
         "uniques": 56
+      },
+      {
+        "timestamp": "2026-07-09T00:00:00Z",
+        "count": 97,
+        "uniques": 54
       }
     ]
   },
@@ -2128,6 +2138,62 @@
             "referrer": "DuckDuckGo",
             "count": 2,
             "uniques": 2
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-07-11T04:24:01.874Z",
+        "date": "2026-07-11",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 192,
+            "uniques": 114
+          },
+          {
+            "referrer": "Google",
+            "count": 105,
+            "uniques": 73
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 12,
+            "uniques": 7
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 9,
+            "uniques": 4
+          },
+          {
+            "referrer": "Bing",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "statics.teams.cdn.office.net",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "medium.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "rentamac.io",
+            "count": 3,
+            "uniques": 1
           }
         ]
       }
@@ -4112,6 +4178,72 @@
             "uniques": 4
           }
         ]
+      },
+      {
+        "captured_at": "2026-07-11T04:24:01.874Z",
+        "date": "2026-07-11",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 413,
+            "uniques": 307
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 28,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/actions/runs/28426361118",
+            "title": "/actions/runs/28426361118",
+            "count": 28,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 15,
+            "uniques": 13
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 13,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 12,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/wiki",
+            "title": "/wiki",
+            "count": 11,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/actions",
+            "title": "/actions",
+            "count": 10,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 7,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 6,
+            "uniques": 4
+          }
+        ]
       }
     ]
   },
@@ -4474,6 +4606,18 @@
       "clones_window": {
         "count": 2575,
         "uniques": 675
+      }
+    },
+    {
+      "captured_at": "2026-07-11T04:24:01.874Z",
+      "date": "2026-07-11",
+      "views_window": {
+        "count": 715,
+        "uniques": 354
+      },
+      "clones_window": {
+        "count": 2368,
+        "uniques": 665
       }
     }
   ]
