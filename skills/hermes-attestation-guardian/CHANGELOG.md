@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.7] - 2026-07-12
+
+### Fixed
+
+- Accepted valid CPE 2.3 metadata from the consolidated advisory feed without treating it as a package selector.
+- Added AND comparator-set and prerelease-aware matching for the range forms currently emitted by the signed feed.
+- Preserved fail-closed rejection for malformed CPEs, partially parsed comparator sets, OR ranges, and hyphen ranges.
+
+### Testing
+
+- Added a regression that validates the complete tracked advisory feed with the Hermes consumer.
+- Added guarded verification coverage for comma-separated and space-separated ranges, prerelease precedence, and build metadata.
+
 ## [0.1.6] - 2026-06-23
 
 ### Changed

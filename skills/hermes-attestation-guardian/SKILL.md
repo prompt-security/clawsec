@@ -1,6 +1,6 @@
 ---
 name: hermes-attestation-guardian
-version: 0.1.6
+version: 0.1.7
 description: Hermes-only runtime security attestation and drift detection skill for operator-managed Hermes infrastructure.
 homepage: https://clawsec.prompt.security
 hermes:
@@ -31,7 +31,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="hermes-attestation-guardian"
-VERSION="0.1.6"
+VERSION="0.1.7"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -233,7 +233,8 @@ The default signed advisory feed is consolidated: it can contain NVD CVEs, appro
 - Default output root is `~/.hermes/security/attestations/`.
 - No destructive remediation actions (delete/restore/quarantine) are implemented.
 - Advisory feed remote URL allowlisting is not implemented in v0.0.2; operators must explicitly trust configured feed/checksum endpoints.
-- Guarded advisory version matching currently uses a lightweight comparator parser (`>=`, `<=`, `>`, `<`, `=`, `^`, `~`, wildcard `*`) and does not implement full npm semver range grammar (for example, OR ranges and complex comparator sets).
+- Guarded advisory version matching supports `>=`, `<=`, `>`, `<`, `=`, `^`, `~`, wildcard `*`, AND comparator sets separated by spaces or commas, and SemVer prerelease precedence. OR and hyphen ranges remain unsupported and fail closed.
+- Valid CPE 2.3 entries from the consolidated NVD feed are accepted as non-package metadata and ignored by package-name matching. Malformed CPE entries still fail closed.
 - Operator policy file is optional JSON with:
   - `watch_files`: list of file paths
   - `trust_anchor_files`: list of file paths

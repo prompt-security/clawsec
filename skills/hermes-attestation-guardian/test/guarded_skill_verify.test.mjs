@@ -281,8 +281,43 @@ await withTempDir(async (tempDir) => {
     { label: "tilde-reject-minor-bump", versionSpec: "~1.2.3", candidateVersion: "1.3.0", expectedStatus: 0 },
     { label: "wildcard-accept", versionSpec: "1.2.*", candidateVersion: "1.2.99", expectedStatus: 42 },
     { label: "wildcard-reject", versionSpec: "1.2.*", candidateVersion: "1.3.0", expectedStatus: 0 },
+    {
+      label: "comma-comparator-set-accept",
+      versionSpec: ">= 2026.5.14-beta.1, < 2026.5.27",
+      candidateVersion: "2026.5.20",
+      expectedStatus: 42,
+    },
+    {
+      label: "comma-comparator-set-reject-upper-bound",
+      versionSpec: ">= 2026.5.14-beta.1, < 2026.5.27",
+      candidateVersion: "2026.5.27",
+      expectedStatus: 0,
+    },
+    {
+      label: "space-comparator-set-accept",
+      versionSpec: ">= 2026.2.13 <= 2026.3.1",
+      candidateVersion: "2026.3.1",
+      expectedStatus: 42,
+    },
+    {
+      label: "prerelease-precedence",
+      versionSpec: "<1.2.3",
+      candidateVersion: "1.2.3-beta.1",
+      expectedStatus: 42,
+    },
+    {
+      label: "build-metadata-ignored",
+      versionSpec: "=1.2.3+build.2",
+      candidateVersion: "1.2.3+build.1",
+      expectedStatus: 42,
+    },
     { label: "malformed-comparator-fail-closed", versionSpec: ">>1.2.3", candidateVersion: "1.9.0", expectedStatus: 1 },
-    { label: "comparator-set-fail-closed", versionSpec: ">=1 <2", candidateVersion: "1.9.0", expectedStatus: 1 },
+    {
+      label: "partially-parsed-comparator-set-fail-closed",
+      versionSpec: ">=1.0.0 garbage <2.0.0",
+      candidateVersion: "1.9.0",
+      expectedStatus: 1,
+    },
     { label: "logical-or-fail-closed", versionSpec: "1.2 || 1.3", candidateVersion: "1.2.5", expectedStatus: 1 },
   ];
 
