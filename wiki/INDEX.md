@@ -32,6 +32,7 @@
 - [Signed Feed Migration Plan](migration-signed-feed.md)
 - [Platform Verification Checklist](platform-verification.md)
 - [Cross-Platform Remediation Plan](remediation-plan.md)
+- [Agent-Harness Testing Pipeline (Design)](agent-harness-testing.md)
 
 ## Modules
 - [Frontend Web App](modules/frontend-web.md)
@@ -53,6 +54,7 @@
 - [Generation Metadata](GENERATION.md)
 
 ## Update Notes
+- 2026-07-12: Added Operations design doc `agent-harness-testing.md` — two-phase automated agent-harness testing pipeline (pre-merge claims verification + post-release pipeline verification) with tiered mock/Bedrock inference and keyless OIDC access.
 - 2026-05-04: Added runtime traffic guardian baseline module and platform-specific skill scaffolds for OpenClaw, Hermes, NanoClaw, and Picoclaw.
 - 2026-04-26: Split Picoclaw self-pen-testing into standalone `picoclaw-self-pen-testing`; updated Picoclaw module docs and references.
 - 2026-04-25: Added Picoclaw Security Guardian module for advisory awareness, config drift detection, and chain-of-supply verification.
