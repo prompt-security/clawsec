@@ -106,6 +106,16 @@ assert.match(
   /advisory_pages_artifacts\.mjs publish-release-mirror/,
   "Pages Verify must simulate the production release compatibility mirror",
 );
+assert.match(
+  stepBody(workflow, "Verify deployed advisory endpoints"),
+  /advisory_pages_artifacts\.mjs verify-url/,
+  "Deploy Pages must verify the real custom-domain endpoints after deployment",
+);
+assert.match(
+  stepBody(workflow, "Verify deployed advisory endpoints"),
+  /--base-url https:\/\/clawsec\.prompt\.security/,
+  "post-deploy verification must target the production custom domain",
+);
 
 async function collectContractSources(entryPath) {
   const stat = await fs.stat(entryPath);

@@ -69,7 +69,11 @@ async function advisoryMappings(publicDir) {
   const ghsaPath = path.join(publicDir, "advisories/ghsa-without-cve.json");
   if (!(await fileExists(ghsaPath))) return [...RELEASE_MIRROR_MAPPINGS];
   await requireFile(path.join(publicDir, "advisories/ghsa-without-cve.json.sig"));
-  return [...RELEASE_MIRROR_MAPPINGS, ...OPTIONAL_GHSA_MAPPINGS];
+  return releaseMappings(true);
+}
+
+function releaseMappings(includeGhsa) {
+  return includeGhsa ? [...RELEASE_MIRROR_MAPPINGS, ...OPTIONAL_GHSA_MAPPINGS] : [...RELEASE_MIRROR_MAPPINGS];
 }
 
 async function copyMappings({ sourceRoot, destinationRoot, mappings }) {
@@ -228,7 +232,7 @@ async function stopServer(server) {
 }
 
 async function fetchArtifact(baseUrl, artifactPath) {
-  const response = await globalThis.fetch(`${baseUrl}/${artifactPath}`);
+  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${artifactPath}`);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for /${artifactPath}`);
   }
@@ -238,78 +242,105 @@ async function fetchArtifact(baseUrl, artifactPath) {
   };
 }
 
+async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror }) {
+  const fetched = new Map();
+  for (const artifactPath of ADVISORY_PUBLIC_CONTRACT) {
+    fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
+  }
+  if (includeGhsa) {
+    for (const artifactPath of ["advisories/ghsa-without-cve.json", "advisories/ghsa-without-cve.json.sig"]) {
+      fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
+    }
+  }
+
+  if (!fetched.get(CHECKSUM_ALIAS).contentType.startsWith("application/json")) {
+    throw new Error(`unexpected content type for /${CHECKSUM_ALIAS}`);
+  }
+
+  const checksums = fetched.get("checksums.json").body;
+  const checksumsSignature = fetched.get("checksums.sig").body;
+  const publicKey = fetched.get("signing-public.pem").body;
+  verifySignature(checksums, checksumsSignature, publicKey, "checksum manifest");
+  verifySignature(
+    fetched.get("advisories/feed.json").body,
+    fetched.get("advisories/feed.json.sig").body,
+    publicKey,
+    "advisory feed",
+  );
+
+  const manifest = JSON.parse(checksums.toString("utf8"));
+  verifyManifestEntry(manifest, "advisories/feed.json", fetched.get("advisories/feed.json").body);
+  verifyManifestEntry(manifest, "advisories/feed.json.sig", fetched.get("advisories/feed.json.sig").body);
+  if (includeGhsa) {
+    verifySignature(
+      fetched.get("advisories/ghsa-without-cve.json").body,
+      fetched.get("advisories/ghsa-without-cve.json.sig").body,
+      publicKey,
+      "provisional GHSA feed",
+    );
+    verifyManifestEntry(
+      manifest,
+      "advisories/ghsa-without-cve.json",
+      fetched.get("advisories/ghsa-without-cve.json").body,
+    );
+    verifyManifestEntry(
+      manifest,
+      "advisories/ghsa-without-cve.json.sig",
+      fetched.get("advisories/ghsa-without-cve.json.sig").body,
+    );
+  }
+
+  if (!checksums.equals(fetched.get(CHECKSUM_ALIAS).body)) throw new Error("HTTP checksum alias differs from root");
+  if (!checksumsSignature.equals(fetched.get(CHECKSUM_SIGNATURE_ALIAS).body)) {
+    throw new Error("HTTP checksum signature alias differs from root");
+  }
+  if (!publicKey.equals(fetched.get(PUBLIC_KEY_ALIAS).body)) throw new Error("HTTP signing-key alias differs from root");
+
+  if (includeReleaseMirror) {
+    for (const [source, destination] of releaseMappings(includeGhsa)) {
+      const [sourceArtifact, mirroredArtifact] = await Promise.all([
+        fetchArtifact(baseUrl, source),
+        fetchArtifact(baseUrl, `releases/latest/download/${destination}`),
+      ]);
+      if (!sourceArtifact.body.equals(mirroredArtifact.body)) {
+        throw new Error(`HTTP release mirror differs: ${destination}`);
+      }
+    }
+  }
+}
+
 export async function smokeTestBuiltAdvisoryEndpoints({ distDir = "dist" } = {}) {
   const { server, baseUrl } = await startStaticServer(distDir);
   try {
-    const fetched = new Map();
-    for (const artifactPath of ADVISORY_PUBLIC_CONTRACT) {
-      fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
-    }
-    const hasGhsaFeed = await fileExists(path.join(distDir, "advisories/ghsa-without-cve.json"));
-    if (hasGhsaFeed) {
-      for (const artifactPath of ["advisories/ghsa-without-cve.json", "advisories/ghsa-without-cve.json.sig"]) {
-        fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
-      }
-    }
-
-    if (!fetched.get(CHECKSUM_ALIAS).contentType.startsWith("application/json")) {
-      throw new Error(`unexpected content type for /${CHECKSUM_ALIAS}`);
-    }
-
-    const checksums = fetched.get("checksums.json").body;
-    const checksumsSignature = fetched.get("checksums.sig").body;
-    const publicKey = fetched.get("signing-public.pem").body;
-    verifySignature(checksums, checksumsSignature, publicKey, "checksum manifest");
-    verifySignature(
-      fetched.get("advisories/feed.json").body,
-      fetched.get("advisories/feed.json.sig").body,
-      publicKey,
-      "advisory feed",
-    );
-
-    const manifest = JSON.parse(checksums.toString("utf8"));
-    verifyManifestEntry(manifest, "advisories/feed.json", fetched.get("advisories/feed.json").body);
-    verifyManifestEntry(manifest, "advisories/feed.json.sig", fetched.get("advisories/feed.json.sig").body);
-    if (hasGhsaFeed) {
-      verifySignature(
-        fetched.get("advisories/ghsa-without-cve.json").body,
-        fetched.get("advisories/ghsa-without-cve.json.sig").body,
-        publicKey,
-        "provisional GHSA feed",
-      );
-      verifyManifestEntry(
-        manifest,
-        "advisories/ghsa-without-cve.json",
-        fetched.get("advisories/ghsa-without-cve.json").body,
-      );
-      verifyManifestEntry(
-        manifest,
-        "advisories/ghsa-without-cve.json.sig",
-        fetched.get("advisories/ghsa-without-cve.json.sig").body,
-      );
-    }
-
-    if (!checksums.equals(fetched.get(CHECKSUM_ALIAS).body)) throw new Error("HTTP checksum alias differs from root");
-    if (!checksumsSignature.equals(fetched.get(CHECKSUM_SIGNATURE_ALIAS).body)) {
-      throw new Error("HTTP checksum signature alias differs from root");
-    }
-    if (!publicKey.equals(fetched.get(PUBLIC_KEY_ALIAS).body)) throw new Error("HTTP signing-key alias differs from root");
-
-    const mirrorDir = path.join(distDir, "releases/latest/download");
-    if (await directoryExists(mirrorDir)) {
-      for (const [source, destination] of await advisoryMappings(distDir)) {
-        const [sourceArtifact, mirroredArtifact] = await Promise.all([
-          fetchArtifact(baseUrl, source),
-          fetchArtifact(baseUrl, `releases/latest/download/${destination}`),
-        ]);
-        if (!sourceArtifact.body.equals(mirroredArtifact.body)) {
-          throw new Error(`HTTP release mirror differs: ${destination}`);
-        }
-      }
-    }
+    await verifyAdvisoryEndpoints({
+      baseUrl,
+      includeGhsa: await fileExists(path.join(distDir, "advisories/ghsa-without-cve.json")),
+      includeReleaseMirror: await directoryExists(path.join(distDir, "releases/latest/download")),
+    });
   } finally {
     await stopServer(server);
   }
+}
+
+export async function verifyLiveAdvisoryEndpoints({
+  baseUrl = "https://clawsec.prompt.security",
+  attempts = 12,
+  retryDelayMs = 10_000,
+} = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= Number(attempts); attempt += 1) {
+    try {
+      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa: true, includeReleaseMirror: true });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < Number(attempts)) {
+        process.stderr.write(`Production verification attempt ${attempt} failed: ${error.message}; retrying\n`);
+        await new Promise((resolve) => globalThis.setTimeout(resolve, Number(retryDelayMs)));
+      }
+    }
+  }
+  throw lastError;
 }
 
 function parseOptions(args) {
@@ -324,6 +355,9 @@ function parseOptions(args) {
     else if (option === "--dist-dir") options.distDir = value;
     else if (option === "--mirror-dir") options.mirrorDir = value;
     else if (option === "--repository") options.repository = value;
+    else if (option === "--base-url") options.baseUrl = value;
+    else if (option === "--attempts") options.attempts = Number(value);
+    else if (option === "--retry-delay-ms") options.retryDelayMs = Number(value);
     else throw new Error(`unknown option: ${option}`);
     index += 1;
   }
@@ -348,9 +382,12 @@ async function main() {
   } else if (command === "smoke-http") {
     await smokeTestBuiltAdvisoryEndpoints(options);
     process.stdout.write("Smoke-tested built advisory endpoints over HTTP\n");
+  } else if (command === "verify-url") {
+    await verifyLiveAdvisoryEndpoints(options);
+    process.stdout.write(`Verified deployed advisory endpoints at ${options.baseUrl}\n`);
   } else {
     throw new Error(
-      "usage: advisory_pages_artifacts.mjs <generate|publish-aliases|publish-release-mirror|verify-built|smoke-http> [options]",
+      "usage: advisory_pages_artifacts.mjs <generate|publish-aliases|publish-release-mirror|verify-built|smoke-http|verify-url> [options]",
     );
   }
 }
