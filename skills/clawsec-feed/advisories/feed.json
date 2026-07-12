@@ -1,52 +1,462 @@
 {
   "version": "0.0.3",
-  "updated": "2026-07-02T07:06:24Z",
+  "updated": "2026-07-12T06:52:13Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
-      "id": "GHSA-4pqj-3c56-5fqq",
-      "ghsa_id": "GHSA-4pqj-3c56-5fqq",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "github_security_advisory",
-      "nvd_category_id": "CWE-184",
-      "title": "Workspace dotenv files could override provider credentials",
-      "description": "Summary Workspace dotenv files could override provider credentials. In affected versions, a lower-trust caller or configured input path could expose data or credentials that should have remained within the trusted boundary. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could expose data or credentials that should have remained within the trusted boundary. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.5.28. Mitigations Upgrade to OpenClaw 2026.5.28 or later. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
+      "id": "CVE-2026-15320",
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "A vulnerability was detected in Sipeed PicoClaw up to 0.2.9. This vulnerability affects the function...",
+      "description": "A vulnerability was detected in Sipeed PicoClaw up to 0.2.9. This vulnerability affects the function rt.ReloadConfig of the file pkg/channels/pico/pico.go. Performing a manipulation of the argument message.send results in missing authorization. It is possible to initiate the attack remotely. The exploit is now public and may be used. The reported GitHub issue was closed automatically due to inactivity.",
       "affected": [
-        "openclaw@< 2026.5.28"
+        "picoclaw@*"
       ],
-      "patched": [
-        "openclaw@2026.5.28"
+      "platforms": [
+        "picoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-10T03:16:20.723",
+      "references": [
+        "https://github.com/sipeed/picoclaw/",
+        "https://github.com/sipeed/picoclaw/issues/3071",
+        "https://vuldb.com/cve/CVE-2026-15320"
+      ],
+      "cvss_score": 5.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-15320",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.4); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-15319",
+      "severity": "high",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A security vulnerability has been detected in Sipeed PicoClaw up to 0.2.9. This affects the function...",
+      "description": "A security vulnerability has been detected in Sipeed PicoClaw up to 0.2.9. This affects the function IPAllowlist of the file web/backend/middleware/access_control.go of the component Launcher. Such manipulation leads to improper access controls. The attack may be performed from remote. The exploit has been disclosed publicly and may be used. The name of the patch is 3126. A patch should be applied to remediate this issue.",
+      "affected": [
+        "picoclaw@*"
+      ],
+      "platforms": [
+        "picoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-10T03:16:20.433",
+      "references": [
+        "https://github.com/sipeed/picoclaw/",
+        "https://github.com/sipeed/picoclaw/issues/3069",
+        "https://github.com/sipeed/picoclaw/pull/3126"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-15319",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-15318",
+      "severity": "medium",
+      "type": "improper_authorization",
+      "nvd_category_id": "CWE-285",
+      "title": "A weakness has been identified in Sipeed PicoClaw up to 0.2.9. Affected by this issue is some unknow...",
+      "description": "A weakness has been identified in Sipeed PicoClaw up to 0.2.9. Affected by this issue is some unknown functionality of the file pkg/channels/mqtt/mqtt.go of the component MQTT Channel Handler. This manipulation of the argument client_id causes incorrect authorization. The attack is possible to be carried out remotely. The exploit has been made available to the public and could be used for attacks. The reported GitHub issue was closed automatically due to inactivity.",
+      "affected": [
+        "picoclaw@*"
+      ],
+      "platforms": [
+        "picoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-10T02:16:25.457",
+      "references": [
+        "https://github.com/sipeed/picoclaw/",
+        "https://github.com/sipeed/picoclaw/issues/3068",
+        "https://vuldb.com/cve/CVE-2026-15318"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-15318",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-15317",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "A security flaw has been discovered in Sipeed PicoClaw up to 0.2.9. Affected by this vulnerability i...",
+      "description": "A security flaw has been discovered in Sipeed PicoClaw up to 0.2.9. Affected by this vulnerability is the function WebFetchTool.Execute of the file pkg/tools/integration/web.go of the component Guarded Web Fetch Flow. The manipulation results in server-side request forgery. The attack can be executed remotely. The exploit has been released to the public and may be used for attacks. The reported GitHub issue was closed automatically due to inactivity.",
+      "affected": [
+        "picoclaw@*"
+      ],
+      "platforms": [
+        "picoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-10T00:16:33.027",
+      "references": [
+        "https://github.com/sipeed/picoclaw/",
+        "https://github.com/sipeed/picoclaw/issues/3078",
+        "https://vuldb.com/cve/CVE-2026-15317"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-15317",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-15311",
+      "severity": "low",
+      "type": "cross_site_scripting",
+      "nvd_category_id": "CWE-79",
+      "title": "A vulnerability was identified in NousResearch hermes-agent up to 2026.5.29.2. Affected by this issu...",
+      "description": "A vulnerability was identified in NousResearch hermes-agent up to 2026.5.29.2. Affected by this issue is the function MatrixAdapter._markdown_to_html of the file gateway/platforms/matrix.py of the component Matrix Adapter. Such manipulation leads to cross site scripting. The attack can be executed remotely. The exploit is publicly available and might be used. The pull request to fix this issue awaits acceptance.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-10T00:16:32.853",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/",
+        "https://github.com/NousResearch/hermes-agent/issues/42667",
+        "https://github.com/NousResearch/hermes-agent/pull/42759"
+      ],
+      "cvss_score": 3.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-15311",
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.5); network accessible; XSS has limited impact in headless agents",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-15193",
+      "severity": "medium",
+      "type": "command_injection",
+      "nvd_category_id": "CWE-77",
+      "title": "A vulnerability was determined in AidanPark openclaw-android up to 0.4.0. The affected element is an...",
+      "description": "A vulnerability was determined in AidanPark openclaw-android up to 0.4.0. The affected element is an unknown function of the file android/app/src/main/java/com/openclaw/android/JsBridge.kt of the component Android WebView Bridge. This manipulation causes os command injection. The attack can only be executed locally. The exploit has been publicly disclosed and may be utilized. The pull request to fix this issue awaits acceptance.",
+      "affected": [
+        "openclaw@*"
       ],
       "platforms": [
         "openclaw"
       ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T01:11:32Z",
-      "updated": "2026-06-30T01:11:32Z",
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-09T17:16:57.947",
       "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4pqj-3c56-5fqq"
+        "https://github.com/AidanPark/openclaw-android/",
+        "https://github.com/AidanPark/openclaw-android/issues/136",
+        "https://github.com/AidanPark/openclaw-android/pull/137"
       ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4pqj-3c56-5fqq",
-      "nvd_url": null,
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-15193",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-59261",
+      "severity": "high",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw before 2026.5.28 contains a credential exposure vulnerability where workspace dotenv files ...",
+      "description": "OpenClaw before 2026.5.28 contains a credential exposure vulnerability where workspace dotenv files can override provider credentials. Attackers with lower-trust access to configured input paths can expose sensitive data and credentials that should remain within trusted boundaries.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-08T17:17:25.640",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4pqj-3c56-5fqq",
+        "https://www.vulncheck.com/advisories/openclaw-credential-override-via-workspace-dotenv-files"
+      ],
       "cvss_score": 7.1,
-      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N",
-      "cwe_ids": [
-        "CWE-184",
-        "CWE-200"
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-59261",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "High CVSS score (7.1); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-14783",
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "A vulnerability was determined in NousResearch hermes-agent 2026.5.29.2. The impacted element is the...",
+      "description": "A vulnerability was determined in NousResearch hermes-agent 2026.5.29.2. The impacted element is the function skill_view of the file tools/skills_tool.py. Executing a manipulation of the argument Name can lead to path traversal. The attack can be launched remotely. The exploit has been publicly disclosed and may be utilized. This patch is called 56f833efa427ccb444c0f9ad1759af1012f2124d. It is advisable to implement a patch to correct this issue.",
+      "affected": [
+        "hermes@*"
       ],
-      "credits": [
-        "Har1sh-k"
+      "platforms": [
+        "hermes"
       ],
-      "aliases": [
-        "GHSA-4pqj-3c56-5fqq"
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-06T00:16:55.037",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/",
+        "https://github.com/NousResearch/hermes-agent/commit/56f833efa427ccb444c0f9ad1759af1012f2124d",
+        "https://github.com/NousResearch/hermes-agent/issues/38643"
       ],
-      "source_feed": "ghsa-without-cve"
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-14783",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-14628",
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "A vulnerability was detected in NousResearch hermes-agent up to 2026.5.16. This impacts the function...",
+      "description": "A vulnerability was detected in NousResearch hermes-agent up to 2026.5.16. This impacts the function extract_media of the file gateway/platforms/base.py of the component Live Webhook Endpoint. Performing a manipulation results in path traversal. The attack may be initiated remotely. The exploit is now public and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-04T13:16:30.413",
+      "references": [
+        "https://gist.github.com/YLChen-007/8af7eff27b50bec24b2d0f76dd1c4383",
+        "https://vuldb.com/cve/CVE-2026-14628",
+        "https://vuldb.com/submit/845599"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-14628",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.3); remotely exploitable without authentication; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-14627",
+      "severity": "medium",
+      "type": "improper_authentication",
+      "nvd_category_id": "CWE-287",
+      "title": "A security vulnerability has been detected in NousResearch hermes-agent up to 0.15.2. This affects t...",
+      "description": "A security vulnerability has been detected in NousResearch hermes-agent up to 0.15.2. This affects the function DiscordAdapter._is_allowed_user of the file gateway/platforms/discord.py of the component Discord Platform Integration. Such manipulation leads to improper authentication. The attack can be launched remotely. This attack is characterized by high complexity. The exploitability is reported as difficult. The exploit has been disclosed publicly and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-04T13:16:30.230",
+      "references": [
+        "https://gist.github.com/YLChen-007/d030c690b10a97319efb129ca2f5badb",
+        "https://vuldb.com/cve/CVE-2026-14627",
+        "https://vuldb.com/submit/845598"
+      ],
+      "cvss_score": 5.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-14627",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.6); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-14626",
+      "severity": "medium",
+      "type": "unknown_cwe_404",
+      "nvd_category_id": "CWE-404",
+      "title": "A weakness has been identified in NousResearch hermes-agent up to 2026.4.30. The impacted element is...",
+      "description": "A weakness has been identified in NousResearch hermes-agent up to 2026.4.30. The impacted element is the function AIAgent.run_conversation of the file run_agent.py of the component HTTP API. This manipulation of the argument todos causes denial of service. The attack can be initiated remotely. The exploit has been made available to the public and could be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-04T12:16:53.903",
+      "references": [
+        "https://gist.github.com/YLChen-007/b91a85f9448beadebe25d37a3f4fd760",
+        "https://vuldb.com/cve/CVE-2026-14626",
+        "https://vuldb.com/submit/845596"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-14626",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-14625",
+      "severity": "medium",
+      "type": "unknown_cwe_693",
+      "nvd_category_id": "CWE-693",
+      "title": "A security flaw has been discovered in NousResearch hermes-agent up to 0.15.2. The affected element ...",
+      "description": "A security flaw has been discovered in NousResearch hermes-agent up to 0.15.2. The affected element is the function shell.exec of the file tui_gateway/server.py. The manipulation results in protection mechanism failure. It is possible to launch the attack remotely. The exploit has been released to the public and may be used for attacks. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-04T12:16:53.740",
+      "references": [
+        "https://gist.github.com/YLChen-007/3b11589740dcf16b152b0929e1b3d024",
+        "https://vuldb.com/cve/CVE-2026-14625",
+        "https://vuldb.com/submit/845595"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-14625",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-14617",
+      "severity": "low",
+      "type": "unknown_cwe_178",
+      "nvd_category_id": "CWE-178",
+      "title": "A security vulnerability has been detected in NousResearch hermes-agent up to 2026.4.30. Affected is...",
+      "description": "A security vulnerability has been detected in NousResearch hermes-agent up to 2026.4.30. Affected is the function GatewayStreamConsumer._filter_and_accumulate of the file gateway/stream_consumer.py of the component Streaming Reasoning Tag Filter. The manipulation leads to improper handling of case sensitivity. The attack may be initiated remotely. The attack's complexity is rated as high. The exploitability is told to be difficult. The exploit has been disclosed publicly and may be used. The project decided to not implement a dedicated fix: \"[T]he analysis and the fix are both sound. It just lands below the bar for the maintenance cost of a duplicated scrub path.\"",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-03T22:16:52.943",
+      "references": [
+        "https://gist.github.com/YLChen-007/2229e5505bcbb3e15a7ae8fba4c4be37",
+        "https://github.com/NousResearch/hermes-agent/",
+        "https://github.com/NousResearch/hermes-agent/issues/27288"
+      ],
+      "cvss_score": 3.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-14617",
+      "exploitability_score": "low",
+      "exploitability_rationale": "Low CVSS score (3.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
     },
     {
       "id": "GHSA-8f46-3xx3-8c9m",
@@ -506,7 +916,7 @@
       "severity": "medium",
       "type": "github_security_advisory",
       "nvd_category_id": "CWE-290",
-      "title": "MS Teams allowFrom could bind to mutable display names",
+      "title": "[AgentGG] MS Teams allowFrom could bind to mutable display names",
       "description": "Summary MS Teams allowFrom could bind to mutable display names. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.5.12. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
       "affected": [
         "@openclaw/msteams@<= 2026.5.7"
@@ -519,7 +929,7 @@
       ],
       "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
       "published": "2026-06-30T00:41:20Z",
-      "updated": "2026-06-30T00:41:20Z",
+      "updated": "2026-07-04T04:54:45Z",
       "references": [
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-7w4v-g4m6-j88v"
       ],
@@ -534,7 +944,8 @@
         "CWE-863"
       ],
       "credits": [
-        "gracia-gu"
+        "gracia-gu",
+        "PhilipPhil"
       ],
       "aliases": [
         "GHSA-7w4v-g4m6-j88v"
