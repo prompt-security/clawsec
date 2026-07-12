@@ -210,6 +210,11 @@ try {
   await fs.writeFile(path.join(publicDir, "checksums.sig"), sign(checksumsRaw));
   await fs.writeFile(path.join(publicDir, "signing-public.pem"), publicKey.export({ type: "spki", format: "pem" }));
   await publishAdvisoryAliases({ publicDir });
+
+  const distWithoutReleaseMirror = path.join(tempRoot, "dist-without-release-mirror");
+  await fs.cp(publicDir, distWithoutReleaseMirror, { recursive: true });
+  await smokeTestBuiltAdvisoryEndpoints({ distDir: distWithoutReleaseMirror });
+
   await publishReleaseCompatibilityMirror({ publicDir });
   await fs.cp(publicDir, distDir, { recursive: true });
   await verifyBuiltAdvisoryArtifacts({ publicDir, distDir });

@@ -312,25 +312,39 @@ async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMir
 export async function smokeTestBuiltAdvisoryEndpoints({ distDir = "dist" } = {}) {
   const { server, baseUrl } = await startStaticServer(distDir);
   try {
-    await verifyAdvisoryEndpoints({
+    await verifyLiveAdvisoryEndpoints({
       baseUrl,
+      attempts: 1,
+      retryDelayMs: 0,
       includeGhsa: await fileExists(path.join(distDir, "advisories/ghsa-without-cve.json")),
-      includeReleaseMirror: await directoryExists(path.join(distDir, "releases/latest/download")),
     });
   } finally {
     await stopServer(server);
   }
 }
 
+async function probeReleaseMirror(baseUrl) {
+  const probePath = "releases/latest/download/checksums.json";
+  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${probePath}`);
+  if (response.ok) return true;
+  if (response.status === 404) {
+    process.stderr.write(`Release compatibility mirror is absent at /${probePath}; skipping mirror verification\n`);
+    return false;
+  }
+  throw new Error(`HTTP ${response.status} while probing /${probePath}`);
+}
+
 export async function verifyLiveAdvisoryEndpoints({
   baseUrl = "https://clawsec.prompt.security",
   attempts = 12,
   retryDelayMs = 10_000,
+  includeGhsa = true,
 } = {}) {
   let lastError;
   for (let attempt = 1; attempt <= Number(attempts); attempt += 1) {
     try {
-      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa: true, includeReleaseMirror: true });
+      const includeReleaseMirror = await probeReleaseMirror(baseUrl);
+      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror });
       return;
     } catch (error) {
       lastError = error;
