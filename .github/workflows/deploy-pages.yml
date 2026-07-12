@@ -38,6 +38,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
 
@@ -277,48 +283,7 @@ jobs:
           signature_file: public/advisories/ghsa-without-cve.json.sig
 
       - name: Generate advisory checksums manifest
-        run: |
-          set -euo pipefail
-
-          FILES_JSON="{}"
-          ADVISORY_ARTIFACTS=(public/advisories/*.json public/advisories/*.json.sig)
-          for file in "${ADVISORY_ARTIFACTS[@]}"; do
-            [ -e "$file" ] || continue
-            REL_PATH="${file#public/}"
-            FILE_SHA=$(sha256sum "$file" | awk '{print $1}')
-            FILE_SIZE=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
-            FILES_JSON=$(jq \
-              --arg path "$REL_PATH" \
-              --arg sha "$FILE_SHA" \
-              --argjson size "$FILE_SIZE" \
-              '. + {($path): {sha256: $sha, size: $size, path: $path, url: ("https://clawsec.prompt.security/" + $path)}}' \
-              <<< "$FILES_JSON")
-          done
-
-          # Generate checksums manifest conforming to parseChecksumsManifest expectations:
-          # - schema_version: "1" (manifest format version)
-          # - algorithm: "sha256" (hash algorithm)
-          # - version: "1.1.0" (feed content version, for informational purposes)
-          # - generated_at, repository: metadata
-          # - files: map of path -> {sha256, size, path, url}
-          jq -n \
-            --arg schema_version "1" \
-            --arg algorithm "sha256" \
-            --arg version "1.1.0" \
-            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg repo "${{ github.repository }}" \
-            --argjson files "$FILES_JSON" \
-            '{
-              schema_version: $schema_version,
-              algorithm: $algorithm,
-              version: $version,
-              generated_at: $generated,
-              repository: $repo,
-              files: $files
-            }' > public/checksums.json
-
-          echo "Generated public/checksums.json"
-          jq . public/checksums.json
+        run: node scripts/ci/advisory_pages_artifacts.mjs generate --public-dir public --repository "${{ github.repository }}"
 
       - name: Sign checksums and verify
         uses: ./.github/actions/sign-and-verify
@@ -328,11 +293,8 @@ jobs:
           input_file: public/checksums.json
           signature_file: public/checksums.sig
 
-      - name: Publish advisory checksum aliases
-        run: |
-          set -euo pipefail
-          cp public/checksums.json public/advisories/checksums.json
-          cp public/checksums.sig public/advisories/checksums.json.sig
+      - name: Publish advisory compatibility aliases
+        run: node scripts/ci/advisory_pages_artifacts.mjs publish-aliases --public-dir public
 
       - name: Verify generated public signing key matches canonical key
         run: |
@@ -346,26 +308,11 @@ jobs:
             exit 1
           fi
 
-      - name: Copy public key to advisory directory
-        run: |
-          # Clients expect the public key at advisories/feed-signing-public.pem
-          mkdir -p public/advisories
-          cp public/signing-public.pem public/advisories/feed-signing-public.pem
-          echo "Public key available at:"
-          echo "  - public/signing-public.pem (root)"
-          echo "  - public/advisories/feed-signing-public.pem (advisory-specific)"
-
       - name: Show signed advisory artifacts
         run: |
           echo "Signed advisory artifacts:"
           ls -la public/advisories/*.json*
           ls -la public/checksums.json public/checksums.sig public/signing-public.pem
-
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: '20'
-          cache: 'npm'
 
       - name: Get latest clawsec-suite release URL
         env:
@@ -443,17 +390,11 @@ jobs:
           NODE_ENV: production
           VITE_CLAWSEC_SUITE_URL: ${{ env.VITE_CLAWSEC_SUITE_URL }}
 
-      - name: Copy skills data to dist
+      - name: Verify built public artifacts
         run: |
           set -euo pipefail
-          cp -r public/skills dist/skills 2>/dev/null || echo "No skills directory"
-          cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No checksums manifest"
-          cp public/checksums.sig dist/checksums.sig 2>/dev/null || echo "No checksums signature"
-          cp public/signing-public.pem dist/signing-public.pem 2>/dev/null || echo "No signing public key"
-          cp -r public/advisories dist/advisories 2>/dev/null || echo "No advisories directory"
-
-          cmp dist/checksums.json dist/advisories/checksums.json
-          cmp dist/checksums.sig dist/advisories/checksums.json.sig
+          test -f dist/skills/index.json
+          node scripts/ci/advisory_pages_artifacts.mjs verify-built --public-dir public --dist-dir dist
 
           echo "=== Dist contents ==="
           ls -la dist/

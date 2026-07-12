@@ -19,6 +19,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
 
@@ -30,39 +36,6 @@ jobs:
           if [ -f advisories/ghsa-without-cve.json ]; then
             cp advisories/ghsa-without-cve.json public/advisories/ghsa-without-cve.json
           fi
-
-      - name: Generate advisory checksums manifest
-        run: |
-          set -euo pipefail
-
-          FILES_JSON="{}"
-          for file in public/advisories/*.json; do
-            REL_PATH="${file#public/}"
-            FILE_SHA=$(sha256sum "$file" | awk '{print $1}')
-            FILE_SIZE=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file")
-            FILES_JSON=$(jq \
-              --arg path "$REL_PATH" \
-              --arg sha "$FILE_SHA" \
-              --argjson size "$FILE_SIZE" \
-              '. + {($path): {sha256: $sha, size: $size, path: $path, url: ("https://clawsec.prompt.security/" + $path)}}' \
-              <<< "$FILES_JSON")
-          done
-
-          jq -n \
-            --arg schema_version "1" \
-            --arg algorithm "sha256" \
-            --arg version "1.1.0" \
-            --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg repo "${{ github.repository }}" \
-            --argjson files "$FILES_JSON" \
-            '{
-              schema_version: $schema_version,
-              algorithm: $algorithm,
-              version: $version,
-              generated_at: $generated,
-              repository: $repo,
-              files: $files
-            }' > public/checksums.json
 
       - name: Generate ephemeral signing key for PR verification
         id: test_key
@@ -93,6 +66,9 @@ jobs:
           input_file: public/advisories/ghsa-without-cve.json
           signature_file: public/advisories/ghsa-without-cve.json.sig
 
+      - name: Generate advisory checksums manifest
+        run: node scripts/ci/advisory_pages_artifacts.mjs generate --public-dir public --repository "${{ github.repository }}"
+
       - name: Sign checksums and verify
         uses: ./.github/actions/sign-and-verify
         with:
@@ -100,17 +76,8 @@ jobs:
           input_file: public/checksums.json
           signature_file: public/checksums.sig
 
-      - name: Publish advisory checksum aliases
-        run: |
-          set -euo pipefail
-          cp public/checksums.json public/advisories/checksums.json
-          cp public/checksums.sig public/advisories/checksums.json.sig
-
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Publish advisory compatibility aliases
+        run: node scripts/ci/advisory_pages_artifacts.mjs publish-aliases --public-dir public
 
       - name: Install dependencies
         run: npm ci
@@ -124,13 +91,4 @@ jobs:
         run: |
           set -euo pipefail
           test -f dist/index.html
-          test -f public/advisories/feed.json.sig
-          if [ -f public/advisories/ghsa-without-cve.json ]; then
-            test -f public/advisories/ghsa-without-cve.json.sig
-          fi
-          test -f public/checksums.sig
-          test -f public/signing-public.pem
-          test -f dist/advisories/checksums.json
-          test -f dist/advisories/checksums.json.sig
-          cmp public/checksums.json dist/advisories/checksums.json
-          cmp public/checksums.sig dist/advisories/checksums.json.sig
+          node scripts/ci/advisory_pages_artifacts.mjs verify-built --public-dir public --dist-dir dist
