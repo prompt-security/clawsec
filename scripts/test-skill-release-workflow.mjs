@@ -309,7 +309,13 @@ assert.match(
 assert.doesNotMatch(
   commentJob,
   /continue-on-error: true/,
-  'SkillSpector PR comment publishing must fail visibly when report artifacts or PR comments cannot be created',
+  'SkillSpector PR comment publishing must not hide the whole job behind continue-on-error',
+);
+
+assert.match(
+  commentJob,
+  /status === 403 && message\.includes\("Resource not accessible by integration"\)[\s\S]*core\.warning\([\s\S]*skillspector-pr-reports artifact[\s\S]*throw error/,
+  'SkillSpector PR comments must fall back to the uploaded artifact only for GitHub integration permission denials',
 );
 
 assert.match(
