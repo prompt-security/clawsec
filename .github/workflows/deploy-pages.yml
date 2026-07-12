@@ -347,36 +347,10 @@ jobs:
               echo "Warning: Suite release assets not mirrored (missing: $MIRROR_TAG_DIR)"
             fi
 
-            # Mirror advisories feed + signatures at the path referenced by suite docs/heartbeat
-            if [ -f "public/advisories/feed.json" ]; then
-              mkdir -p "$MIRROR_LATEST_DIR/advisories"
-              cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/advisories/feed.json"
-              cp "public/advisories/feed.json" "$MIRROR_LATEST_DIR/feed.json"
-            fi
-            if [ -f "public/advisories/feed.json.sig" ]; then
-              mkdir -p "$MIRROR_LATEST_DIR/advisories"
-              cp "public/advisories/feed.json.sig" "$MIRROR_LATEST_DIR/advisories/feed.json.sig"
-              cp "public/advisories/feed.json.sig" "$MIRROR_LATEST_DIR/feed.json.sig"
-            fi
-            if [ -f "public/advisories/ghsa-without-cve.json" ]; then
-              mkdir -p "$MIRROR_LATEST_DIR/advisories"
-              cp "public/advisories/ghsa-without-cve.json" "$MIRROR_LATEST_DIR/advisories/ghsa-without-cve.json"
-              cp "public/advisories/ghsa-without-cve.json" "$MIRROR_LATEST_DIR/ghsa-without-cve.json"
-            fi
-            if [ -f "public/advisories/ghsa-without-cve.json.sig" ]; then
-              mkdir -p "$MIRROR_LATEST_DIR/advisories"
-              cp "public/advisories/ghsa-without-cve.json.sig" "$MIRROR_LATEST_DIR/advisories/ghsa-without-cve.json.sig"
-              cp "public/advisories/ghsa-without-cve.json.sig" "$MIRROR_LATEST_DIR/ghsa-without-cve.json.sig"
-            fi
-            if [ -f "public/checksums.json" ]; then
-              cp "public/checksums.json" "$MIRROR_LATEST_DIR/checksums.json"
-            fi
-            if [ -f "public/checksums.sig" ]; then
-              cp "public/checksums.sig" "$MIRROR_LATEST_DIR/checksums.sig"
-            fi
-            if [ -f "public/signing-public.pem" ]; then
-              cp "public/signing-public.pem" "$MIRROR_LATEST_DIR/signing-public.pem"
-            fi
+            # Mirror the advisory contract at the paths referenced by suite docs/heartbeat.
+            node scripts/ci/advisory_pages_artifacts.mjs publish-release-mirror \
+              --public-dir public \
+              --mirror-dir "$MIRROR_LATEST_DIR"
           else
             echo "No clawsec-suite release found, using fallback"
           fi
@@ -400,6 +374,9 @@ jobs:
           ls -la dist/
           ls -la dist/skills/ 2>/dev/null || echo "No skills in dist"
           ls -la dist/advisories/ 2>/dev/null || echo "No advisories in dist"
+
+      - name: Smoke-test built advisory endpoints
+        run: node scripts/ci/advisory_pages_artifacts.mjs smoke-http --dist-dir dist
 
       - name: Add .nojekyll file
         run: touch dist/.nojekyll

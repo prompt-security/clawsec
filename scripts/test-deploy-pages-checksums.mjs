@@ -3,10 +3,15 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
+  ADVISORY_PUBLIC_CONTRACT,
+  RELEASE_MIRROR_MAPPINGS,
   generateAdvisoryChecksums,
   publishAdvisoryAliases,
+  publishReleaseCompatibilityMirror,
+  smokeTestBuiltAdvisoryEndpoints,
   verifyBuiltAdvisoryArtifacts,
 } from "./ci/advisory_pages_artifacts.mjs";
 
@@ -34,6 +39,7 @@ function assertProductionOrdering(source, workflowName) {
   const signChecksumsIndex = stepIndex(source, "Sign checksums and verify");
   const aliasesIndex = stepIndex(source, "Publish advisory compatibility aliases");
   const buildIndex = stepIndex(source, workflowName === "Deploy Pages" ? "Build" : "Build site");
+  const smokeIndex = stepIndex(source, "Smoke-test built advisory endpoints");
 
   assert.ok(setupNodeIndex < generateChecksumsIndex, `${workflowName} must pin Node before running the artifact helper`);
   assert.ok(signFeedIndex < generateChecksumsIndex, `${workflowName} must checksum feed.json.sig`);
@@ -41,6 +47,7 @@ function assertProductionOrdering(source, workflowName) {
   assert.ok(generateChecksumsIndex < signChecksumsIndex, `${workflowName} must sign the refreshed checksum manifest`);
   assert.ok(signChecksumsIndex < aliasesIndex, `${workflowName} must publish aliases only after signing checksums.json`);
   assert.ok(aliasesIndex < buildIndex, `${workflowName} must publish aliases before Vite copies public assets`);
+  assert.ok(buildIndex < smokeIndex, `${workflowName} must smoke-test endpoints after the Vite build`);
 
   assert.match(
     stepBody(source, "Generate advisory checksums manifest"),
@@ -51,6 +58,11 @@ function assertProductionOrdering(source, workflowName) {
     stepBody(source, "Publish advisory compatibility aliases"),
     /node scripts\/ci\/advisory_pages_artifacts\.mjs publish-aliases/,
     `${workflowName} must use the shared alias publisher`,
+  );
+  assert.match(
+    stepBody(source, "Smoke-test built advisory endpoints"),
+    /node scripts\/ci\/advisory_pages_artifacts\.mjs smoke-http/,
+    `${workflowName} must exercise the built endpoints over HTTP`,
   );
 }
 
@@ -78,20 +90,69 @@ assert.match(
   "Pages Verify must validate the same built advisory artifacts as production",
 );
 
-const mirrorBlockIndex = workflow.indexOf(
-  "# Mirror advisories feed + signatures at the path referenced by suite docs/heartbeat",
-);
-assert.notEqual(mirrorBlockIndex, -1, "missing advisory release mirror block");
-const mirrorBlock = workflow.slice(mirrorBlockIndex, workflow.indexOf("if [ -f \"public/checksums.json\"", mirrorBlockIndex));
+const productionMirrorStep = stepBody(workflow, "Get latest clawsec-suite release URL");
 assert.match(
-  mirrorBlock,
-  /cp "public\/advisories\/ghsa-without-cve\.json" "\$MIRROR_LATEST_DIR\/ghsa-without-cve\.json"/,
-  "GHSA provisional feed must remain at the release-root compatibility path",
+  productionMirrorStep,
+  /advisory_pages_artifacts\.mjs publish-release-mirror/,
+  "Deploy Pages must use the tested release compatibility mirror",
+);
+assert.doesNotMatch(
+  productionMirrorStep,
+  /cp "public\/(?:advisories|checksums|signing-public)/,
+  "release compatibility files must not be maintained as duplicate workflow copy lists",
 );
 assert.match(
-  mirrorBlock,
-  /cp "public\/advisories\/ghsa-without-cve\.json\.sig" "\$MIRROR_LATEST_DIR\/ghsa-without-cve\.json\.sig"/,
-  "GHSA provisional signature must remain at the release-root compatibility path",
+  stepBody(verifyWorkflow, "Simulate release compatibility mirror"),
+  /advisory_pages_artifacts\.mjs publish-release-mirror/,
+  "Pages Verify must simulate the production release compatibility mirror",
+);
+
+async function collectContractSources(entryPath) {
+  const stat = await fs.stat(entryPath);
+  if (stat.isFile()) return [entryPath];
+  const files = [];
+  for (const entry of await fs.readdir(entryPath, { withFileTypes: true })) {
+    if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
+    const childPath = path.join(entryPath, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await collectContractSources(childPath));
+    } else if (/\.(?:json|md|mjs|sh|ts)$/.test(entry.name) && !/^(?:feed|ghsa-without-cve)\.json$/.test(entry.name)) {
+      files.push(childPath);
+    }
+  }
+  return files;
+}
+
+const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
+const contractSources = [];
+for (const relativePath of ["README.md", "wiki", "skills"]) {
+  contractSources.push(...await collectContractSources(path.join(repositoryRoot, relativePath)));
+}
+const referencedAdvisoryArtifacts = new Set();
+const advisoryArtifactPattern = /advisories\/(?:feed\.json(?:\.sig)?|checksums\.json(?:\.sig)?|feed-signing-public\.pem)/g;
+for (const sourcePath of contractSources) {
+  const source = await fs.readFile(sourcePath, "utf8");
+  for (const match of source.matchAll(advisoryArtifactPattern)) referencedAdvisoryArtifacts.add(match[0]);
+}
+const documentedAdvisoryContract = ADVISORY_PUBLIC_CONTRACT.filter((artifact) => artifact.startsWith("advisories/"));
+for (const artifact of referencedAdvisoryArtifacts) {
+  assert.ok(documentedAdvisoryContract.includes(artifact), `skill or instruction expects unpublished artifact: ${artifact}`);
+}
+for (const artifact of documentedAdvisoryContract) {
+  assert.ok(referencedAdvisoryArtifacts.has(artifact), `published advisory artifact has no skill or instruction consumer: ${artifact}`);
+}
+assert.deepEqual(
+  [...new Set(RELEASE_MIRROR_MAPPINGS.map(([, destination]) => destination))].sort(),
+  [
+    "advisories/feed.json",
+    "advisories/feed.json.sig",
+    "checksums.json",
+    "checksums.sig",
+    "feed.json",
+    "feed.json.sig",
+    "signing-public.pem",
+  ],
+  "release compatibility mirror must preserve the documented root and nested artifacts",
 );
 
 const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "clawsec-pages-checksums-"));
@@ -101,11 +162,15 @@ try {
   const distDir = path.join(tempRoot, "dist");
   await fs.mkdir(advisoryDir, { recursive: true });
 
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
+  const sign = (content) => `${crypto.sign(null, Buffer.from(content), privateKey).toString("base64")}\n`;
+  const feedRaw = "{\"advisories\":[]}\n";
+  const ghsaRaw = "{\"advisories\":[]}\n";
   const artifacts = {
-    "feed.json": "{\"advisories\":[]}\n",
-    "feed.json.sig": "feed-signature\n",
-    "ghsa-without-cve.json": "{\"advisories\":[]}\n",
-    "ghsa-without-cve.json.sig": "ghsa-signature\n",
+    "feed.json": feedRaw,
+    "feed.json.sig": sign(feedRaw),
+    "ghsa-without-cve.json": ghsaRaw,
+    "ghsa-without-cve.json.sig": sign(ghsaRaw),
   };
   await Promise.all(
     Object.entries(artifacts).map(([name, content]) => fs.writeFile(path.join(advisoryDir, name), content)),
@@ -131,11 +196,14 @@ try {
     assert.equal(entry.size, Buffer.byteLength(content));
   }
 
-  await fs.writeFile(path.join(publicDir, "checksums.sig"), "checksums-signature\n");
-  await fs.writeFile(path.join(publicDir, "signing-public.pem"), "public-key\n");
+  const checksumsRaw = await fs.readFile(path.join(publicDir, "checksums.json"));
+  await fs.writeFile(path.join(publicDir, "checksums.sig"), sign(checksumsRaw));
+  await fs.writeFile(path.join(publicDir, "signing-public.pem"), publicKey.export({ type: "spki", format: "pem" }));
   await publishAdvisoryAliases({ publicDir });
+  await publishReleaseCompatibilityMirror({ publicDir });
   await fs.cp(publicDir, distDir, { recursive: true });
   await verifyBuiltAdvisoryArtifacts({ publicDir, distDir });
+  await smokeTestBuiltAdvisoryEndpoints({ distDir });
 
   await fs.writeFile(path.join(distDir, "advisories/checksums.json"), "tampered\n");
   await assert.rejects(

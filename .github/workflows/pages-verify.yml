@@ -79,6 +79,12 @@ jobs:
       - name: Publish advisory compatibility aliases
         run: node scripts/ci/advisory_pages_artifacts.mjs publish-aliases --public-dir public
 
+      - name: Simulate release compatibility mirror
+        run: |
+          node scripts/ci/advisory_pages_artifacts.mjs publish-release-mirror \
+            --public-dir public \
+            --mirror-dir public/releases/latest/download
+
       - name: Install dependencies
         run: npm ci
 
@@ -92,3 +98,6 @@ jobs:
           set -euo pipefail
           test -f dist/index.html
           node scripts/ci/advisory_pages_artifacts.mjs verify-built --public-dir public --dist-dir dist
+
+      - name: Smoke-test built advisory endpoints
+        run: node scripts/ci/advisory_pages_artifacts.mjs smoke-http --dist-dir dist
