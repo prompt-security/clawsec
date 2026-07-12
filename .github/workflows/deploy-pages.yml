@@ -328,6 +328,12 @@ jobs:
           input_file: public/checksums.json
           signature_file: public/checksums.sig
 
+      - name: Publish advisory checksum aliases
+        run: |
+          set -euo pipefail
+          cp public/checksums.json public/advisories/checksums.json
+          cp public/checksums.sig public/advisories/checksums.json.sig
+
       - name: Verify generated public signing key matches canonical key
         run: |
           set -euo pipefail
@@ -439,11 +445,15 @@ jobs:
 
       - name: Copy skills data to dist
         run: |
+          set -euo pipefail
           cp -r public/skills dist/skills 2>/dev/null || echo "No skills directory"
           cp public/checksums.json dist/checksums.json 2>/dev/null || echo "No checksums manifest"
           cp public/checksums.sig dist/checksums.sig 2>/dev/null || echo "No checksums signature"
           cp public/signing-public.pem dist/signing-public.pem 2>/dev/null || echo "No signing public key"
           cp -r public/advisories dist/advisories 2>/dev/null || echo "No advisories directory"
+
+          cmp dist/checksums.json dist/advisories/checksums.json
+          cmp dist/checksums.sig dist/advisories/checksums.json.sig
 
           echo "=== Dist contents ==="
           ls -la dist/
