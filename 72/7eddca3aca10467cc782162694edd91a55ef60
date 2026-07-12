@@ -1,0 +1,25 @@
+wiki/INDEX.md
+  374e67ac374303d1 35,57
+wiki/agent-harness-testing.md
+  374e67ac374303d1 1-497
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "727eddca3aca10467cc782162694edd91a55ef60",
+  "prompts": {
+    "374e67ac374303d1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d8df3aef-b786-4989-a1a0-fa379de315b9",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 499,
+      "total_deletions": 0,
+      "accepted_lines": 499,
+      "overriden_lines": 0
+    }
+  }
+}
