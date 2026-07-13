@@ -368,7 +368,6 @@ export async function prepareReleasePackage({
     const clawhubFiles = await collectClawhubPackageFiles(packageDir);
     const finalPackageDir = path.join(resolvedOutputDir, skillName);
     await rename(packageDir, finalPackageDir);
-    await rm(stagingDir, { recursive: true, force: true });
     return {
       packageDir: finalPackageDir,
       files: packageFiles.size,
@@ -376,9 +375,8 @@ export async function prepareReleasePackage({
       releaseKeyFingerprint,
       embeddedAdvisoryTrust: advisoryTrust,
     };
-  } catch (error) {
+  } finally {
     await rm(stagingDir, { recursive: true, force: true });
-    throw error;
   }
 }
 
