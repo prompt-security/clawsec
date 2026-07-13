@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-07-12T04:27:22.094Z",
+  "updated_at": "2026-07-13T04:28:40.801Z",
   "daily": {
     "views": [
       {
@@ -234,6 +234,11 @@
         "timestamp": "2026-07-10T00:00:00Z",
         "count": 48,
         "uniques": 38
+      },
+      {
+        "timestamp": "2026-07-11T00:00:00Z",
+        "count": 25,
+        "uniques": 17
       }
     ],
     "clones": [
@@ -466,6 +471,11 @@
         "timestamp": "2026-07-10T00:00:00Z",
         "count": 466,
         "uniques": 62
+      },
+      {
+        "timestamp": "2026-07-11T00:00:00Z",
+        "count": 75,
+        "uniques": 45
       }
     ]
   },
@@ -2258,6 +2268,62 @@
           },
           {
             "referrer": "DuckDuckGo",
+            "count": 2,
+            "uniques": 2
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-07-13T04:28:40.801Z",
+        "date": "2026-07-13",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 194,
+            "uniques": 119
+          },
+          {
+            "referrer": "Google",
+            "count": 97,
+            "uniques": 69
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 9,
+            "uniques": 5
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 9,
+            "uniques": 4
+          },
+          {
+            "referrer": "Bing",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 4,
+            "uniques": 2
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "statics.teams.cdn.office.net",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "medium.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "chatgpt.com",
             "count": 2,
             "uniques": 2
           }
@@ -4376,6 +4442,72 @@
             "uniques": 4
           }
         ]
+      },
+      {
+        "captured_at": "2026-07-13T04:28:40.801Z",
+        "date": "2026-07-13",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 398,
+            "uniques": 300
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 28,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/actions/runs/28426361118",
+            "title": "/actions/runs/28426361118",
+            "count": 28,
+            "uniques": 1
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 16,
+            "uniques": 14
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 14,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/wiki",
+            "title": "/wiki",
+            "count": 12,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 11,
+            "uniques": 11
+          },
+          {
+            "path": "/prompt-security/clawsec/actions",
+            "title": "/actions",
+            "count": 10,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 6,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 5,
+            "uniques": 4
+          }
+        ]
       }
     ]
   },
@@ -4762,6 +4894,18 @@
       "clones_window": {
         "count": 2760,
         "uniques": 693
+      }
+    },
+    {
+      "captured_at": "2026-07-13T04:28:40.801Z",
+      "date": "2026-07-13",
+      "views_window": {
+        "count": 692,
+        "uniques": 335
+      },
+      "clones_window": {
+        "count": 2742,
+        "uniques": 687
       }
     }
   ]
