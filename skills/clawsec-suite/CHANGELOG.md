@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14] - 2026-07-13
+
+### Fixed
+
+- Included the embedded feed signing public key in the signed advisory checksum manifest generated for both PR simulations and tag releases.
+- Exercised the packaged local fallback through the runtime checksum-verification path so releases fail before publication if any required trust artifact is absent from the manifest.
+
 ## [0.1.13] - 2026-07-13
 
 ### Fixed

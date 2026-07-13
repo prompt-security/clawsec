@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), "clawsec-tag-release-sim-"));
 const fakeSkillspector = path.join(tempRoot, "skillspector");
@@ -127,11 +128,12 @@ async function runSimulation({
     };
 
     const canonicalFeed = await readFile("advisories/feed.json");
+    const canonicalFeedPayload = JSON.parse(canonicalFeed.toString("utf8"));
     const packagedFeed = readArchiveEntry(`${skillName}/advisories/feed.json`);
     const packagedFeedSignature = readArchiveEntry(`${skillName}/advisories/feed.json.sig`);
     const packagedChecksumsRaw = readArchiveEntry(`${skillName}/advisories/checksums.json`);
     readArchiveEntry(`${skillName}/advisories/checksums.json.sig`);
-    readArchiveEntry(`${skillName}/advisories/feed-signing-public.pem`);
+    const packagedPublicKey = readArchiveEntry(`${skillName}/advisories/feed-signing-public.pem`);
 
     assert.deepEqual(packagedFeed, canonicalFeed, "simulated release must package the canonical advisory feed");
     const embeddedChecksums = JSON.parse(packagedChecksumsRaw.toString("utf8"));
@@ -145,6 +147,40 @@ async function runSimulation({
       sha256(packagedFeedSignature),
       "embedded manifest must checksum the packaged feed signature",
     );
+    assert.equal(
+      embeddedChecksums.files["advisories/feed-signing-public.pem"].sha256,
+      sha256(packagedPublicKey),
+      "embedded manifest must checksum the packaged feed signing key",
+    );
+
+    const extractedReleaseDir = path.join(outputDir, "extracted-release");
+    const extracted = spawnSync("unzip", ["-q", "-o", archivePath, "-d", extractedReleaseDir]);
+    assert.equal(
+      extracted.status,
+      0,
+      `failed to extract simulated release archive: ${extracted.stderr?.toString() || ""}`,
+    );
+
+    const extractedSkillDir = path.join(extractedReleaseDir, skillName);
+    const extractedAdvisoryDir = path.join(extractedSkillDir, "advisories");
+    const extractedFeedPath = path.join(extractedAdvisoryDir, "feed.json");
+    const extractedPublicKeyPath = path.join(extractedAdvisoryDir, "feed-signing-public.pem");
+    const extractedPublicKeyPem = await readFile(extractedPublicKeyPath, "utf8");
+    const feedModuleUrl = pathToFileURL(
+      path.join(extractedSkillDir, "hooks", "clawsec-advisory-guardian", "lib", "feed.mjs"),
+    );
+    const { loadLocalFeed } = await import(feedModuleUrl.href);
+    const loadedFeed = await loadLocalFeed(extractedFeedPath, {
+      signaturePath: `${extractedFeedPath}.sig`,
+      checksumsPath: path.join(extractedAdvisoryDir, "checksums.json"),
+      checksumsSignaturePath: path.join(extractedAdvisoryDir, "checksums.json.sig"),
+      publicKeyPem: extractedPublicKeyPem,
+      checksumsPublicKeyPem: extractedPublicKeyPem,
+      verifyChecksumManifest: true,
+      checksumPublicKeyEntry: path.basename(extractedPublicKeyPath),
+    });
+    assert.equal(loadedFeed.version, canonicalFeedPayload.version);
+    assert.equal(loadedFeed.advisories.length, canonicalFeedPayload.advisories.length);
   }
 
   const install = await readFile(path.join(releaseAssetsDir, "install.md"), "utf8");
@@ -207,8 +243,8 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.13",
-    expectedSimulated: "0.1.14",
+    expectedOriginal: "0.1.14",
+    expectedSimulated: "0.1.15",
     expectedAgent: "openclaw",
     verifyEmbeddedAdvisory: true,
   });

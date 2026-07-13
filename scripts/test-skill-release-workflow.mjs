@@ -125,6 +125,24 @@ assert.match(
   'Skill release workflow must install SkillSpector before publishing release evidence',
 );
 
+assert.equal(
+  (workflow.match(/"advisories\/feed-signing-public\.pem": \{/g) || []).length,
+  2,
+  'PR dry-run and tag release embedded manifests must both checksum the feed signing public key',
+);
+
+assert.match(
+  workflow,
+  /cp "\$pub_file" "\$advisory_dir\/feed-signing-public\.pem"[\s\S]*local public_key_sha=[\s\S]*"advisories\/feed-signing-public\.pem": \{sha256: \$public_key_sha, size: \$public_key_size\}/,
+  'PR dry-run must stage the embedded public key before checksumming it',
+);
+
+assert.match(
+  workflow,
+  /PUBLIC_KEY_SHA=\$\(sha256sum "\$ADVISORY_DIR\/feed-signing-public\.pem"[\s\S]*"advisories\/feed-signing-public\.pem": \{[\s\S]*sha256: \$public_key_sha/,
+  'Tag releases must include the embedded public key digest in the signed advisory manifest',
+);
+
 assert.match(
   workflow,
   /Generate SkillSpector report/,
