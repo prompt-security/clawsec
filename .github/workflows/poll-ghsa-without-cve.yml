@@ -16,6 +16,8 @@ env:
   GHSA_FEED_SIG_PATH: advisories/ghsa-without-cve.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
   SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
+  SUITE_FEED_PATH: skills/clawsec-suite/advisories/feed.json
+  SUITE_FEED_SIG_PATH: skills/clawsec-suite/advisories/feed.json.sig
 
 jobs:
   poll-and-update:
@@ -48,11 +50,13 @@ jobs:
             --nvd-feed "$FEED_PATH" \
             --stale-after-days 60
 
-      - name: Sync consolidated feed to clawsec-feed skill
+      - name: Sync consolidated feed to feed consumers
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$SKILL_FEED_PATH")"
           cp "$FEED_PATH" "$SKILL_FEED_PATH"
+          mkdir -p "$(dirname "$SUITE_FEED_PATH")"
+          cp "$FEED_PATH" "$SUITE_FEED_PATH"
 
       - name: Detect feed changes
         id: changes
@@ -66,7 +70,7 @@ jobs:
             GHSA_CHANGED=true
           fi
 
-          if ! git diff --quiet -- "$FEED_PATH" "$SKILL_FEED_PATH" || [ ! -f "$FEED_SIG_PATH" ] || [ ! -f "$SKILL_FEED_SIG_PATH" ]; then
+          if ! git diff --quiet -- "$FEED_PATH" "$SKILL_FEED_PATH" "$SUITE_FEED_PATH" || [ ! -f "$FEED_SIG_PATH" ] || [ ! -f "$SKILL_FEED_SIG_PATH" ] || [ ! -f "$SUITE_FEED_SIG_PATH" ]; then
             AGENT_CHANGED=true
           fi
 
@@ -99,10 +103,13 @@ jobs:
           verify_files: |
             ${{ env.FEED_PATH }}
             ${{ env.SKILL_FEED_PATH }}
+            ${{ env.SUITE_FEED_PATH }}
 
-      - name: Sync consolidated signature to clawsec-feed skill
+      - name: Sync consolidated signature to feed consumers
         if: steps.changes.outputs.agent_changed == 'true'
-        run: cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
+        run: |
+          cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
+          cp "$FEED_SIG_PATH" "$SUITE_FEED_SIG_PATH"
 
       - name: Create Pull Request
         if: steps.changes.outputs.changed == 'true'
@@ -135,6 +142,8 @@ jobs:
             ${{ env.GHSA_FEED_SIG_PATH }}
             ${{ env.SKILL_FEED_PATH }}
             ${{ env.SKILL_FEED_SIG_PATH }}
+            ${{ env.SUITE_FEED_PATH }}
+            ${{ env.SUITE_FEED_SIG_PATH }}
 
       - name: Summary
         run: |

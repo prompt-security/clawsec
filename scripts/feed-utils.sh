@@ -7,6 +7,7 @@ init_feed_paths() {
 
   : "${FEED_PATH:=$project_root/advisories/feed.json}"
   : "${SKILL_FEED_PATH:=$project_root/skills/clawsec-feed/advisories/feed.json}"
+  : "${SUITE_FEED_PATH:=$project_root/skills/clawsec-suite/advisories/feed.json}"
   : "${PUBLIC_FEED_PATH:=$project_root/public/advisories/feed.json}"
 }
 
@@ -15,7 +16,7 @@ sync_feed_to_mirrors() {
   local mode="${2:-create}"
 
   local target
-  for target in "$SKILL_FEED_PATH" "$PUBLIC_FEED_PATH"; do
+  for target in "$SKILL_FEED_PATH" "$SUITE_FEED_PATH" "$PUBLIC_FEED_PATH"; do
     case "$mode" in
       create)
         mkdir -p "$(dirname "$target")"

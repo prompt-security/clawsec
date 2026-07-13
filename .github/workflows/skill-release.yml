@@ -9,6 +9,8 @@ on:
       - 'skills/**'
       - '!skills/clawsec-feed/advisories/feed.json'
       - '!skills/clawsec-feed/advisories/feed.json.sig'
+      - '!skills/clawsec-suite/advisories/feed.json'
+      - '!skills/clawsec-suite/advisories/feed.json.sig'
       - '.github/workflows/skill-release.yml'
       - 'scripts/ci/**'
       - 'scripts/test-skill-*.mjs'
@@ -92,6 +94,8 @@ jobs:
             'skills/*/**' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json.sig' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json.sig' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
             | awk -F/ '
@@ -416,6 +420,8 @@ jobs:
             'skills/*/**' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json.sig' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json.sig' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \

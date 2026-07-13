@@ -29,7 +29,14 @@ async function prereleaseFixture(sourceSkillDir, version, fixtureGroup) {
   return fixtureDir;
 }
 
-async function runSimulation({ skillDir, outputDir, expectedOriginal, expectedSimulated, expectedAgent }) {
+async function runSimulation({
+  skillDir,
+  outputDir,
+  expectedOriginal,
+  expectedSimulated,
+  expectedAgent,
+  verifyEmbeddedAdvisory = false,
+}) {
   const result = spawnSync(
     process.execPath,
     [
@@ -101,8 +108,44 @@ async function runSimulation({ skillDir, outputDir, expectedOriginal, expectedSi
     );
   }
 
-  const archive = await readFile(path.join(releaseAssetsDir, `${expectedTag}.zip`));
+  const archivePath = path.join(releaseAssetsDir, `${expectedTag}.zip`);
+  const archive = await readFile(archivePath);
   assert.ok(archive.length > 0, "release archive should not be empty");
+
+  if (verifyEmbeddedAdvisory) {
+    const readArchiveEntry = (entry) => {
+      const extracted = spawnSync("unzip", ["-p", archivePath, entry], {
+        maxBuffer: 64 * 1024 * 1024,
+      });
+      assert.equal(
+        extracted.status,
+        0,
+        `failed to read ${entry} from simulated release archive: ${extracted.stderr?.toString() || ""}`,
+      );
+      assert.ok(extracted.stdout.length > 0, `${entry} must not be empty in simulated release archive`);
+      return extracted.stdout;
+    };
+
+    const canonicalFeed = await readFile("advisories/feed.json");
+    const packagedFeed = readArchiveEntry(`${skillName}/advisories/feed.json`);
+    const packagedFeedSignature = readArchiveEntry(`${skillName}/advisories/feed.json.sig`);
+    const packagedChecksumsRaw = readArchiveEntry(`${skillName}/advisories/checksums.json`);
+    readArchiveEntry(`${skillName}/advisories/checksums.json.sig`);
+    readArchiveEntry(`${skillName}/advisories/feed-signing-public.pem`);
+
+    assert.deepEqual(packagedFeed, canonicalFeed, "simulated release must package the canonical advisory feed");
+    const embeddedChecksums = JSON.parse(packagedChecksumsRaw.toString("utf8"));
+    assert.equal(
+      embeddedChecksums.files["advisories/feed.json"].sha256,
+      sha256(packagedFeed),
+      "embedded manifest must checksum the packaged feed",
+    );
+    assert.equal(
+      embeddedChecksums.files["advisories/feed.json.sig"].sha256,
+      sha256(packagedFeedSignature),
+      "embedded manifest must checksum the packaged feed signature",
+    );
+  }
 
   const install = await readFile(path.join(releaseAssetsDir, "install.md"), "utf8");
   assert.match(
@@ -164,9 +207,10 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.12",
-    expectedSimulated: "0.1.13",
+    expectedOriginal: "0.1.13",
+    expectedSimulated: "0.1.14",
     expectedAgent: "openclaw",
+    verifyEmbeddedAdvisory: true,
   });
 
   await runSimulation({
