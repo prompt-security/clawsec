@@ -7,6 +7,7 @@ const clawhubLockPath = new URL('../.github/clawhub-cli/package-lock.json', impo
 const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
 const installClawhubCliPath = new URL('./ci/install_clawhub_cli.sh', import.meta.url);
 const patchClawhubPayloadPath = new URL('./ci/patch_clawhub_publish_payload.mjs', import.meta.url);
+const patchClawhubTrustExtensionsPath = new URL('./ci/patch_clawhub_trust_extensions.mjs', import.meta.url);
 const guardClawhubSlugOwnerPath = new URL('./ci/guard_clawhub_slug_owner.sh', import.meta.url);
 const releaseSkillScriptPath = new URL('./release-skill.sh', import.meta.url);
 const workflow = await readFile(workflowPath, 'utf8');
@@ -15,6 +16,7 @@ const clawhubLock = JSON.parse(await readFile(clawhubLockPath, 'utf8'));
 const validateSkillInstallDocs = await readFile(validateSkillInstallDocsPath, 'utf8');
 const installClawhubCli = await readFile(installClawhubCliPath, 'utf8');
 const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
+const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPath, 'utf8');
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
@@ -91,6 +93,24 @@ assert.match(
 
 assert.match(
   workflow,
+  /sign_advisory_artifacts "\$\{inner_dir\}"/,
+  'PR release dry-runs must sign advisory artifacts inside the staged package',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /Removed test signatures from release staging|rm -f "\$\{inner_dir\}\/advisories\/(?:feed\.json\.sig|checksums\.json|checksums\.json\.sig|feed-signing-public\.pem)"/,
+  'PR release dry-runs must retain the complete signed advisory trust set in the simulated archive',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /rm -f "\$\{skill_dir\}\/advisories\/(?:feed\.json\.sig|checksums\.json|checksums\.json\.sig|feed-signing-public\.pem)"/,
+  'PR release dry-runs must not delete tracked or generated advisory trust files from source directories',
+);
+
+assert.match(
+  workflow,
   /release_tag="\$\{skill_release_name\}-v\$\{head_json_version\}"/,
   'Skill release validation must use the skill package directory name for release tag checks',
 );
@@ -117,6 +137,12 @@ assert.match(
   workflow,
   /::error file=\$\{skill_dir\}::Changed skill package has no version bump and release tag \$\{release_tag\} already exists\./,
   'Skill release validation must still fail unchanged versions after their release tag exists',
+);
+
+assert.match(
+  workflow,
+  /node scripts\/ci\/semver_increment\.mjs "\$\{base_json_version\}" "\$\{head_json_version\}"/,
+  'Changed skill versions must increase by SemVer precedence instead of merely differing from the base version',
 );
 
 assert.match(
@@ -405,8 +431,8 @@ assert.match(
 
 assert.match(
   workflow,
-  /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"[\s\S]*cp scripts\/ci\/skill_platforms\.mjs "\$RUNNER_TEMP\/skill_platforms\.mjs"/,
-  'Manual ClawHub republish must preserve the current slug helper and its local module dependency before checking out an older release tag',
+  /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"[\s\S]*cp scripts\/ci\/skill_platforms\.mjs "\$RUNNER_TEMP\/skill_platforms\.mjs"[\s\S]*cp scripts\/ci\/clawhub_release_package\.mjs "\$RUNNER_TEMP\/clawhub_release_package\.mjs"/,
+  'Manual ClawHub republish must preserve current slug and signed-package helpers before checking out an older release tag',
 );
 
 assert.match(
@@ -429,6 +455,18 @@ assert.match(
 
 assert.match(
   workflow,
+  /id: clawhub-version[\s\S]*already_exists=true[\s\S]*skipping upload and verifying exact registry contents/,
+  'Automatic ClawHub retries must verify an existing version instead of failing before package parity checks',
+);
+
+assert.match(
+  workflow,
+  /Publish to ClawHub[\s\S]*steps\.clawhub-version\.outputs\.already_exists != 'true'/,
+  'Automatic ClawHub retries must skip only the duplicate upload while retaining post-publish verification',
+);
+
+assert.match(
+  workflow,
   /--slug "\$CLAWHUB_SLUG"/,
   'ClawHub publish must use the resolved ClawHub slug',
 );
@@ -440,15 +478,87 @@ assert.match(
 );
 
 assert.equal(
-  workflow.match(/bash scripts\/ci\/install_clawhub_cli\.sh/g)?.length,
+  workflow.match(/gh release download "\$TAG"/g)?.length,
   2,
-  'ClawHub publish and republish jobs must share the same pinned CLI installer',
+  'Automatic and manual ClawHub publication must download the GitHub release payload',
+);
+
+assert.equal(
+  workflow.match(/--pattern "checksums\.sig"/g)?.length,
+  2,
+  'Automatic and manual ClawHub publication must download the signed release manifest companions',
+);
+
+assert.equal(
+  workflow.match(/clawhub_release_package\.mjs"? prepare/g)?.length,
+  3,
+  'PR simulation, automatic publication, and manual publication must prepare a verified package from the signed release archive',
+);
+
+assert.equal(
+  workflow.match(/clawhub_release_package\.mjs"? verify-registry/g)?.length,
+  2,
+  'Automatic and manual ClawHub publication must share registry retry and hash verification',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /for attempt in 1 2 3 4 5 6/,
+  'ClawHub registry retry logic must remain centralized in the release package helper',
+);
+
+assert.equal(
+  workflow.match(/SKILL_PATH="\$\{\{ steps\.clawhub-package\.outputs\.skill_path \}\}"/g)?.length,
+  4,
+  'ClawHub publish, republish, and their verification steps must use the verified release package path',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /publish-clawhub:[\s\S]*?continue-on-error:\s*true/,
+  'ClawHub package verification must be a blocking release gate',
+);
+
+assert.match(
+  workflow,
+  /Require ClawHub token[\s\S]*::error::CLAWHUB_TOKEN secret is not set/,
+  'Publishable tagged skills must fail when the ClawHub token is unavailable',
+);
+
+assert.equal(
+  workflow.match(/grep -Eqi "version \.\*already exists"/g)?.length,
+  2,
+  'Duplicate publish retries must recognize version-specific already-exists responses before post-publish verification',
+);
+
+assert.equal(
+  workflow.match(/bash scripts\/ci\/install_clawhub_cli\.sh/g)?.length,
+  3,
+  'ClawHub simulation, publish, and republish jobs must share the same pinned CLI installer',
 );
 
 assert.equal(
   workflow.match(/node scripts\/ci\/patch_clawhub_publish_payload\.mjs/g)?.length,
   2,
   'ClawHub publish and republish jobs must share the same payload patch helper',
+);
+
+assert.equal(
+  workflow.match(/run: node (?:scripts\/ci\/|"\$RUNNER_TEMP\/)?patch_clawhub_trust_extensions\.mjs"?/g)?.length,
+  3,
+  'ClawHub simulation, automatic publishing, and manual publishing must apply the trust-extension patch',
+);
+
+assert.match(
+  workflow,
+  /cp scripts\/ci\/patch_clawhub_trust_extensions\.mjs "\$RUNNER_TEMP\/patch_clawhub_trust_extensions\.mjs"/,
+  'Manual ClawHub republish must preserve the current trust-extension patch across tag checkout',
+);
+
+assert.match(
+  workflow,
+  /simulate-tag-release-build:[\s\S]*clawhub_release_package\.mjs prepare[\s\S]*clawhub_release_package\.mjs verify-client-selection/,
+  'PR tag simulation must verify signed release staging through the patched pinned ClawHub client',
 );
 
 assert.equal(
@@ -512,6 +622,19 @@ assert.match(
   patchClawhubPayload,
   /Already patched/,
   'ClawHub payload patch helper must stay idempotent when the pinned CLI already includes acceptLicenseTerms',
+);
+
+for (const extension of ['pem', 'sig']) {
+  assert.ok(
+    patchClawhubTrustExtensions.includes(`"${extension}"`),
+    `ClawHub trust-extension patch must preserve .${extension} release artifacts`,
+  );
+}
+
+assert.match(
+  patchClawhubTrustExtensions,
+  /Already patched/,
+  'ClawHub trust-extension patch must be idempotent when the client already accepts trust artifacts',
 );
 
 assert.match(

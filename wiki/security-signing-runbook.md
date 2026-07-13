@@ -151,6 +151,8 @@ Signing controls:
 Operator review points:
 - verify `checksums.json` includes the release-evidence files documented in `wiki/modules/automation-release.md`
 - verify `checksums.sig` validates against `signing-public.pem`
+- for `clawsec-suite`, verify the GitHub archive and installed ClawHub package both contain `advisories/feed.json`, `feed.json.sig`, `checksums.json`, `checksums.json.sig`, and `feed-signing-public.pem`
+- require the ClawHub post-publish file hash/size comparison to pass before treating a tag release as complete
 - review the release workflow run and PR evidence links before pushing or approving follow-up release tags
 
 ## 8) Rotation policy and runbook

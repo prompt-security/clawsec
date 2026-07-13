@@ -198,6 +198,14 @@ jobs:
               continue
             fi
 
+            if [ "${base_has_json}" = "true" ] && [ "${json_version_changed}" = "true" ]; then
+              if ! node scripts/ci/semver_increment.mjs "${base_json_version}" "${head_json_version}"; then
+                echo "::error file=${json_path}::Skill version increment does not satisfy release policy. Stable releases must advance by at least a patch. base=${base_json_version}, head=${head_json_version}"
+                failures=$((failures + 1))
+                continue
+              fi
+            fi
+
             skill_release_name="$(basename "${skill_dir}")"
             release_tag="${skill_release_name}-v${head_json_version}"
             if [ "${json_version_changed}" != "true" ] && [ "${md_version_changed}" != "true" ]; then
@@ -591,13 +599,6 @@ jobs:
             out_assets="${out_root}/release-assets"
             mkdir -p "${out_assets}"
 
-            # --- Sign advisory artifacts if present (dry-run with test key) ---
-            if ! sign_advisory_artifacts "${skill_dir}"; then
-              failures=$((failures + 1))
-              echo "::endgroup::"
-              continue
-            fi
-
             # --- Stage SBOM files preserving directory structure ---
             staging_dir="$(mktemp -d)"
             inner_dir="${staging_dir}/${skill_name}"
@@ -620,6 +621,8 @@ jobs:
               if [ -f "${full_path}" ]; then
                 mkdir -p "${inner_dir}/$(dirname "${file}")"
                 cp "${full_path}" "${inner_dir}/${file}"
+              elif [[ "${file}" == "advisories/checksums.json" || "${file}" == "advisories/checksums.json.sig" ]] && [ -f "${skill_dir}/advisories/feed.json" ]; then
+                echo "  [Dry-run] ${file} will be generated inside the staged package"
               else
                 echo "::error file=${json_path}::SBOM references missing file: ${file}"
                 failures=$((failures + 1))
@@ -628,14 +631,14 @@ jobs:
 
             cp "${json_path}" "${inner_dir}/skill.json"
 
-            # --- Remove test-only artifacts from staging (don't include in release zip) ---
-            # The test signatures/keys were needed for SBOM validation but shouldn't ship
-            if [ -d "${inner_dir}/advisories" ]; then
-              rm -f "${inner_dir}/advisories/feed.json.sig"
-              rm -f "${inner_dir}/advisories/checksums.json"
-              rm -f "${inner_dir}/advisories/checksums.json.sig"
-              rm -f "${inner_dir}/advisories/feed-signing-public.pem"
-              echo "  [Dry-run] Removed test signatures from release staging"
+            # --- Generate signed advisory trust artifacts inside staging only ---
+            # This keeps tracked source files untouched and exercises the package shape
+            # that the real tag release publishes.
+            if ! sign_advisory_artifacts "${inner_dir}"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
             fi
 
             # --- Verify staged runtime import closure before archiving ---
@@ -650,14 +653,6 @@ jobs:
               failures=$((failures + 1))
             fi
 
-            # --- Clean up test artifacts from source directory ---
-            if [ -d "${skill_dir}/advisories" ]; then
-              rm -f "${skill_dir}/advisories/feed.json.sig"
-              rm -f "${skill_dir}/advisories/checksums.json"
-              rm -f "${skill_dir}/advisories/checksums.json.sig"
-              rm -f "${skill_dir}/advisories/feed-signing-public.pem"
-            fi
-
             # --- Generate checksums.json via jq ---
             files_json="{}"
             while IFS= read -r raw_file; do
@@ -668,7 +663,7 @@ jobs:
               if is_test_release_path "${file}"; then
                 continue
               fi
-              full_path="${skill_dir}/${file}"
+              full_path="${inner_dir}/${file}"
               if [ -f "${full_path}" ]; then
                 sha256="$(sha256sum "${full_path}" | awk '{print $1}')"
                 size="$(stat -c%s "${full_path}" 2>/dev/null || stat -f%z "${full_path}")"
@@ -1039,6 +1034,12 @@ jobs:
           echo "/tmp/skillspector-venv/bin" >> "$GITHUB_PATH"
           skillspector --help >/dev/null
 
+      - name: Install pinned ClawHub client for package simulation
+        run: bash scripts/ci/install_clawhub_cli.sh
+
+      - name: Allow signed trust artifacts in simulated ClawHub packages
+        run: node scripts/ci/patch_clawhub_trust_extensions.mjs
+
       - name: Simulate tag release build
         run: |
           set -euo pipefail
@@ -1059,6 +1060,19 @@ jobs:
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.sig"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/signing-public.pem"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/skillspector-report.md"
+
+            simulated_version="$(jq -r '.simulated_version' "dist/tag-release-simulation/${skill_name}/simulation-summary.json")"
+            release_dir="dist/tag-release-simulation/${skill_name}/release-assets"
+            clawhub_output="dist/tag-release-simulation/${skill_name}/clawhub-package"
+            node scripts/ci/clawhub_release_package.mjs prepare \
+              --release-dir "$release_dir" \
+              --output-dir "$clawhub_output" \
+              --skill "$skill_name" \
+              --version "$simulated_version" \
+              --canonical-key "$release_dir/signing-public.pem"
+            node scripts/ci/clawhub_release_package.mjs verify-client-selection \
+              --package-dir "$clawhub_output/$skill_name" \
+              --cli-prefix .github/clawhub-cli
             echo "::endgroup::"
           done
 
@@ -1751,13 +1765,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-clawhub:
-    # Separate job for ClawHub publishing - runs after GitHub release
-    # Non-blocking: if this fails, the release is still successful
-    # Retriggerable: can be manually triggered for failed publishes
+    # Separate blocking job for ClawHub publishing - runs after GitHub release.
+    # It publishes the verified GitHub release payload, never the raw source directory.
+    # Retriggerable: can be manually triggered for failed publishes.
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: release-tag
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
     env:
@@ -1779,17 +1792,61 @@ jobs:
         with:
           node-version: 20
 
+      - name: Prepare verified ClawHub release package
+        id: clawhub-package
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
+          VERSION="${{ needs.release-tag.outputs.version }}"
+          TAG="${{ github.ref_name }}"
+          RELEASE_DIR="$RUNNER_TEMP/clawhub-release"
+          OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
+
+          mkdir -p "$RELEASE_DIR" "$OUTPUT_DIR"
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --dir "$RELEASE_DIR" \
+            --pattern "${SKILL_NAME}-v${VERSION}.zip" \
+            --pattern "checksums.json" \
+            --pattern "checksums.sig" \
+            --pattern "signing-public.pem"
+
+          node scripts/ci/clawhub_release_package.mjs prepare \
+            --release-dir "$RELEASE_DIR" \
+            --output-dir "$OUTPUT_DIR" \
+            --skill "$SKILL_NAME" \
+            --version "$VERSION" \
+            --canonical-key clawsec-signing-public.pem
+
+          echo "skill_path=$OUTPUT_DIR/$SKILL_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Require ClawHub token
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
+        run: |
+          if [ -z "$CLAWHUB_TOKEN" ]; then
+            echo "::error::CLAWHUB_TOKEN secret is not set"
+            exit 1
+          fi
+
       - name: Install clawhub CLI
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         run: bash scripts/ci/install_clawhub_cli.sh
 
       - name: Patch clawhub publish payload workaround
         # Idempotent compatibility guard: older clawhub@0.7.0 builds omitted acceptLicenseTerms.
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
+      - name: Allow signed trust artifacts in ClawHub packages
+        # ClawHub's text-file allowlist omits .sig and .pem, which silently drops verification assets.
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
+        run: node scripts/ci/patch_clawhub_trust_extensions.mjs
+
       - name: Login to ClawHub
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
@@ -1800,7 +1857,7 @@ jobs:
             clawhub login --token "$CLAWHUB_TOKEN" --site "$SITE" --no-input
 
       - name: Guard ClawHub slug ownership
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
@@ -1811,8 +1868,9 @@ jobs:
           bash scripts/ci/guard_clawhub_slug_owner.sh \
             "${{ needs.release-tag.outputs.clawhub_slug }}"
 
-      - name: Guard duplicate ClawHub version
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+      - name: Check existing ClawHub version
+        id: clawhub-version
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
@@ -1830,11 +1888,13 @@ jobs:
           set -e
 
           if [ "$STATUS" -eq 0 ]; then
-            echo "::error::ClawHub already contains ${CLAWHUB_SLUG}@${VERSION}. Bump the version before tagging."
-            exit 1
+            echo "already_exists=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::ClawHub already contains ${CLAWHUB_SLUG}@${VERSION}; skipping upload and verifying exact registry contents."
+            exit 0
           fi
 
           if grep -Eqi "Version not found|Skill not found" /tmp/clawhub-existing-version.err; then
+            echo "already_exists=false" >> "$GITHUB_OUTPUT"
             echo "No existing ${CLAWHUB_SLUG}@${VERSION} detected in ClawHub. Proceeding."
           else
             echo "::error::Failed to verify ClawHub version precondition."
@@ -1843,12 +1903,12 @@ jobs:
           fi
 
       - name: Publish to ClawHub
-        if: needs.release-tag.outputs.publish_clawhub == 'true' && env.CLAWHUB_TOKEN != ''
+        if: needs.release-tag.outputs.publish_clawhub == 'true' && steps.clawhub-version.outputs.already_exists != 'true'
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          SKILL_PATH="${{ needs.release-tag.outputs.skill_path }}"
+          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
           SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
           CLAWHUB_SLUG="${{ needs.release-tag.outputs.clawhub_slug }}"
           VERSION="${{ needs.release-tag.outputs.version }}"
@@ -1865,11 +1925,34 @@ jobs:
               --changelog "$CHANGELOG" \
               --tags "latest" \
               --no-input 2>&1 | tee /tmp/clawhub-publish.log; then
-            echo "::error::ClawHub publish failed. Check logs above for details."
-            exit 1
+            if grep -Eqi "version .*already exists" /tmp/clawhub-publish.log; then
+              echo "::warning::ClawHub reported an existing version after publish; verifying registry contents before accepting the retry."
+            else
+              echo "::error::ClawHub publish failed. Check logs above for details."
+              exit 1
+            fi
           fi
 
-          echo "✓ Successfully published $SKILL_NAME@$VERSION to ClawHub as $CLAWHUB_SLUG"
+          echo "ClawHub publish request completed for $SKILL_NAME@$VERSION as $CLAWHUB_SLUG"
+
+      - name: Verify published ClawHub package
+        if: needs.release-tag.outputs.publish_clawhub == 'true'
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          CLAWHUB_SLUG="${{ needs.release-tag.outputs.clawhub_slug }}"
+          VERSION="${{ needs.release-tag.outputs.version }}"
+          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          export CLAWHUB_SITE="$SITE"
+          export CLAWHUB_REGISTRY="$REGISTRY"
+
+          node scripts/ci/clawhub_release_package.mjs verify-registry \
+            --package-dir "$SKILL_PATH" \
+            --slug "$CLAWHUB_SLUG" \
+            --version "$VERSION"
+          echo "✓ Verified published ClawHub package matches the signed release payload"
 
   republish-clawhub:
     # Manual workflow to republish a specific tag to ClawHub
@@ -1899,10 +1982,12 @@ jobs:
       - name: Checkout workflow helpers
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Prepare ClawHub slug helper
+      - name: Prepare current ClawHub workflow helpers
         run: |
           cp scripts/ci/resolve_clawhub_slug.mjs "$RUNNER_TEMP/resolve_clawhub_slug.mjs"
           cp scripts/ci/skill_platforms.mjs "$RUNNER_TEMP/skill_platforms.mjs"
+          cp scripts/ci/clawhub_release_package.mjs "$RUNNER_TEMP/clawhub_release_package.mjs"
+          cp scripts/ci/patch_clawhub_trust_extensions.mjs "$RUNNER_TEMP/patch_clawhub_trust_extensions.mjs"
 
       - name: Checkout tag
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1942,6 +2027,36 @@ jobs:
         with:
           node-version: 20
 
+      - name: Prepare verified ClawHub release package
+        id: clawhub-package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          TAG="${{ github.event.inputs.tag }}"
+          RELEASE_DIR="$RUNNER_TEMP/clawhub-release"
+          OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
+
+          mkdir -p "$RELEASE_DIR" "$OUTPUT_DIR"
+          gh release download "$TAG" \
+            --repo "${{ github.repository }}" \
+            --dir "$RELEASE_DIR" \
+            --pattern "${SKILL_NAME}-v${VERSION}.zip" \
+            --pattern "checksums.json" \
+            --pattern "checksums.sig" \
+            --pattern "signing-public.pem"
+
+          node "$RUNNER_TEMP/clawhub_release_package.mjs" prepare \
+            --release-dir "$RELEASE_DIR" \
+            --output-dir "$OUTPUT_DIR" \
+            --skill "$SKILL_NAME" \
+            --version "$VERSION" \
+            --canonical-key clawsec-signing-public.pem
+
+          echo "skill_path=$OUTPUT_DIR/$SKILL_NAME" >> "$GITHUB_OUTPUT"
+
       - name: Validate npx skills install docs
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
 
@@ -1951,6 +2066,10 @@ jobs:
       - name: Patch clawhub publish payload workaround
         # Idempotent compatibility guard: older clawhub@0.7.0 builds omitted acceptLicenseTerms.
         run: node scripts/ci/patch_clawhub_publish_payload.mjs
+
+      - name: Allow signed trust artifacts in ClawHub packages
+        # Use the current helper even when republishing a tag created before this packaging fix.
+        run: node "$RUNNER_TEMP/patch_clawhub_trust_extensions.mjs"
 
       - name: Login to ClawHub
         run: |
@@ -1983,7 +2102,7 @@ jobs:
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
           SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
           CLAWHUB_SLUG="${{ steps.publishable.outputs.clawhub_slug }}"
           VERSION="${{ steps.parse.outputs.version }}"
@@ -2005,7 +2124,7 @@ jobs:
               --no-input 2>&1 | tee /tmp/clawhub-publish.log; then
 
             # Check if it's a "version already exists" error (which is OK on retry)
-            if grep -qi "version already exists" /tmp/clawhub-publish.log; then
+            if grep -Eqi "version .*already exists" /tmp/clawhub-publish.log; then
               echo "::warning::Version $VERSION already published to ClawHub"
               echo "This is expected if you're retrying a failed publish."
               echo "✓ Skill is available on ClawHub"
@@ -2018,3 +2137,21 @@ jobs:
           fi
 
           echo "✓ Successfully published $SKILL_NAME@$VERSION to ClawHub"
+
+      - name: Verify published ClawHub package
+        run: |
+          set -euo pipefail
+          SITE=${CLAWHUB_SITE:-https://clawhub.ai}
+          REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
+          CLAWHUB_SLUG="${{ steps.publishable.outputs.clawhub_slug }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
+          export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
+          export CLAWHUB_SITE="$SITE"
+          export CLAWHUB_REGISTRY="$REGISTRY"
+
+          node "$RUNNER_TEMP/clawhub_release_package.mjs" verify-registry \
+            --package-dir "$SKILL_PATH" \
+            --slug "$CLAWHUB_SLUG" \
+            --version "$VERSION"
+          echo "✓ Verified published ClawHub package matches the signed release payload"

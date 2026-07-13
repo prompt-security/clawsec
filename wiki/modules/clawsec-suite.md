@@ -16,6 +16,17 @@
 - `skills/clawsec-suite/scripts/guarded_skill_install.mjs`: advisory-gated installer wrapper.
 - `skills/clawsec-suite/scripts/discover_skill_catalog.mjs`: remote/fallback catalog discovery.
 
+## Packaged Advisory Trust Set
+The standard installed Suite package must contain all five files below:
+
+- `advisories/feed.json`
+- `advisories/feed.json.sig`
+- `advisories/checksums.json`
+- `advisories/checksums.json.sig`
+- `advisories/feed-signing-public.pem`
+
+The local fallback is considered usable only when this complete set verifies. GitHub release and ClawHub packaging must preserve the same signed payload; a registry publish that omits any file is a release failure.
+
 ## Public Interfaces
 | Interface | Consumer | Behavior |
 | --- | --- | --- |
@@ -65,7 +76,7 @@ if (matches.length > 0 && !args.confirmAdvisory) {
 ```
 
 ## Edge Cases
-- Missing/malformed feed signatures force remote rejection and local fallback attempts.
+- Missing/malformed feed signatures force remote rejection and local fallback attempts; an incomplete local trust set cannot be accepted as a verified fallback.
 - Ambiguous checksum manifest basename collisions are treated as errors.
 - Unknown skill versions are treated conservatively in version matching logic.
 - Suppression is disabled unless config includes the pipeline sentinel (`enabledFor`).

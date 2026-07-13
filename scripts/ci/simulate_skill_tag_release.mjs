@@ -248,14 +248,14 @@ async function createSigningKeyPair(tempRoot) {
   return { privateKeyPath, publicKeyPath };
 }
 
-async function signAdvisoryArtifacts(skillDir, tempRoot) {
+async function signAdvisoryArtifacts(skillDir, tempRoot, signingKeys) {
   const advisoryDir = path.join(skillDir, "advisories");
   const feedPath = path.join(advisoryDir, "feed.json");
   if (!existsSync(feedPath)) {
     return;
   }
 
-  const { privateKeyPath, publicKeyPath } = await createSigningKeyPair(tempRoot);
+  const { privateKeyPath, publicKeyPath } = signingKeys;
   const feedSignaturePath = path.join(advisoryDir, "feed.json.sig");
   const checksumsPath = path.join(advisoryDir, "checksums.json");
   const checksumsSignaturePath = path.join(advisoryDir, "checksums.json.sig");
@@ -399,6 +399,7 @@ async function main() {
     const simulatedVersion = nextSimulatedReleaseVersion(originalVersion);
     const tag = `${skillName}-v${simulatedVersion}`;
     const zipName = `${tag}.zip`;
+    const signingKeys = await createSigningKeyPair(tempRoot);
 
     skill.version = simulatedVersion;
     await writeJson(skillJsonPath, skill);
@@ -407,7 +408,7 @@ async function main() {
       replaceSkillMarkdownVersion(await readFile(skillMdPath, "utf8"), simulatedVersion),
     );
     await addSimulatedChangelogEntry(tempSkillDir, simulatedVersion);
-    await signAdvisoryArtifacts(tempSkillDir, tempRoot);
+    await signAdvisoryArtifacts(tempSkillDir, tempRoot, signingKeys);
 
     if (!skill.sbom || !Array.isArray(skill.sbom.files)) {
       throw new Error(`skill.json missing required release field: sbom.files`);
@@ -495,20 +496,19 @@ async function main() {
     }
     await writeJson(path.join(releaseAssetsDir, "checksums.json"), manifest);
 
-    const { privateKeyPath, publicKeyPath } = await createSigningKeyPair(tempRoot);
     await signFileBase64({
-      keyPath: privateKeyPath,
+      keyPath: signingKeys.privateKeyPath,
       inputPath: path.join(releaseAssetsDir, "checksums.json"),
       outputPath: path.join(releaseAssetsDir, "checksums.sig"),
       tempRoot,
     });
     await verifyFileBase64Signature({
-      publicKeyPath,
+      publicKeyPath: signingKeys.publicKeyPath,
       inputPath: path.join(releaseAssetsDir, "checksums.json"),
       signaturePath: path.join(releaseAssetsDir, "checksums.sig"),
       tempRoot,
     });
-    await cp(publicKeyPath, path.join(releaseAssetsDir, "signing-public.pem"));
+    await cp(signingKeys.publicKeyPath, path.join(releaseAssetsDir, "signing-public.pem"));
 
     await writeJson(path.join(outputDir, "simulation-summary.json"), {
       skill: skillName,

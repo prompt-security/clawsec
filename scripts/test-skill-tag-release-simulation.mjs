@@ -6,12 +6,24 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import {
+  collectClawhubPackageFiles,
+  collectPackageFiles,
+  prepareReleasePackage,
+  verifyRegistryPackage,
+  verifyPublishedPackage,
+} from "./ci/clawhub_release_package.mjs";
 
 const tempRoot = await mkdtemp(path.join(tmpdir(), "clawsec-tag-release-sim-"));
 const fakeSkillspector = path.join(tempRoot, "skillspector");
+const fakeClawhub = path.join(tempRoot, "clawhub");
 
 function sha256(buffer) {
   return createHash("sha256").update(buffer).digest("hex");
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
 }
 
 async function prereleaseFixture(sourceSkillDir, version, fixtureGroup) {
@@ -113,6 +125,53 @@ async function runSimulation({
   const archive = await readFile(archivePath);
   assert.ok(archive.length > 0, "release archive should not be empty");
 
+  if (!verifyEmbeddedAdvisory) {
+    const clawhubOutputDir = path.join(outputDir, "clawhub-package");
+    const prepared = await prepareReleasePackage({
+      releaseDir: releaseAssetsDir,
+      outputDir: clawhubOutputDir,
+      skillName,
+      version: expectedSimulated,
+      canonicalKeyPath: path.join(releaseAssetsDir, "signing-public.pem"),
+    });
+    const publishableFiles = await collectClawhubPackageFiles(prepared.packageDir);
+    const inspectJsonPath = path.join(outputDir, "clawhub-inspect.json");
+    await writeFile(inspectJsonPath, `${JSON.stringify({
+      version: { version: expectedSimulated, files: [...publishableFiles.values()] },
+    }, null, 2)}\n`);
+    assert.deepEqual(
+      await verifyPublishedPackage({
+        packageDir: prepared.packageDir,
+        inspectJsonPath,
+        version: expectedSimulated,
+      }),
+      { version: expectedSimulated, files: publishableFiles.size },
+    );
+
+    const registryAttemptPath = path.join(outputDir, "clawhub-inspect-attempts.txt");
+    const previousPath = process.env.PATH;
+    process.env.PATH = `${tempRoot}:${previousPath}`;
+    process.env.FAKE_CLAWHUB_INSPECT_JSON = inspectJsonPath;
+    process.env.FAKE_CLAWHUB_ATTEMPT_FILE = registryAttemptPath;
+    try {
+      assert.deepEqual(
+        await verifyRegistryPackage({
+          packageDir: prepared.packageDir,
+          slug: "clawsec-suite",
+          version: expectedSimulated,
+          attempts: 2,
+          delayMs: 1,
+        }),
+        { version: expectedSimulated, files: publishableFiles.size },
+      );
+      assert.equal(await readFile(registryAttemptPath, "utf8"), "2");
+    } finally {
+      process.env.PATH = previousPath;
+      delete process.env.FAKE_CLAWHUB_INSPECT_JSON;
+      delete process.env.FAKE_CLAWHUB_ATTEMPT_FILE;
+    }
+  }
+
   if (verifyEmbeddedAdvisory) {
     const readArchiveEntry = (entry) => {
       const extracted = spawnSync("unzip", ["-p", archivePath, entry], {
@@ -181,6 +240,91 @@ async function runSimulation({
     });
     assert.equal(loadedFeed.version, canonicalFeedPayload.version);
     assert.equal(loadedFeed.advisories.length, canonicalFeedPayload.advisories.length);
+
+    const clawhubOutputDir = path.join(outputDir, "clawhub-package");
+    const prepared = await prepareReleasePackage({
+      releaseDir: releaseAssetsDir,
+      outputDir: clawhubOutputDir,
+      skillName,
+      version: expectedSimulated,
+      canonicalKeyPath: path.join(releaseAssetsDir, "signing-public.pem"),
+    });
+    assert.equal(prepared.embeddedAdvisoryTrust.verified, true);
+    assert.equal(prepared.embeddedAdvisoryTrust.files, 5);
+
+    const preparedFiles = await collectPackageFiles(prepared.packageDir);
+    const publishableFiles = await collectClawhubPackageFiles(prepared.packageDir);
+    const extractedFiles = await collectPackageFiles(extractedSkillDir);
+    assert.deepEqual(
+      Object.fromEntries(preparedFiles),
+      Object.fromEntries(extractedFiles),
+      "ClawHub staging must be byte-identical to the verified GitHub release archive",
+    );
+
+    const preparedAdvisoryDir = path.join(prepared.packageDir, "advisories");
+    const preparedFeedPath = path.join(preparedAdvisoryDir, "feed.json");
+    const preparedPublicKeyPath = path.join(preparedAdvisoryDir, "feed-signing-public.pem");
+    const preparedPublicKeyPem = await readFile(preparedPublicKeyPath, "utf8");
+    const preparedFeedModuleUrl = pathToFileURL(
+      path.join(prepared.packageDir, "hooks", "clawsec-advisory-guardian", "lib", "feed.mjs"),
+    );
+    const { loadLocalFeed: loadClawHubFeed } = await import(preparedFeedModuleUrl.href);
+    const clawhubFeed = await loadClawHubFeed(preparedFeedPath, {
+      signaturePath: `${preparedFeedPath}.sig`,
+      checksumsPath: path.join(preparedAdvisoryDir, "checksums.json"),
+      checksumsSignaturePath: path.join(preparedAdvisoryDir, "checksums.json.sig"),
+      publicKeyPem: preparedPublicKeyPem,
+      checksumsPublicKeyPem: preparedPublicKeyPem,
+      verifyChecksumManifest: true,
+      checksumPublicKeyEntry: path.basename(preparedPublicKeyPath),
+    });
+    assert.equal(clawhubFeed.version, canonicalFeedPayload.version);
+    assert.equal(clawhubFeed.advisories.length, canonicalFeedPayload.advisories.length);
+
+    const inspectJsonPath = path.join(outputDir, "clawhub-inspect.json");
+    const inspectPayload = {
+      version: {
+        version: expectedSimulated,
+        files: [...publishableFiles.values()],
+      },
+    };
+    await writeFile(inspectJsonPath, `${JSON.stringify(inspectPayload, null, 2)}\n`);
+    assert.deepEqual(
+      await verifyPublishedPackage({
+        packageDir: prepared.packageDir,
+        inspectJsonPath,
+        version: expectedSimulated,
+      }),
+      { version: expectedSimulated, files: publishableFiles.size },
+    );
+
+    const incompleteInspectPath = path.join(outputDir, "clawhub-inspect-missing-key.json");
+    const incompleteInspect = cloneJson(inspectPayload);
+    incompleteInspect.version.files = incompleteInspect.version.files.filter(
+      (entry) => entry.path !== "advisories/feed-signing-public.pem",
+    );
+    await writeFile(incompleteInspectPath, `${JSON.stringify(incompleteInspect, null, 2)}\n`);
+    await assert.rejects(
+      verifyPublishedPackage({
+        packageDir: prepared.packageDir,
+        inspectJsonPath: incompleteInspectPath,
+        version: expectedSimulated,
+      }),
+      /missing advisories\/feed-signing-public\.pem/,
+    );
+
+    const duplicateInspectPath = path.join(outputDir, "clawhub-inspect-duplicate-path.json");
+    const duplicateInspect = cloneJson(inspectPayload);
+    duplicateInspect.version.files.push(duplicateInspect.version.files[0]);
+    await writeFile(duplicateInspectPath, `${JSON.stringify(duplicateInspect, null, 2)}\n`);
+    await assert.rejects(
+      verifyPublishedPackage({
+        packageDir: prepared.packageDir,
+        inspectJsonPath: duplicateInspectPath,
+        version: expectedSimulated,
+      }),
+      /duplicate file paths/,
+    );
   }
 
   const install = await readFile(path.join(releaseAssetsDir, "install.md"), "utf8");
@@ -239,14 +383,43 @@ writeFileSync(process.argv[outputIndex + 1], "# Fake SkillSpector Report\\n\\nNo
     { mode: 0o700 },
   );
   await chmod(fakeSkillspector, 0o700);
+  await writeFile(
+    fakeClawhub,
+    `#!/usr/bin/env node
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
+const attemptFile = process.env.FAKE_CLAWHUB_ATTEMPT_FILE;
+const inspectFile = process.env.FAKE_CLAWHUB_INSPECT_JSON;
+if (process.argv[2] !== "inspect" || !attemptFile || !inspectFile) {
+  process.exit(2);
+}
+const attempt = existsSync(attemptFile) ? Number(readFileSync(attemptFile, "utf8")) + 1 : 1;
+writeFileSync(attemptFile, String(attempt));
+if (attempt === 1) {
+  process.stderr.write("registry result not yet visible\\n");
+  process.exit(1);
+}
+process.stdout.write(readFileSync(inspectFile, "utf8"));
+`,
+    { mode: 0o700 },
+  );
+  await chmod(fakeClawhub, 0o700);
 
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.14",
-    expectedSimulated: "0.1.15",
+    expectedOriginal: "0.1.15",
+    expectedSimulated: "0.1.16",
     expectedAgent: "openclaw",
     verifyEmbeddedAdvisory: true,
+  });
+
+  await runSimulation({
+    skillDir: "skills/clawsec-feed",
+    outputDir: path.join(tempRoot, "feed-only"),
+    expectedOriginal: "0.0.11",
+    expectedSimulated: "0.0.12",
+    expectedAgent: "openclaw",
   });
 
   await runSimulation({
