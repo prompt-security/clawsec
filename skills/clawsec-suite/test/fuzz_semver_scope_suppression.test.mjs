@@ -57,6 +57,21 @@ function runSemverProperties() {
   );
 }
 
+function runConsolidatedFeedRangeRegressions() {
+  assert.equal(versionMatches("2026.5.25", ">= 2026.4.14, < 2026.5.26"), true);
+  assert.equal(versionMatches("2026.5.26", ">= 2026.4.14, < 2026.5.26"), false);
+  assert.equal(versionMatches("2026.2.17", ">=2026.1.20 <=2026.2.17"), true);
+  assert.equal(versionMatches("2026.2.18", ">=2026.1.20 <=2026.2.17"), false);
+  assert.equal(versionMatches("2026.2.22-2", "<= 2026.2.22-2"), true);
+  assert.equal(versionMatches("2026.2.22-3", "<= 2026.2.22-2"), false);
+  assert.equal(versionMatches("2026.2.22", "<= 2026.2.22-2"), false);
+  assert.equal(versionMatches("2026.5.14-beta.1", ">=2026.5.14-beta.1 <2026.5.27"), true);
+  assert.equal(versionMatches("2026.5.14-beta.0", ">=2026.5.14-beta.1 <2026.5.27"), false);
+  assert.equal(versionMatches("1.2.3", ">= 1.0.0 <"), false);
+  assert.equal(compareSemver("1.2.3-beta.2", "1.2.3-beta.10"), -1);
+  assert.equal(compareSemver("1.2.3", "1.2.3-beta.10"), 1);
+}
+
 function runAdvisoryScopeProperties() {
   fc.assert(
     fc.property(fc.string(), (application) => {
@@ -127,6 +142,7 @@ function runSuppressionProperties() {
 try {
   console.log("=== ClawSec Semver/Scope/Suppression Fuzz Properties ===\n");
   runSemverProperties();
+  runConsolidatedFeedRangeRegressions();
   runAdvisoryScopeProperties();
   runSuppressionProperties();
   console.log("=== Results: all fuzz properties passed ===");

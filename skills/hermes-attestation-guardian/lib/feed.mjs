@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { parseAffectedSpecifier, parseVersionSpec } from "./semver.mjs";
+import { isCpeAffectedSpecifier, parseAffectedSpecifier, parseVersionSpec } from "./semver.mjs";
 
 const PINNED_FEED_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAS7nijfMcUoOBCj4yOXJX+GYGv2pFl2Yaha1P4v5Cm6A=
@@ -381,6 +381,10 @@ export function isValidFeedPayload(raw) {
     if (!Array.isArray(advisory.affected)) return false;
     for (const entry of advisory.affected) {
       if (typeof entry !== "string" || !entry.trim()) return false;
+      // The consolidated feed intentionally preserves NVD CPE metadata. Hermes
+      // package matching cannot act on CPEs, but valid CPE 2.3 entries must not
+      // invalidate an otherwise trusted feed.
+      if (isCpeAffectedSpecifier(entry)) continue;
       const parsed = parseAffectedSpecifier(entry);
       if (!parsed || !parsed.name) return false;
       if (!parseVersionSpec(parsed.versionSpec).supported) return false;

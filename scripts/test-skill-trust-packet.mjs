@@ -25,7 +25,7 @@ function runTrustPacket(skillDir, targetDir, tag) {
 }
 
 try {
-  const result = runTrustPacket("skills/clawsec-suite", outputDir, "clawsec-suite-v0.1.12");
+  const result = runTrustPacket("skills/clawsec-suite", outputDir, "clawsec-suite-v0.1.13");
 
   assert.equal(
     result.status,
@@ -41,10 +41,10 @@ try {
   assert.match(skillCard, /## License\/Terms of Use/);
   assert.match(skillCard, /AGPL-3\.0-or-later/);
   assert.match(skillCard, /skillspector-report\.md/);
-  assert.match(skillCard, /clawsec-suite-v0\.1\.12/);
+  assert.match(skillCard, /clawsec-suite-v0\.1\.13/);
 
   assert.equal(permissions.skill, "clawsec-suite");
-  assert.equal(permissions.version, "0.1.12");
+  assert.equal(permissions.version, "0.1.13");
   assert.equal(permissions.platform, "openclaw");
   assert.deepEqual(
     permissions.required_binaries,
@@ -62,7 +62,7 @@ try {
   const hermesResult = runTrustPacket(
     "skills/hermes-attestation-guardian",
     hermesOutputDir,
-    "hermes-attestation-guardian-v0.1.6",
+    "hermes-attestation-guardian-v0.1.7",
   );
   assert.equal(
     hermesResult.status,

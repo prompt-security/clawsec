@@ -27,6 +27,8 @@ assert.match(
 for (const generatedFeedPath of [
   'skills/clawsec-feed/advisories/feed.json',
   'skills/clawsec-feed/advisories/feed.json.sig',
+  'skills/clawsec-suite/advisories/feed.json',
+  'skills/clawsec-suite/advisories/feed.json.sig',
 ]) {
   assert.ok(
     workflow.includes(`      - '!${generatedFeedPath}'`),
@@ -52,13 +54,15 @@ assert.ok(
 
 assert.match(
   workflow,
-  /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
-  'Skill release validation must ignore generated clawsec-feed advisory mirror and test-only changes while inspecting release-relevant skill files',
+  /git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/clawsec-suite\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-suite\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
+  'Skill release validation must ignore generated advisory mirrors and test-only changes while inspecting release-relevant skill files',
 );
 
 for (const generatedFeedPath of [
   ':(exclude)skills/clawsec-feed/advisories/feed.json',
   ':(exclude)skills/clawsec-feed/advisories/feed.json.sig',
+  ':(exclude)skills/clawsec-suite/advisories/feed.json',
+  ':(exclude)skills/clawsec-suite/advisories/feed.json.sig',
 ]) {
   assert.ok(
     validateSkillInstallDocs.includes(`"${generatedFeedPath}"`),
@@ -165,7 +169,7 @@ assert.match(
 
 assert.match(
   workflow,
-  /Run release dry-run for changed skills[\s\S]*git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
+  /Run release dry-run for changed skills[\s\S]*git diff --name-only "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" --[\s\S]*'skills\/\*\/\*\*'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-feed\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/clawsec-suite\/advisories\/feed\.json'[\s\S]*':\(exclude\)skills\/clawsec-suite\/advisories\/feed\.json\.sig'[\s\S]*':\(exclude\)skills\/\*\/test\/\*\*'[\s\S]*':\(exclude\)skills\/\*\/tests\/\*\*'/,
   'PR dry-run SkillSpector scan must run when any release-relevant skill package file changes except generated advisory mirror files',
 );
 
@@ -309,7 +313,13 @@ assert.match(
 assert.doesNotMatch(
   commentJob,
   /continue-on-error: true/,
-  'SkillSpector PR comment publishing must fail visibly when report artifacts or PR comments cannot be created',
+  'SkillSpector PR comment publishing must not hide the whole job behind continue-on-error',
+);
+
+assert.match(
+  commentJob,
+  /status === 403 && message\.includes\("Resource not accessible by integration"\)[\s\S]*core\.warning\([\s\S]*skillspector-pr-reports artifact[\s\S]*throw error/,
+  'SkillSpector PR comments must fall back to the uploaded artifact only for GitHub integration permission denials',
 );
 
 assert.match(

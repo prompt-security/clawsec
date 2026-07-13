@@ -15,6 +15,8 @@ env:
   FEED_SIG_PATH: advisories/feed.json.sig
   SKILL_FEED_PATH: skills/clawsec-feed/advisories/feed.json
   SKILL_FEED_SIG_PATH: skills/clawsec-feed/advisories/feed.json.sig
+  SUITE_FEED_PATH: skills/clawsec-suite/advisories/feed.json
+  SUITE_FEED_SIG_PATH: skills/clawsec-suite/advisories/feed.json.sig
 
 jobs:
   process-advisory:
@@ -230,13 +232,16 @@ jobs:
             echo "Feed JSON is valid"
             mv tmp_feed.json "$FEED_PATH"
 
-            # Sync to skill feed
+            # Sync to feed consumers
             mkdir -p "$(dirname "$SKILL_FEED_PATH")"
             cp "$FEED_PATH" "$SKILL_FEED_PATH"
+            mkdir -p "$(dirname "$SUITE_FEED_PATH")"
+            cp "$FEED_PATH" "$SUITE_FEED_PATH"
 
             echo "Updated feeds:"
             echo "  - $FEED_PATH"
             echo "  - $SKILL_FEED_PATH"
+            echo "  - $SUITE_FEED_PATH"
 
             TOTAL=$(jq '.advisories | length' "$FEED_PATH")
             echo "Total advisories: $TOTAL"
@@ -256,10 +261,13 @@ jobs:
           verify_files: |
             ${{ env.FEED_PATH }}
             ${{ env.SKILL_FEED_PATH }}
+            ${{ env.SUITE_FEED_PATH }}
 
-      - name: Sync advisory signature to skill feed
+      - name: Sync advisory signature to skill feeds
         if: steps.parse.outputs.already_exists != 'true'
-        run: cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
+        run: |
+          cp "$FEED_SIG_PATH" "$SKILL_FEED_SIG_PATH"
+          cp "$FEED_SIG_PATH" "$SUITE_FEED_SIG_PATH"
 
       - name: Require automation token for write operations
         env:
@@ -299,6 +307,8 @@ jobs:
             ${{ env.FEED_SIG_PATH }}
             ${{ env.SKILL_FEED_PATH }}
             ${{ env.SKILL_FEED_SIG_PATH }}
+            ${{ env.SUITE_FEED_PATH }}
+            ${{ env.SUITE_FEED_SIG_PATH }}
 
       - name: Comment on issue
         if: steps.parse.outputs.already_exists != 'true'

@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "id": "comma-range-inside",
+      "version": "2026.5.25",
+      "range": ">= 2026.4.14, < 2026.5.26",
+      "matches": true
+    },
+    {
+      "id": "comma-range-upper-bound",
+      "version": "2026.5.26",
+      "range": ">= 2026.4.14, < 2026.5.26",
+      "matches": false
+    },
+    {
+      "id": "space-range-inclusive-upper",
+      "version": "2026.2.17",
+      "range": ">=2026.1.20 <=2026.2.17",
+      "matches": true
+    },
+    {
+      "id": "space-range-above-upper",
+      "version": "2026.2.18",
+      "range": ">=2026.1.20 <=2026.2.17",
+      "matches": false
+    },
+    {
+      "id": "exclusive-lower-bound",
+      "version": "2026.4.20",
+      "range": "> 2026.4.20, < 2026.5.28",
+      "matches": false
+    },
+    {
+      "id": "exclusive-range-inside",
+      "version": "2026.4.21",
+      "range": "> 2026.4.20, < 2026.5.28",
+      "matches": true
+    },
+    {
+      "id": "prerelease-inclusive-boundary",
+      "version": "2026.2.22-2",
+      "range": "<= 2026.2.22-2",
+      "matches": true
+    },
+    {
+      "id": "prerelease-above-boundary",
+      "version": "2026.2.22-3",
+      "range": "<= 2026.2.22-2",
+      "matches": false
+    },
+    {
+      "id": "release-above-prerelease-boundary",
+      "version": "2026.2.22",
+      "range": "<= 2026.2.22-2",
+      "matches": false
+    },
+    {
+      "id": "prerelease-range-lower-bound",
+      "version": "2026.5.14-beta.1",
+      "range": ">=2026.5.14-beta.1 <2026.5.27",
+      "matches": true
+    },
+    {
+      "id": "prerelease-range-below-lower",
+      "version": "2026.5.14-beta.0",
+      "range": ">=2026.5.14-beta.1 <2026.5.27",
+      "matches": false
+    },
+    {
+      "id": "prerelease-range-upper-bound",
+      "version": "2026.5.27",
+      "range": ">=2026.5.14-beta.1 <2026.5.27",
+      "matches": false
+    },
+    {
+      "id": "legacy-prerelease-lower-bound",
+      "version": "2.0.0-beta3",
+      "range": ">= 2.0.0-beta3, < 2026.2.12",
+      "matches": true
+    },
+    {
+      "id": "legacy-prerelease-below-lower",
+      "version": "2.0.0-beta2",
+      "range": ">= 2.0.0-beta3, < 2026.2.12",
+      "matches": false
+    },
+    {
+      "id": "build-metadata-ignored",
+      "version": "1.2.3+build.1",
+      "range": "=1.2.3+build.2",
+      "matches": true
+    },
+    {
+      "id": "caret-zero-minor-upper-bound",
+      "version": "0.3.0",
+      "range": "^0.2.3",
+      "matches": false
+    }
+  ]
+}

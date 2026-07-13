@@ -9,6 +9,8 @@ on:
       - 'skills/**'
       - '!skills/clawsec-feed/advisories/feed.json'
       - '!skills/clawsec-feed/advisories/feed.json.sig'
+      - '!skills/clawsec-suite/advisories/feed.json'
+      - '!skills/clawsec-suite/advisories/feed.json.sig'
       - '.github/workflows/skill-release.yml'
       - 'scripts/ci/**'
       - 'scripts/test-skill-*.mjs'
@@ -92,6 +94,8 @@ jobs:
             'skills/*/**' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json.sig' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json.sig' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
             | awk -F/ '
@@ -416,6 +420,8 @@ jobs:
             'skills/*/**' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json' \
             ':(exclude)skills/clawsec-feed/advisories/feed.json.sig' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json' \
+            ':(exclude)skills/clawsec-suite/advisories/feed.json.sig' \
             ':(exclude)skills/*/test/**' \
             ':(exclude)skills/*/tests/**' \
             | awk -F/ 'NF >= 3 {print $1 "/" $2}' \
@@ -968,22 +974,35 @@ jobs:
               const body = buildComment({ tag, report });
               const existing = comments.find((comment) => comment.body?.includes(marker));
 
-              if (existing) {
-                await github.rest.issues.updateComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: existing.id,
-                  body,
-                });
-                core.info(`Updated SkillSpector PR comment for ${tag}.`);
-              } else {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  body,
-                });
-                core.info(`Created SkillSpector PR comment for ${tag}.`);
+              try {
+                if (existing) {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: existing.id,
+                    body,
+                  });
+                  core.info(`Updated SkillSpector PR comment for ${tag}.`);
+                } else {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    body,
+                  });
+                  core.info(`Created SkillSpector PR comment for ${tag}.`);
+                }
+              } catch (error) {
+                const status = Number(error?.status ?? error?.response?.status ?? 0);
+                const message = String(error?.response?.data?.message ?? error?.message ?? "");
+                if (status === 403 && message.includes("Resource not accessible by integration")) {
+                  core.warning(
+                    `GitHub denied PR comment write access for ${tag}; `
+                    + "the full report remains available in the skillspector-pr-reports artifact.",
+                  );
+                  continue;
+                }
+                throw error;
               }
             }
 

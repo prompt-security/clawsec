@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.13] - 2026-07-13
+
+### Fixed
+
+- Evaluated every clause in comma- and whitespace-separated advisory comparator sets instead of silently ignoring upper bounds.
+- Preserved SemVer prerelease precedence so stable and later prerelease builds are not falsely reported as vulnerable.
+- Rejected malformed or partially parsed ranges instead of deriving a result from a valid prefix.
+
+### Added
+
+- Added full consolidated-feed validation and cross-consumer range-conformance coverage shared with Hermes and NanoClaw.
+- Added canonical feed and signature propagation so Suite releases and source installs no longer retain a stale fallback mirror.
+
 ## [0.1.12] - 2026-06-23
 
 ### Changed

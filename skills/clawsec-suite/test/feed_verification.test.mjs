@@ -495,6 +495,25 @@ async function testIsValidFeedPayload_Valid() {
 }
 
 // -----------------------------------------------------------------------------
+// Test: isValidFeedPayload - tracked consolidated feed
+// -----------------------------------------------------------------------------
+async function testIsValidFeedPayload_TrackedConsolidatedFeed() {
+  const testName = "isValidFeedPayload: tracked consolidated feed passes";
+  try {
+    const feedPath = path.resolve(__dirname, "..", "..", "..", "advisories", "feed.json");
+    const feed = JSON.parse(await fs.readFile(feedPath, "utf8"));
+
+    if (isValidFeedPayload(feed) && feed.advisories.length > 0) {
+      pass(testName);
+    } else {
+      fail(testName, "Expected tracked consolidated feed to pass validation");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Test: isValidFeedPayload - missing version fails
 // -----------------------------------------------------------------------------
 async function testIsValidFeedPayload_MissingVersion() {
@@ -577,6 +596,7 @@ async function runTests() {
 
     // Feed payload validation tests
     await testIsValidFeedPayload_Valid();
+    await testIsValidFeedPayload_TrackedConsolidatedFeed();
     await testIsValidFeedPayload_MissingVersion();
     await testIsValidFeedPayload_AdvisoryMissingId();
   } finally {

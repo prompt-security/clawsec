@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import {
   getFeedVerificationStatus,
+  isValidFeedPayload,
   loadLocalFeed,
   loadRemoteFeed,
   refreshAdvisoryFeed,
@@ -137,7 +138,7 @@ async function testUnsupportedAffectedRangesFailClosed() {
     const publicKeyPem = publicKey.export({ type: "spki", format: "pem" });
     const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" });
 
-    const testSpecs = [">=1 <2", "1.2 || 1.3"];
+    const testSpecs = ["1.2 || 1.3", ">=1.0.0 garbage <2.0.0"];
     for (const unsupportedSpec of testSpecs) {
       const payload = createFeedPayload();
       payload.advisories[0].affected = [`sample-skill@${unsupportedSpec}`];
@@ -162,6 +163,23 @@ async function testUnsupportedAffectedRangesFailClosed() {
       });
     }
   });
+}
+
+function testCanonicalRepositoryFeedPayloadIsAccepted() {
+  const canonicalFeedUrl = new URL("../../../advisories/feed.json", import.meta.url);
+  const canonicalFeed = JSON.parse(fsSync.readFileSync(canonicalFeedUrl, "utf8"));
+
+  assert.equal(
+    isValidFeedPayload(canonicalFeed),
+    true,
+    "Hermes must accept the canonical consolidated feed, including CPE metadata and supported comparator sets",
+  );
+}
+
+function testMalformedCpeFailsClosed() {
+  const payload = createFeedPayload();
+  payload.advisories[0].affected = ["cpe:2.3:a:missing-components"];
+  assert.equal(isValidFeedPayload(payload), false, "malformed CPE metadata must still fail closed");
 }
 
 async function testInvalidSignatureFailsClosed() {
@@ -649,6 +667,8 @@ async function testResolveFeedConfigRejectsOutsideHermesHomeStateAndCachePaths()
 }
 
 await testValidSignedLocalFeed();
+testCanonicalRepositoryFeedPayloadIsAccepted();
+testMalformedCpeFailsClosed();
 await testUnsupportedAffectedRangesFailClosed();
 await testInvalidSignatureFailsClosed();
 await testChecksumMismatchFails();
