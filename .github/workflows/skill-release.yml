@@ -2040,6 +2040,20 @@ jobs:
           OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
 
           mkdir -p "$RELEASE_DIR" "$OUTPUT_DIR"
+          release_assets="$(gh release view "$TAG" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
+          required_release_assets=(
+            "${SKILL_NAME}-v${VERSION}.zip"
+            "checksums.json"
+            "checksums.sig"
+            "signing-public.pem"
+          )
+          for asset in "${required_release_assets[@]}"; do
+            if ! grep -Fxq "$asset" <<< "$release_assets"; then
+              echo "::error::Release ${TAG} lacks required signed asset ${asset}. Legacy unsigned releases cannot be safely republished; create a new patch release."
+              exit 1
+            fi
+          done
+
           gh release download "$TAG" \
             --repo "${{ github.repository }}" \
             --dir "$RELEASE_DIR" \
@@ -2068,7 +2082,7 @@ jobs:
         run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
       - name: Allow signed trust artifacts in ClawHub packages
-        # Use the current helper even when republishing a tag created before this packaging fix.
+        # Use the current helper for signed tags created before the client-extension fix.
         run: node "$RUNNER_TEMP/patch_clawhub_trust_extensions.mjs"
 
       - name: Login to ClawHub

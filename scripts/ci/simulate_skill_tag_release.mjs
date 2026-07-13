@@ -13,6 +13,7 @@ import {
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { nextSimulatedReleaseVersion } from "./semver_increment.mjs";
 
 const TRUST_ARTIFACTS = [
   "skill-card.md",
@@ -93,26 +94,6 @@ function runAllowFailure(command, args, options = {}) {
     encoding: "utf8",
     ...options,
   });
-}
-
-function nextSimulatedReleaseVersion(version) {
-  const versionMatch = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9]+))?$/);
-  if (!versionMatch) {
-    throw new Error(`Cannot derive simulated release version from unsupported version: ${version}`);
-  }
-
-  const [, major, minor, patch, prerelease] = versionMatch;
-  if (!prerelease) {
-    return `${major}.${minor}.${Number(patch) + 1}`;
-  }
-
-  const prereleaseMatch = prerelease.match(/^(.*?)(\d+)$/);
-  if (prereleaseMatch) {
-    const [, label, number] = prereleaseMatch;
-    return `${major}.${minor}.${patch}-${label}${Number(number) + 1}`;
-  }
-
-  return `${major}.${minor}.${patch}-${prerelease}1`;
 }
 
 function normalizeReleasePath(rawPath) {

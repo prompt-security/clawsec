@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   assertSemverIncrement,
   compareSemver,
+  nextSimulatedReleaseVersion,
   parseSemver,
 } from "./ci/semver_increment.mjs";
 
@@ -47,4 +48,13 @@ for (const [baseVersion, nextVersion] of [
 
 for (const invalidVersion of ["1.2", "01.2.3", "1.2.3-beta.01", "v1.2.3", "1.2.3+build"]) {
   assert.throws(() => parseSemver(invalidVersion), /Invalid/);
+}
+
+for (const [version, expected] of [
+  ["0.1.15", "0.1.16"],
+  ["1.2.3-beta5", "1.2.3-beta6"],
+  ["1.2.3-beta.5", "1.2.3-beta.6"],
+  ["1.2.3-preview", "1.2.3-preview1"],
+]) {
+  assert.equal(nextSimulatedReleaseVersion(version), expected);
 }

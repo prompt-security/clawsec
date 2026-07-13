@@ -5,8 +5,11 @@ import { spawnSync } from "node:child_process";
 import {
   lstat,
   mkdir,
+  mkdtemp,
   readFile,
   readdir,
+  rename,
+  rm,
   stat,
 } from "node:fs/promises";
 import path from "node:path";
@@ -325,49 +328,58 @@ export async function prepareReleasePackage({
   if (existingOutputEntries.length > 0) {
     throw new Error(`ClawHub package output directory must be empty: ${resolvedOutputDir}`);
   }
-  run("unzip", ["-q", archivePath, "-d", resolvedOutputDir]);
+  const stagingDir = await mkdtemp(path.join(resolvedOutputDir, ".staging-"));
+  try {
+    run("unzip", ["-q", archivePath, "-d", stagingDir]);
 
-  const packageDir = path.join(resolvedOutputDir, skillName);
-  const packageMetadata = await stat(packageDir).catch(() => null);
-  if (!packageMetadata?.isDirectory()) {
-    throw new Error(`Release archive did not create expected package directory: ${packageDir}`);
-  }
-
-  const packageFiles = await collectPackageFiles(packageDir);
-  for (const [filePath, actual] of packageFiles) {
-    const expected = checksums.files?.[filePath];
-    if (!expected) {
-      throw new Error(`Signed release manifest is missing packaged file: ${filePath}`);
+    const packageDir = path.join(stagingDir, skillName);
+    const packageMetadata = await stat(packageDir).catch(() => null);
+    if (!packageMetadata?.isDirectory()) {
+      throw new Error(`Release archive did not create expected package directory: ${packageDir}`);
     }
-    if (expected.sha256 !== actual.sha256 || expected.size !== actual.size) {
-      throw new Error(`Signed release manifest mismatch for packaged file: ${filePath}`);
+
+    const packageFiles = await collectPackageFiles(packageDir);
+    for (const [filePath, actual] of packageFiles) {
+      const expected = checksums.files?.[filePath];
+      if (!expected) {
+        throw new Error(`Signed release manifest is missing packaged file: ${filePath}`);
+      }
+      if (expected.sha256 !== actual.sha256 || expected.size !== actual.size) {
+        throw new Error(`Signed release manifest mismatch for packaged file: ${filePath}`);
+      }
     }
-  }
 
-  const skill = JSON.parse(await readFile(path.join(packageDir, "skill.json"), "utf8"));
-  if (skill.version !== version) {
-    throw new Error(`Packaged skill.json version mismatch: expected ${version}, got ${skill.version}`);
-  }
+    const skill = JSON.parse(await readFile(path.join(packageDir, "skill.json"), "utf8"));
+    if (skill.version !== version) {
+      throw new Error(`Packaged skill.json version mismatch: expected ${version}, got ${skill.version}`);
+    }
 
-  const declaredPackageFiles = new Set(
-    (skill.sbom?.files ?? []).map((entry) => entry.path.replaceAll("\\", "/").replace(/^\.\//, "")),
-  );
-  const requiresEmbeddedAdvisoryTrust = ADVISORY_TRUST_ARTIFACTS.every(
-    (artifact) => declaredPackageFiles.has(artifact),
-  );
-  const advisoryTrust = await verifyEmbeddedAdvisoryTrust(
-    packageDir,
-    releaseKeyFingerprint,
-    requiresEmbeddedAdvisoryTrust,
-  );
-  const clawhubFiles = await collectClawhubPackageFiles(packageDir);
-  return {
-    packageDir,
-    files: packageFiles.size,
-    clawhubFiles: clawhubFiles.size,
-    releaseKeyFingerprint,
-    embeddedAdvisoryTrust: advisoryTrust,
-  };
+    const declaredPackageFiles = new Set(
+      (skill.sbom?.files ?? []).map((entry) => entry.path.replaceAll("\\", "/").replace(/^\.\//, "")),
+    );
+    const requiresEmbeddedAdvisoryTrust = ADVISORY_TRUST_ARTIFACTS.every(
+      (artifact) => declaredPackageFiles.has(artifact),
+    );
+    const advisoryTrust = await verifyEmbeddedAdvisoryTrust(
+      packageDir,
+      releaseKeyFingerprint,
+      requiresEmbeddedAdvisoryTrust,
+    );
+    const clawhubFiles = await collectClawhubPackageFiles(packageDir);
+    const finalPackageDir = path.join(resolvedOutputDir, skillName);
+    await rename(packageDir, finalPackageDir);
+    await rm(stagingDir, { recursive: true, force: true });
+    return {
+      packageDir: finalPackageDir,
+      files: packageFiles.size,
+      clawhubFiles: clawhubFiles.size,
+      releaseKeyFingerprint,
+      embeddedAdvisoryTrust: advisoryTrust,
+    };
+  } catch (error) {
+    await rm(stagingDir, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 export async function verifyClawhubClientSelection({ packageDir, cliPrefix }) {

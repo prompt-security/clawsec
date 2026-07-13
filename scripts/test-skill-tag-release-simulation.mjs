@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { chmod, cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -49,6 +49,7 @@ async function runSimulation({
   expectedSimulated,
   expectedAgent,
   verifyEmbeddedAdvisory = false,
+  expectedPreparationError = null,
 }) {
   const result = spawnSync(
     process.execPath,
@@ -127,48 +128,61 @@ async function runSimulation({
 
   if (!verifyEmbeddedAdvisory) {
     const clawhubOutputDir = path.join(outputDir, "clawhub-package");
-    const prepared = await prepareReleasePackage({
+    const prepareOptions = {
       releaseDir: releaseAssetsDir,
       outputDir: clawhubOutputDir,
       skillName,
       version: expectedSimulated,
       canonicalKeyPath: path.join(releaseAssetsDir, "signing-public.pem"),
-    });
-    const publishableFiles = await collectClawhubPackageFiles(prepared.packageDir);
-    const inspectJsonPath = path.join(outputDir, "clawhub-inspect.json");
-    await writeFile(inspectJsonPath, `${JSON.stringify({
-      version: { version: expectedSimulated, files: [...publishableFiles.values()] },
-    }, null, 2)}\n`);
-    assert.deepEqual(
-      await verifyPublishedPackage({
-        packageDir: prepared.packageDir,
-        inspectJsonPath,
-        version: expectedSimulated,
-      }),
-      { version: expectedSimulated, files: publishableFiles.size },
-    );
-
-    const registryAttemptPath = path.join(outputDir, "clawhub-inspect-attempts.txt");
-    const previousPath = process.env.PATH;
-    process.env.PATH = `${tempRoot}:${previousPath}`;
-    process.env.FAKE_CLAWHUB_INSPECT_JSON = inspectJsonPath;
-    process.env.FAKE_CLAWHUB_ATTEMPT_FILE = registryAttemptPath;
-    try {
+    };
+    if (expectedPreparationError) {
+      await assert.rejects(
+        prepareReleasePackage(prepareOptions),
+        expectedPreparationError,
+      );
       assert.deepEqual(
-        await verifyRegistryPackage({
+        await readdir(clawhubOutputDir),
+        [],
+        "failed ClawHub staging must leave the output directory safely retryable",
+      );
+    } else {
+      const prepared = await prepareReleasePackage(prepareOptions);
+      const publishableFiles = await collectClawhubPackageFiles(prepared.packageDir);
+      const inspectJsonPath = path.join(outputDir, "clawhub-inspect.json");
+      await writeFile(inspectJsonPath, `${JSON.stringify({
+        version: { version: expectedSimulated, files: [...publishableFiles.values()] },
+      }, null, 2)}\n`);
+      assert.deepEqual(
+        await verifyPublishedPackage({
           packageDir: prepared.packageDir,
-          slug: "clawsec-suite",
+          inspectJsonPath,
           version: expectedSimulated,
-          attempts: 2,
-          delayMs: 1,
         }),
         { version: expectedSimulated, files: publishableFiles.size },
       );
-      assert.equal(await readFile(registryAttemptPath, "utf8"), "2");
-    } finally {
-      process.env.PATH = previousPath;
-      delete process.env.FAKE_CLAWHUB_INSPECT_JSON;
-      delete process.env.FAKE_CLAWHUB_ATTEMPT_FILE;
+
+      const registryAttemptPath = path.join(outputDir, "clawhub-inspect-attempts.txt");
+      const previousPath = process.env.PATH;
+      process.env.PATH = `${tempRoot}:${previousPath}`;
+      process.env.FAKE_CLAWHUB_INSPECT_JSON = inspectJsonPath;
+      process.env.FAKE_CLAWHUB_ATTEMPT_FILE = registryAttemptPath;
+      try {
+        assert.deepEqual(
+          await verifyRegistryPackage({
+            packageDir: prepared.packageDir,
+            slug: "clawsec-suite",
+            version: expectedSimulated,
+            attempts: 2,
+            delayMs: 1,
+          }),
+          { version: expectedSimulated, files: publishableFiles.size },
+        );
+        assert.equal(await readFile(registryAttemptPath, "utf8"), "2");
+      } finally {
+        process.env.PATH = previousPath;
+        delete process.env.FAKE_CLAWHUB_INSPECT_JSON;
+        delete process.env.FAKE_CLAWHUB_ATTEMPT_FILE;
+      }
     }
   }
 
@@ -455,6 +469,29 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     expectedOriginal: "0.0.1-preview",
     expectedSimulated: "0.0.1-preview1",
     expectedAgent: "openclaw",
+  });
+
+  const unsupportedSkillDir = await prereleaseFixture(
+    "skills/picoclaw-self-pen-testing",
+    "0.0.5",
+    "unsupported-client-file-fixture",
+  );
+  await writeFile(path.join(unsupportedSkillDir, "runtime.bin"), "required runtime binary\n");
+  const unsupportedSkillJsonPath = path.join(unsupportedSkillDir, "skill.json");
+  const unsupportedSkill = JSON.parse(await readFile(unsupportedSkillJsonPath, "utf8"));
+  unsupportedSkill.sbom.files.push({
+    path: "runtime.bin",
+    required: true,
+    description: "Unsupported ClawHub runtime fixture",
+  });
+  await writeFile(unsupportedSkillJsonPath, `${JSON.stringify(unsupportedSkill, null, 2)}\n`);
+  await runSimulation({
+    skillDir: unsupportedSkillDir,
+    outputDir: path.join(tempRoot, "unsupported-client-file"),
+    expectedOriginal: "0.0.5",
+    expectedSimulated: "0.0.6",
+    expectedAgent: "openclaw",
+    expectedPreparationError: /would omit non-placeholder package file: runtime\.bin/,
   });
 } finally {
   await rm(tempRoot, { recursive: true, force: true });

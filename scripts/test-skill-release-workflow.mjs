@@ -557,6 +557,12 @@ assert.match(
 
 assert.match(
   workflow,
+  /Legacy unsigned releases cannot be safely republished; create a new patch release/,
+  'Manual ClawHub republish must fail clearly when a legacy release lacks signed verification assets',
+);
+
+assert.match(
+  workflow,
   /simulate-tag-release-build:[\s\S]*clawhub_release_package\.mjs prepare[\s\S]*clawhub_release_package\.mjs verify-client-selection/,
   'PR tag simulation must verify signed release staging through the patched pinned ClawHub client',
 );

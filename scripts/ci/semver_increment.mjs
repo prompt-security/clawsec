@@ -85,6 +85,21 @@ export function assertSemverIncrement(baseVersion, nextVersion) {
   return true;
 }
 
+export function nextSimulatedReleaseVersion(version) {
+  const parsed = parseSemver(version);
+  const [major, minor, patch] = parsed.core;
+  if (parsed.prerelease.length === 0) {
+    return `${major}.${minor}.${patch + 1}`;
+  }
+
+  const rawPrerelease = parsed.raw.slice(parsed.raw.indexOf("-") + 1);
+  const numberedPrerelease = rawPrerelease.match(/^(.*?)(\d+)$/);
+  if (numberedPrerelease) {
+    return `${major}.${minor}.${patch}-${numberedPrerelease[1]}${Number(numberedPrerelease[2]) + 1}`;
+  }
+  return `${major}.${minor}.${patch}-${rawPrerelease}1`;
+}
+
 async function main() {
   const [baseVersion, nextVersion] = process.argv.slice(2);
   if (!baseVersion || !nextVersion) {
