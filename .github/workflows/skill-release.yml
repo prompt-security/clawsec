@@ -340,11 +340,17 @@ jobs:
             rm -f "$tmp_sig_bin"
             echo "  [Dry-run] Verified feed.json signature"
 
+            # Copy the public key before generating the manifest so the exact
+            # key used by the runtime fallback is covered by the signed hashes.
+            cp "$pub_file" "$advisory_dir/feed-signing-public.pem"
+
             # Generate checksums.json
             local feed_sha=$(sha256sum "$advisory_dir/feed.json" | awk '{print $1}')
             local feed_size=$(stat -c%s "$advisory_dir/feed.json" 2>/dev/null || stat -f%z "$advisory_dir/feed.json")
             local feed_sig_sha=$(sha256sum "$advisory_dir/feed.json.sig" | awk '{print $1}')
             local feed_sig_size=$(stat -c%s "$advisory_dir/feed.json.sig" 2>/dev/null || stat -f%z "$advisory_dir/feed.json.sig")
+            local public_key_sha=$(sha256sum "$advisory_dir/feed-signing-public.pem" | awk '{print $1}')
+            local public_key_size=$(stat -c%s "$advisory_dir/feed-signing-public.pem" 2>/dev/null || stat -f%z "$advisory_dir/feed-signing-public.pem")
 
             jq -n \
               --arg schema_version "1" \
@@ -355,6 +361,8 @@ jobs:
               --argjson feed_size "$feed_size" \
               --arg feed_sig_sha "$feed_sig_sha" \
               --argjson feed_sig_size "$feed_sig_size" \
+              --arg public_key_sha "$public_key_sha" \
+              --argjson public_key_size "$public_key_size" \
               '{
                 schema_version: $schema_version,
                 algorithm: $algorithm,
@@ -362,7 +370,8 @@ jobs:
                 generated_at: $generated,
                 files: {
                   "advisories/feed.json": {sha256: $feed_sha, size: $feed_size},
-                  "advisories/feed.json.sig": {sha256: $feed_sig_sha, size: $feed_sig_size}
+                  "advisories/feed.json.sig": {sha256: $feed_sig_sha, size: $feed_sig_size},
+                  "advisories/feed-signing-public.pem": {sha256: $public_key_sha, size: $public_key_size}
                 }
               }' > "$advisory_dir/checksums.json"
 
@@ -380,9 +389,6 @@ jobs:
             fi
             rm -f "$tmp_sig_bin"
             echo "  [Dry-run] Verified checksums.json signature"
-
-            # Copy public key
-            cp "$pub_file" "$advisory_dir/feed-signing-public.pem"
 
             echo "  [Dry-run] Advisory artifacts signed and verified with test key"
           }
@@ -1211,6 +1217,8 @@ jobs:
           FEED_SIZE=$(stat -c%s "$ADVISORY_DIR/feed.json" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed.json")
           FEED_SIG_SHA=$(sha256sum "$ADVISORY_DIR/feed.json.sig" | awk '{print $1}')
           FEED_SIG_SIZE=$(stat -c%s "$ADVISORY_DIR/feed.json.sig" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed.json.sig")
+          PUBLIC_KEY_SHA=$(sha256sum "$ADVISORY_DIR/feed-signing-public.pem" | awk '{print $1}')
+          PUBLIC_KEY_SIZE=$(stat -c%s "$ADVISORY_DIR/feed-signing-public.pem" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed-signing-public.pem")
 
           jq -n \
             --arg schema_version "1" \
@@ -1222,6 +1230,8 @@ jobs:
             --argjson feed_size "$FEED_SIZE" \
             --arg feed_sig_sha "$FEED_SIG_SHA" \
             --argjson feed_sig_size "$FEED_SIG_SIZE" \
+            --arg public_key_sha "$PUBLIC_KEY_SHA" \
+            --argjson public_key_size "$PUBLIC_KEY_SIZE" \
             '{
               schema_version: $schema_version,
               algorithm: $algorithm,
@@ -1238,6 +1248,11 @@ jobs:
                   sha256: $feed_sig_sha,
                   size: $feed_sig_size,
                   path: "advisories/feed.json.sig"
+                },
+                "advisories/feed-signing-public.pem": {
+                  sha256: $public_key_sha,
+                  size: $public_key_size,
+                  path: "advisories/feed-signing-public.pem"
                 }
               }
             }' > "$ADVISORY_DIR/checksums.json"

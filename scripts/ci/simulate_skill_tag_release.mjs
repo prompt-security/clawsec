@@ -274,6 +274,8 @@ async function signAdvisoryArtifacts(skillDir, tempRoot) {
     tempRoot,
   });
 
+  await cp(publicKeyPath, publicKeyOutputPath);
+
   await writeJson(checksumsPath, {
     schema_version: "1",
     algorithm: "sha256",
@@ -282,6 +284,10 @@ async function signAdvisoryArtifacts(skillDir, tempRoot) {
     files: {
       "advisories/feed.json": await checksumEntry(feedPath, "advisories/feed.json"),
       "advisories/feed.json.sig": await checksumEntry(feedSignaturePath, "advisories/feed.json.sig"),
+      "advisories/feed-signing-public.pem": await checksumEntry(
+        publicKeyOutputPath,
+        "advisories/feed-signing-public.pem",
+      ),
     },
   });
 
@@ -297,8 +303,6 @@ async function signAdvisoryArtifacts(skillDir, tempRoot) {
     signaturePath: checksumsSignaturePath,
     tempRoot,
   });
-
-  await cp(publicKeyPath, publicKeyOutputPath);
 }
 
 async function addReleaseAssetChecksum({ releaseAssetsDir, manifest, asset }) {
