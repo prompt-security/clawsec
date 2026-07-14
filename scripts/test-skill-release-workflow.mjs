@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const workflowPath = new URL('../.github/workflows/skill-release.yml', import.meta.url);
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
@@ -19,6 +22,24 @@ const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
 const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPath, 'utf8');
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
+
+const preservedHelperDir = await mkdtemp(path.join(tmpdir(), 'clawhub-republish-helpers-'));
+try {
+  await Promise.all([
+    cp(new URL('./ci/clawhub_release_package.mjs', import.meta.url), path.join(preservedHelperDir, 'clawhub_release_package.mjs')),
+    cp(new URL('./ci/release_path_policy.mjs', import.meta.url), path.join(preservedHelperDir, 'release_path_policy.mjs')),
+  ]);
+  const preservedHelper = await import(
+    `${pathToFileURL(path.join(preservedHelperDir, 'clawhub_release_package.mjs')).href}?test=${Date.now()}`
+  );
+  assert.equal(
+    typeof preservedHelper.prepareReleasePackage,
+    'function',
+    'Preserved manual republish helpers must remain importable after checkout moves to an older tag',
+  );
+} finally {
+  await rm(preservedHelperDir, { recursive: true, force: true });
+}
 
 assert.match(
   workflow,
@@ -433,6 +454,12 @@ assert.match(
   workflow,
   /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"[\s\S]*cp scripts\/ci\/skill_platforms\.mjs "\$RUNNER_TEMP\/skill_platforms\.mjs"[\s\S]*cp scripts\/ci\/clawhub_release_package\.mjs "\$RUNNER_TEMP\/clawhub_release_package\.mjs"/,
   'Manual ClawHub republish must preserve current slug and signed-package helpers before checking out an older release tag',
+);
+
+assert.match(
+  workflow,
+  /cp scripts\/ci\/clawhub_release_package\.mjs "\$RUNNER_TEMP\/clawhub_release_package\.mjs"[\s\S]*cp scripts\/ci\/release_path_policy\.mjs "\$RUNNER_TEMP\/release_path_policy\.mjs"/,
+  'Manual ClawHub republish must preserve signed-package helper dependencies before checking out an older release tag',
 );
 
 assert.match(
