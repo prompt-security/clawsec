@@ -14,6 +14,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { isTestReleasePath } from "./release_path_policy.mjs";
 
 const CLAWHUB_TEXT_EXTENSIONS = new Set([
   "c", "cfg", "cjs", "cpp", "cs", "css", "csv", "env", "go", "h", "hpp",
@@ -29,15 +30,6 @@ const ADVISORY_TRUST_ARTIFACTS = [
   "advisories/feed-signing-public.pem",
 ];
 const CLAWHUB_TEXT_TRUST_EXTENSIONS = new Set(["pem", "sig"]);
-
-function isTestReleasePath(filePath) {
-  const normalized = filePath.replaceAll("\\", "/").toLowerCase();
-  const parts = normalized.split("/");
-  const name = parts.at(-1) ?? "";
-  return parts.some((part) => ["__tests__", "test", "tests"].includes(part))
-    || /^(?:test|spec)[_-]/.test(name)
-    || /\.(?:test|spec)\./.test(name);
-}
 
 function usage() {
   return [

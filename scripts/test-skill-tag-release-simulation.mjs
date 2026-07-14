@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { chmod, cp, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -50,6 +50,7 @@ async function runSimulation({
   expectedAgent,
   verifyEmbeddedAdvisory = false,
   expectedPreparationError = null,
+  expectedExcludedPaths = [],
 }) {
   const result = spawnSync(
     process.execPath,
@@ -125,6 +126,16 @@ async function runSimulation({
   const archivePath = path.join(releaseAssetsDir, `${expectedTag}.zip`);
   const archive = await readFile(archivePath);
   assert.ok(archive.length > 0, "release archive should not be empty");
+  const archiveListing = spawnSync("unzip", ["-Z1", archivePath], { encoding: "utf8" });
+  assert.equal(archiveListing.status, 0, `failed to list simulated release archive: ${archiveListing.stderr}`);
+  const archiveEntries = new Set(archiveListing.stdout.split(/\r?\n/).filter(Boolean));
+  for (const excludedPath of expectedExcludedPaths) {
+    assert.equal(
+      archiveEntries.has(`${skillName}/${excludedPath}`),
+      false,
+      `simulated release archive must exclude test-only path: ${excludedPath}`,
+    );
+  }
 
   if (!verifyEmbeddedAdvisory) {
     const clawhubOutputDir = path.join(outputDir, "clawhub-package");
@@ -469,6 +480,41 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     expectedOriginal: "0.0.1-preview",
     expectedSimulated: "0.0.1-preview1",
     expectedAgent: "openclaw",
+  });
+
+  const testFilterSkillDir = await prereleaseFixture(
+    "skills/picoclaw-self-pen-testing",
+    "0.0.5",
+    "test-filter-fixture",
+  );
+  const testOnlyPaths = [
+    "tests/scanner-fixture.md",
+    "__tests__/scanner-fixture.js",
+    "test_scanner_fixture.py",
+    "scanner-fixture.spec.mjs",
+  ];
+  await mkdir(path.join(testFilterSkillDir, "tests"));
+  await mkdir(path.join(testFilterSkillDir, "__tests__"));
+  for (const testOnlyPath of testOnlyPaths) {
+    await writeFile(path.join(testFilterSkillDir, testOnlyPath), "test fixture\n");
+  }
+  const testFilterSkillJsonPath = path.join(testFilterSkillDir, "skill.json");
+  const testFilterSkill = JSON.parse(await readFile(testFilterSkillJsonPath, "utf8"));
+  for (const testOnlyPath of testOnlyPaths) {
+    testFilterSkill.sbom.files.push({
+      path: testOnlyPath,
+      required: true,
+      description: "Test-only release filtering fixture",
+    });
+  }
+  await writeFile(testFilterSkillJsonPath, `${JSON.stringify(testFilterSkill, null, 2)}\n`);
+  await runSimulation({
+    skillDir: testFilterSkillDir,
+    outputDir: path.join(tempRoot, "test-filter"),
+    expectedOriginal: "0.0.5",
+    expectedSimulated: "0.0.6",
+    expectedAgent: "openclaw",
+    expectedExcludedPaths: testOnlyPaths,
   });
 
   const unsupportedSkillDir = await prereleaseFixture(
