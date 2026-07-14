@@ -14,6 +14,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { isTestReleasePath } from "./release_path_policy.mjs";
 
 const CLAWHUB_TEXT_EXTENSIONS = new Set([
   "c", "cfg", "cjs", "cpp", "cs", "css", "csv", "env", "go", "h", "hpp",
@@ -28,6 +29,7 @@ const ADVISORY_TRUST_ARTIFACTS = [
   "advisories/checksums.json.sig",
   "advisories/feed-signing-public.pem",
 ];
+const CLAWHUB_TEXT_TRUST_EXTENSIONS = new Set(["pem", "sig"]);
 
 function usage() {
   return [
@@ -160,6 +162,9 @@ export async function collectClawhubPackageFiles(rootDir) {
   const publishedFiles = new Map();
 
   for (const [filePath, metadata] of packageFiles) {
+    if (isTestReleasePath(filePath)) {
+      throw new Error(`ClawHub package must not contain test-only file: ${filePath}`);
+    }
     const parts = filePath.split("/");
     const extension = path.posix.extname(filePath).slice(1).toLowerCase();
     const clientWouldOmit = parts.some((part) => part.startsWith("."))
@@ -396,6 +401,17 @@ export async function verifyClawhubClientSelection({ packageDir, cliPrefix }) {
   }
 
   const selectedFiles = await skillsModule.listTextFiles(resolvedPackageDir);
+  for (const entry of selectedFiles) {
+    const extension = entry.relPath.split(".").at(-1)?.toLowerCase() ?? "";
+    if (
+      CLAWHUB_TEXT_TRUST_EXTENSIONS.has(extension)
+      && entry.contentType !== "text/plain"
+    ) {
+      throw new Error(
+        `ClawHub client would upload ${entry.relPath} with non-text MIME type: ${entry.contentType ?? "missing"}`,
+      );
+    }
+  }
   const actualFiles = new Map(selectedFiles.map((entry) => [entry.relPath, {
     path: entry.relPath,
     sha256: sha256(Buffer.from(entry.bytes)),

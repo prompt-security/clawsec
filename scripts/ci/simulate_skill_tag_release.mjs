@@ -14,6 +14,7 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { nextSimulatedReleaseVersion } from "./semver_increment.mjs";
+import { isTestReleasePath } from "./release_path_policy.mjs";
 
 const TRUST_ARTIFACTS = [
   "skill-card.md",
@@ -118,16 +119,6 @@ function normalizeReleasePath(rawPath) {
   }
 
   return releasePath;
-}
-
-function isTestReleasePath(releasePath) {
-  const lower = releasePath.toLowerCase();
-  return lower === "test" ||
-    lower === "tests" ||
-    lower.startsWith("test/") ||
-    lower.startsWith("tests/") ||
-    lower.includes("/test/") ||
-    lower.includes("/tests/");
 }
 
 async function sha256File(filePath) {
@@ -416,7 +407,7 @@ async function main() {
     });
 
     const zipContents = run("unzip", ["-Z1", path.join(releaseAssetsDir, zipName)]);
-    if (zipContents.split("\n").some((entry) => /(^|\/)(test|tests)\//i.test(entry))) {
+    if (zipContents.split("\n").some(isTestReleasePath)) {
       throw new Error(`Simulated release archive contains test-only files: ${zipName}`);
     }
 
