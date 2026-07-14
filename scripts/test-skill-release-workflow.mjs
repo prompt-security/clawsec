@@ -23,20 +23,35 @@ const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPa
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
+const preservedHelperBlock = workflow.match(
+  /- name: Prepare current ClawHub workflow helpers\s+run: \|\n(?<body>[\s\S]*?)\n\s+- name: Checkout tag/,
+)?.groups?.body;
+assert.ok(preservedHelperBlock, 'Manual ClawHub republish must define a preserved-helper block');
+const preservedHelperCopies = [...preservedHelperBlock.matchAll(
+  /cp (scripts\/ci\/[^\s]+\.mjs) "\$RUNNER_TEMP\/([^"/]+\.mjs)"/g,
+)].map((match) => ({ source: match[1], destination: match[2] }));
+const preservedHelperDestinations = new Set(preservedHelperCopies.map(({ destination }) => destination));
+
+for (const { source, destination } of preservedHelperCopies) {
+  const sourceText = await readFile(new URL(`../${source}`, import.meta.url), 'utf8');
+  for (const match of sourceText.matchAll(/\bfrom\s+["'](\.[^"']+)["']/g)) {
+    const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(destination), match[1]));
+    assert.ok(
+      preservedHelperDestinations.has(dependency),
+      `Manual ClawHub republish must preserve ${dependency}, imported by ${source}`,
+    );
+  }
+}
+
 const preservedHelperDir = await mkdtemp(path.join(tmpdir(), 'clawhub-republish-helpers-'));
 try {
-  await Promise.all([
-    cp(new URL('./ci/clawhub_release_package.mjs', import.meta.url), path.join(preservedHelperDir, 'clawhub_release_package.mjs')),
-    cp(new URL('./ci/release_path_policy.mjs', import.meta.url), path.join(preservedHelperDir, 'release_path_policy.mjs')),
-  ]);
-  const preservedHelper = await import(
-    `${pathToFileURL(path.join(preservedHelperDir, 'clawhub_release_package.mjs')).href}?test=${Date.now()}`
-  );
-  assert.equal(
-    typeof preservedHelper.prepareReleasePackage,
-    'function',
-    'Preserved manual republish helpers must remain importable after checkout moves to an older tag',
-  );
+  await Promise.all(preservedHelperCopies.map(({ source, destination }) => cp(
+    new URL(`../${source}`, import.meta.url),
+    path.join(preservedHelperDir, destination),
+  )));
+  for (const { destination } of preservedHelperCopies) {
+    await import(`${pathToFileURL(path.join(preservedHelperDir, destination)).href}?test=${Date.now()}`);
+  }
 } finally {
   await rm(preservedHelperDir, { recursive: true, force: true });
 }
