@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -47,18 +47,18 @@
       },
       {
         "path": "advisories/feed.json.sig",
-        "required": false,
-        "description": "Detached Ed25519 signature for advisory feed when bundled with the local suite seed"
+        "required": true,
+        "description": "Detached Ed25519 signature for the bundled advisory feed"
       },
       {
         "path": "advisories/checksums.json",
         "required": false,
-        "description": "SHA-256 checksum manifest for advisory artifacts when bundled with the local suite seed"
+        "description": "Release-generated SHA-256 manifest; required in every published Suite package"
       },
       {
         "path": "advisories/checksums.json.sig",
         "required": false,
-        "description": "Detached Ed25519 signature for checksum manifest when bundled with the local suite seed"
+        "description": "Release-generated Ed25519 checksum signature; required in every published Suite package"
       },
       {
         "path": "advisories/feed-signing-public.pem",

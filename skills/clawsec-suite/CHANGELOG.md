@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.15] - 2026-07-13
+
+### Fixed
+
+- Published ClawHub packages from the verified, signed GitHub release payload instead of the raw source directory.
+- Preserved `.sig` and `.pem` advisory trust files that ClawHub's client extension allowlist otherwise omitted.
+- Made ClawHub publication blocking and verified every published file hash and size before reporting success.
+
+### Changed
+
+- Enforced the complete five-file embedded advisory trust set in release staging and published-package verification.
+- Required changed skill releases to advance the core version by at least a patch so an already released version cannot be reused.
+
 ## [0.1.14] - 2026-07-13
 
 ### Fixed

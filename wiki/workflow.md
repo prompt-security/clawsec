@@ -36,7 +36,7 @@
 - Tag pushes matching `<skill>-v<semver>` build the real release payload, sign `checksums.json`, verify the signature, and publish GitHub Release assets.
 - Skill packaging includes SBOM-declared files, release trust packet files, install instructions, security scan evidence, and integrity manifests.
 - `checksums.json` is signed and immediately verified in workflow execution.
-- Optional publish-to-ClawHub job runs after successful GitHub release when configured.
+- Configured ClawHub publication runs as a blocking job after the GitHub release, uploads the verified signed-release payload, and checks exact registry file parity.
 - Older releases within same major line can be superseded/deleted by automation.
 
 ## SkillSpector Release Evidence

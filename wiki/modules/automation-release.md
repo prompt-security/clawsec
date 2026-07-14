@@ -24,15 +24,17 @@ When a skill is tagged (for example, `soul-guardian-v1.0.0`), the pipeline:
 5. Generates `checksums.json` for the archive and release assets.
 6. Signs and verifies release checksum artifacts.
 7. Publishes GitHub Release assets.
-8. Supersedes older releases within the same major version (tags remain).
-9. Triggers website catalog refresh.
+8. Publishes the verified release payload to ClawHub when configured, then compares every expected registry file hash and size with the signed package.
+9. Supersedes older releases within the same major version (tags remain).
+10. Triggers website catalog refresh.
 
 ### PR dry-run behavior
 PRs that touch skill packages run the release workflow in validation mode:
 - `validate-pr-version-sync` checks changed skill metadata and documentation parity.
+- Released stable skills must advance by at least one SemVer patch version; equal or lower versions fail validation.
 - `release` builds dry-run release assets for changed release-relevant skill files.
 - `comment-skillspector-report` posts a sanitized SkillSpector summary back to the PR when reports are available.
-- `simulate-tag-release-build` exercises the tag-release builder across skills without publishing.
+- `simulate-tag-release-build` exercises the tag-release builder across skills, verifies signed ClawHub staging through the patched pinned client, and does not publish.
 
 The PR path exists to catch packaging, signing, and release-evidence regressions before a maintainer pushes a real release tag.
 
@@ -61,9 +63,18 @@ Enforced in:
 - `.github/workflows/deploy-pages.yml`
 
 ### Release versioning and superseding
+- Changes to an already released stable skill must increment its version by at least one patch version (for example, `0.1.14` to `0.1.15`).
 - New patch/minor release: previous releases in same major line are removed.
 - New major release: latest release from previous major line is retained for compatibility.
 - Git tags are preserved and can be used to recreate releases when needed.
+
+### ClawHub package parity
+- ClawHub publication uses the package extracted from the signed GitHub release archive, not `skills/<name>/` directly.
+- The pinned ClawHub client is patched to accept `.sig` and `.pem` text trust artifacts before upload.
+- Publication is a blocking release job for configured skills.
+- After publish, `clawhub inspect` must report the exact expected publishable paths, SHA-256 hashes, and sizes. Missing or extra files fail the job.
+- SBOM-declared optional `.gitkeep` placeholders are the only allowed release/archive omission because ClawHub intentionally ignores dotfiles. Any other client-unsupported package file blocks publication.
+- For Suite releases, package preparation verifies the embedded feed signature, checksum signature, signing-key fingerprint, and all required local fallback artifacts before upload.
 
 ### Release artifacts
 Each skill release includes:
@@ -147,6 +158,8 @@ on:
 ## Edge Cases
 - NVD API rate limiting (`403`/`429`) is handled with retry/backoff and can fail workflow on persistent errors.
 - Release pipeline blocks on version mismatch between `skill.json` and `SKILL.md` frontmatter.
+- Release pipeline blocks equal or decreasing versions for changed, previously released skills.
+- ClawHub may silently omit unsupported file extensions; the workflow patches the pinned client and verifies the published registry file list to detect this.
 - Key fingerprint drift between canonical PEM files and docs hard-fails signing-related workflows.
 - Deploy workflow intentionally allows unsigned legacy checksums for backward compatibility in some branches.
 - Manual helper script has safety checks but includes destructive rollback logic in error branches; use carefully.

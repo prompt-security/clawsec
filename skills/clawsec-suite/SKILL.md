@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.14
+version: 0.1.15
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -36,7 +36,7 @@ This means `clawsec-suite` can:
 ## Included vs Optional Protections
 
 ### Built into clawsec-suite
-- Embedded consolidated advisory feed seed file: `advisories/feed.json`
+- Embedded signed advisory trust set: `advisories/feed.json`, `feed.json.sig`, `checksums.json`, `checksums.json.sig`, and `feed-signing-public.pem`
 - Portable heartbeat workflow in `HEARTBEAT.md`
 - Advisory polling + state tracking + affected-skill checks
 - OpenClaw advisory guardian hook package: `hooks/clawsec-advisory-guardian/`
