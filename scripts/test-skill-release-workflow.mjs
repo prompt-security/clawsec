@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const workflowPath = new URL('../.github/workflows/skill-release.yml', import.meta.url);
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
@@ -19,6 +22,39 @@ const patchClawhubPayload = await readFile(patchClawhubPayloadPath, 'utf8');
 const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPath, 'utf8');
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
+
+const preservedHelperBlock = workflow.match(
+  /- name: Prepare current ClawHub workflow helpers\s+run: \|\n(?<body>[\s\S]*?)\n\s+- name: Checkout tag/,
+)?.groups?.body;
+assert.ok(preservedHelperBlock, 'Manual ClawHub republish must define a preserved-helper block');
+const preservedHelperCopies = [...preservedHelperBlock.matchAll(
+  /cp (scripts\/ci\/[^\s]+\.mjs) "\$RUNNER_TEMP\/([^"/]+\.mjs)"/g,
+)].map((match) => ({ source: match[1], destination: match[2] }));
+const preservedHelperDestinations = new Set(preservedHelperCopies.map(({ destination }) => destination));
+
+for (const { source, destination } of preservedHelperCopies) {
+  const sourceText = await readFile(new URL(`../${source}`, import.meta.url), 'utf8');
+  for (const match of sourceText.matchAll(/\bfrom\s+["'](\.[^"']+)["']/g)) {
+    const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(destination), match[1]));
+    assert.ok(
+      preservedHelperDestinations.has(dependency),
+      `Manual ClawHub republish must preserve ${dependency}, imported by ${source}`,
+    );
+  }
+}
+
+const preservedHelperDir = await mkdtemp(path.join(tmpdir(), 'clawhub-republish-helpers-'));
+try {
+  await Promise.all(preservedHelperCopies.map(({ source, destination }) => cp(
+    new URL(`../${source}`, import.meta.url),
+    path.join(preservedHelperDir, destination),
+  )));
+  for (const { destination } of preservedHelperCopies) {
+    await import(`${pathToFileURL(path.join(preservedHelperDir, destination)).href}?test=${Date.now()}`);
+  }
+} finally {
+  await rm(preservedHelperDir, { recursive: true, force: true });
+}
 
 assert.match(
   workflow,
@@ -433,6 +469,12 @@ assert.match(
   workflow,
   /cp scripts\/ci\/resolve_clawhub_slug\.mjs "\$RUNNER_TEMP\/resolve_clawhub_slug\.mjs"[\s\S]*cp scripts\/ci\/skill_platforms\.mjs "\$RUNNER_TEMP\/skill_platforms\.mjs"[\s\S]*cp scripts\/ci\/clawhub_release_package\.mjs "\$RUNNER_TEMP\/clawhub_release_package\.mjs"/,
   'Manual ClawHub republish must preserve current slug and signed-package helpers before checking out an older release tag',
+);
+
+assert.match(
+  workflow,
+  /cp scripts\/ci\/clawhub_release_package\.mjs "\$RUNNER_TEMP\/clawhub_release_package\.mjs"[\s\S]*cp scripts\/ci\/release_path_policy\.mjs "\$RUNNER_TEMP\/release_path_policy\.mjs"/,
+  'Manual ClawHub republish must preserve signed-package helper dependencies before checking out an older release tag',
 );
 
 assert.match(

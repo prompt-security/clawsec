@@ -1987,6 +1987,7 @@ jobs:
           cp scripts/ci/resolve_clawhub_slug.mjs "$RUNNER_TEMP/resolve_clawhub_slug.mjs"
           cp scripts/ci/skill_platforms.mjs "$RUNNER_TEMP/skill_platforms.mjs"
           cp scripts/ci/clawhub_release_package.mjs "$RUNNER_TEMP/clawhub_release_package.mjs"
+          cp scripts/ci/release_path_policy.mjs "$RUNNER_TEMP/release_path_policy.mjs"
           cp scripts/ci/patch_clawhub_trust_extensions.mjs "$RUNNER_TEMP/patch_clawhub_trust_extensions.mjs"
 
       - name: Checkout tag
