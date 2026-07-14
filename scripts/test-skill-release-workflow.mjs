@@ -639,6 +639,12 @@ for (const extension of ['pem', 'sig']) {
 
 assert.match(
   patchClawhubTrustExtensions,
+  /REQUIRED_TRUST_CONTENT_TYPE = "text\/plain"/,
+  'ClawHub trust-extension patch must send ASCII trust artifacts with a server-accepted text MIME type',
+);
+
+assert.match(
+  patchClawhubTrustExtensions,
   /Already patched/,
   'ClawHub trust-extension patch must be idempotent when the client already accepts trust artifacts',
 );

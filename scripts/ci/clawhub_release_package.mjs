@@ -28,6 +28,7 @@ const ADVISORY_TRUST_ARTIFACTS = [
   "advisories/checksums.json.sig",
   "advisories/feed-signing-public.pem",
 ];
+const CLAWHUB_TEXT_TRUST_EXTENSIONS = new Set(["pem", "sig"]);
 
 function usage() {
   return [
@@ -396,6 +397,17 @@ export async function verifyClawhubClientSelection({ packageDir, cliPrefix }) {
   }
 
   const selectedFiles = await skillsModule.listTextFiles(resolvedPackageDir);
+  for (const entry of selectedFiles) {
+    const extension = entry.relPath.split(".").at(-1)?.toLowerCase() ?? "";
+    if (
+      CLAWHUB_TEXT_TRUST_EXTENSIONS.has(extension)
+      && entry.contentType !== "text/plain"
+    ) {
+      throw new Error(
+        `ClawHub client would upload ${entry.relPath} with non-text MIME type: ${entry.contentType ?? "missing"}`,
+      );
+    }
+  }
   const actualFiles = new Map(selectedFiles.map((entry) => [entry.relPath, {
     path: entry.relPath,
     sha256: sha256(Buffer.from(entry.bytes)),
