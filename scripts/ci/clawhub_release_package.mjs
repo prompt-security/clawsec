@@ -30,6 +30,15 @@ const ADVISORY_TRUST_ARTIFACTS = [
 ];
 const CLAWHUB_TEXT_TRUST_EXTENSIONS = new Set(["pem", "sig"]);
 
+function isTestReleasePath(filePath) {
+  const normalized = filePath.replaceAll("\\", "/").toLowerCase();
+  const parts = normalized.split("/");
+  const name = parts.at(-1) ?? "";
+  return parts.some((part) => ["__tests__", "test", "tests"].includes(part))
+    || /^(?:test|spec)[_-]/.test(name)
+    || /\.(?:test|spec)\./.test(name);
+}
+
 function usage() {
   return [
     "Usage:",
@@ -161,6 +170,9 @@ export async function collectClawhubPackageFiles(rootDir) {
   const publishedFiles = new Map();
 
   for (const [filePath, metadata] of packageFiles) {
+    if (isTestReleasePath(filePath)) {
+      throw new Error(`ClawHub package must not contain test-only file: ${filePath}`);
+    }
     const parts = filePath.split("/");
     const extension = path.posix.extname(filePath).slice(1).toLowerCase();
     const clientWouldOmit = parts.some((part) => part.startsWith("."))

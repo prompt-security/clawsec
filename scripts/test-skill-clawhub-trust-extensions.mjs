@@ -89,6 +89,23 @@ try {
   );
   await rm(path.join(packageDir, "runtime.bin"));
 
+  await writeFile(path.join(packageDir, "test_scanner_fixture.py"), "raise AssertionError\n");
+  await assert.rejects(
+    collectClawhubPackageFiles(packageDir),
+    /must not contain test-only file: test_scanner_fixture\.py/,
+    "ClawHub package preparation must reject test-named files before upload",
+  );
+  await rm(path.join(packageDir, "test_scanner_fixture.py"));
+
+  await mkdir(path.join(packageDir, "tests"));
+  await writeFile(path.join(packageDir, "tests", "scanner-fixture.md"), "# Test fixture\n");
+  await assert.rejects(
+    collectClawhubPackageFiles(packageDir),
+    /must not contain test-only file: tests\/scanner-fixture\.md/,
+    "ClawHub package preparation must reject files in test directories before upload",
+  );
+  await rm(path.join(packageDir, "tests"), { recursive: true });
+
   const installedClientSource = path.resolve(".github", "clawhub-cli");
   const installedSkillsModule = path.join(
     installedClientSource,
