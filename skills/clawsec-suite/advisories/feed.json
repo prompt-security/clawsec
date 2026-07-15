@@ -1,8 +1,533 @@
 {
   "version": "0.0.3",
-  "updated": "2026-07-12T06:52:13Z",
+  "updated": "2026-07-15T06:43:23Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-62200",
+      "severity": "high",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw versions before 2026.6.6 contain a flaw in host exec environment filtering that could allow...",
+      "description": "OpenClaw versions before 2026.6.6 contain a flaw in host exec environment filtering that could allow Git ext transport to be abused. When the affected feature is enabled and reachable, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:51.813",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-9969-8g9h-rxwm",
+        "https://www.vulncheck.com/advisories/openclaw-authentication-bypass-via-git-ext-transport"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62200",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62199",
+      "severity": "high",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "OpenClaw versions before 2026.6.6 contain a flaw in host exec environment filtering that can miss in...",
+      "description": "OpenClaw versions before 2026.6.6 contain a flaw in host exec environment filtering that can miss interpreter startup variables. When the affected feature is enabled and reachable, a lower-trust caller or configured input path can supply crafted environment variables to execute or persist actions beyond the caller's intended authorization.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:51.673",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-hjr6-g723-hmfm",
+        "https://www.vulncheck.com/advisories/openclaw-authentication-bypass-via-environment-filtering"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62199",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62198",
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw versions 2026.5.28 before 2026.6.6 contain an authorization bypass vulnerability in native ...",
+      "description": "OpenClaw versions 2026.5.28 before 2026.6.6 contain an authorization bypass vulnerability in native web search that allows lower-trust callers to perform actions requiring stronger policy checks. Attackers can exploit misconfigured input paths to bypass intended authorization controls and execute restricted operations.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:51.533",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v4f6-x5g5-2g4g",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-web-search"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62198",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62197",
+      "severity": "high",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "OpenClaw before 2026.6.6 contains a policy bypass vulnerability in browser CDP discovery that accept...",
+      "description": "OpenClaw before 2026.6.6 contains a policy bypass vulnerability in browser CDP discovery that accepts blocked WebSocket URLs. Attackers with lower-trust access can reach network destinations that should have been blocked by OpenClaw policy when the affected feature is enabled.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:51.380",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3x84-qq85-fj65",
+        "https://www.vulncheck.com/advisories/openclaw-policy-bypass-via-cdp-discovery"
+      ],
+      "cvss_score": 8.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62197",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.5); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62196",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw versions 2026.3.22 before 2026.6.6 contain an authorization bypass vulnerability where What...",
+      "description": "OpenClaw versions 2026.3.22 before 2026.6.6 contain an authorization bypass vulnerability where WhatsApp group IDs can satisfy elevated sender allowlists. Attackers with lower-trust access can perform actions requiring stronger authorization by leveraging group ID validation in the affected feature.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:51.243",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-fh38-965w-f6c3",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-whatsapp-group-ids"
+      ],
+      "cvss_score": 8.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62196",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62195",
+      "severity": "high",
+      "type": "incorrect_permission_assignment",
+      "nvd_category_id": "CWE-732",
+      "title": "OpenClaw versions 2026.5.20 before 2026.6.6 contain an authorization bypass vulnerability in the MCP...",
+      "description": "OpenClaw versions 2026.5.20 before 2026.6.6 contain an authorization bypass vulnerability in the MCP loopback feature that allows lower-trust callers to execute owner-only tools. Attackers can bypass authorization checks through configured input paths to execute or persist actions beyond their intended permissions.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:51.100",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-52xj-c9p8-78cv",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-mcp-loopback"
+      ],
+      "cvss_score": 8.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62195",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62194",
+      "severity": "high",
+      "type": "incorrect_permission_assignment",
+      "nvd_category_id": "CWE-732",
+      "title": "OpenClaw versions 2026.5.20 before 2026.6.9 contain a privilege escalation vulnerability in plugin i...",
+      "description": "OpenClaw versions 2026.5.20 before 2026.6.9 contain a privilege escalation vulnerability in plugin install commands that allows lower-trust callers to execute or persist actions beyond their intended authorization. Attackers can exploit misconfigured input paths or enabled features to escalate privileges and perform unauthorized actions when the feature is reachable.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:50.943",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7vrr-rp4x-4g76",
+        "https://www.vulncheck.com/advisories/openclaw-privilege-escalation-via-plugin-install"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62194",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62193",
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw versions 2026.6.5 before 2026.6.9 contain a vulnerability in the plugin install wrappers th...",
+      "description": "OpenClaw versions 2026.6.5 before 2026.6.9 contain a vulnerability in the plugin install wrappers that could skip the install policy (authorization) check. When the affected feature is enabled and reachable, a lower-trust caller or a configured input path could execute or persist actions beyond the caller's intended authorization. Impact depends on the operator's configuration and whether lower-trust input can reach the affected path. The issue is fixed in 2026.6.9.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:50.600",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wgq8-x5wm-g4rw",
+        "https://www.vulncheck.com/advisories/openclaw-authentication-bypass-via-plugin-install"
+      ],
+      "cvss_score": 4.9,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62193",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.9); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62192",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw versions 2026.6.6 before 2026.6.9 contain an authorization bypass vulnerability in Discord ...",
+      "description": "OpenClaw versions 2026.6.6 before 2026.6.9 contain an authorization bypass vulnerability in Discord guild actions that allows lower-trust callers to perform actions requiring stronger authorization checks. Attackers can exploit misconfigured input paths to skip cross-provider requester authorization and execute restricted operations.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:50.457",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3pmr-x9g8-m55r",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62192",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62191",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "OpenClaw versions 2026.6.6 before 2026.6.9 contain an authorization bypass vulnerability in message ...",
+      "description": "OpenClaw versions 2026.6.6 before 2026.6.9 contain an authorization bypass vulnerability in message mutation handling that allows lower-trust callers to perform actions requiring stronger authorization checks. Attackers can exploit misconfigured input paths to skip requester authorization and execute privileged operations when the affected feature is enabled and reachable.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:50.310",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v7hx-r36p-f68m",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-message-mutations"
+      ],
+      "cvss_score": 7.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62191",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62190",
+      "severity": "high",
+      "type": "unknown_cwe_706",
+      "nvd_category_id": "CWE-706",
+      "title": "OpenClaw versions before 2026.6.9 contain an authorization bypass vulnerability in the flock wrapper...",
+      "description": "OpenClaw versions before 2026.6.9 contain an authorization bypass vulnerability in the flock wrapper that allows lower-trust callers to execute or persist actions beyond their intended authorization. Attackers can leverage configured input paths to bypass durable exec approval binding and perform unauthorized operations when the affected feature is enabled.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:50.173",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3fp5-v549-9v66",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-flock-wrapper"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62190",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62189",
+      "severity": "high",
+      "type": "unknown_cwe_367",
+      "nvd_category_id": "CWE-367",
+      "title": "OpenClaw versions before 2026.6.9 contain a symlink following vulnerability in the mirror sync featu...",
+      "description": "OpenClaw versions before 2026.6.9 contain a symlink following vulnerability in the mirror sync feature that allows lower-trust callers to perform actions requiring stronger authorization. Attackers can exploit remote symlink parents to bypass policy checks and authorization boundaries when the feature is enabled and reachable.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:50.037",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-m38g-vpwj-mpg9",
+        "https://www.vulncheck.com/advisories/openclaw-symlink-following-via-mirror-sync"
+      ],
+      "cvss_score": 7.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62189",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62188",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw @openclaw/feishu versions 2026.6.6 and earlier contain an incorrect authorization vulnerabi...",
+      "description": "OpenClaw @openclaw/feishu versions 2026.6.6 and earlier contain an incorrect authorization vulnerability in which the Feishu permission tools could ignore per-account disablement settings. When the affected feature is enabled and reachable, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. The issue is fixed in version 2026.6.9.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw\\/feishu:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:49.893",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w8wf-3qvj-6xqf",
+        "https://www.vulncheck.com/advisories/openclaw-feishu-authorization-bypass"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62188",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62187",
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw Feishu tools (npm package @openclaw/feishu) in versions <= 2026.6.6 could ignore per-accoun...",
+      "description": "OpenClaw Feishu tools (npm package @openclaw/feishu) in versions <= 2026.6.6 could ignore per-account disablement. A lower-trust caller or a configured input path could perform actions that should have required a stronger authorization or policy check, resulting in unauthorized operations. The issue is fixed in version 2026.6.9. Impact depends on the operator's configuration and whether lower-trust input can reach the affected feature.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw\\/feishu:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:49.753",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2q7j-2vhx-56g8",
+        "https://www.vulncheck.com/advisories/openclaw-feishu-tools-authorization-bypass"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62187",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-62186",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "OpenClaw versions before 2026.6.8 contain an authorization bypass vulnerability in OpenAI-compatible...",
+      "description": "OpenClaw versions before 2026.6.8 contain an authorization bypass vulnerability in OpenAI-compatible HTTP model overrides that allows lower-trust callers to perform actions requiring stronger authorization checks. Attackers can exploit misconfigured input paths to bypass admin authorization policies and execute restricted operations.",
+      "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-13T22:16:49.607",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jhfx-v2j8-x3m6",
+        "https://www.vulncheck.com/advisories/openclaw-authorization-bypass-via-http-model-override"
+      ],
+      "cvss_score": 7.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-62186",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-15320",
       "severity": "medium",
@@ -1756,675 +2281,6 @@
       ],
       "aliases": [
         "GHSA-mgvr-6gvw-3rgr"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-9969-8g9h-rxwm",
-      "ghsa_id": "GHSA-9969-8g9h-rxwm",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "os_command_injection",
-      "nvd_category_id": "CWE-78",
-      "title": "Host exec environment filtering could allow Git ext transport",
-      "description": "Summary Host exec environment filtering could allow Git ext transport. In affected versions, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could execute or persist actions beyond the caller's intended authorization. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.6. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@<= 2026.6.1"
-      ],
-      "patched": [
-        "openclaw@2026.6.6"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:38:34Z",
-      "updated": "2026-06-30T00:38:34Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-9969-8g9h-rxwm"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9969-8g9h-rxwm",
-      "nvd_url": null,
-      "cvss_score": 8.8,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
-      "cwe_ids": [
-        "CWE-78",
-        "CWE-184"
-      ],
-      "credits": [
-        "nayakchinmohan"
-      ],
-      "aliases": [
-        "GHSA-9969-8g9h-rxwm"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-hjr6-g723-hmfm",
-      "ghsa_id": "GHSA-hjr6-g723-hmfm",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "os_command_injection",
-      "nvd_category_id": "CWE-78",
-      "title": "Host exec environment filtering could miss interpreter startup variables",
-      "description": "Summary Host exec environment filtering could miss interpreter startup variables. In affected versions, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could execute or persist actions beyond the caller's intended authorization. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.6. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@<= 2026.6.1"
-      ],
-      "patched": [
-        "openclaw@2026.6.6"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:38:25Z",
-      "updated": "2026-06-30T00:38:25Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-hjr6-g723-hmfm"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-hjr6-g723-hmfm",
-      "nvd_url": null,
-      "cvss_score": 8.8,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
-      "cwe_ids": [
-        "CWE-78",
-        "CWE-184"
-      ],
-      "credits": [
-        "nayakchinmohan"
-      ],
-      "aliases": [
-        "GHSA-hjr6-g723-hmfm"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-v4f6-x5g5-2g4g",
-      "ghsa_id": "GHSA-v4f6-x5g5-2g4g",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "medium",
-      "type": "improper_access_control",
-      "nvd_category_id": "CWE-284",
-      "title": "Native web search could ignore OpenClaw tool policy",
-      "description": "Summary Native web search could ignore OpenClaw tool policy. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.6. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@>= 2026.5.28, < 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.6"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:38:21Z",
-      "updated": "2026-06-30T00:38:21Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v4f6-x5g5-2g4g"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-v4f6-x5g5-2g4g",
-      "nvd_url": null,
-      "cvss_score": 4.3,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N",
-      "cwe_ids": [
-        "CWE-284",
-        "CWE-863"
-      ],
-      "credits": [],
-      "aliases": [
-        "GHSA-v4f6-x5g5-2g4g"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-3x84-qq85-fj65",
-      "ghsa_id": "GHSA-3x84-qq85-fj65",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "improper_access_control",
-      "nvd_category_id": "CWE-284",
-      "title": "Browser CDP discovery could accept blocked WebSocket URLs",
-      "description": "Summary Browser CDP discovery could accept blocked WebSocket URLs. In affected versions, a lower-trust caller or configured input path could reach network destinations that should have been blocked by OpenClaw policy. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could reach network destinations that should have been blocked by OpenClaw policy. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.6. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@< 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.6"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:38:15Z",
-      "updated": "2026-06-30T00:38:15Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3x84-qq85-fj65"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-3x84-qq85-fj65",
-      "nvd_url": null,
-      "cvss_score": 8.5,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:L/A:N",
-      "cwe_ids": [
-        "CWE-284",
-        "CWE-918"
-      ],
-      "credits": [
-        "jason-allen-oneal"
-      ],
-      "aliases": [
-        "GHSA-3x84-qq85-fj65"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-fh38-965w-f6c3",
-      "ghsa_id": "GHSA-fh38-965w-f6c3",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "improper_authentication",
-      "nvd_category_id": "CWE-287",
-      "title": "WhatsApp group IDs could satisfy elevated sender allowlists",
-      "description": "Summary WhatsApp group IDs could satisfy elevated sender allowlists. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.6. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@>= 2026.3.22, < 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.6"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:38:06Z",
-      "updated": "2026-06-30T00:38:06Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-fh38-965w-f6c3"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-fh38-965w-f6c3",
-      "nvd_url": null,
-      "cvss_score": 8.3,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
-      "cwe_ids": [
-        "CWE-287",
-        "CWE-863"
-      ],
-      "credits": [
-        "YLChen-007"
-      ],
-      "aliases": [
-        "GHSA-fh38-965w-f6c3"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-52xj-c9p8-78cv",
-      "ghsa_id": "GHSA-52xj-c9p8-78cv",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "github_security_advisory",
-      "nvd_category_id": "CWE-269",
-      "title": "MCP loopback could expose owner-only tools to non-owner runs",
-      "description": "Summary MCP loopback could expose owner-only tools to non-owner runs. In affected versions, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could execute or persist actions beyond the caller's intended authorization. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.6. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@>= 2026.5.20, < 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.6"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:37:20Z",
-      "updated": "2026-06-30T00:37:20Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-52xj-c9p8-78cv"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-52xj-c9p8-78cv",
-      "nvd_url": null,
-      "cvss_score": 8.3,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
-      "cwe_ids": [
-        "CWE-269",
-        "CWE-862"
-      ],
-      "credits": [
-        "YLChen-007"
-      ],
-      "aliases": [
-        "GHSA-52xj-c9p8-78cv"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-7vrr-rp4x-4g76",
-      "ghsa_id": "GHSA-7vrr-rp4x-4g76",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "github_security_advisory",
-      "nvd_category_id": "CWE-269",
-      "title": "Plugin install commands could allow non-owner persistence",
-      "description": "Summary Plugin install commands could allow non-owner persistence. In affected versions, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could execute or persist actions beyond the caller's intended authorization. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@>= 2026.5.20, < 2026.6.9"
-      ],
-      "patched": [
-        "openclaw@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:37:13Z",
-      "updated": "2026-06-30T00:37:13Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7vrr-rp4x-4g76"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-7vrr-rp4x-4g76",
-      "nvd_url": null,
-      "cvss_score": 8.8,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
-      "cwe_ids": [
-        "CWE-269",
-        "CWE-862"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-7vrr-rp4x-4g76"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-wgq8-x5wm-g4rw",
-      "ghsa_id": "GHSA-wgq8-x5wm-g4rw",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "medium",
-      "type": "incorrect_authorization",
-      "nvd_category_id": "CWE-863",
-      "title": "Plugin install wrappers could skip install policy",
-      "description": "Summary Plugin install wrappers could skip install policy. In affected versions, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could execute or persist actions beyond the caller's intended authorization. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@>= 2026.6.5, < 2026.6.9"
-      ],
-      "patched": [
-        "openclaw@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:37:07Z",
-      "updated": "2026-06-30T00:37:07Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wgq8-x5wm-g4rw"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-wgq8-x5wm-g4rw",
-      "nvd_url": null,
-      "cvss_score": 4.9,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:N/I:H/A:N",
-      "cwe_ids": [
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-wgq8-x5wm-g4rw"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-3pmr-x9g8-m55r",
-      "ghsa_id": "GHSA-3pmr-x9g8-m55r",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "incorrect_authorization",
-      "nvd_category_id": "CWE-863",
-      "title": "Discord guild actions could skip cross-provider requester authorization",
-      "description": "Summary Discord guild actions could skip cross-provider requester authorization. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@= 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:57Z",
-      "updated": "2026-06-30T00:36:57Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3pmr-x9g8-m55r"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-3pmr-x9g8-m55r",
-      "nvd_url": null,
-      "cvss_score": 8.1,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
-      "cwe_ids": [
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-3pmr-x9g8-m55r"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-v7hx-r36p-f68m",
-      "ghsa_id": "GHSA-v7hx-r36p-f68m",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "missing_authorization",
-      "nvd_category_id": "CWE-862",
-      "title": "Message mutations could skip requester authorization",
-      "description": "Summary Message mutations could skip requester authorization. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@= 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:52Z",
-      "updated": "2026-06-30T00:36:52Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v7hx-r36p-f68m"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-v7hx-r36p-f68m",
-      "nvd_url": null,
-      "cvss_score": 7.1,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:L",
-      "cwe_ids": [
-        "CWE-862",
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-v7hx-r36p-f68m"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-3fp5-v549-9v66",
-      "ghsa_id": "GHSA-3fp5-v549-9v66",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "github_security_advisory",
-      "nvd_category_id": "CWE-706",
-      "title": "flock wrapper could bypass durable exec approval binding",
-      "description": "Summary flock wrapper could bypass durable exec approval binding. In affected versions, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could execute or persist actions beyond the caller's intended authorization. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@<= 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:44Z",
-      "updated": "2026-06-30T00:36:44Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3fp5-v549-9v66"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-3fp5-v549-9v66",
-      "nvd_url": null,
-      "cvss_score": 8.8,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
-      "cwe_ids": [
-        "CWE-706",
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-3fp5-v549-9v66"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-m38g-vpwj-mpg9",
-      "ghsa_id": "GHSA-m38g-vpwj-mpg9",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "github_security_advisory",
-      "nvd_category_id": "CWE-59",
-      "title": "OpenShell mirror sync could follow remote symlink parents",
-      "description": "Summary OpenShell mirror sync could follow remote symlink parents. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@<= 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:38Z",
-      "updated": "2026-06-30T00:36:38Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-m38g-vpwj-mpg9"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-m38g-vpwj-mpg9",
-      "nvd_url": null,
-      "cvss_score": 8.4,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:L",
-      "cwe_ids": [
-        "CWE-59",
-        "CWE-367"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-m38g-vpwj-mpg9"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-w8wf-3qvj-6xqf",
-      "ghsa_id": "GHSA-w8wf-3qvj-6xqf",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "incorrect_authorization",
-      "nvd_category_id": "CWE-863",
-      "title": "Feishu permission tools could ignore per-account disablement",
-      "description": "Summary Feishu permission tools could ignore per-account disablement. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "@openclaw/feishu@<= 2026.6.6"
-      ],
-      "patched": [
-        "@openclaw/feishu@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:22Z",
-      "updated": "2026-06-30T00:36:22Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w8wf-3qvj-6xqf"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-w8wf-3qvj-6xqf",
-      "nvd_url": null,
-      "cvss_score": 8.1,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
-      "cwe_ids": [
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-w8wf-3qvj-6xqf"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-2q7j-2vhx-56g8",
-      "ghsa_id": "GHSA-2q7j-2vhx-56g8",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "incorrect_authorization",
-      "nvd_category_id": "CWE-863",
-      "title": "Feishu tools could ignore per-account disablement",
-      "description": "Summary Feishu tools could ignore per-account disablement. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.9. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "@openclaw/feishu@<= 2026.6.6"
-      ],
-      "patched": [
-        "@openclaw/feishu@2026.6.9"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:15Z",
-      "updated": "2026-06-30T00:36:15Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-2q7j-2vhx-56g8"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-2q7j-2vhx-56g8",
-      "nvd_url": null,
-      "cvss_score": 8.1,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
-      "cwe_ids": [
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-2q7j-2vhx-56g8"
-      ],
-      "source_feed": "ghsa-without-cve"
-    },
-    {
-      "id": "GHSA-jhfx-v2j8-x3m6",
-      "ghsa_id": "GHSA-jhfx-v2j8-x3m6",
-      "cve_id": null,
-      "status": "active",
-      "stale": false,
-      "stale_after_days": 60,
-      "severity": "high",
-      "type": "missing_authorization",
-      "nvd_category_id": "CWE-862",
-      "title": "OpenAI-compatible HTTP model overrides could miss admin authorization",
-      "description": "Summary OpenAI-compatible HTTP model overrides could miss admin authorization. In affected versions, a lower-trust caller or configured input path could perform actions that should have required a stronger authorization or policy check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could perform actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.6.8. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
-      "affected": [
-        "openclaw@<= 2026.6.6"
-      ],
-      "patched": [
-        "openclaw@2026.6.8"
-      ],
-      "platforms": [
-        "openclaw"
-      ],
-      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
-      "published": "2026-06-30T00:36:01Z",
-      "updated": "2026-06-30T00:36:01Z",
-      "references": [
-        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jhfx-v2j8-x3m6"
-      ],
-      "source": "GitHub Security Advisory",
-      "repository": "openclaw/openclaw",
-      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-jhfx-v2j8-x3m6",
-      "nvd_url": null,
-      "cvss_score": 7.6,
-      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:L/A:L",
-      "cwe_ids": [
-        "CWE-862",
-        "CWE-863"
-      ],
-      "credits": [
-        "rexpository"
-      ],
-      "aliases": [
-        "GHSA-jhfx-v2j8-x3m6"
       ],
       "source_feed": "ghsa-without-cve"
     },
