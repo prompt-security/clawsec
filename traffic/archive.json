@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-07-17T04:22:18.768Z",
+  "updated_at": "2026-07-18T04:16:45.504Z",
   "daily": {
     "views": [
       {
@@ -259,6 +259,11 @@
         "timestamp": "2026-07-15T00:00:00Z",
         "count": 44,
         "uniques": 31
+      },
+      {
+        "timestamp": "2026-07-16T00:00:00Z",
+        "count": 36,
+        "uniques": 26
       }
     ],
     "clones": [
@@ -516,6 +521,11 @@
         "timestamp": "2026-07-15T00:00:00Z",
         "count": 145,
         "uniques": 80
+      },
+      {
+        "timestamp": "2026-07-16T00:00:00Z",
+        "count": 133,
+        "uniques": 54
       }
     ]
   },
@@ -2590,6 +2600,62 @@
             "referrer": "Bing",
             "count": 2,
             "uniques": 2
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-07-18T04:16:45.504Z",
+        "date": "2026-07-18",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 159,
+            "uniques": 119
+          },
+          {
+            "referrer": "Google",
+            "count": 95,
+            "uniques": 68
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 10,
+            "uniques": 2
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 8,
+            "uniques": 4
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 5,
+            "uniques": 2
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "medium.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "statics.teams.cdn.office.net",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 1,
+            "uniques": 1
           }
         ]
       }
@@ -5036,6 +5102,72 @@
             "uniques": 2
           }
         ]
+      },
+      {
+        "captured_at": "2026-07-18T04:16:45.504Z",
+        "date": "2026-07-18",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 378,
+            "uniques": 295
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 17,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 15,
+            "uniques": 14
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 14,
+            "uniques": 13
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 14,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 7,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/actions",
+            "title": "/actions",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/claw-release/SKILL.md",
+            "title": "/blob/main/skills/claw-release/SKILL.md",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/modules/nanoclaw-integration.md",
+            "title": "/blob/main/wiki/modules/nanoclaw-integration.md",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/AGENTS.md",
+            "title": "/blob/main/AGENTS.md",
+            "count": 2,
+            "uniques": 2
+          }
+        ]
       }
     ]
   },
@@ -5482,6 +5614,18 @@
       "clones_window": {
         "count": 2691,
         "uniques": 703
+      }
+    },
+    {
+      "captured_at": "2026-07-18T04:16:45.504Z",
+      "date": "2026-07-18",
+      "views_window": {
+        "count": 546,
+        "uniques": 330
+      },
+      "clones_window": {
+        "count": 2728,
+        "uniques": 719
       }
     }
   ]
