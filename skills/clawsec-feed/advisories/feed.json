@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-07-19T06:50:00Z",
+  "updated": "2026-07-21T06:49:56Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -462,6 +462,7 @@
       "title": "OpenClaw versions before 2026.5.18 contain an authorization bypass vulnerability in skill command di...",
       "description": "OpenClaw versions before 2026.5.18 contain an authorization bypass vulnerability in skill command dispatch that allows lower-trust callers to execute or persist actions beyond their intended authorization. Attackers can bypass tool policy restrictions through configured input paths to perform unauthorized actions when the affected feature is enabled and reachable.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -530,6 +531,7 @@
       "title": "OpenClaw before 2026.5.18 contain an authorization bypass vulnerability in the device-pair approval ...",
       "description": "OpenClaw before 2026.5.18 contain an authorization bypass vulnerability in the device-pair approval feature that allows lower-trust callers to execute actions beyond their intended authorization. Attackers can exploit misconfigured input paths to execute or persist unauthorized actions when the affected feature is enabled and reachable.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -564,6 +566,7 @@
       "title": "OpenClaw before 2026.5.22 contain a vulnerability in setup-mode discovery that allows loading of unt...",
       "description": "OpenClaw before 2026.5.22 contain a vulnerability in setup-mode discovery that allows loading of untrusted workspace plugins. Attackers with lower-trust caller access or control over configured input paths can execute or persist actions beyond their intended authorization level.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -802,6 +805,7 @@
       "title": "OpenClaw versions before 2026.6.5 contain an authentication bypass vulnerability in HTTP Canvas resp...",
       "description": "OpenClaw versions before 2026.6.5 contain an authentication bypass vulnerability in HTTP Canvas responses that allows lower-trust callers to forge trusted A2UI actions. Attackers can perform actions requiring stronger authorization by submitting crafted requests through configured input paths, bypassing intended policy checks.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -836,6 +840,7 @@
       "title": "OpenClaw versions before 2026.5.28 Bot Framework contains an improper input validation vulnerability...",
       "description": "OpenClaw versions before 2026.5.28 Bot Framework contains an improper input validation vulnerability that allows lower-trust callers to expose bot tokens and credentials by failing to properly validate serviceUrl parameters. Attackers can supply malicious serviceUrl values through configured input paths to retrieve sensitive authentication data outside the trusted boundary.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -870,6 +875,7 @@
       "title": "OpenClaw versions before 2026.5.27 contain a token leakage vulnerability in MS Teams outbound reques...",
       "description": "OpenClaw versions before 2026.5.27 contain a token leakage vulnerability in MS Teams outbound requests that allows lower-trust callers to expose Bot Framework tokens. Attackers can access configured input paths to retrieve credentials that should remain within the trusted boundary.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -904,6 +910,7 @@
       "title": "OpenClaw before 2026.5.28 contains a race condition in the MS Teams safeFetch DNS rebinding check. W...",
       "description": "OpenClaw before 2026.5.28 contains a race condition in the MS Teams safeFetch DNS rebinding check. When the affected feature is enabled and reachable, a lower-trust caller or configured input path could win a timing window between the DNS validation check and use, allowing actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -938,6 +945,7 @@
       "title": "OpenClaw versions before 2026.6.1 contain a credential redaction bypass vulnerability in the traject...",
       "description": "OpenClaw versions before 2026.6.1 contain a credential redaction bypass vulnerability in the trajectory export feature that allows lower-trust callers to access data that should remain within trusted boundaries. Attackers can exploit misconfigured input paths or feature accessibility to expose sensitive credentials and data through the export mechanism.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -972,6 +980,7 @@
       "title": "OpenClaw versions before 2026.6.1 contain a denial of service vulnerability where remote media URLs ...",
       "description": "OpenClaw versions before 2026.6.1 contain a denial of service vulnerability where remote media URLs can trigger slow-read attacks that exhaust gateway worker resources. Attackers with access to configured input paths can supply remote media URLs that consume gateway resources and reduce availability.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1040,6 +1049,7 @@
       "title": "OpenClaw before 2026.6.5 could forward Authorization headers during MCP SSE redirects. When the affe...",
       "description": "OpenClaw before 2026.6.5 could forward Authorization headers during MCP SSE redirects. When the affected feature is enabled and reachable, a lower-trust caller or configured input path could execute or persist actions beyond the caller's intended authorization. Impact depends on the operator's configuration and whether lower-trust input can reach the affected path.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1074,6 +1084,7 @@
       "title": "OpenClaw versions before 2026.6.5 contain an authentication bypass vulnerability that allows lower-t...",
       "description": "OpenClaw versions before 2026.6.5 contain an authentication bypass vulnerability that allows lower-trust callers to reach admin-scoped tools. Attackers can perform actions requiring stronger authorization by exploiting insufficient policy checks on configured input paths.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1108,6 +1119,7 @@
       "title": "OpenClaw versions before 2026.6.9 contain a missing authorization vulnerability in Discord moderatio...",
       "description": "OpenClaw versions before 2026.6.9 contain a missing authorization vulnerability in Discord moderation actions. In affected versions, a lower-trust caller or configured input path could perform moderation actions that should have required a stronger authorization or policy check. Practical impact depends on the operator's configuration and whether lower-trust input can reach the affected path.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1176,6 +1188,7 @@
       "title": "OpenClaw versions before 2026.6.6 contain an environment variable filtering vulnerability in host ex...",
       "description": "OpenClaw versions before 2026.6.6 contain an environment variable filtering vulnerability in host exec that fails to properly sanitize rustup startup variables. Attackers with lower-trust caller access or configured input paths can execute or persist actions beyond their intended authorization level.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -1244,6 +1257,7 @@
       "title": "OpenClaw versions before 2026.6.6 contain a network policy bypass vulnerability in the sandbox exec-...",
       "description": "OpenClaw versions before 2026.6.6 contain a network policy bypass vulnerability in the sandbox exec-server that allows lower-trust callers to reach internal network destinations blocked by OpenClaw policy. Attackers can send HTTP requests through the exec-server to access network resources that should have been restricted by configured policies.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
