@@ -3,27 +3,10 @@ import { Search as _Search, Filter as _Filter, Package, Sparkles, FileText, GitF
 import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
 import type { SkillMetadata, SkillsIndex } from '../types';
+import { loadSkillsIndex } from '../utils/skillCatalogInstallability.mjs';
 
-const SKILLS_INDEX_PATH = '/skills/index.json';
-
-const isProbablyHtmlDocument = (text: string): boolean => {
-  const start = text.trimStart().slice(0, 200).toLowerCase();
-  return start.startsWith('<!doctype html') || start.startsWith('<html');
-};
-
-const parseSkillsIndex = (raw: string): SkillsIndex | null => {
-  try {
-    const parsed = JSON.parse(raw) as Partial<SkillsIndex> | null;
-    if (!parsed || !Array.isArray(parsed.skills)) return null;
-    return {
-      version: typeof parsed.version === 'string' ? parsed.version : '1.0.0',
-      updated: typeof parsed.updated === 'string' ? parsed.updated : '',
-      skills: parsed.skills as SkillMetadata[],
-    };
-  } catch {
-    return null;
-  }
-};
+const isAbortError = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
 
 export const SkillsCatalog: React.FC = () => {
   const [skills, setSkills] = useState<SkillMetadata[]>([]);
@@ -34,49 +17,36 @@ export const SkillsCatalog: React.FC = () => {
   const [categoryFilter, _setCategoryFilter] = useState<string>('all');
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
     const fetchSkills = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        const response = await fetch(SKILLS_INDEX_PATH, {
-          headers: { Accept: 'application/json' },
-        });
-
-        // Missing index file is a valid "empty catalog" state.
-        if (response.status === 404) {
-          setSkills([]);
-          setFilteredSkills([]);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch skills index');
-        }
-
-        const contentType = response.headers.get('content-type') ?? '';
-        const raw = await response.text();
-
-        // Some SPA setups return index.html with 200 for missing JSON files.
-        if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(raw)) {
-          setSkills([]);
-          setFilteredSkills([]);
-          return;
-        }
-
-        const data = parseSkillsIndex(raw);
-        if (!data) {
-          throw new Error('Invalid skills index format');
-        }
+        const data = await loadSkillsIndex(fetch, { signal: controller.signal }) as SkillsIndex;
+        if (!active) return;
 
         setSkills(data.skills);
         setFilteredSkills(data.skills);
       } catch (err) {
+        if (!active || isAbortError(err)) return;
         console.error('Failed to load skills index:', err);
-        setError('Failed to load skills catalog');
+        setSkills([]);
+        setFilteredSkills([]);
+        setError('The verified skills catalog is unavailable. Skill details and installation links are disabled.');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchSkills();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -120,11 +90,8 @@ export const SkillsCatalog: React.FC = () => {
       <div className="pt-[52px]">
         <div className="py-16 text-center">
           <Package className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">No Skills Available</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Skills Catalog Unavailable</h2>
           <p className="text-gray-400 mb-4">{error}</p>
-          <p className="text-sm text-gray-500">
-            Skills will appear here after the first skill release.
-          </p>
         </div>
         <Footer />
       </div>

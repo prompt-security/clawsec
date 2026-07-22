@@ -1,122 +1,90 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Copy, Check, Download, ExternalLink, FileText, Shield } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Footer } from '../components/Footer';
-import type { SkillJson, SkillChecksums } from '../types';
+import type {
+  SkillChecksums,
+  SkillDetailLoadResult,
+  SkillLifecycleView,
+} from '../types';
 import { getPlatformDescriptor } from '../utils/advisoryPlatforms';
 import { defaultMarkdownComponents } from '../utils/markdownComponents';
 import { stripFrontmatter } from '../utils/markdownHelpers.mjs';
 import { getRecommendedSkillPlatforms, resolveSkillPlatformMetadata } from '../utils/skillPlatforms';
+import {
+  getSkillLifecycleView,
+  loadSkillDetailData,
+} from '../utils/skillCatalogInstallability.mjs';
 
 const RELEASE_REPO_URL = 'https://github.com/prompt-security/clawsec';
-
-const isProbablyHtmlDocument = (text: string): boolean => {
-  const start = text.trimStart().slice(0, 200).toLowerCase();
-  return start.startsWith('<!doctype html') || start.startsWith('<html');
-};
+const isAbortError = (error: unknown): boolean =>
+  typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
 
 export const SkillDetail: React.FC = () => {
   const { skillId } = useParams<{ skillId: string }>();
-  const [skillData, setSkillData] = useState<SkillJson | null>(null);
-  const [checksums, setChecksums] = useState<SkillChecksums | null>(null);
-  const [doc, setDoc] = useState<{ filename: string; content: string } | null>(null);
+  const [detail, setDetail] = useState<SkillDetailLoadResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
     const fetchSkillData = async () => {
-      if (!skillId) return;
+      setLoading(true);
+      setDetail(null);
+      setCopied(null);
+
+      if (!skillId) {
+        const view = getSkillLifecycleView('blocked') as SkillLifecycleView;
+        setDetail({
+          state: 'blocked',
+          reason: 'The requested skill has no catalog identity.',
+          record: null,
+          skillData: null,
+          checksums: null,
+          doc: null,
+          view,
+        });
+        setLoading(false);
+        return;
+      }
 
       try {
-        setDoc(null);
+        const result = await loadSkillDetailData(fetch, skillId, {
+          signal: controller.signal,
+        }) as SkillDetailLoadResult;
+        if (!active) return;
 
-        // Fetch skill.json
-        const skillResponse = await fetch(`/skills/${skillId}/skill.json`, {
-          headers: { Accept: 'application/json' }
+        setDetail({
+          ...result,
+          view: getSkillLifecycleView(result.state) as SkillLifecycleView,
         });
-        if (!skillResponse.ok) {
-          throw new Error('Skill not found');
-        }
-
-        const skillContentType = skillResponse.headers.get('content-type') ?? '';
-        const skillRaw = await skillResponse.text();
-        if (skillContentType.includes('text/html') || isProbablyHtmlDocument(skillRaw)) {
-          throw new Error('Skill not found');
-        }
-
-        let skill: SkillJson;
-        try {
-          skill = JSON.parse(skillRaw) as SkillJson;
-        } catch {
-          throw new Error('Invalid skill metadata');
-        }
-
-        setSkillData(skill);
-
-        // Fetch checksums.json
-        try {
-          const checksumsResponse = await fetch(`/skills/${skillId}/checksums.json`, {
-            headers: { Accept: 'application/json' }
-          });
-          if (checksumsResponse.ok) {
-            const checksumsContentType = checksumsResponse.headers.get('content-type') ?? '';
-            const checksumsRaw = await checksumsResponse.text();
-            if (!checksumsContentType.includes('text/html') && !isProbablyHtmlDocument(checksumsRaw)) {
-              try {
-                const checksumsData = JSON.parse(checksumsRaw) as SkillChecksums;
-                setChecksums(checksumsData);
-              } catch {
-                // Checksums malformed, ignore.
-              }
-            }
-          }
-        } catch {
-          // Checksums not available
-        }
-
-        // Fetch documentation (README.md preferred, fallback to SKILL.md).
-        // Note: Dev servers may fall back to serving index.html with 200 for missing files;
-        // guard against accidentally rendering HTML as docs.
-        try {
-          const fetchDocFile = async (filename: string) => {
-            const response = await fetch(`/skills/${skillId}/${filename}`, {
-              headers: { Accept: 'text/plain' }
-            });
-            if (!response.ok) return null;
-
-            const contentType = response.headers.get('content-type') ?? '';
-            const rawText = await response.text();
-
-            if (contentType.includes('text/html') || isProbablyHtmlDocument(rawText)) return null;
-
-            const text =
-              filename === 'SKILL.md' ? stripFrontmatter(rawText).trim() : rawText.trim();
-
-            return text.length > 0 ? text : null;
-          };
-
-          const candidates = ['README.md', 'SKILL.md'];
-          for (const filename of candidates) {
-            const content = await fetchDocFile(filename);
-            if (content) {
-              setDoc({ filename, content });
-              break;
-            }
-          }
-        } catch {
-          // Documentation not available
-        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load skill');
+        if (!active || isAbortError(err)) return;
+
+        setDetail({
+          state: 'blocked',
+          reason: 'The verified catalog could not authorize this skill detail page.',
+          record: null,
+          skillData: null,
+          checksums: null,
+          doc: null,
+          view: getSkillLifecycleView('blocked') as SkillLifecycleView,
+        });
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchSkillData();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [skillId]);
 
   const handleCopy = (text: string, id: string) => {
@@ -124,58 +92,6 @@ export const SkillDetail: React.FC = () => {
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
   };
-
-  const releaseTag = skillData ? `${skillData.name}-v${skillData.version}` : '';
-  const skillInstructionsUrl = releaseTag
-    ? `${RELEASE_REPO_URL}/releases/download/${releaseTag}/SKILL.md`
-    : '';
-
-  const recommendedPlatforms = useMemo(
-    () => (skillData ? getRecommendedSkillPlatforms(skillData) : []),
-    [skillData]
-  );
-
-  const isOpenClawSkill = recommendedPlatforms.includes('openclaw');
-
-  const installCommand = skillData
-    ? isOpenClawSkill
-      ? `npx clawhub@latest install ${skillData.name}`
-      : `curl -sLO ${skillInstructionsUrl}`
-    : '';
-
-  const installLabel = isOpenClawSkill ? 'Via ClawHub' : 'Via SKILL.md instructions';
-  const installHelp = isOpenClawSkill
-    ? 'Recommended for OpenClaw-compatible skills.'
-    : 'Pull the published instruction file and follow the platform-specific setup steps.';
-
-  const releasePageUrl = useMemo(() => {
-    if (!skillData) return '';
-
-    try {
-      const url = new URL(skillData.homepage);
-      if (url.hostname === 'github.com') {
-        const [owner, repo] = url.pathname.split('/').filter(Boolean);
-        if (owner && repo) {
-          const repoBase = `${url.origin}/${owner}/${repo.replace(/\\.git$/, '')}`;
-          return `${repoBase}/releases/tag/${releaseTag}`;
-        }
-      }
-    } catch {
-      // ignore invalid URLs
-    }
-
-    return skillData.homepage;
-  }, [releaseTag, skillData]);
-
-  const platformMetadata = useMemo(
-    () => (skillData ? resolveSkillPlatformMetadata(skillData) : null),
-    [skillData]
-  );
-
-  const triggers = useMemo(() => {
-    if (!platformMetadata || !Array.isArray(platformMetadata.triggers)) return [];
-    return platformMetadata.triggers;
-  }, [platformMetadata]);
 
   if (loading) {
     return (
@@ -186,17 +102,148 @@ export const SkillDetail: React.FC = () => {
     );
   }
 
-  if (error || !skillData) {
+  if (!detail || detail.state === 'blocked') {
     return (
-      <div className="py-16 text-center">
-        <Shield className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Skill Not Found</h2>
-        <p className="text-gray-400 mb-4">{error || 'This skill does not exist'}</p>
+      <div className="py-16 text-center" role="status">
+        <Shield className="w-16 h-16 mx-auto text-amber-300 mb-4" />
+        <h2 className="text-xl font-bold text-white mb-2">Skill Details Unavailable</h2>
+        <p className="text-gray-400 mb-4">
+          {detail?.reason || 'The verified catalog did not authorize this skill detail page.'}
+        </p>
         <Link to="/skills" className="text-clawd-accent hover:underline">
           Back to Skills Catalog
         </Link>
       </div>
     );
+  }
+
+  if (detail.state === 'historical') {
+    if (
+      !detail.record ||
+      detail.record.id !== skillId ||
+      !detail.view.historicalEvidence
+    ) {
+      return (
+        <div className="py-16 text-center" role="status">
+          <Shield className="w-16 h-16 mx-auto text-amber-300 mb-4" />
+          <h2 className="text-xl font-bold text-white mb-2">Historical Record Unavailable</h2>
+          <p className="text-gray-400 mb-4">The catalog record is missing required historical evidence.</p>
+          <Link to="/skills" className="text-clawd-accent hover:underline">
+            Back to Skills Catalog
+          </Link>
+        </div>
+      );
+    }
+
+    const record = detail.record;
+    const releaseEvidenceUrl = `${RELEASE_REPO_URL}/releases/tag/${encodeURIComponent(record.tag)}`;
+    const checksumEvidenceUrl = `/skills/${encodeURIComponent(record.id)}/checksums.json`;
+
+    return (
+      <div className="pt-8 space-y-8">
+        <Link
+          to="/skills"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft size={20} />
+          Back to Skills
+        </Link>
+
+        <section
+          className="rounded-xl border border-amber-500/60 bg-amber-500/10 p-6 space-y-4"
+          role="status"
+        >
+          <div className="flex items-start gap-4">
+            <Shield className="mt-1 h-8 w-8 flex-none text-amber-300" />
+            <div className="space-y-2">
+              <p className="text-sm font-semibold uppercase tracking-wide text-amber-200">
+                Historical — not installable
+              </p>
+              <h1 className="text-3xl font-bold text-white">{record.name}</h1>
+              <p className="font-mono text-sm text-gray-400">v{record.version}</p>
+              <p className="text-gray-300">{record.description}</p>
+              <p className="text-sm text-amber-100">
+                {detail.reason || 'This record is retained as historical evidence only. Installation and activation are disabled.'}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Shield size={20} />
+            Historical evidence
+          </h2>
+          <p className="text-sm text-gray-400">
+            These links document the retired release. They do not authorize installation, activation, or execution.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <a
+              href={releaseEvidenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 rounded-lg border border-clawd-700 bg-clawd-800 p-4 text-white hover:border-amber-500/60"
+            >
+              <span>GitHub release/tag</span>
+              <ExternalLink size={16} className="text-amber-200" />
+            </a>
+            <a
+              href={checksumEvidenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-3 rounded-lg border border-clawd-700 bg-clawd-800 p-4 text-white hover:border-amber-500/60"
+            >
+              <span>Checksum manifest</span>
+              <ExternalLink size={16} className="text-amber-200" />
+            </a>
+          </div>
+        </section>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  const { record, skillData, checksums, doc, view } = detail;
+  if (!record || record.id !== skillId || !skillData || !view.canInstall) {
+    return (
+      <div className="py-16 text-center" role="status">
+        <Shield className="w-16 h-16 mx-auto text-amber-300 mb-4" />
+        <h2 className="text-xl font-bold text-white mb-2">Installation Unavailable</h2>
+        <p className="text-gray-400 mb-4">The verified catalog did not authorize an installation path.</p>
+        <Link to="/skills" className="text-clawd-accent hover:underline">
+          Back to Skills Catalog
+        </Link>
+      </div>
+    );
+  }
+
+  const releaseTag = record.tag;
+  const skillInstructionsUrl = `${RELEASE_REPO_URL}/releases/download/${encodeURIComponent(releaseTag)}/SKILL.md`;
+  const recommendedPlatforms = getRecommendedSkillPlatforms(skillData);
+  const isOpenClawSkill = recommendedPlatforms.includes('openclaw');
+  const installCommand = isOpenClawSkill
+    ? `npx clawhub@latest install ${skillData.name}`
+    : `curl -sLO ${skillInstructionsUrl}`;
+  const installLabel = isOpenClawSkill ? 'Via ClawHub' : 'Via SKILL.md instructions';
+  const installHelp = isOpenClawSkill
+    ? 'Recommended for OpenClaw-compatible skills.'
+    : 'Pull the published instruction file and follow the platform-specific setup steps.';
+  const platformMetadata = resolveSkillPlatformMetadata(skillData);
+  const triggers = Array.isArray(platformMetadata.triggers) ? platformMetadata.triggers : [];
+  let releasePageUrl = `${RELEASE_REPO_URL}/releases/tag/${encodeURIComponent(releaseTag)}`;
+
+  try {
+    const url = new URL(skillData.homepage);
+    if (url.hostname === 'github.com') {
+      const [owner, repo] = url.pathname.split('/').filter(Boolean);
+      if (owner && repo) {
+        const repoBase = `${url.origin}/${owner}/${repo.replace(/\\.git$/, '')}`;
+        releasePageUrl = `${repoBase}/releases/tag/${encodeURIComponent(releaseTag)}`;
+      }
+    }
+  } catch {
+    // Keep the canonical repository release URL.
   }
 
   return (
@@ -218,7 +265,7 @@ export const SkillDetail: React.FC = () => {
             <h1 className="text-3xl font-bold text-white mb-1">{skillData.name}</h1>
             <div className="flex items-center gap-3 text-sm">
               <span className="text-gray-500 font-mono">v{skillData.version}</span>
-              {recommendedPlatforms.slice(0, 4).map((platform) => {
+              {view.showPlatforms && recommendedPlatforms.slice(0, 4).map((platform) => {
                 const descriptor = getPlatformDescriptor(platform);
 
                 return (
@@ -258,32 +305,34 @@ export const SkillDetail: React.FC = () => {
       </section>
 
       {/* Install Command */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Download size={20} />
-          Quick Install
-        </h2>
-        <div>
-          <p className="text-sm font-medium text-white">{installLabel}</p>
-          <p className="text-sm text-gray-400">{installHelp}</p>
-        </div>
-        <div className="bg-clawd-800 rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4">
-          <code className="text-gray-200 font-mono text-xs sm:text-sm overflow-x-auto break-all min-w-0 flex-1">
-            {installCommand}
-          </code>
-          <button
-            onClick={() => handleCopy(installCommand, 'install')}
-            className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
-            title="Copy to clipboard"
-          >
-            {copied === 'install' ? (
-              <Check size={20} className="text-green-400" />
-            ) : (
-              <Copy size={20} className="text-gray-400" />
-            )}
-          </button>
-        </div>
-      </section>
+      {view.canInstall && view.showCopyControls && (
+        <section className="space-y-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Download size={20} />
+            Quick Install
+          </h2>
+          <div>
+            <p className="text-sm font-medium text-white">{installLabel}</p>
+            <p className="text-sm text-gray-400">{installHelp}</p>
+          </div>
+          <div className="bg-clawd-800 rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4">
+            <code className="text-gray-200 font-mono text-xs sm:text-sm overflow-x-auto break-all min-w-0 flex-1">
+              {installCommand}
+            </code>
+            <button
+              onClick={() => handleCopy(installCommand, 'install')}
+              className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+              title="Copy to clipboard"
+            >
+              {copied === 'install' ? (
+                <Check size={20} className="text-green-400" />
+              ) : (
+                <Copy size={20} className="text-gray-400" />
+              )}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Checksums */}
       {checksums && Object.keys(checksums.files).length > 0 && (
@@ -356,7 +405,7 @@ export const SkillDetail: React.FC = () => {
       )}
 
       {/* Documentation */}
-      {doc && (
+      {view.showDocumentation && doc && (
         <section className="space-y-4">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <FileText size={20} />
@@ -393,7 +442,7 @@ export const SkillDetail: React.FC = () => {
           </dl>
         </div>
 
-        {triggers.length > 0 && (
+        {view.showTriggers && triggers.length > 0 && (
           <div className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6 space-y-4">
             <h3 className="font-bold text-white">Trigger Phrases</h3>
             <div className="flex flex-wrap gap-2">

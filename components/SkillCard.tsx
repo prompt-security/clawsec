@@ -9,22 +9,36 @@ interface SkillCardProps {
 }
 
 export const SkillCard: React.FC<SkillCardProps> = ({ skill }) => {
-  const platforms = Array.isArray(skill.platforms) ? skill.platforms.slice(0, 4) : [];
+  const isInstallable = skill.installable !== false;
+  const platforms = isInstallable && Array.isArray(skill.platforms) ? skill.platforms.slice(0, 4) : [];
 
   return (
     <Link
-      to={`/skills/${skill.id}`}
-      className="group block bg-clawd-800 border border-clawd-700 rounded-lg p-5 hover:border-clawd-accent/30 hover:bg-clawd-800/80 transition-all duration-200"
+      to={`/skills/${encodeURIComponent(skill.id)}`}
+      className={`group block bg-clawd-800 border rounded-lg p-5 hover:bg-clawd-800/80 transition-all duration-200 ${
+        isInstallable
+          ? 'border-clawd-700 hover:border-clawd-accent/30'
+          : 'border-amber-500/50 hover:border-amber-400/70'
+      }`}
     >
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">{skill.emoji || '📦'}</span>
-        <div>
+        <span className="text-2xl">{isInstallable ? skill.emoji || '📦' : '📦'}</span>
+        <div className="min-w-0">
           <h3 className="font-bold text-white group-hover:text-clawd-accent transition-colors">
             {skill.name}
           </h3>
           <span className="text-xs text-gray-500 font-mono">v{skill.version}</span>
         </div>
       </div>
+
+      {!isInstallable && (
+        <div
+          className="mb-3 inline-flex rounded-md border border-amber-500/50 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-200"
+          role="status"
+        >
+          Historical — not installable
+        </div>
+      )}
 
       <p className="text-sm text-gray-400 mb-4 line-clamp-2">
         {skill.description}
@@ -53,8 +67,14 @@ export const SkillCard: React.FC<SkillCardProps> = ({ skill }) => {
           {skill.category || 'utility'}
         </span>
         */}
-        <span className="text-clawd-accent text-sm flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
-          View details <ArrowRight size={14} />
+        <span
+          className={`text-sm flex items-center gap-1 transition-opacity ml-auto ${
+            isInstallable
+              ? 'text-clawd-accent opacity-0 group-hover:opacity-100'
+              : 'text-amber-200 opacity-100'
+          }`}
+        >
+          {isInstallable ? 'View details' : 'View historical details'} <ArrowRight size={14} />
         </span>
       </div>
     </Link>
