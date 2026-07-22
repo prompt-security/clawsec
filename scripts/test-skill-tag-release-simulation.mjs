@@ -26,6 +26,21 @@ function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+async function stablePatchFixture(skillDir) {
+  const skill = JSON.parse(await readFile(path.join(skillDir, "skill.json"), "utf8"));
+  const version = typeof skill.version === "string" ? skill.version : "";
+  const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version);
+  assert.ok(
+    match,
+    `${skill.name} tag-release fixture must start from a final SemVer`,
+  );
+
+  return {
+    expectedOriginal: version,
+    expectedSimulated: `${match[1]}.${match[2]}.${BigInt(match[3]) + 1n}`,
+  };
+}
+
 async function prereleaseFixture(sourceSkillDir, version, fixtureGroup) {
   const fixtureDir = path.join(tempRoot, fixtureGroup, path.basename(sourceSkillDir));
   await cp(sourceSkillDir, fixtureDir, { recursive: true });
@@ -556,11 +571,11 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
   );
   await chmod(fakeClawhub, 0o700);
 
+  const suiteVersionFixture = await stablePatchFixture("skills/clawsec-suite");
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.16",
-    expectedSimulated: "0.1.17",
+    ...suiteVersionFixture,
     expectedAgents: ["openclaw"],
     verifyReleaseBundle: true,
     verifyEmbeddedAdvisory: true,
