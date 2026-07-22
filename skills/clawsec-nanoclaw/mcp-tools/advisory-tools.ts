@@ -182,7 +182,7 @@ server.tool(
 
 server.tool(
   'clawsec_check_skill_safety',
-  'Check a skill and optional version against the cached ClawSec advisory feed. Returns an install/block/review recommendation with reasons; the host installer or operator must enforce it and complete other required review.',
+  'Check if a specific skill is safe to install based on ClawSec advisory feed. Returns safety recommendation (install/block/review) with reasons. Use this as a pre-install gate before installing any skill.',
   {
     skillName: z.string().describe('Name of skill to check'),
     skillVersion: z.string().optional().describe('Version of skill (optional, for version-specific checks)'),

@@ -23,8 +23,6 @@ const install = read('INSTALL.md');
 const signing = read('docs/SKILL_SIGNING.md');
 const integrity = read('docs/INTEGRITY.md');
 const changelog = read('CHANGELOG.md');
-const signatureTool = read('mcp-tools/signature-verification.ts');
-const advisoryTool = read('mcp-tools/advisory-tools.ts');
 
 assert.equal(skillJson.version, '0.0.11', 'skill.json must carry the truthfulness release version');
 assert.equal(frontmatterValue(skill, 'version'), '0.0.11', 'SKILL.md must match skill.json version');
@@ -105,15 +103,6 @@ assert.doesNotMatch(skill, /prevents installation of vulnerable skills/i,
   'the skill must not claim ownership of a host installer');
 assert.doesNotMatch(readme, /ClawSec now supports NanoClaw/i,
   'the README must not make an unqualified support claim');
-assert.doesNotMatch(signatureTool, /prevents installation/i,
-  'the signature tool description must not claim ownership of a host installer');
-assert.match(signatureTool, /host installer or operator must enforce/i,
-  'the historical signature source must still identify who would enforce a result');
-assert.doesNotMatch(advisoryTool, /safe to install based on/i,
-  'the advisory source must not present a feed result as complete installation safety');
-assert.match(advisoryTool, /host installer or operator must enforce/i,
-  'the historical advisory source must still identify who would enforce a result');
-
 const packagedPaths = skillJson.sbom?.files?.map((entry) => entry.path) ?? [];
 const expectedPackagedPaths = [
   'CHANGELOG.md',

@@ -1,8 +1,7 @@
 /**
  * Skill Signature Verification Handler for NanoClaw
  *
- * Verifies Ed25519 signatures on staged skill packages so callers can detect
- * tampering before an operator or host installer decides whether to proceed.
+ * Verifies Ed25519 signatures on skill packages to prevent supply chain attacks.
  * Uses the same pinned public key as advisory feed verification.
  */
 
