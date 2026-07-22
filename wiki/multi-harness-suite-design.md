@@ -703,7 +703,7 @@ Parity means the same contract and user-visible outcome where the harness can sa
 | All ten core operations from `verify-feed` through `doctor` | Required | Required | Required through deterministic host CLI plus apply/remove workflow | Required |
 | Suite `status`, `catalog`, `recommend`, exact-install delegation, and `doctor` | Required | Required | Required as operator-run host workflow | Required |
 | Guardian `enable` and `disable` | Conditional on persistent native integration | Conditional on persistent native integration | Conditional; on-demand operation is valid | Conditional on persistent native integration |
-| Deterministic recurring advisory verification | Conditional through reviewed native cron | Conditional through reviewed Hermes scheduler | Intentionally unsupported in v1 until a host adapter exists | Planned; heartbeat/task behavior must pass a prototype gate |
+| Deterministic recurring advisory verification | Conditional through reviewed native cron | Conditional through reviewed Hermes scheduler | Intentionally unsupported in the initial ClawSec NanoClaw v2 suite release until a host adapter exists | Planned; heartbeat/task behavior must pass a prototype gate |
 | Separate authenticated, read-only drift guardian | Required before the harness family is declared complete | Required before the harness family is declared complete | Required through a v2 host-owned rewrite | Required before the harness family is declared complete |
 | Traffic guardian | Planned, outside baseline | Planned, outside baseline | Planned, outside baseline and requires a v2 redesign | Planned, outside baseline |
 | Agent/container status surface | Optional | Optional | Optional distinct read-only container payload; never trust or install authority | Optional |
@@ -1091,7 +1091,8 @@ Deliverables:
 
 - This document.
 - Explicit decisions on canonical names, trust-root format, compatibility policy, and ownership/name of the generated stable distribution repository.
-- Blocking ADR `root-format-v1`: choose TUF-based metadata or a fully specified ClawSec root format, including threshold/rotation, expiry, rollback, freeze, and recovery behavior. `catalog-trust-v1` cannot begin until it is approved.
+- Blocking ADR `root-format-v1`: choose TUF-based metadata or a fully specified ClawSec root format, including threshold/rotation, expiry, rollback, freeze, and recovery behavior. `catalog-trust-contract-v1` cannot begin until it is approved.
+- Operator task `provision-production-root`: after the ADR is approved, create the production root and independent fingerprint channel, assign threshold signer custody, record recovery material and ceremonies, and make only the approved public root metadata available to consuming pipelines. No code PR generates, commits, or takes custody of production private keys.
 - Blocking prototypes for Hermes and PicoClaw exact-byte or deterministic-transformation activation. Their core work may start against contracts, but neither core can become stable until its native install path is proven.
 - No runtime behavior changes.
 
@@ -1103,30 +1104,42 @@ Operator task `enable-immutable-releases`:
 - Record the effective setting and administrator approval.
 - Do not assume a code PR can enable or retroactively apply this control.
 
-PR `release-trust-hardening`:
+Wave 1 is not one aggregate hardening PR. Each row below is its own pipeline, tooling, policy-data, or operator unit with its own tests and remote proof. No row changes a skill, and no implementation PR silently absorbs another row because both touch the release workflow.
 
-- Stop deleting older same-major GitHub releases.
-- Preflight the immutable-release setting before every tag release.
-- Create releases as drafts, attach and verify the complete asset set, publish once, and run `gh release verify` plus `gh release verify-asset`.
-- Require every active mirrored release signer to match an allowed canonical key ID.
-- Keep unsigned legacy releases visible as fetchable history but exclude them from ClawSec authorization, active resolution, and generated discovery.
-- Classify pre-enforcement releases as `legacy_mutable` unless separately re-authorized.
-- Select stable releases by explicit channel and semantic-version rules rather than GitHub API order, and reject public prerelease publication.
-- Define `release_lifecycle_cutover` by a monotonic signed policy/root serial, not a Git timestamp. Freeze an allowlist of pre-cutover legacy refs and exact digests; every other public prerelease ref is rejected regardless of when a draft or tag was created.
-- Inventory the 15 currently fetched legacy `*-beta*` tags into that frozen allowlist, exclude them from the active catalog and generated discovery, classify them as legacy or yanked where the channel supports it, and preserve them as fetchable but non-authorized history without rewriting or deletion.
-- Default-deny ClawHub dry-run and publication unless a minimal owner-approved package/channel allowlist exists.
-- Inventory already-published ClawHub versions, owner-qualified slugs, and their declared license state.
-- Add regression tests for immutable releases, canonical-key enforcement, stable selection, and prerelease publication rejection.
-- Keep current skill runtime behavior unchanged.
+| PR or operator task | Single responsibility | Dependency and proof |
+| --- | --- | --- |
+| `lifecycle-semver-v1` | Define `beta`, `rc`, `stable_intent`, and `stable`, and add one SemVer 2.0 contract/shared parser covering `beta.N < rc.N < stable`, invalid identifiers, package-qualified tags, and SemVer validity versus publication policy | Independent tooling/contract PR; parser fixtures only, with no workflow change or signed-cutover enforcement |
+| `release-retention-v1` | Remove the job that deletes older same-major GitHub Releases; preserve tags, releases, and assets | Independent; static workflow test proves there is no release-deletion command or superseded-release cleanup step |
+| `inventory-legacy-prereleases-v1` | Record the exact tag object and release-asset digests for the 15 currently fetched historical `*-beta*` refs without rewriting, deleting, or authorizing them | Read-only live inventory plus reproducible digest fixture; policy-data PR only |
+| `stable-tag-policy-v1` | Fail closed at tag-release and manual-republish entrypoints before credentials or writes for every alpha, beta, RC, preview, or other public prerelease ref; treat the frozen inventory only as existing fetchable, non-authorized history | Depends on `lifecycle-semver-v1` and the reviewed legacy inventory; stable fixtures pass and prerelease fixtures prove no release, store, catalog, or discovery write can run |
+| `immutable-release-preflight-v1` | Verify the operator-enabled GitHub immutable-release control before a tag release proceeds | Depends on `enable-immutable-releases`; negative and positive API fixtures, with no release construction change |
+| `verified-draft-publication-v1` | Create one draft, attach and verify the exact asset set, publish once, and run `gh release verify` plus `gh release verify-asset` | Depends on immutable preflight and release retention; fake-`gh` fixtures prove command ordering and fail-closed release construction |
+| `pages-release-authority-v1` | Require every release entering Pages mirrors or discovery to use an allowed canonical key ID; reject adjacent attacker keys, missing signatures, corrupt manifests, and incomplete assets | Approved temporary signer policy; change only the Pages pipeline and its authority helper/tests |
+| `pages-stable-selection-v1` | Select stable releases by explicit channel and SemVer rules rather than GitHub API order; classify pre-enforcement releases as `legacy_mutable` and exclude unsigned/prerelease history from active resolution and generated discovery | Depends on `lifecycle-semver-v1`, stable-tag policy, and Pages release authority; deterministic shuffled-history fixtures; change only the Pages pipeline |
+| `inventory-clawhub-publications-v1` | Record already-published versions, owner-qualified slugs, and declared license state without publishing or republishing | Read-only operator evidence; policy-data PR only |
+| `clawhub-publication-allowlist-v1` | Default-deny ClawHub dry-run and publication unless an owner-approved package/channel/license allowlist entry exists | Depends on the reviewed ClawHub inventory and license decision; denied-by-default and exact-allow fixtures |
+
+The temporary Wave 1 stable-tag policy is intentionally simpler than the final signed lifecycle gate: it blocks all new public prerelease writes immediately while preserving exact historical evidence. `release-cutover-gate-v1` later replaces that repository policy with the monotonic signed policy/root serial and frozen ref/digest verification; neither mechanism treats a historical prerelease as active or install-authorized.
+
+Keep current skill runtime behavior unchanged throughout Wave 1.
 
 PR `nanoclaw-v2-truthfulness`:
 
-- Mark the current `clawsec-nanoclaw` package as a v1-only legacy integration that is incompatible with NanoClaw v2.
-- Remove it from current-v2 capability claims and generated availability matrices without deleting the package.
-- Correct public NanoClaw integration documentation so `/workspace/ipc`, `registered_groups.json`, Docker Compose restart steps, legacy MCP scheduling, and unsigned or key-override behavior are not presented as v2 support.
-- Preserve the old code only as migration evidence and test-vector input until its compatibility package is released.
+- Change only the existing `skills/clawsec-nanoclaw` package: mark it as a v1-only legacy integration that is incompatible with NanoClaw v2, align its version and skill-owned documentation, and add a truthfulness regression test.
+- Preserve the TypeScript implementation and policy as migration evidence and test-vector input. Do not ship that active v1 IPC implementation inside the future compatibility facade; the facade delegates migration to canonical successors instead of reactivating retired behavior.
+- Do not edit repository-wide wiki, README, matrix sources, generators, release pipelines, tags, or publications in this changed-skill PR.
 
-Release hardening lands before new package releases begin. The NanoClaw truthfulness PR can run alongside it, but must land before any v2 implementation or public v2 support claim.
+PR `docs-nanoclaw-v2-truthfulness`:
+
+- In a separate documentation-only PR dependent on the changed-skill PR, correct repository-wide NanoClaw claims so `/workspace/ipc`, `registered_groups.json`, Docker Compose restart steps, legacy MCP scheduling, raw-copy installation, and unsigned or caller-key verification are not presented as v2 support.
+- Edit tracked source documentation only; do not commit generated `public/wiki/` output or modify the NanoClaw skill.
+
+PR `nanoclaw-v2-matrix-filter-v1`:
+
+- In a separate metadata/tooling PR dependent on the changed-skill PR, make current capability and availability generators honor the explicit v1-only range and legacy/v2-incompatible classification.
+- Prove the legacy package remains discoverable as migration history but cannot satisfy a NanoClaw v2 support query. Do not change the skill or public prose in this PR.
+
+Every applicable Wave 1 hardening unit lands before new package releases begin. The NanoClaw truthfulness PR can run alongside those units, but must land before any v2 implementation or public v2 support claim.
 
 ### Wave 2: Contracts and truthful metadata
 
@@ -1134,7 +1147,7 @@ PR `metadata-contracts-v1`:
 
 - Add normalized `clawsec` metadata schema.
 - Add role, family, maturity, capability, dependency, legacy-name, and supported-harness-range validation.
-- Update validators without changing runtime behavior.
+- Update validators without changing runtime behavior. Existing packages without normalized metadata are reported as non-authorized legacy inputs; new lifecycle-managed packages and catalog candidates fail closed unless the complete normalized object is present.
 - Include the required NanoClaw native category/location/persistence profile.
 
 PR `result-status-contracts-v1`:
@@ -1149,14 +1162,14 @@ PR `install-migration-receipts-v1`:
 - Bind exact package metadata, authority, source/channel, pre/post trees, transformations, state ownership, rollback, and append-only predecessor links.
 - Add tampering, interrupted-operation, repeated-operation, and unrelated-state fixtures.
 
-PR `catalog-trust-v1`:
+PR `catalog-trust-contract-v1`:
 
-- Define and publish a signed official-skill catalog.
+- Define the signed official-skill catalog, root, release-policy, verifier, and adversarial fixtures without publishing production metadata or changing Pages.
 - Include serial, expiry, channels, yanks, key IDs, replacement/conflict metadata, and exact immutable artifacts.
 - Bind exact release artifact digests and supported harnesses.
 - Implement the already approved `root-format-v1` ADR, including key rotation, expiry, threshold, rollback/freeze, and recovery behavior.
-- Add release and Pages verification tests.
-- Preserve existing feed and release endpoints during migration.
+- Test threshold success and failure, authorized rotation, unauthorized replacement, expiry, rollback, freeze, recovery, stable resolution, yanks, supersession, and exact archive/manifest/signer identity using ephemeral test keys only.
+- Leave production-root custody, Pages wiring, active-pointer mutation, and compatibility endpoint changes to separate operator and pipeline units.
 
 PR `distribution-policy-v1`:
 
@@ -1165,11 +1178,11 @@ PR `distribution-policy-v1`:
 - Define idempotent retry, candidate-versus-active catalog states, published-but-not-authorized state, and catalog-activation receipts.
 - Add schema, license-policy, immutable-ref, no-repackaging, and receipt tests.
 
-PR `lifecycle-semver-v1`:
+PR `release-cutover-gate-v1`:
 
-- Define `beta`, `rc`, `stable_intent`, and `stable` lifecycle stages without conflating them with capability maturity.
-- Replace ad hoc Python, shell, and workflow version checks with one tested SemVer 2.0 contract covering `beta.N < rc.N < stable`, invalid identifiers, and package-qualified tags.
-- Implement the monotonic signed cutover serial plus frozen legacy-ref/digest allowlist and public-prerelease rejection.
+- Replace the temporary Wave 1 prerelease freeze with verification of the monotonic signed lifecycle-cutover serial and exact frozen legacy-ref/digest allowlist.
+- Reuse the merged SemVer parser and catalog/root trust verifier; reject every non-allowlisted public prerelease ref before any release, store, catalog, or discovery write.
+- Change only the release-policy gate and its dry-run fixtures. Do not change packaging, GitHub Release construction, channel publication, catalog activation, or any skill.
 
 PR `candidate-lab-records-v1`:
 
@@ -1346,6 +1359,7 @@ Run bounded PRs rather than one multi-channel release change:
 | `marketplace-manifest-v1` | Replace the current marketplace grouping file with independent SHA-pinned package entries | Stable exact-byte distribution tree |
 | `provision-hermes-tap` | Create owner, permissions, protections, credentials, and append-only policy for the external tap | Explicit operator approval |
 | `hermes-tap-v1` | Generate stable Hermes install trees and publication receipts | Stable Hermes core plus provisioned repository |
+| `catalog-pages-integration-v1` | Wire the merged catalog verifier to Pages artifacts, active-pointer reads, and compatibility feed/release endpoints without changing catalog schemas or production-root policy | `catalog-trust-contract-v1`; endpoint fixtures; operator-owned production root available through the approved channel |
 | `catalog-activation-controller-v1` | Verify promotion and required channel receipts, validate private projections, compare-and-swap the active signed catalog, update controlled discovery, observe public endpoints, and emit the activation receipt | All required receipts and the immediately previous active serial |
 | `public-matrices-v1` | Generate README and website capability/distribution matrices | Validated metadata, conformance/acceptance receipts, and exact active catalog serial |
 | `clawsec-feed-retirement-v1` | Move feed identity to signed `trust_asset` catalog metadata, migrate documentation/state pointers to the signed endpoint/core consumer, and record retirement | Active core consumers; no installable facade or package release |
@@ -1362,11 +1376,29 @@ The following edges are required. A box names one bounded implementation unit. A
 
 ```mermaid
 flowchart TD
-  R["root-format-v1 ADR"] --> C["catalog-trust-v1"]
+  OI["enable-immutable-releases operator task"] --> IM["immutable-release-preflight-v1"]
+  IM --> VD["verified-draft-publication-v1"]
+  RR["release-retention-v1"] --> G
+  LP["inventory-legacy-prereleases-v1"] --> ST["stable-tag-policy-v1"]
+  L["lifecycle-semver-v1"] --> ST
+  ST --> PS["pages-stable-selection-v1"]
+  PA["pages-release-authority-v1"] --> PS
+  LP --> RC
+  ST --> RC
+  VD --> G
+  PS --> PI
+  CI["inventory-clawhub-publications-v1"] --> CA["clawhub-publication-allowlist-v1"]
+  CA --> CC
+  NT["nanoclaw-v2-truthfulness"] --> ND["docs-nanoclaw-v2-truthfulness"]
+  NT --> NM["nanoclaw-v2-matrix-filter-v1"]
+  R["root-format-v1 ADR"] --> C["catalog-trust-contract-v1"]
+  R --> PR["provision-production-root operator task"]
   M["metadata-contracts-v1"] --> I["install-migration-receipts-v1"]
   S["result-status-contracts-v1"] --> I
   M --> C
-  L["lifecycle-semver-v1"] --> Q["candidate-lab-records-v1"]
+  L --> Q["candidate-lab-records-v1"]
+  C --> RC["release-cutover-gate-v1"]
+  L --> RC
   I --> Q
   R --> Q
   C --> D["distribution-policy-v1"]
@@ -1385,6 +1417,7 @@ flowchart TD
   D --> E
   E --> B["bootstrap-verifier-v1"]
   R --> B
+  PR --> B
   Q --> B
   L --> K["candidate-packaging-v1"]
   M --> K
@@ -1400,9 +1433,12 @@ flowchart TD
   A --> V["promotion-verifier-v1"]
   K --> V
   V --> G["stable-release-builder-v1"]
+  RC --> G
+  PR --> G
   G --> CB["catalog-candidate-builder-v1"]
   C --> CB
   P --> CB
+  PR --> CB
   CB --> SD["stable-distribution-v1"]
   D --> SD
   CB --> CH["other channel-adapter-<channel>-v1"]
@@ -1412,12 +1448,15 @@ flowchart TD
   CB --> CC
   D --> GD["generic-discovery-v1"]
   C --> GD
+  C --> PI["catalog-pages-integration-v1"]
+  PR --> PI
   SD --> AC["catalog-activation-controller-v1"]
   CH --> AC
   CC --> AC
   GD --> AC
+  PI --> AC
   P --> AC
-  AC -. "CAS conflict: rebase and revalidate" .-> CB
+  PR --> AC
   AC --> PM["public-matrices-v1"]
   F --> PM
 ```
@@ -1452,6 +1491,8 @@ flowchart LR
 ```
 
 Canonical release-run instances are ordered `core activation -> drift activation -> suite activation -> family-integration`. Only then may `compat-<legacy>-v1` start for a mapping whose required targets are active; each facade uses the same per-package pipeline and a later compatibility activation serial. `stable-distribution-v1` is one explicit channel-adapter instance before activation. `generic-discovery-v1` and `public-matrices-v1` consume the resulting active serial; matrices also require the family/conformance receipts. Candidate packaging, private publication, and qualification runners may be implemented against fixtures before harness cores exist, but a real qualification receipt requires the exact completed package and test plan. A merged code PR never promotes a package by itself.
+
+A catalog activation compare-and-swap conflict is runtime control flow, not an implementation dependency: the failed attempt emits evidence, the candidate is rebased against the newly active serial, required checks are rerun, and a new activation attempt is made. The retry never creates a reverse edge from the activation controller to its own builder in the merge DAG.
 
 ---
 
