@@ -1,10 +1,18 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const outputDir = await mkdtemp(path.join(tmpdir(), "clawsec-trust-packet-"));
+
+async function loadSkillIdentity(skillDir) {
+  const skill = JSON.parse(await readFile(path.join(skillDir, "skill.json"), "utf8"));
+  return {
+    ...skill,
+    tag: `${skill.name}-v${skill.version}`,
+  };
+}
 
 function runTrustPacket(skillDir, targetDir, tag) {
   return spawnSync(
@@ -25,7 +33,20 @@ function runTrustPacket(skillDir, targetDir, tag) {
 }
 
 try {
-  const result = runTrustPacket("skills/clawsec-suite", outputDir, "clawsec-suite-v0.1.16");
+  const suite = await loadSkillIdentity("skills/clawsec-suite");
+  const mismatchedTagDir = path.join(outputDir, "mismatched-tag");
+  const mismatchedTag = runTrustPacket(
+    "skills/clawsec-suite",
+    mismatchedTagDir,
+    "clawsec-suite-v9.9.9",
+  );
+  assert.equal(mismatchedTag.status, 1, "a mismatched release tag must fail closed");
+  assert.match(
+    mismatchedTag.stderr,
+    new RegExp(`Release tag clawsec-suite-v9\\.9\\.9 does not match skill identity ${suite.tag.replaceAll(".", "\\.")}`),
+  );
+
+  const result = runTrustPacket("skills/clawsec-suite", outputDir, suite.tag);
 
   assert.equal(
     result.status,
@@ -42,11 +63,12 @@ try {
   assert.match(skillCard, /## License\/Terms of Use/);
   assert.match(skillCard, /AGPL-3\.0-or-later/);
   assert.match(skillCard, /skillspector-report\.md/);
-  assert.match(skillCard, /clawsec-suite-v0\.1\.16/);
+  assert.ok(skillCard.includes(suite.tag));
 
   assert.equal(permissions.skill, "clawsec-suite");
-  assert.equal(permissions.version, "0.1.16");
+  assert.equal(permissions.version, suite.version);
   assert.equal(permissions.platform, "openclaw");
+  assert.equal(permissions.installable, true);
   assert.deepEqual(
     permissions.required_binaries,
     ["node", "npx", "openclaw", "curl", "jq", "shasum", "openssl", "unzip"],
@@ -58,12 +80,12 @@ try {
   assert.match(releaseVerifier, /safe|archive/i);
 
   assert.match(install, /EXPECTED_KEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"/);
-  assert.match(install, /BASE_URL="https:\/\/github\.com\/prompt-security\/clawsec\/releases\/download\/clawsec-suite-v0\.1\.16"/);
-  assert.match(install, /ARCHIVE="clawsec-suite-v0\.1\.16\.zip"/);
+  assert.ok(install.includes(`BASE_URL="https://github.com/prompt-security/clawsec/releases/download/${suite.tag}"`));
+  assert.ok(install.includes(`ARCHIVE="${suite.tag}.zip"`));
   assert.match(install, /python3 verify_skill_release_bundle\.py[\s\S]*--release-dir "\$VERIFY_DIR"[\s\S]*--output-dir "\$VERIFY_DIR\/verified"/);
   assert.match(
     install,
-    /npx skills add prompt-security\/clawsec#clawsec-suite-v0\.1\.16 --skill clawsec-suite --agent openclaw --yes/,
+    new RegExp(`npx skills add prompt-security/clawsec#${suite.tag.replaceAll(".", "\\.")} --skill clawsec-suite --agent openclaw --yes`),
   );
   assert.match(install, /installed tree is not byte-bound to the signed release archive/);
   assert.doesNotMatch(install, /npx skills (?:update|list)/);
@@ -82,10 +104,11 @@ try {
   assert.doesNotMatch(install, /\bunzip\b/, "install instructions must not use raw archive extraction");
 
   const hermesOutputDir = path.join(outputDir, "hermes");
+  const hermes = await loadSkillIdentity("skills/hermes-attestation-guardian");
   const hermesResult = runTrustPacket(
     "skills/hermes-attestation-guardian",
     hermesOutputDir,
-    "hermes-attestation-guardian-v0.1.7",
+    hermes.tag,
   );
   assert.equal(
     hermesResult.status,
@@ -95,16 +118,14 @@ try {
   const hermesInstall = await readFile(path.join(hermesOutputDir, "install.md"), "utf8");
   assert.match(
     hermesInstall,
-    /npx skills add prompt-security\/clawsec#hermes-attestation-guardian-v0\.1\.7 --skill hermes-attestation-guardian --agent hermes-agent --yes/,
+    new RegExp(`npx skills add prompt-security/clawsec#${hermes.tag.replaceAll(".", "\\.")} --skill hermes-attestation-guardian --agent hermes-agent --yes`),
   );
 
-  for (const [skillDir, tag, platform] of [
-    ["skills/clawsec-nanoclaw", "clawsec-nanoclaw-v0.0.10", "nanoclaw"],
-    ["skills/picoclaw-security-guardian", "picoclaw-security-guardian-v0.0.3", "picoclaw"],
-  ]) {
+  for (const [skillDir, platform] of [["skills/picoclaw-security-guardian", "picoclaw"]]) {
     const skillName = path.basename(skillDir);
+    const identity = await loadSkillIdentity(skillDir);
     const nativeOutputDir = path.join(outputDir, skillName);
-    const nativeResult = runTrustPacket(skillDir, nativeOutputDir, tag);
+    const nativeResult = runTrustPacket(skillDir, nativeOutputDir, identity.tag);
     assert.equal(
       nativeResult.status,
       0,
@@ -117,8 +138,67 @@ try {
     assert.doesNotMatch(nativeInstall, /--agent openclaw/);
   }
 
+  const nonInstallableSource = path.join(outputDir, "non-installable-source", "clawsec-nanoclaw");
+  await cp("skills/clawsec-nanoclaw", nonInstallableSource, { recursive: true });
+  const nonInstallableJsonPath = path.join(nonInstallableSource, "skill.json");
+  const nonInstallableSkill = JSON.parse(await readFile(nonInstallableJsonPath, "utf8"));
+  nonInstallableSkill.installable = false;
+  nonInstallableSkill.platform = "retired-unmapped-harness";
+  delete nonInstallableSkill.nanoclaw;
+  await writeFile(nonInstallableJsonPath, `${JSON.stringify(nonInstallableSkill, null, 2)}\n`);
+
+  const nonInstallableOutput = path.join(outputDir, "non-installable-output");
+  const nonInstallableTag = `${nonInstallableSkill.name}-v${nonInstallableSkill.version}`;
+  const nonInstallableResult = runTrustPacket(
+    nonInstallableSource,
+    nonInstallableOutput,
+    nonInstallableTag,
+  );
+  assert.equal(
+    nonInstallableResult.status,
+    0,
+    `non-installable trust packet generation failed\nstdout:\n${nonInstallableResult.stdout}\nstderr:\n${nonInstallableResult.stderr}`,
+  );
+  const nonInstallableDoc = await readFile(path.join(nonInstallableOutput, "install.md"), "utf8");
+  const nonInstallableCard = await readFile(path.join(nonInstallableOutput, "skill-card.md"), "utf8");
+  const nonInstallablePermissions = JSON.parse(
+    await readFile(path.join(nonInstallableOutput, "permissions.json"), "utf8"),
+  );
+  assert.match(nonInstallableDoc, /^# Installation Unavailable for clawsec-nanoclaw/m);
+  assert.match(nonInstallableDoc, /declares `installable: false`/);
+  assert.match(nonInstallableDoc, /no supported installation or activation path/);
+  assert.doesNotMatch(nonInstallableDoc, /```|curl|python3|npx skills|--agent openclaw|\bcopy\b/i);
+  assert.match(nonInstallableCard, /declares `installable: false`/);
+  assert.match(nonInstallableCard, /no supported execution or activation path/);
+  assert.doesNotMatch(nonInstallableCard, /provides this capability|Use this skill for/);
+  assert.equal(nonInstallablePermissions.installable, false);
+  assert.equal(nonInstallablePermissions.platform, "not-applicable");
+  assert.deepEqual(nonInstallablePermissions.required_binaries, []);
+  assert.deepEqual(nonInstallablePermissions.optional_binaries, []);
+  assert.deepEqual(nonInstallablePermissions.required_env, []);
+  assert.deepEqual(nonInstallablePermissions.optional_env, []);
+  assert.deepEqual(nonInstallablePermissions.capabilities, []);
+  assert.match(nonInstallablePermissions.network_egress, /Not applicable: package is non-installable/);
+  assert.match(nonInstallablePermissions.persistence, /Not applicable: package is non-installable/);
+  assert.match(String(nonInstallablePermissions.automatic_execution), /Not applicable: package is non-installable/);
+
+  const invalidInstallableSource = path.join(outputDir, "invalid-installable-source", "clawsec-nanoclaw");
+  await cp("skills/clawsec-nanoclaw", invalidInstallableSource, { recursive: true });
+  const invalidInstallableJsonPath = path.join(invalidInstallableSource, "skill.json");
+  const invalidInstallableSkill = JSON.parse(await readFile(invalidInstallableJsonPath, "utf8"));
+  invalidInstallableSkill.installable = "false";
+  await writeFile(invalidInstallableJsonPath, `${JSON.stringify(invalidInstallableSkill, null, 2)}\n`);
+  const invalidInstallableResult = runTrustPacket(
+    invalidInstallableSource,
+    path.join(outputDir, "invalid-installable-output"),
+    `${invalidInstallableSkill.name}-v${invalidInstallableSkill.version}`,
+  );
+  assert.equal(invalidInstallableResult.status, 1, "non-boolean installable metadata must fail closed");
+  assert.match(invalidInstallableResult.stderr, /"installable" must be a boolean/);
+
   const multiOutputDir = path.join(outputDir, "clawtributor");
-  const multiResult = runTrustPacket("skills/clawtributor", multiOutputDir, "clawtributor-v0.1.4");
+  const clawtributor = await loadSkillIdentity("skills/clawtributor");
+  const multiResult = runTrustPacket("skills/clawtributor", multiOutputDir, clawtributor.tag);
   assert.equal(
     multiResult.status,
     0,

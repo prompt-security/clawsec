@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { resolveSkillInstallability } from "./skill_installability.mjs";
 import { PLATFORM_KEYS, resolveDirectSkillsCliTargets } from "./skill_platforms.mjs";
 
 const KNOWN_AGENT_TYPES = new Set(["codex", "hermes-agent", "openclaw", "universal"]);
@@ -161,11 +162,42 @@ function requireField(skill, fieldName) {
   return skill[fieldName].trim();
 }
 
+function validateReleaseIdentity(skill, tag) {
+  if (!tag) {
+    return;
+  }
+
+  const expectedTag = `${skill.name}-v${skill.version}`;
+  if (tag !== expectedTag) {
+    throw new Error(`Release tag ${tag} does not match skill identity ${expectedTag}`);
+  }
+}
+
 function codeBlock(command) {
   return ["```bash", command, "```"].join("\n");
 }
 
-function buildPermissions({ skill, metadata, platform, generatedAt }) {
+function buildPermissions({ skill, metadata, platform, generatedAt, installable }) {
+  if (!installable) {
+    return {
+      schema_version: "1",
+      generated_at: generatedAt,
+      skill: skill.name,
+      version: skill.version,
+      platform: "not-applicable",
+      installable: false,
+      required_binaries: [],
+      optional_binaries: [],
+      required_env: [],
+      optional_env: [],
+      network_egress: "Not applicable: package is non-installable.",
+      persistence: "Not applicable: package is non-installable.",
+      automatic_execution: "Not applicable: package is non-installable.",
+      capabilities: [],
+      operator_review: ["Limit use to read-only historical review or migration planning."],
+    };
+  }
+
   const execution = metadata.execution && typeof metadata.execution === "object" ? metadata.execution : {};
   const permissions = {
     schema_version: "1",
@@ -173,6 +205,7 @@ function buildPermissions({ skill, metadata, platform, generatedAt }) {
     skill: skill.name,
     version: skill.version,
     platform,
+    installable: true,
     required_binaries: collectRequiredBinaries(metadata),
     optional_binaries: collectOptionalBinaries(metadata),
     required_env: collectRequiredEnv(metadata),
@@ -191,18 +224,44 @@ function buildSkillCard({ skill, frontmatter, permissions, repository, tag, sour
   const homepage = skill.homepage || frontmatter.homepage || `https://github.com/${repository}`;
   const supportRef = `${repository}@${tag || sourceRef}`;
   const licenseRef = `https://github.com/${repository}/blob/${tag || sourceRef}/LICENSE`;
-  const outputTypes = ["Markdown instructions", "release artifact files"];
-  if (permissions.capabilities.length > 0) {
+  const isInstallable = skill.installable !== false;
+  const outputTypes = isInstallable
+    ? ["Markdown instructions", "release artifact files"]
+    : ["Historical and migration documentation", "signed denial evidence"];
+  if (isInstallable && permissions.capabilities.length > 0) {
     outputTypes.push("local security findings or status reports");
   }
+
+  const description = isInstallable
+    ? `The \`${skill.name}\` skill provides this capability: ${skill.description}
+
+This skill is intended for operator-reviewed security workflows, not unattended production mutation without the review steps declared in the skill instructions.`
+    : `The \`${skill.name}\` package declares \`installable: false\`: ${skill.description}
+
+It is retained only as immutable historical, migration, or test-vector evidence. It has no supported execution or activation path.`;
+  const useCase = isInstallable
+    ? `Use this skill for ${permissions.platform} workflows where an agent or operator needs the capability described in \`${skill.name}\`.`
+    : `Use this package only for read-only historical review or migration planning. Do not install, activate, execute, or substitute another harness target.`;
+  const risks = isInstallable
+    ? `Risk: The skill may run commands, inspect local files, install hooks, or fetch remote security metadata depending on the workflow.
+
+Mitigation: Review \`permissions.json\`, \`SKILL.md\`, and the signed \`checksums.json\` before enabling the skill. Keep high-impact actions approval-gated.
+
+Risk: Security findings and remediation guidance can be incomplete or wrong.
+
+Mitigation: Treat output as operator guidance. Review proposed removals, installs, configuration changes, and reports before acting.`
+    : `Risk: Historical material may be mistaken for a supported integration.
+
+Mitigation: Enforce \`installable: false\`, emit no installation commands, and do not execute preserved source. \`SKILL.md\` may provide migration context, but it is not installation authority.`;
+  const outputFormat = isInstallable
+    ? "Markdown, JSON, shell commands, or local files as documented by the skill."
+    : "Read-only Markdown and JSON evidence; no runtime output is authorized.";
 
   return `# Skill Card
 
 ## Description
 
-The \`${skill.name}\` skill provides this capability: ${skill.description}
-
-This skill is intended for operator-reviewed security workflows, not unattended production mutation without the review steps declared in the skill instructions.
+${description}
 
 ## Owner
 
@@ -218,7 +277,7 @@ Project homepage: ${homepage}
 
 ## Use Case
 
-Use this skill for ${permissions.platform} workflows where an agent or operator needs the capability described in \`${skill.name}\`.
+${useCase}
 
 ## Deployment Geography for Use
 
@@ -226,13 +285,7 @@ Global, subject to the operator's local compliance, network, and data-handling r
 
 ## Known Risks and Mitigations
 
-Risk: The skill may run commands, inspect local files, install hooks, or fetch remote security metadata depending on the workflow.
-
-Mitigation: Review \`permissions.json\`, \`SKILL.md\`, and the signed \`checksums.json\` before enabling the skill. Keep high-impact actions approval-gated.
-
-Risk: Security findings and remediation guidance can be incomplete or wrong.
-
-Mitigation: Treat output as operator guidance. Review proposed removals, installs, configuration changes, and reports before acting.
+${risks}
 
 ## References
 
@@ -246,7 +299,7 @@ Mitigation: Treat output as operator guidance. Review proposed removals, install
 
 Output type(s): ${outputTypes.join(", ")}
 
-Output format: Markdown, JSON, shell commands, or local files as documented by the skill.
+Output format: ${outputFormat}
 
 Output parameters: See \`SKILL.md\`, \`permissions.json\`, and release checksums for exact files and side effects.
 
@@ -258,14 +311,28 @@ ${skill.version}${tag ? ` (${tag})` : ""}
 
 ## Ethical Considerations
 
-Use this skill only on systems, agents, repositories, and workspaces where you have authorization. Review generated security reports before sharing them because they may contain operational details.
+${isInstallable
+    ? "Use this skill only on systems, agents, repositories, and workspaces where you have authorization. Review generated security reports before sharing them because they may contain operational details."
+    : "Preserve operator data and history. Keep assessment read-only unless a separate reviewed migration plan explicitly authorizes a change."}
 `;
 }
 
 function buildInstallDoc({ skill, repository, tag, sourceRef }) {
+  const releaseUrl = tag ? `https://github.com/${repository}/releases/tag/${tag}` : `https://github.com/${repository}`;
+
+  if (skill.installable === false) {
+    return `# Installation Unavailable for ${skill.name}
+
+This package declares \`installable: false\` in signed package metadata. It may be retained as immutable historical, migration, or test-vector evidence, but it has no supported installation or activation path.
+
+Do not install, extract into a harness skill directory, activate, execute, or substitute another harness target. \`SKILL.md\` may provide status and migration context, but it cannot override this denial.
+
+Reference identifier only: ${releaseUrl}.
+`;
+  }
+
   const refSuffix = sourceRef && sourceRef !== "main" ? `#${sourceRef}` : "";
   const source = `${repository}${refSuffix}`;
-  const releaseUrl = tag ? `https://github.com/${repository}/releases/tag/${tag}` : `https://github.com/${repository}`;
   const archiveName = `${skill.name}-v${skill.version}.zip`;
   const releaseAssetBase = tag ? `https://github.com/${repository}/releases/download/${tag}` : "";
   const resolution = resolveDirectSkillsCliTargets(skill, KNOWN_AGENT_TYPES);
@@ -377,11 +444,13 @@ async function main() {
   skill.version = requireField(skill, "version");
   skill.description = requireField(skill, "description");
   skill.license = requireField(skill, "license");
+  const { installable } = resolveSkillInstallability(skill);
+  validateReleaseIdentity(skill, args.tag);
 
-  const platform = detectPlatform(skill);
-  const metadata = platformMetadata(skill, platform);
+  const platform = installable ? detectPlatform(skill) : "not-applicable";
+  const metadata = installable ? platformMetadata(skill, platform) : {};
   const generatedAt = new Date().toISOString();
-  const permissions = buildPermissions({ skill, metadata, platform, generatedAt });
+  const permissions = buildPermissions({ skill, metadata, platform, generatedAt, installable });
 
   await mkdir(outputDir, { recursive: true });
   await Promise.all([
