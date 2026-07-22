@@ -1148,8 +1148,8 @@ PR `docs-nanoclaw-v2-truthfulness`:
 PR `catalog-installability-projection-v1`:
 
 - In a separate Pages projection/tooling PR dependent on `non-installable-release-policy-v1` and the changed-skill PR, derive the effective catalog lifecycle value from both release-served metadata and the checked-out repository tombstone.
-- Use deny-wins semantics: `effective_installable = release_installable && repository_installable`; a missing field means `true`, any non-boolean value fails closed, and a repository value can withdraw but never authorize a release. This is a denial-only discovery overlay, not installation authority; Pages authority and stable-selection gates remain required before catalog data can authorize a stable install.
-- Write the effective value into the generated public index and local-preview index without mutating mirrored signed release assets. Prove a historical release with no field plus a current `false` tombstone projects `installable: false`.
+- Use deny-wins semantics: `effective_installable = release_installable && repository_installable`; a missing `installable` field on an existing metadata record means `true`, a missing current repository record means `false`, any non-boolean value fails closed, and a repository value can withdraw but never authorize a release. Release, repository, and tag-derived package identities must match. This is a denial-only discovery overlay, not installation authority; Pages authority and stable-selection gates remain required before catalog data can authorize a stable install.
+- Write the effective value into the generated public index and local-preview index without mutating mirrored signed release assets. The local preview validates every public skill's lifecycle metadata before truncating or copying generated output. Prove a historical release with no field plus a current `false` tombstone projects `installable: false`, while an orphaned release with no current repository record also projects false.
 
 PR `web-catalog-installability-v1`:
 
