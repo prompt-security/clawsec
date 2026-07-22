@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -138,7 +138,7 @@
       {
         "path": "scripts/discover_skill_catalog.mjs",
         "required": true,
-        "description": "Dynamic skill-catalog discovery with remote index fetch and suite-local fallback metadata"
+        "description": "Strict lifecycle-aware catalog discovery with fail-closed remote validation and non-authorizing suite-local context"
       },
       {
         "path": "scripts/local_file_io.mjs",
@@ -187,7 +187,7 @@
     }
   },
   "catalog": {
-    "description": "Available protections in the ClawSec suite",
+    "description": "Descriptive suite-local context only; a valid non-denied remote record is necessary but not sufficient, and signed stable-catalog authorization remains separate",
     "base_url": "https://clawsec.prompt.security/releases/download",
     "skills": {
       "clawsec-feed": {
@@ -259,6 +259,8 @@
         "CLAWSEC_FEED_PUBLIC_KEY",
         "CLAWSEC_ALLOW_UNSIGNED_FEED",
         "CLAWSEC_VERIFY_CHECKSUM_MANIFEST",
+        "CLAWSEC_SKILLS_INDEX_URL",
+        "CLAWSEC_SKILLS_INDEX_TIMEOUT_MS",
         "CLAWSEC_HOOK_INTERVAL_SECONDS",
         "CLAWSEC_ADVISORY_CRON_NAME",
         "CLAWSEC_ADVISORY_CRON_EVERY"

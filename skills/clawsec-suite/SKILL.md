@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.16
+version: 0.1.17
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -54,9 +54,22 @@ SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
 node "$SUITE_DIR/scripts/discover_skill_catalog.mjs"
 ```
 
-Fallback behavior:
-- If the remote catalog index is reachable and valid, the suite uses it.
-- If the remote index is unavailable or malformed, the script falls back to suite-local catalog metadata in `skill.json`.
+Lifecycle behavior:
+- A remote record with `installable: true`, or a legacy record with no `installable` field, may appear as a lifecycle-screened candidate.
+- A remote record with `installable: false` may appear only as non-authorizing historical context. It never receives an install command.
+- A present non-Boolean `installable` value invalidates the whole remote index and disables install recommendations.
+- An unavailable or malformed remote index produces no installable results. Suite-local metadata in `skill.json` may be shown only as unverified context; it never authorizes an install.
+- Local metadata cannot override a remote denial or satisfy a record that is missing from a valid remote index.
+- This projected index is a denial overlay. A non-denied record is necessary but not sufficient for an official stable install; signed stable-catalog authorization remains a separate gate.
+- The Suite's final SemVer does not itself assert stable status. Version `0.1.17` remains a stable-intent candidate until the release and active-catalog gates authorize that exact payload.
+
+Resolve one exact skill before installing it:
+
+```bash
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs" --skill <exact-skill-id>
+```
+
+Only continue to the next checks when that command returns a lifecycle-screened candidate. A withdrawn, missing, malformed, or unavailable record is denied without an install command. Discovery does not replace signed stable-catalog authorization or the advisory/operator gates.
 
 ## Installation
 
@@ -183,7 +196,9 @@ Restart the OpenClaw gateway after enabling the hook. Then run `/new` once to fo
 
 ## Guarded Skill Install Flow (Double Confirmation)
 
-When the user asks to install a skill, treat that as the first request and run a guarded install check:
+Lifecycle screening and advisory gating are separate checks. First resolve the exact skill through `discover_skill_catalog.mjs --skill <exact-skill-id>`. Do not pass a denied, missing, or unverified-local record to the installer.
+
+When catalog discovery does not deny the requested skill, independently verify stable-catalog authorization, then treat the user's request as the first confirmation and run the guarded advisory check:
 
 ```bash
 SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
@@ -390,20 +405,21 @@ Audit entries (with check identifiers like `skills.code_safety`) are only matche
 
 ## Optional Skill Installation
 
-Discover currently available installable skills dynamically, then install the ones you want:
+Discover currently available installable skills dynamically, then resolve one exact skill before installing it:
 
 ```bash
 SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
 node "$SUITE_DIR/scripts/discover_skill_catalog.mjs"
-
-# then install any discovered skill by name
-npx clawhub@latest install <skill-name>
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs" --skill <exact-skill-id>
 ```
 
-Machine-readable output is also available for automation:
+The requested form emits an install command only for an exact lifecycle-screened record from a valid remote index. That command is a candidate recommendation, not proof of stable authorization. Explicitly withdrawn records, missing records, malformed lifecycle data, and remote failures emit no install command. Local fallback data is context only.
+
+Machine-readable output follows the same denial rules and identifies stable authorization as not evaluated:
 
 ```bash
 node "$SUITE_DIR/scripts/discover_skill_catalog.mjs" --json
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs" --json --skill <exact-skill-id>
 ```
 
 ## Security Notes

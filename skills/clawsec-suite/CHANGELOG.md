@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.17] - 2026-07-23
+
+### Changed
+
+- Made catalog discovery distinguish lifecycle-screened remote candidates from non-authorizing historical or suite-local context.
+- Added exact requested-skill discovery so callers can resolve one catalog identity before beginning the separate advisory-gated install flow.
+- Classified the bundled `skill.json` catalog as descriptive fallback context rather than installation authority.
+- Marked the projected catalog as a denial overlay that does not replace independent signed stable-catalog authorization.
+
+### Security
+
+- Fail closed without install commands when the remote index is unavailable, malformed, contains invalid lifecycle metadata, or omits the requested skill.
+- Treat explicit `installable: false` as a denial that local defaults cannot override, while preserving missing-field compatibility for existing remote records.
+
 ## [0.1.16] - 2026-07-14
 
 ### Fixed
