@@ -285,7 +285,13 @@ assert.match(
   'Skill release workflow must generate skill cards, permission summaries, and npx install instructions',
 );
 
-for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skillspector-report.md']) {
+for (const artifact of [
+  'skill-card.md',
+  'permissions.json',
+  'install.md',
+  'verify_skill_release_bundle.py',
+  'skillspector-report.md',
+]) {
   assert.match(
     workflow,
     new RegExp(`release-assets/${artifact.replace('.', '\\.')}`),
@@ -295,7 +301,13 @@ for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skil
 
 const escapeRegExp = (literal) => literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skillspector-report.md']) {
+for (const artifact of [
+  'skill-card.md',
+  'permissions.json',
+  'install.md',
+  'verify_skill_release_bundle.py',
+  'skillspector-report.md',
+]) {
   assert.match(
     workflow,
     new RegExp(
@@ -344,7 +356,13 @@ assert.match(
 assert.match(
   workflow,
   /add_release_asset_checksum "install\.md"/,
-  'npx install/update instructions must be included in the signed checksums manifest',
+  'verify-first install instructions must be included in the signed checksums manifest',
+);
+
+assert.match(
+  workflow,
+  /add_release_asset_checksum "verify_skill_release_bundle\.py"/,
+  'the bounded release verifier must be included in the signed checksums manifest',
 );
 
 assert.match(

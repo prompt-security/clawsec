@@ -20,6 +20,7 @@ const TRUST_ARTIFACTS = [
   "skill-card.md",
   "permissions.json",
   "install.md",
+  "verify_skill_release_bundle.py",
   "skillspector-report.md",
 ];
 

@@ -758,6 +758,13 @@ jobs:
               continue
             fi
 
+            if ! add_release_asset_checksum "${out_assets}" "verify_skill_release_bundle.py"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
             if ! add_release_asset_checksum "${out_assets}" "skillspector-report.md"; then
               failures=$((failures + 1))
               rm -rf "${staging_dir}"
@@ -1479,11 +1486,13 @@ jobs:
           test -s release-assets/skill-card.md
           test -s release-assets/permissions.json
           test -s release-assets/install.md
+          test -s release-assets/verify_skill_release_bundle.py
           test -s release-assets/skillspector-report.md
 
           add_release_asset_checksum "skill-card.md"
           add_release_asset_checksum "permissions.json"
           add_release_asset_checksum "install.md"
+          add_release_asset_checksum "verify_skill_release_bundle.py"
           add_release_asset_checksum "skillspector-report.md"
 
           if ! jq -e . "release-assets/checksums.json" >/dev/null 2>&1; then
