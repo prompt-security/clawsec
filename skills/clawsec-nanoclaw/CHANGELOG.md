@@ -4,9 +4,11 @@
 
 ### Changed
 
-- Bounded this legacy adapter to NanoClaw `>=0.1.0 <2.0.0` and marked NanoClaw v2 as incompatible.
-- Removed or explicitly scoped obsolete v2-facing installation, scheduler, IPC-layout, and key-management claims to the pre-v2 adapter.
-- Added a compatibility regression test while preserving the frozen v1 runtime behavior as migration evidence.
+- Reclassified the package as a deprecated, runtime-unverified NanoClaw v1-era integration prototype with no asserted support range.
+- Removed actionable setup, restart, scheduling, integrity, and signing instructions from the packaged user-facing Markdown where they were not proven against an official NanoClaw runtime.
+- Marked NanoClaw v2 as incompatible and documented its additive skill and two-database host/container boundaries.
+- Excluded runtime-unverified TypeScript, policy JSON, and PEM artifacts from the release SBOM while retaining the frozen source in the repository as migration evidence.
+- Added a static legacy-status contract test for the non-installable, documentation-only release boundary.
 
 ## [0.0.10] - 2026-06-23
 
