@@ -70,6 +70,17 @@ if [ ! -f "$SKILL_PATH/skill.json" ]; then
   exit 1
 fi
 
+if ! command -v node >/dev/null 2>&1; then
+  echo "Error: Node.js is required to evaluate skill publication eligibility" >&2
+  exit 1
+fi
+
+if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
+  INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH" --require-publication)"
+else
+  INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH")"
+fi
+
 # Validate semver format (supports prerelease like 1.0.0-beta1)
 if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
   echo "Error: Invalid version format. Use semver (e.g., 1.0.0, 1.1.0-beta1)"
@@ -338,6 +349,17 @@ if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   fi
 else
   # Feature branch: skip tagging, instruct user on next steps
+  if [[ "$INSTALLABLE" == "false" ]]; then
+    echo ""
+    echo "Done! Non-installable package version updated and committed for review."
+    echo ""
+    echo "Next step: push this branch so CI can build signed denial evidence."
+    echo "  git push origin $CURRENT_BRANCH"
+    echo ""
+    echo "Do not create or push a public tag, GitHub Release, or skill-store publication for this package."
+    exit 0
+  fi
+
   echo ""
   echo "Done! Version updated and committed (tag deferred)."
   echo ""

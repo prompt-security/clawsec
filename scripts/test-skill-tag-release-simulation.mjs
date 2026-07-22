@@ -47,6 +47,7 @@ async function runSimulation({
   outputDir,
   expectedOriginal,
   expectedSimulated,
+  expectedInstallable = true,
   expectedAgents = [],
   verifyReleaseBundle = false,
   verifyEmbeddedAdvisory = false,
@@ -81,6 +82,7 @@ async function runSimulation({
   assert.equal(summary.skill, skillName);
   assert.equal(summary.original_version, expectedOriginal);
   assert.equal(summary.simulated_version, expectedSimulated);
+  assert.equal(summary.installable, expectedInstallable);
   assert.equal(summary.tag, expectedTag);
 
   const releaseAssetsDir = path.join(outputDir, "release-assets");
@@ -192,7 +194,7 @@ async function runSimulation({
     assert.equal(verifiedSkill.version, expectedSimulated);
   }
 
-  if (!verifyEmbeddedAdvisory) {
+  if (expectedInstallable && !verifyEmbeddedAdvisory) {
     const clawhubOutputDir = path.join(outputDir, "clawhub-package");
     const prepareOptions = {
       releaseDir: releaseAssetsDir,
@@ -252,7 +254,7 @@ async function runSimulation({
     }
   }
 
-  if (verifyEmbeddedAdvisory) {
+  if (expectedInstallable && verifyEmbeddedAdvisory) {
     const readArchiveEntry = (entry) => {
       const extracted = spawnSync("unzip", ["-p", archivePath, entry], {
         maxBuffer: 64 * 1024 * 1024,
@@ -408,6 +410,51 @@ async function runSimulation({
   }
 
   const install = await readFile(path.join(releaseAssetsDir, "install.md"), "utf8");
+  const permissions = JSON.parse(
+    await readFile(path.join(releaseAssetsDir, "permissions.json"), "utf8"),
+  );
+  assert.equal(permissions.installable, expectedInstallable);
+
+  if (!expectedInstallable) {
+    const card = await readFile(path.join(releaseAssetsDir, "skill-card.md"), "utf8");
+    assert.match(install, /^# Installation Unavailable for /m);
+    assert.match(install, /declares `installable: false`/);
+    assert.match(install, /no supported installation or activation path/);
+    assert.doesNotMatch(install, /```|\bcurl\b|\bpython3\b|\bnpx\b|--agent|\bunzip\b/);
+    assert.equal(permissions.platform, "not-applicable");
+    assert.deepEqual(permissions.required_binaries, []);
+    assert.deepEqual(permissions.optional_binaries, []);
+    assert.deepEqual(permissions.required_env, []);
+    assert.deepEqual(permissions.optional_env, []);
+    assert.deepEqual(permissions.capabilities, []);
+    assert.match(permissions.network_egress, /Not applicable: package is non-installable/);
+    assert.match(card, /declares `installable: false`/);
+    assert.match(card, /no supported execution or activation path/);
+    assert.doesNotMatch(card, /provides this capability|Use this skill for/);
+    assert.equal(
+      existsSync(path.join(outputDir, "clawhub-package")),
+      false,
+      "non-installable simulation must not prepare a ClawHub package",
+    );
+    const rejectedClawhubOutputDir = path.join(outputDir, "rejected-clawhub-package");
+    await assert.rejects(
+      prepareReleasePackage({
+        releaseDir: releaseAssetsDir,
+        outputDir: rejectedClawhubOutputDir,
+        skillName,
+        version: expectedSimulated,
+        canonicalKeyPath: path.join(releaseAssetsDir, "signing-public.pem"),
+      }),
+      /Publication denied .*skill\.json declares "installable": false/,
+    );
+    assert.deepEqual(
+      await readdir(rejectedClawhubOutputDir),
+      [],
+      "rejected non-installable release staging must leave no publishable package",
+    );
+    return;
+  }
+
   assert.match(install, /## Secure Path: Verify the Canonical Release Before Installation/);
   assert.match(install, new RegExp(`TAG="${expectedTag}"`));
   assert.match(install, new RegExp(`ARCHIVE="${expectedTag}\\.zip"`));
@@ -525,6 +572,27 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     expectedOriginal: "0.0.11",
     expectedSimulated: "0.0.12",
     expectedAgents: ["openclaw"],
+  });
+
+  const nonInstallableSkillDir = await prereleaseFixture(
+    "skills/picoclaw-security-guardian",
+    "0.0.7",
+    "non-installable-fixture",
+  );
+  const nonInstallableSkillJsonPath = path.join(nonInstallableSkillDir, "skill.json");
+  const nonInstallableSkill = JSON.parse(await readFile(nonInstallableSkillJsonPath, "utf8"));
+  nonInstallableSkill.installable = false;
+  await writeFile(
+    nonInstallableSkillJsonPath,
+    `${JSON.stringify(nonInstallableSkill, null, 2)}\n`,
+  );
+  await runSimulation({
+    skillDir: nonInstallableSkillDir,
+    outputDir: path.join(tempRoot, "non-installable"),
+    expectedOriginal: "0.0.7",
+    expectedSimulated: "0.0.8",
+    expectedInstallable: false,
+    verifyReleaseBundle: true,
   });
 
   await runSimulation({

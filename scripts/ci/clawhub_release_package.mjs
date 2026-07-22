@@ -15,6 +15,7 @@ import {
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { isTestReleasePath } from "./release_path_policy.mjs";
+import { requireSkillPublication } from "./skill_installability.mjs";
 
 const CLAWHUB_TEXT_EXTENSIONS = new Set([
   "c", "cfg", "cjs", "cpp", "cs", "css", "csv", "env", "go", "h", "hpp",
@@ -354,10 +355,12 @@ export async function prepareReleasePackage({
       }
     }
 
-    const skill = JSON.parse(await readFile(path.join(packageDir, "skill.json"), "utf8"));
+    const packagedSkillJsonPath = path.join(packageDir, "skill.json");
+    const skill = JSON.parse(await readFile(packagedSkillJsonPath, "utf8"));
     if (skill.version !== version) {
       throw new Error(`Packaged skill.json version mismatch: expected ${version}, got ${skill.version}`);
     }
+    requireSkillPublication(skill, packagedSkillJsonPath);
 
     const declaredPackageFiles = new Set(
       (skill.sbom?.files ?? []).map((entry) => entry.path.replaceAll("\\", "/").replace(/^\.\//, "")),
