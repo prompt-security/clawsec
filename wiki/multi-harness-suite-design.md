@@ -1104,11 +1104,20 @@ Operator task `enable-immutable-releases`:
 - Record the effective setting and administrator approval.
 - Do not assume a code PR can enable or retroactively apply this control.
 
+Operator task `protect-release-tags`:
+
+- After `controlled-tag-creation-v1` exists, add a repository or organization tag ruleset covering ClawSec package release tags and restrict ordinary creation to that dedicated workflow identity. Any unavoidable organization-owner bypass is an emergency path that creates an incident record and never counts as an authorized release attempt by itself.
+- Record the effective pattern, bypass identities, and administrator approval. An Actions job can reject release work after an unauthorized manual tag push, but it cannot prevent that ref from having become public.
+- Keep direct developer tag pushes outside the supported release path. The controlled workflow evaluates lifecycle and installability policy before creating the tag.
+- Keep the workflow's tag-writing environment disabled until an API preflight observes the effective ruleset and allowed identity. The operator task records that observation before enabling the first real tag attempt.
+
 Wave 1 is not one aggregate hardening PR. Each row below is its own pipeline, tooling, policy-data, or operator unit with its own tests and remote proof. No row changes a skill, and no implementation PR silently absorbs another row because both touch the release workflow.
 
 | PR or operator task | Single responsibility | Dependency and proof |
 | --- | --- | --- |
 | `lifecycle-semver-v1` | Define `beta`, `rc`, `stable_intent`, and `stable`, and add one SemVer 2.0 contract/shared parser covering `beta.N < rc.N < stable`, invalid identifiers, package-qualified tags, and SemVer validity versus publication policy | Independent tooling/contract PR; parser fixtures only, with no workflow change or signed-cutover enforcement |
+| `non-installable-release-policy-v1` | Define `installable: false` as a denial-only lifecycle state: produce reviewable CI test-signed, non-authorizing denial evidence, reject tag creation through supported release tooling, and reject GitHub Releases, manual republish, and store publication before credentials or writes | Full public-ref prevention additionally requires `controlled-tag-creation-v1` and `protect-release-tags`; denial evidence never carries a production release signature, missing means `true` for legacy compatibility, non-boolean values fail closed, and the verified extracted payload is re-checked before any channel preparation |
+| `controlled-tag-creation-v1` | Replace maintainer tag pushes with one manually dispatched protected workflow that binds package, stable version, and exact protected-main commit; it runs the merged lifecycle, installability, and stable-tag policy before creating one annotated package-qualified tag, reads back its tag-object and peeled-commit IDs, and explicitly dispatches the release workflow with those exact values and one release-attempt ID | Depends on `lifecycle-semver-v1`, `stable-tag-policy-v1`, and `non-installable-release-policy-v1`; fake-GitHub fixtures prove no tag write occurs for prerelease, non-installable, changed-SHA, dirty-source, or policy failure, and no downstream dispatch occurs unless the read-back object matches; the unit does not itself create a GitHub Release, store, catalog, or discovery write |
 | `release-retention-v1` | Remove the job that deletes older same-major GitHub Releases; preserve tags, releases, and assets | Independent; static workflow test proves there is no release-deletion command or superseded-release cleanup step |
 | `inventory-legacy-prereleases-v1` | Record the exact tag object and release-asset digests for the 15 currently fetched historical `*-beta*` refs without rewriting, deleting, or authorizing them | Read-only live inventory plus reproducible digest fixture; policy-data PR only |
 | `stable-tag-policy-v1` | Fail closed at tag-release and manual-republish entrypoints before credentials or writes for every alpha, beta, RC, preview, or other public prerelease ref; treat the frozen inventory only as existing fetchable, non-authorized history | Depends on `lifecycle-semver-v1` and the reviewed legacy inventory; stable fixtures pass and prerelease fixtures prove no release, store, catalog, or discovery write can run |
@@ -1118,6 +1127,8 @@ Wave 1 is not one aggregate hardening PR. Each row below is its own pipeline, to
 | `pages-stable-selection-v1` | Select stable releases by explicit channel and SemVer rules rather than GitHub API order; classify pre-enforcement releases as `legacy_mutable` and exclude unsigned/prerelease history from active resolution and generated discovery | Depends on `lifecycle-semver-v1`, stable-tag policy, and Pages release authority; deterministic shuffled-history fixtures; change only the Pages pipeline |
 | `inventory-clawhub-publications-v1` | Record already-published versions, owner-qualified slugs, and declared license state without publishing or republishing | Read-only operator evidence; policy-data PR only |
 | `clawhub-publication-allowlist-v1` | Default-deny ClawHub dry-run and publication unless an owner-approved package/channel/license allowlist entry exists | Depends on the reviewed ClawHub inventory and license decision; denied-by-default and exact-allow fixtures |
+
+`controlled-tag-creation-v1` does not rely on a tag-push event from the default `GITHUB_TOKEN`, because that event does not start another workflow. The release workflow gains an explicit dispatch input carrying the tag name, annotated tag-object ID, peeled protected-main commit, and release-attempt ID. It fetches and re-verifies that exact ref tuple before release, signing, store, catalog, or discovery work. If dispatch fails after tag creation, an idempotent retry may dispatch only the same object tuple and attempt ID; it must not create or move a tag.
 
 The temporary Wave 1 stable-tag policy is intentionally simpler than the final signed lifecycle gate: it blocks all new public prerelease writes immediately while preserving exact historical evidence. `release-cutover-gate-v1` later replaces that repository policy with the monotonic signed policy/root serial and frozen ref/digest verification; neither mechanism treats a historical prerelease as active or install-authorized.
 
@@ -1134,12 +1145,28 @@ PR `docs-nanoclaw-v2-truthfulness`:
 - In a separate documentation-only PR dependent on the changed-skill PR, correct repository-wide NanoClaw claims so `/workspace/ipc`, `registered_groups.json`, Docker Compose restart steps, legacy MCP scheduling, raw-copy installation, and unsigned or caller-key verification are not presented as v2 support.
 - Edit tracked source documentation only; do not commit generated `public/wiki/` output or modify the NanoClaw skill.
 
-PR `nanoclaw-v2-matrix-filter-v1`:
+PR `catalog-installability-projection-v1`:
 
-- In a separate metadata/tooling PR dependent on the changed-skill PR, make current capability and availability generators honor `installable: false`, the absence of a supported range, and the historical/v2-incompatible classification.
-- Prove the legacy package remains discoverable as migration history but cannot satisfy an installable-support query for NanoClaw v1, v2, or an unspecified version. Do not change the skill or public prose in this PR.
+- In a separate Pages projection/tooling PR dependent on `non-installable-release-policy-v1` and the changed-skill PR, derive the effective catalog lifecycle value from both release-served metadata and the checked-out repository tombstone.
+- Use deny-wins semantics: `effective_installable = release_installable && repository_installable`; a missing field means `true`, any non-boolean value fails closed, and a repository value can withdraw but never authorize a release. This is a denial-only discovery overlay, not installation authority; Pages authority and stable-selection gates remain required before catalog data can authorize a stable install.
+- Write the effective value into the generated public index and local-preview index without mutating mirrored signed release assets. Prove a historical release with no field plus a current `false` tombstone projects `installable: false`.
 
-Every applicable Wave 1 hardening unit lands before new package releases begin. The NanoClaw truthfulness PR can run alongside those units, but must land before any v2 implementation or public v2 support claim.
+PR `web-catalog-installability-v1`:
+
+- In a separate frontend PR dependent on `catalog-installability-projection-v1`, validate the optional boolean and consume the effective index value on catalog cards and detail pages.
+- Keep a non-installable historical record discoverable, but show a conspicuous non-installable state and suppress install commands, copy controls, trigger phrases, platform-support affordances, and rendered operational instructions. Preserve release and checksum links only as clearly labeled historical evidence.
+- A direct detail route must also suppress installation when the effective index is unavailable, malformed, or lacks that record. Detail metadata may add another denial but must never override an index denial.
+- Preserve the existing install experience for explicit `true` and legacy-absent records. Do not change Pages generation, a skill, or release policy in this PR.
+
+PR `suite-catalog-installability-v1`:
+
+- In a separate changed-skill PR dependent on `catalog-installability-projection-v1`, update only `clawsec-suite` so catalog discovery omits non-installable records from installable output and never emits an install command for them.
+- Remote-index failure, malformed lifecycle metadata, or a missing requested record fails closed for install recommendations. Any lifecycle-aware local fallback may report historical status but must not resurrect a withdrawn record or emit its install command.
+- Align the suite version, `SKILL.md`, changelog, packaged discovery script, and skill-local tests. Do not change the Pages pipeline, frontend, NanoClaw package, or shared release policy in this PR.
+
+Together, these units prove the historical NanoClaw record remains discoverable as migration evidence but cannot satisfy an installable-support query for NanoClaw v1, v2, or an unspecified version. They also establish the generic withdrawal path for future non-installable records without creating a new installation authority.
+
+Every applicable Wave 1 hardening unit lands before new package releases begin. The NanoClaw truthfulness PR may be reviewed and tested in parallel, but it cannot merge before `non-installable-release-policy-v1`; it must land before any v2 implementation or public v2 support claim.
 
 ### Wave 2: Contracts and truthful metadata
 
@@ -1377,6 +1404,9 @@ The following edges are required. A box names one bounded implementation unit. A
 ```mermaid
 flowchart TD
   OI["enable-immutable-releases operator task"] --> IM["immutable-release-preflight-v1"]
+  NI["non-installable-release-policy-v1"] --> CTG["controlled-tag-creation-v1"]
+  ST --> CTG
+  CTG --> PT["protect-release-tags operator task"]
   IM --> VD["verified-draft-publication-v1"]
   RR["release-retention-v1"] --> G
   LP["inventory-legacy-prereleases-v1"] --> ST["stable-tag-policy-v1"]
@@ -1389,8 +1419,12 @@ flowchart TD
   PS --> PI
   CI["inventory-clawhub-publications-v1"] --> CA["clawhub-publication-allowlist-v1"]
   CA --> CC
-  NT["nanoclaw-v2-truthfulness"] --> ND["docs-nanoclaw-v2-truthfulness"]
-  NT --> NM["nanoclaw-v2-matrix-filter-v1"]
+  NI --> NT["nanoclaw-v2-truthfulness"]
+  NT --> ND["docs-nanoclaw-v2-truthfulness"]
+  NI --> CIP["catalog-installability-projection-v1"]
+  NT --> CIP
+  CIP --> WU["web-catalog-installability-v1"]
+  CIP --> SC["suite-catalog-installability-v1"]
   R["root-format-v1 ADR"] --> C["catalog-trust-contract-v1"]
   R --> PR["provision-production-root operator task"]
   M["metadata-contracts-v1"] --> I["install-migration-receipts-v1"]
