@@ -3,7 +3,8 @@
  *
  * Add this tool to /workspace/project/container/agent-runner/src/ipc-mcp-stdio.ts
  *
- * This tool verifies Ed25519 signatures on skill packages to prevent supply chain attacks.
+ * This tool reports Ed25519 signature verification results for operator or
+ * host-installer review. It does not install packages or enforce the result.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -91,7 +92,7 @@ async function waitForResult(requestId: string, timeoutMs: number = 5000): Promi
 
 server.tool(
   'clawsec_verify_skill_package',
-  'Verify Ed25519 signature of a skill package before installation. Prevents installation of tampered or malicious skill packages by checking ClawSec signatures.',
+  'Verify the Ed25519 signature of a staged skill package and return an install/block recommendation. The host installer or operator must enforce the result and complete advisory and code review.',
   {
     packagePath: z.string().describe('Absolute path to skill package (.tar.gz or .zip)'),
     signaturePath: z.string().optional().describe('Path to signature file. If omitted, auto-detects <packagePath>.sig'),

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.11] - 2026-07-22
+
+### Changed
+
+- Bounded this legacy adapter to NanoClaw `>=0.1.0 <2.0.0` and marked NanoClaw v2 as incompatible.
+- Removed or explicitly scoped obsolete v2-facing installation, scheduler, IPC-layout, and key-management claims to the pre-v2 adapter.
+- Added a compatibility regression test while preserving the frozen v1 runtime behavior as migration evidence.
+
 ## [0.0.10] - 2026-06-23
 
 ### Changed

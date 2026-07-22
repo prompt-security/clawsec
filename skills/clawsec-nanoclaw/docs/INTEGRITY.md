@@ -1,6 +1,8 @@
-# File Integrity Monitoring for NanoClaw
+# File Integrity Monitoring for NanoClaw v1 (Legacy)
 
-ClawSec's file integrity monitoring protects critical NanoClaw configuration files from unauthorized modification.
+> **Compatibility boundary:** This document describes the bundled NanoClaw v1 adapter for `>=0.1.0 <2.0.0`. It is incompatible with NanoClaw v2. Paths such as `registered_groups.json`, `CLAUDE.md`, `/workspace/ipc`, and `/workspace/project/...`, plus the `schedule_task` examples, are v1 layout and scheduler assumptions—not NanoClaw v2 guidance.
+
+The legacy adapter monitors selected NanoClaw v1 configuration files for unauthorized modification.
 
 ## What It Does
 
@@ -48,9 +50,9 @@ This creates:
 └── audit.jsonl          # Event log
 ```
 
-### Step 3: Enable Scheduled Monitoring
+### Step 3: Legacy NanoClaw v1 Scheduler Example
 
-Add to main group's scheduled tasks:
+Only a confirmed v1 deployment with a reviewed host scheduler may add this example to the main group's scheduled tasks. The skill does not install a scheduler:
 
 ```typescript
 schedule_task({
@@ -264,7 +266,7 @@ if (!verification.valid) {
 
 ## Workflow Examples
 
-### Scenario 1: Scheduled Monitoring
+### Scenario 1: Legacy NanoClaw v1 Scheduler Example
 
 **Setup:**
 ```typescript
@@ -564,4 +566,4 @@ A: No, but it's hash-chained for tamper detection. Encryption can be added in Ph
 
 ---
 
-**Ready to protect your NanoClaw deployment? Start with the [Quick Start](#quick-start) guide above.**
+**For a confirmed compatible v1 deployment, start with the [Quick Start](#quick-start) guide above. Do not use it for NanoClaw v2.**

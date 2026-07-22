@@ -1,24 +1,25 @@
 ---
 name: clawsec-nanoclaw
-version: 0.0.10
-description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
+version: 0.0.11
+description: Use only with legacy NanoClaw >=0.1.0 <2.0.0 to check ClawSec advisories, package signatures, and the bundled v1 integrity adapter; NanoClaw v2 is incompatible and requires a separate adapter
 ---
 
-# ClawSec for NanoClaw
+# ClawSec for NanoClaw v1 (Legacy)
 
-Security advisory monitoring that protects your WhatsApp bot from known vulnerabilities in skills and dependencies.
+Legacy advisory, package-signature, and integrity tooling for compatible pre-v2 NanoClaw deployments.
 
-## Vercel Skills Installation
+## Compatibility Gate
 
-Install with the Vercel Skills CLI for this harness:
+- Supported NanoClaw range: `>=0.1.0 <2.0.0`.
+- NanoClaw v2 (`>=2.0.0`): **incompatible; do not install or activate this adapter**.
+- NanoClaw v2 uses different host, container, SQLite IPC, and extension surfaces. It requires a separate ClawSec adapter.
+- The v1 integration paths in this package are retained for legacy users and migration evidence only. They are not NanoClaw v2 instructions.
 
-```bash
-npx skills add prompt-security/clawsec --skill clawsec-nanoclaw -a openclaw -y
-```
+Stop if the target version is unknown or is NanoClaw v2. Do not reinterpret the v1 IPC examples as a generic installation recipe.
 
 ## Overview
 
-ClawSec provides MCP tools that check installed skills against a curated feed of security advisories. It prevents installation of vulnerable skills, includes exploitability context for triage, and alerts you to issues in existing ones.
+The bundled v1 MCP tools check installed skills against a curated feed of security advisories, include exploitability context for triage, and report issues in existing packages. They return advisory decisions; they do not own or enforce the host installer.
 
 **Core principle:** Check before you install. Monitor what's running.
 
@@ -95,7 +96,7 @@ const advisories = await tools.clawsec_list_advisories({
 
 ## Common Patterns
 
-### Pattern 1: Safe Skill Installation
+### Pattern 1: Pre-Installation Advisory Review
 
 ```typescript
 // ALWAYS check before installing
@@ -103,28 +104,25 @@ const safety = await tools.clawsec_check_skill_safety({
   skillName: userRequestedSkill
 });
 
-if (safety.safe) {
-  // Proceed with installation
-  await installSkill(userRequestedSkill);
-} else {
-  // Show user the risks and get confirmation
+if (!safety.safe) {
+  // Return the advisory evidence to the host installer or operator.
   await showSecurityWarning(safety.advisories);
-  if (await getUserConfirmation()) {
-    await installSkill(userRequestedSkill);
-  }
+  return { recommendation: 'do-not-install', safety };
 }
+
+// Advisory output is one input, not installation authorization.
+return {
+  recommendation: 'continue-review',
+  safety,
+  requiresSignatureVerification: true,
+  requiresCodeReview: true,
+  requiresOperatorApproval: true
+};
 ```
 
-### Pattern 2: Periodic Security Check
+### Pattern 2: Legacy v1 Host Scheduling
 
-```typescript
-// Add to scheduled tasks
-schedule_task({
-  prompt: "Check advisories using clawsec_check_advisories and alert when critical or high-exploitability matches appear",
-  schedule_type: "cron",
-  schedule_value: "0 9 * * *"  // Daily at 9am
-});
-```
+Scheduling is deployment-owned. This package does not register a NanoClaw v2 task or scheduler integration. A compatible v1 operator may wire an advisory check through the v1 host's reviewed scheduling surface after completing the manual integration in [INSTALL.md](./INSTALL.md).
 
 ### Pattern 3: User Security Query
 
@@ -153,7 +151,13 @@ await installSkill('untrusted-skill');
 const safety = await tools.clawsec_check_skill_safety({
   skillName: 'untrusted-skill'
 });
-if (safety.safe) await installSkill('untrusted-skill');
+if (!safety.safe) return { recommendation: 'do-not-install', safety };
+return {
+  recommendation: 'continue-review',
+  requiresSignatureVerification: true,
+  requiresCodeReview: true,
+  requiresOperatorApproval: true
+};
 ```
 
 ### ❌ Ignoring exploitability context
@@ -193,21 +197,21 @@ if (advisory.exploitability_score === 'high' || advisory.severity === 'critical'
 
 This signed feed is consolidated. NanoClaw receives NVD CVEs, approved community advisories, and provisional GHSA-without-CVE advisories through the same default URL.
 
-**Update Frequency**: Every 6 hours (automatic)
+**Legacy v1 example cadence**: Every 6 hours after explicit host wiring; the skill does not install a scheduler.
 
 **Signature Verification**: Ed25519 signed feeds
 **Package Verification Policy**: pinned key only, bounded package/signature paths
 
-**Cache Location**: `/workspace/project/data/clawsec-advisory-cache.json`
+**Legacy v1 cache location**: `/workspace/project/data/clawsec-advisory-cache.json`
 
 See [INSTALL.md](./INSTALL.md) for setup and [docs/](./docs/) for advanced usage.
 
 ## Real-World Impact
 
-- Prevents installation of skills with known RCE vulnerabilities
+- Helps operators identify skills with known RCE vulnerabilities before installation
 - Alerts to supply chain attacks in dependencies
 - Provides actionable remediation steps
-- Zero false positives (curated feed only)
+- Uses a curated feed while preserving severity and exploitability context for operator review
 
 ## Release Artifact Verification
 
@@ -217,7 +221,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawsec-nanoclaw"
-VERSION="0.0.10"
+VERSION="0.0.11"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -225,6 +229,8 @@ ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+# ClawSec GitHub Release signing trust anchor. This is not a NanoClaw v2
+# integration key and is distinct from the v1 embedded feed-verification path.
 RELEASE_PUBKEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"
 
 curl -fsSL "$BASE/checksums.json" -o "$TMP_DIR/checksums.json"

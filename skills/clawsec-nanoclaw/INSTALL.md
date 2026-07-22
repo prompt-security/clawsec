@@ -1,24 +1,28 @@
-# ClawSec for NanoClaw - Installation Guide
+# ClawSec Legacy NanoClaw v1 Integration Guide
 
-This guide shows how to add ClawSec security monitoring to your NanoClaw deployment.
+> **Compatibility boundary:** This entire guide applies only to NanoClaw `>=0.1.0 <2.0.0`. NanoClaw v2 (`>=2.0.0`) is incompatible. Do not copy these files, use these IPC paths, or run these restart steps on v2. NanoClaw v2 requires a separate adapter for its current SQLite-backed and host/container extension model.
+
+This guide records the manual integration for compatible pre-v2 NanoClaw deployments.
 
 ## Overview
 
-ClawSec provides security advisory monitoring for NanoClaw through:
+The legacy v1 adapter provides security advisory monitoring through:
 - **MCP Tools**: Agents can check for vulnerabilities via `clawsec_check_advisories`
-- **Advisory Feed**: Automatic monitoring of https://clawsec.prompt.security/advisories/feed.json
+- **Advisory Feed**: Host-wired monitoring of https://clawsec.prompt.security/advisories/feed.json
 - **Signature Verification**: Ed25519-signed feeds ensure integrity
 - **Exploitability Context**: Advisories include exploitability score and rationale for triage
 
 ## Prerequisites
 
-- NanoClaw >= 0.1.0
+- NanoClaw >= 0.1.0 and < 2.0.0
 - Node.js >= 18.0.0
 - Write access to NanoClaw installation directory
 
-## Installation Steps
+## Legacy v1 Integration Steps
 
-### 1. Copy Skill Files
+Every path and code fragment below is a NanoClaw v1 layout assumption. Stop if the target version is unknown or is NanoClaw v2.
+
+### 1. Copy Skill Files into a Confirmed v1 Checkout
 
 Copy the `clawsec-nanoclaw` skill directory to your NanoClaw installation:
 
@@ -27,7 +31,7 @@ Copy the `clawsec-nanoclaw` skill directory to your NanoClaw installation:
 cp -r skills/clawsec-nanoclaw /path/to/your/nanoclaw/skills/
 ```
 
-### 2. Integrate MCP Tools
+### 2. Integrate v1 MCP Tools
 
 Add the ClawSec MCP tools to your NanoClaw container agent runner.
 
@@ -53,7 +57,7 @@ Each file calls `server.tool()` directly to register its tools. The `server`,
 the scope where these files are imported (they are declared as ambient globals
 in each tool file).
 
-### 3. Integrate IPC Handlers
+### 3. Integrate v1 IPC Handlers
 
 Add the host-side IPC handlers for ClawSec operations.
 
@@ -84,7 +88,7 @@ default:
 }
 ```
 
-### 4. Start Advisory Cache Service
+### 4. Start the v1 Host Advisory Cache Service
 
 Add the advisory cache manager to your host services.
 
@@ -112,7 +116,7 @@ async function main() {
 }
 ```
 
-### 5. Restart NanoClaw
+### 5. Restart the Legacy v1 Docker Compose Deployment
 
 Restart your NanoClaw instance to load the new MCP tools and services:
 
@@ -124,7 +128,7 @@ docker-compose down
 docker-compose up -d
 ```
 
-## Verification
+## Legacy v1 Verification
 
 Test that ClawSec is working:
 
@@ -219,7 +223,7 @@ To change, pass a different data directory path to `new AdvisoryCacheManager(dat
 
 ### Refresh Interval
 
-Default: 6 hours
+Example v1 host cadence: 6 hours after explicit operator wiring. The skill does not install a scheduler.
 
 To change, update the `setInterval(...)` duration (in milliseconds) in host startup.
 
@@ -244,12 +248,12 @@ Platform metadata is preserved in advisory records and can be filtered by your p
 
 ### Signature Verification
 
-All advisory feeds are Ed25519 signed. The public key is pinned in:
+The v1 advisory cache verifies Ed25519-signed feeds with the public key embedded at:
 ```
 skills/clawsec-nanoclaw/advisories/feed-signing-public.pem
 ```
 
-Feeds failing signature verification are rejected.
+Feeds failing signature verification are rejected. The v1 package-verifier handler also reads this embedded feed-verification key by default. This is not a NanoClaw v2 installer/trust contract, and it is distinct from the ClawSec GitHub Release manifest key downloaded and fingerprint-checked in `SKILL.md`.
 
 ### Cache Integrity
 
@@ -301,7 +305,7 @@ Never manually edit the cache file - it will break signature verification.
 3. Ensure host process is running
 4. Check host logs for handler errors
 
-## Uninstallation
+## Legacy v1 Uninstallation
 
 To remove ClawSec from NanoClaw:
 

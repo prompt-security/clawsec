@@ -1,14 +1,15 @@
-# ClawSec for NanoClaw
+# ClawSec for NanoClaw v1 (Legacy Adapter)
 
-ClawSec now supports NanoClaw, a containerized WhatsApp bot powered by Claude agents.
+This package preserves the original ClawSec integration for pre-v2 NanoClaw deployments.
 
-## Vercel Skills Installation
+## Compatibility
 
-Install with the Vercel Skills CLI for this harness:
+- Supported NanoClaw range: `>=0.1.0 <2.0.0`.
+- NanoClaw v2 (`>=2.0.0`): **incompatible; do not install or activate this adapter**.
+- The bundled IPC, cache, scheduler, and integrity examples describe the v1 layout only.
+- NanoClaw v2 needs a separate adapter for its current host, container, SQLite IPC, and extension surfaces.
 
-```bash
-npx skills add prompt-security/clawsec --skill clawsec-nanoclaw -a openclaw -y
-```
+This package remains available for legacy users and migration evidence. It is not a NanoClaw v2 installation path.
 
 ## What Changed
 
@@ -45,9 +46,9 @@ Advisories now support optional `platforms` field:
 - `["openclaw", "nanoclaw"]` - Affects both platforms
 - (empty/missing) - Applies to all platforms (backward compatible)
 
-## ClawSec NanoClaw Skill
+## Legacy ClawSec NanoClaw Skill
 
-ClawSec provides a complete security skill for NanoClaw deployments:
+ClawSec provides a legacy adapter for compatible pre-v2 NanoClaw deployments:
 
 **Location**: `skills/clawsec-nanoclaw/`
 
@@ -69,18 +70,11 @@ ClawSec provides a complete security skill for NanoClaw deployments:
 - **Exploitability Context**: Surfaces `exploitability_score` and rationale to reduce alert fatigue
 - **IPC Communication**: Container-safe host communication
 
-### Installation
+### Legacy v1 Integration Map
 
-1. Copy the skill to your NanoClaw deployment:
-   ```bash
-   cp -r skills/clawsec-nanoclaw /path/to/nanoclaw/skills/
-   ```
+Only operators who have confirmed a target version in `>=0.1.0 <2.0.0` should use the detailed [legacy installation guide](./INSTALL.md). Do not raw-copy or import these files into NanoClaw v2.
 
-2. Follow the detailed guide at `skills/clawsec-nanoclaw/INSTALL.md`
-
-### Quick Integration
-
-The skill integrates into three places:
+The v1 adapter historically integrates into three v1 locations:
 
 **1. MCP Tools** (container):
 ```typescript
@@ -107,49 +101,17 @@ NanoClaw consumes the same feed as OpenClaw:
 https://clawsec.prompt.security/advisories/feed.json
 ```
 
-The feed is Ed25519 signed and automatically fetched by the cache service.
+The feed is Ed25519 signed. A v1 operator must explicitly wire and start the cache service; this package does not install an automatic scheduler.
 
-## Team Credits
+## Legacy Implementation Status
 
-This integration was developed by a team of 8 specialized agents coordinated to adapt ClawSec for NanoClaw:
-
-- **pioneer-repo-scout** - ClawSec architecture analysis
-- **pioneer-nanoclaw-scout** - NanoClaw architecture analysis
-- **architect** - Integration design and coordination
-- **advisory-specialist** - Advisory feed integration
-- **integrity-specialist** - File integrity design
-- **installer-specialist** - Signature verification implementation
-- **tester** - Test infrastructure and validation
-- **documenter** - Documentation
-
-Total contribution: 3000+ lines of code and comprehensive design documents.
-
-## What's Included
-
-The `clawsec-nanoclaw` skill provides:
-
-- **1,730 lines** of production-ready TypeScript code
-- **MCP Tools** (350 lines): Agent-facing vulnerability checking
-- **Advisory Cache** (492 lines): Automatic feed fetching and caching
-- **Signature Verification** (387 lines): Ed25519 signature validation
-- **Advisory Matching** (289 lines): Skill-to-vulnerability correlation
-- **IPC Handlers** (212 lines): Container-to-host communication
-- **Complete Documentation**: Installation guide, usage examples, troubleshooting
-
-## Future Enhancements
-
-Planned features for future releases:
-- File integrity monitoring (soul-guardian adaptation for containers)
-- Real-time advisory alerts via WebSocket
-- WhatsApp-native security alert formatting
-- Behavioral analysis and anomaly detection
-- Custom/private advisory feed support
+The MCP tools, host services, IPC handlers, and integrity code are frozen v1 implementation and migration evidence. They are not a starting point for claiming NanoClaw v2 support. A future v2 core, suite, and drift guardian must use the v2-native workflow and land in separate packages and PRs.
 
 ## Documentation
 
-- [Skill Documentation](skills/clawsec-nanoclaw/SKILL.md) - Features and architecture
-- [Installation Guide](skills/clawsec-nanoclaw/INSTALL.md) - Detailed setup instructions
-- [ClawSec Main README](README.md) - Overall ClawSec documentation
+- [Skill Documentation](./SKILL.md) - Legacy v1 behavior and compatibility boundary
+- [Installation Guide](./INSTALL.md) - Legacy v1 integration instructions
+- [ClawSec Main README](../../README.md) - Overall ClawSec documentation
 - [Security & Signing](../../wiki/security-signing-runbook.md) - Signature verification details
 
 ## Support

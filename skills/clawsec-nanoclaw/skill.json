@@ -1,7 +1,7 @@
 {
   "name": "clawsec-nanoclaw",
-  "version": "0.0.10",
-  "description": "ClawSec security suite for NanoClaw - Advisory feed monitoring, MCP tools for vulnerability checking, and Ed25519 signature verification for containerized WhatsApp bot agents",
+  "version": "0.0.11",
+  "description": "Legacy ClawSec adapter for pre-v2 NanoClaw deployments; supports NanoClaw >=0.1.0 <2.0.0 and is incompatible with NanoClaw v2",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security/",
@@ -35,7 +35,7 @@
       {
         "path": "INSTALL.md",
         "required": true,
-        "description": "Installation guide for NanoClaw deployments"
+        "description": "Legacy integration guide for NanoClaw >=0.1.0 <2.0.0"
       },
       {
         "path": "mcp-tools/advisory-tools.ts",
@@ -128,10 +128,10 @@
     "Advisory feed monitoring from clawsec.prompt.security",
     "MCP tools for agent-initiated vulnerability scans",
     "Exploitability-aware advisory prioritization for agent environments",
-    "Pre-installation skill safety checks",
+    "Pre-installation advisory checks for operator decisions",
     "Ed25519 signature verification for advisory feeds",
     "Platform metadata preserved in advisory records for downstream filtering",
-    "Containerized agent support with IPC communication"
+    "Legacy NanoClaw v1 container support with v1 IPC communication"
   ],
   "nanoclaw": {
     "mcp_tools": [
@@ -147,7 +147,7 @@
     ],
     "requires": {
       "node": ">=18.0.0",
-      "nanoclaw": ">=0.1.0"
+      "nanoclaw": ">=0.1.0 <2.0.0"
     },
     "integration": {
       "mcp_tools_file": "container/agent-runner/src/ipc-mcp-stdio.ts",

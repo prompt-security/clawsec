@@ -1,14 +1,16 @@
-# Skill Package Signing and Verification
+# Skill Package Signing and Verification for NanoClaw v1 (Legacy)
 
-This document explains how ClawSec signs skill packages and how NanoClaw agents verify signatures before installation.
+> **Compatibility boundary:** This document describes the bundled NanoClaw v1 adapter for `>=0.1.0 <2.0.0`. It is incompatible with NanoClaw v2 and is not a v2 installation, publisher, or key-management contract.
+
+The bundled v1 verifier checks one detached `.sig` file with its configured pinned ClawSec public key. It does not accept caller-selected publisher keys, unsigned packages, or a dual-signature rotation format.
 
 ---
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [For Skill Publishers: How to Sign Packages](#for-skill-publishers-how-to-sign-packages)
-3. [For NanoClaw Agents: How to Verify Signatures](#for-nanoclaw-agents-how-to-verify-signatures)
+2. [Publisher Workflow Is Out of Scope](#publisher-workflow-is-out-of-scope)
+3. [For Legacy NanoClaw v1 Agents](#for-legacy-nanoclaw-v1-agents)
 4. [Security Properties](#security-properties)
 5. [Key Management](#key-management)
 6. [Troubleshooting](#troubleshooting)
@@ -17,7 +19,7 @@ This document explains how ClawSec signs skill packages and how NanoClaw agents 
 
 ## Overview
 
-Skill signature verification prevents **supply chain attacks** by ensuring skill packages haven't been tampered with during distribution. ClawSec uses **Ed25519 digital signatures** to sign skill packages, and NanoClaw agents verify these signatures before installation.
+The legacy verifier can detect whether a staged package matches a detached signature made by the pinned ClawSec key. Verification is one input to an operator decision; the tool does not install a package and does not make arbitrary third-party packages trusted.
 
 ### Why Signature Verification?
 
@@ -27,82 +29,21 @@ Without signature verification, an attacker could:
 - **Distribute** trojan skills that appear legitimate but contain malware
 
 Signature verification ensures:
-- ✅ **Authenticity**: Package comes from ClawSec (or trusted publisher)
+- ✅ **Authenticity**: Signature matches the configured pinned ClawSec key
 - ✅ **Integrity**: Package hasn't been modified since signing
 - ✅ **Non-repudiation**: Signer can't deny signing the package
 
 ---
 
-## For Skill Publishers: How to Sign Packages
+## Publisher Workflow Is Out of Scope
 
-### Prerequisites
+This legacy package does not define a supported publisher key-generation or arbitrary-package signing workflow. The bundled verifier accepts only the key configured by the v1 host service; callers cannot supply a different key or request unsigned acceptance.
 
-- OpenSSL 1.1.1+ (for Ed25519 support)
-- Private Ed25519 signing key (generate once, keep secure)
-- Skill package ready for distribution
-
-### Step 1: Generate Ed25519 Keypair (One-Time Setup)
-
-```bash
-# Generate private key (KEEP THIS SECRET!)
-openssl genpkey -algorithm ED25519 -out clawsec-signing-private.pem
-
-# Extract public key (share this with users)
-openssl pkey -in clawsec-signing-private.pem -pubout -out clawsec-signing-public.pem
-
-# Secure the private key
-chmod 600 clawsec-signing-private.pem
-```
-
-**⚠️ CRITICAL**: Never commit the private key to version control! Store it securely:
-- Local machine: `~/.ssh/clawsec-signing-private.pem` with `chmod 600`
-- CI/CD: GitHub Secrets, AWS Secrets Manager, or similar
-- Team: 1Password, Vault, or hardware security module (HSM)
-
-### Step 2: Package Your Skill
-
-```bash
-# Create skill package (tarball or zip)
-tar -czf my-skill-1.0.0.tar.gz -C skills/my-skill .
-
-# Or as a zip file
-zip -r my-skill-1.0.0.zip skills/my-skill/
-```
-
-### Step 3: Sign the Package
-
-```bash
-# Create detached Ed25519 signature
-openssl dgst -sha512 -sign clawsec-signing-private.pem \
-  -out my-skill-1.0.0.tar.gz.sig \
-  my-skill-1.0.0.tar.gz
-
-# Verify the signature was created
-ls -lh my-skill-1.0.0.tar.gz.sig
-# Should show a ~64-byte file
-```
-
-**Signature Format**: Detached Ed25519 signature, base64-encoded, stored in `.sig` file.
-
-### Step 4: Distribute Package + Signature
-
-Distribute **both** files together:
-- `my-skill-1.0.0.tar.gz` (the skill package)
-- `my-skill-1.0.0.tar.gz.sig` (the signature)
-
-Users will verify the signature against your public key before installation.
-
-### Step 5: Publish Public Key
-
-Share your public key with users via:
-- **Pinned in repository**: Commit `clawsec-signing-public.pem` to your repo
-- **Website**: Host at `https://yoursite.com/clawsec-signing-public.pem`
-- **DNS TXT record**: Publish as base64-encoded TXT record
-- **Skill metadata**: Embed in `skill.json`
+Use the ClawSec release pipeline and its signed release manifest for official ClawSec package publication. Do not generate a local key and expect this adapter to trust it.
 
 ---
 
-## For NanoClaw Agents: How to Verify Signatures
+## For Legacy NanoClaw v1 Agents
 
 ### Quick Start
 
@@ -124,7 +65,7 @@ if (!result.valid) {
 
 console.log(`✓ Signature valid (signer: ${result.signer})`);
 console.log(`Package hash: ${result.packageInfo.sha256}`);
-console.log('Safe to proceed with installation.');
+console.log('Signature matches the pinned key; continue required advisory review and operator approval.');
 ```
 
 ### MCP Tool: `clawsec_verify_skill_package`
@@ -143,7 +84,7 @@ Path policy:
 {
   success: boolean,           // Operation completed without errors
   valid: boolean,             // Signature is cryptographically valid
-  recommendation: string,     // "install" | "block" | "review"
+  recommendation: string,     // "install" | "block"
   signer: string,             // "clawsec"
   algorithm: "Ed25519",       // Signature algorithm
   verifiedAt: string,         // ISO timestamp
@@ -157,27 +98,30 @@ Path policy:
 
 ### Usage Patterns
 
-#### Pattern 1: Basic Pre-Installation Check
+#### Pattern 1: Basic Signature Review
 
 ```typescript
-async function installSkill(packagePath: string) {
+async function reviewSkillSignature(packagePath: string) {
   // Verify signature first
   const verification = await tools.clawsec_verify_skill_package({ packagePath });
   const result = JSON.parse(verification.content[0].text);
 
-  if (result.recommendation === 'block') {
-    throw new Error(`Cannot install: ${result.reason || result.error}`);
+  if (!result.success || !result.valid || result.recommendation === 'block') {
+    throw new Error(`Signature review failed: ${result.reason || result.error}`);
   }
 
-  // Signature valid - proceed with extraction
-  extractPackage(packagePath, '/workspace/project/skills/');
+  return {
+    packagePath,
+    verification: result,
+    nextStep: 'Complete advisory and code review, then request operator approval.'
+  };
 }
 ```
 
 #### Pattern 2: Combined Security Checks
 
 ```typescript
-async function installSkillSafely(packagePath: string, skillName: string) {
+async function buildInstallReview(packagePath: string, skillName: string) {
   // Step 1: Verify signature
   const sigVerify = await tools.clawsec_verify_skill_package({ packagePath });
   const sigResult = JSON.parse(sigVerify.content[0].text);
@@ -194,16 +138,21 @@ async function installSkillSafely(packagePath: string, skillName: string) {
     throw new Error(`Known vulnerabilities: ${advResult.advisories.map(a => a.id).join(', ')}`);
   }
 
-  // Both checks passed - safe to install
-  extractPackage(packagePath, '/workspace/project/skills/');
-  console.log(`✓ Installed ${skillName} (verified + no advisories)`);
+  // These checks produce evidence; they do not authorize or perform installation.
+  return {
+    packagePath,
+    signature: sigResult,
+    advisories: advResult,
+    requiresCodeReview: true,
+    requiresOperatorApproval: true
+  };
 }
 ```
 
 #### Pattern 3: Download and Verify Workflow
 
 ```typescript
-async function downloadAndInstallSkill(url: string) {
+async function downloadAndVerifySkill(url: string) {
   const packagePath = `/tmp/${Date.now()}-skill.tar.gz`;
   const signaturePath = `${packagePath}.sig`;
 
@@ -231,12 +180,9 @@ async function downloadAndInstallSkill(url: string) {
     throw new Error('Signature verification failed');
   }
 
-  // Install verified package
-  extractPackage(packagePath, '/workspace/project/skills/');
-
-  // Cleanup
-  fs.unlinkSync(packagePath);
-  fs.unlinkSync(signaturePath);
+  // Preserve the staged files for advisory/code review and operator approval.
+  // The host installer must separately enforce the final decision.
+  return { packagePath, signaturePath, verification: result };
 }
 ```
 
@@ -263,13 +209,10 @@ if (!result.valid) {
 // Finally check recommendation
 switch (result.recommendation) {
   case 'install':
-    console.log('✓ Safe to install');
+    console.log('✓ Signature recommendation permits continued review; operator approval is still required');
     break;
   case 'block':
-    console.error('⛔ Installation blocked');
-    break;
-  case 'review':
-    console.warn('⚠️ Manual review recommended');
+    console.error('⛔ Signature recommendation is block; the host installer or operator must enforce it');
     break;
 }
 ```
@@ -278,9 +221,9 @@ switch (result.recommendation) {
 
 ## Security Properties
 
-### What Signature Verification Prevents
+### What Signature Verification Detects
 
-✅ **Prevents:**
+✅ **Detects:**
 - **Tampering**: Detecting if package contents were modified after signing
 - **MITM attacks**: Detecting if package was swapped during download
 - **Malicious mirrors**: Ensuring package comes from trusted source
@@ -312,7 +255,7 @@ Signature verification relies on **trust in the public key**:
 │          ↓                                      │
 │ You verify signature with ClawSec's public key  │
 │          ↓                                      │
-│ Signature valid → Package is authentic         │
+│ Signature valid → Bytes match the pinned key   │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -330,7 +273,7 @@ Signature verification relies on **trust in the public key**:
 
 **Location**: `/workspace/project/skills/clawsec-nanoclaw/advisories/feed-signing-public.pem`
 
-This is the **same key** used for advisory feed verification, providing a single trust anchor for all ClawSec security operations.
+The legacy v1 package-verifier handler reads the embedded advisory feed-verification key by default. That coupling is limited to this frozen adapter. It is not the ClawSec GitHub Release manifest trust anchor and is not a NanoClaw v2 trust contract.
 
 **Key Fingerprint** (for manual verification):
 ```bash
@@ -347,19 +290,7 @@ Runtime public-key overrides are intentionally not supported.
 
 ### Key Rotation
 
-If ClawSec's signing key is compromised or needs rotation:
-
-1. **Generate new keypair** (keep private key secure)
-2. **Sign all packages** with new key
-3. **Publish new public key** to all distribution channels
-4. **Update pinned key** in `/workspace/project/skills/clawsec-nanoclaw/advisories/`
-5. **Deprecate old key** after transition period (e.g., 90 days)
-
-During transition, support **dual signatures**:
-- `package.tar.gz.sig` (old key)
-- `package.tar.gz.sig2` (new key)
-
-Agents can verify with either key during the overlap period.
+The bundled v1 verifier has no dual-key or dual-signature rotation protocol. It accepts one configured public key and one `.sig` path. A key change requires a reviewed package update and explicit operator migration; do not invent a `.sig2` fallback or accept caller-selected keys.
 
 ---
 
@@ -483,6 +414,6 @@ MEQCIDxyz...ABC123==
 
 ---
 
-**Document Version**: 1.0.0
-**Last Updated**: 2026-02-25
+**Document Version**: 0.0.11 legacy adapter
+**Last Updated**: 2026-07-22
 **Maintainer**: ClawSec Security Team
