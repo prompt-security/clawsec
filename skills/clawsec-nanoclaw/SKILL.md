@@ -1,289 +1,91 @@
 ---
 name: clawsec-nanoclaw
-version: 0.0.10
-description: Use when checking for security vulnerabilities in NanoClaw skills, before installing new skills, or when asked about security advisories affecting the bot
+version: 0.0.11
+description: Use when auditing or migrating historical ClawSec artifacts from a NanoClaw v1-era fork; this package is an unverified template with no supported runtime range, must not be installed, and is incompatible with NanoClaw v2
 ---
 
-# ClawSec for NanoClaw
+# Audit the Historical ClawSec NanoClaw Template
 
-Security advisory monitoring that protects your WhatsApp bot from known vulnerabilities in skills and dependencies.
+Treat this package as migration evidence only.
 
-## Vercel Skills Installation
+## Stop Gate
 
-Install with the Vercel Skills CLI for this harness:
+- Do not install, import, or activate the bundled TypeScript.
+- Do not claim that any NanoClaw version is supported by this package.
+- Do not use the package as evidence of NanoClaw v2 support.
+- Do not copy v1-era paths, message-file handlers, scheduler examples, or service commands into v2.
+- Do not treat isolated unit tests as a harness acceptance result.
 
-```bash
-npx skills add prompt-security/clawsec --skill clawsec-nanoclaw -a openclaw -y
-```
+NanoClaw has no reviewed direct Agent Skills CLI target; do not substitute `--agent openclaw` or another unrelated target.
 
-## Overview
+Read the [historical integration record](./INSTALL.md) before assessing an existing deployment. It documents why the former integration procedure is not runnable as written.
 
-ClawSec provides MCP tools that check installed skills against a curated feed of security advisories. It prevents installation of vulnerable skills, includes exploitability context for triage, and alerts you to issues in existing ones.
+## Compatibility Result
 
-**Core principle:** Check before you install. Monitor what's running.
+Return these conclusions when asked whether this package can be installed:
 
-## When to Use
+- Status: historical, unverified v1-era template.
+- Supported NanoClaw range: none asserted.
+- NanoClaw v2: incompatible.
+- Installation recommendation: do not install.
+- Successor status: prove availability from the current published release and its acceptance evidence; do not infer it from a roadmap, directory, branch, pull request, or version label.
 
-Use ClawSec tools when:
-- Installing a new skill (check safety first)
-- User asks "are my skills secure?"
-- Investigating suspicious behavior
-- Regular security audits
-- After receiving security notifications
+## Why the Runtime Is Not Qualified
 
-Do NOT use for:
-- Code review (use other tools)
-- Performance issues (different concern)
-- General debugging
+The MCP modules use ambient declarations for `server`, `writeIpcFile`, `TASKS_DIR`, and `groupFolder`. Those declarations satisfy TypeScript but create no runtime binding. Importing the modules cannot access module-local identifiers from NanoClaw's runner.
 
-## MCP Tools Available
+The remaining source also leaves `glob` and `writeResponse` without runtime implementations and uses CommonJS `__dirname` in an ES module. It preserves unqualified assumptions about host/container paths, message-file IPC, group state, scheduling, restart behavior, and writable state. No pinned NanoClaw checkout has passed a complete apply, run, remove, and rollback test for this package.
 
-### Pre-Installation Check
+## Allowed Uses
 
-```typescript
-// Before installing any skill
-const safety = await tools.clawsec_check_skill_safety({
-  skillName: 'new-skill',
-  skillVersion: '1.0.0'  // optional
-});
+Use the package only to:
 
-if (!safety.safe) {
-  // Show user the risks before proceeding
-  console.warn(`Security issues: ${safety.advisories.map(a => a.id)}`);
-}
-```
+- Identify historical ClawSec files in a customized NanoClaw v1-era checkout.
+- Compare those files with the operator's actual fork and service configuration.
+- Produce a read-only migration inventory.
+- Preserve source as test-vector input for future migration tooling.
+- Explain why the old integration must not be copied into NanoClaw v2.
 
-### Security Audit
+Do not modify or remove an operator's existing deployment without an explicit reviewed plan and rollback path.
 
-```typescript
-// Check all installed skills (defaults to ~/.claude/skills in the container)
-const result = await tools.clawsec_check_advisories({
-  installRoot: '/home/node/.claude/skills'  // optional
-});
+## Migration Inventory
 
-if (result.matches.some((m) =>
-  m.advisory.severity === 'critical' || m.advisory.exploitability_score === 'high'
-)) {
-  // Alert user immediately
-  console.error('Urgent advisories found!');
-}
-```
+Record evidence without executing the package:
 
-### Browse Advisories
+1. Pin the exact NanoClaw source commit and record its reported version.
+2. Locate every copied ClawSec file and every source reach-in.
+3. Locate service, task, hook, database, cache, and integrity state owned by the old customization.
+4. Record file digests, permissions, ownership, and whether each path is host-side or container-side.
+5. Record any active process or scheduler that imports or invokes the historical code.
+6. Identify conflicts with NanoClaw v2's additive skill workflow and two-database host/container boundary.
+7. Propose disable, migration, and rollback steps without executing them.
 
-```typescript
-// List advisories with filters
-const advisories = await tools.clawsec_list_advisories({
-  severity: 'high',               // optional
-  exploitabilityScore: 'high'     // optional
-});
-```
+If current authorization does not permit access to live logs, record runtime execution evidence as unknown. Do not infer success or inactivity from missing evidence.
 
-## Quick Reference
+## Preserved Source Boundaries
 
-| Task | Tool | Key Parameter |
-|------|------|---------------|
-| Pre-install check | `clawsec_check_skill_safety` | `skillName` |
-| Audit all skills | `clawsec_check_advisories` | `installRoot` (optional) |
-| Browse feed | `clawsec_list_advisories` | `severity`, `type`, `exploitabilityScore` (optional) |
-| Verify package signature | `clawsec_verify_skill_package` | `packagePath` |
-| Refresh advisory cache | `clawsec_refresh_cache` | (none) |
-| Check file integrity | `clawsec_check_integrity` | `mode`, `autoRestore` (optional) |
-| Approve file change | `clawsec_approve_change` | `path` |
-| View baseline status | `clawsec_integrity_status` | `path` (optional) |
-| Verify audit log | `clawsec_verify_audit` | (none) |
+- `mcp-tools/` contains historical declarations, not a supported registration API.
+- `host-services/` contains unqualified v1-era host integration attempts.
+- `guardian/` contains a historical integrity implementation, not the future NanoClaw drift guardian.
+- `lib/` contains isolated helpers that may inform common contracts only after independent review.
+- `advisories/feed-signing-public.pem` is a feed-verification key and is not release-installation authority.
 
-## Common Patterns
+## Future v2 Requirements
 
-### Pattern 1: Safe Skill Installation
+A supported NanoClaw package must be implemented separately. Require it to:
 
-```typescript
-// ALWAYS check before installing
-const safety = await tools.clawsec_check_skill_safety({
-  skillName: userRequestedSkill
-});
+- Target a pinned NanoClaw v2 range and current official architecture.
+- Use an explicit registration API or reviewed additive reach-in with a failing-when-removed integration test.
+- Keep authoritative trust and receipts on the host, outside agent-controlled state.
+- Provide idempotent apply, update, removal, resume, and rollback behavior.
+- Ship `REMOVE.md` whenever apply leaves state.
+- Run NanoClaw host build/tests and Bun tests for any agent-runner change.
+- Pass the remote lab and release lifecycle before any support claim.
 
-if (safety.safe) {
-  // Proceed with installation
-  await installSkill(userRequestedSkill);
-} else {
-  // Show user the risks and get confirmation
-  await showSecurityWarning(safety.advisories);
-  if (await getUserConfirmation()) {
-    await installSkill(userRequestedSkill);
-  }
-}
-```
+The v2 architecture statements above reflect official upstream material observed on 2026-07-22. Reverify the current documentation and source revision before making a migration or support decision.
 
-### Pattern 2: Periodic Security Check
+## References
 
-```typescript
-// Add to scheduled tasks
-schedule_task({
-  prompt: "Check advisories using clawsec_check_advisories and alert when critical or high-exploitability matches appear",
-  schedule_type: "cron",
-  schedule_value: "0 9 * * *"  // Daily at 9am
-});
-```
-
-### Pattern 3: User Security Query
-
-```
-User: "Are my skills secure?"
-
-You: I'll check installed skills for known vulnerabilities.
-[Use clawsec_check_advisories]
-
-Response:
-✅ No urgent issues found.
-- 2 low-severity/low-exploitability advisories
-- All skills up to date
-```
-
-## Common Mistakes
-
-### ❌ Installing without checking
-```typescript
-// DON'T
-await installSkill('untrusted-skill');
-```
-
-```typescript
-// DO
-const safety = await tools.clawsec_check_skill_safety({
-  skillName: 'untrusted-skill'
-});
-if (safety.safe) await installSkill('untrusted-skill');
-```
-
-### ❌ Ignoring exploitability context
-```typescript
-// DON'T: Use severity only
-if (advisory.severity === 'high') {
-  notifyNow(advisory);
-}
-```
-
-```typescript
-// DO: Use exploitability + severity
-if (
-  advisory.exploitability_score === 'high' ||
-  advisory.severity === 'critical'
-) {
-  notifyNow(advisory);
-}
-```
-
-### ❌ Skipping critical severity
-```typescript
-// DON'T: Ignore high exploitability in medium severity advisories
-if (advisory.severity === 'critical') alert();
-```
-
-```typescript
-// DO: Prioritize exploitability and severity together
-if (advisory.exploitability_score === 'high' || advisory.severity === 'critical') {
-  // Alert immediately
-}
-```
-
-## Implementation Details
-
-**Feed Source**: https://clawsec.prompt.security/advisories/feed.json
-
-This signed feed is consolidated. NanoClaw receives NVD CVEs, approved community advisories, and provisional GHSA-without-CVE advisories through the same default URL.
-
-**Update Frequency**: Every 6 hours (automatic)
-
-**Signature Verification**: Ed25519 signed feeds
-**Package Verification Policy**: pinned key only, bounded package/signature paths
-
-**Cache Location**: `/workspace/project/data/clawsec-advisory-cache.json`
-
-See [INSTALL.md](./INSTALL.md) for setup and [docs/](./docs/) for advanced usage.
-
-## Real-World Impact
-
-- Prevents installation of skills with known RCE vulnerabilities
-- Alerts to supply chain attacks in dependencies
-- Provides actionable remediation steps
-- Zero false positives (curated feed only)
-
-## Release Artifact Verification
-
-For standalone installs, verify the signed release manifest before trusting `SKILL.md`, `skill.json`, or the archive. The `skill.json` file is the package metadata/SBOM source, and the release pipeline signs `checksums.json` with the ClawSec release key.
-
-```bash
-set -euo pipefail
-
-SKILL_NAME="clawsec-nanoclaw"
-VERSION="0.0.10"
-REPO="prompt-security/clawsec"
-TAG="${SKILL_NAME}-v${VERSION}"
-BASE="https://github.com/${REPO}/releases/download/${TAG}"
-ZIP_NAME="${SKILL_NAME}-v${VERSION}.zip"
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
-
-RELEASE_PUBKEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"
-
-curl -fsSL "$BASE/checksums.json" -o "$TMP_DIR/checksums.json"
-curl -fsSL "$BASE/checksums.sig" -o "$TMP_DIR/checksums.sig"
-curl -fsSL "$BASE/signing-public.pem" -o "$TMP_DIR/signing-public.pem"
-curl -fsSL "$BASE/$ZIP_NAME" -o "$TMP_DIR/$ZIP_NAME"
-curl -fsSL "$BASE/SKILL.md" -o "$TMP_DIR/SKILL.md"
-curl -fsSL "$BASE/skill.json" -o "$TMP_DIR/skill.json"
-
-ACTUAL_PUBKEY_SHA256="$(openssl pkey -pubin -in "$TMP_DIR/signing-public.pem" -outform DER | shasum -a 256 | awk '{print $1}')"
-if [ "$ACTUAL_PUBKEY_SHA256" != "$RELEASE_PUBKEY_SHA256" ]; then
-  echo "ERROR: signing-public.pem fingerprint mismatch" >&2
-  exit 1
-fi
-
-openssl base64 -d -A -in "$TMP_DIR/checksums.sig" -out "$TMP_DIR/checksums.sig.bin"
-openssl pkeyutl -verify -rawin -pubin \
-  -inkey "$TMP_DIR/signing-public.pem" \
-  -sigfile "$TMP_DIR/checksums.sig.bin" \
-  -in "$TMP_DIR/checksums.json" >/dev/null
-
-hash_file() {
-  if command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 "$1" | awk '{print $1}'
-  else
-    sha256sum "$1" | awk '{print $1}'
-  fi
-}
-
-verify_manifest_file() {
-  asset="$1"
-  path="$2"
-  expected="$(jq -r --arg asset "$asset" '.files[$asset].sha256 // empty' "$TMP_DIR/checksums.json")"
-  if [ -z "$expected" ]; then
-    echo "ERROR: checksums.json missing $asset" >&2
-    exit 1
-  fi
-  actual="$(hash_file "$path")"
-  if [ "$actual" != "$expected" ]; then
-    echo "ERROR: checksum mismatch for $asset" >&2
-    exit 1
-  fi
-}
-
-expected_archive="$(jq -r '.archive.sha256 // empty' "$TMP_DIR/checksums.json")"
-if [ -z "$expected_archive" ]; then
-  echo "ERROR: checksums.json missing archive.sha256" >&2
-  exit 1
-fi
-actual_archive="$(hash_file "$TMP_DIR/$ZIP_NAME")"
-if [ "$actual_archive" != "$expected_archive" ]; then
-  echo "ERROR: archive checksum mismatch" >&2
-  exit 1
-fi
-
-verify_manifest_file "SKILL.md" "$TMP_DIR/SKILL.md"
-verify_manifest_file "skill.json" "$TMP_DIR/skill.json"
-
-echo "Signed release manifest, archive, SKILL.md, and skill.json verified."
-```
-
-Only install or extract the archive after this verification succeeds.
+- [NanoClaw architecture](https://docs.nanoclaw.dev/concepts/architecture)
+- [NanoClaw v2 skills](https://docs.nanoclaw.dev/extend/overview)
+- [Migrate from NanoClaw v1](https://docs.nanoclaw.dev/migrate-from-v1)

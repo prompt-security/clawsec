@@ -6,6 +6,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
+import './nanoclaw-legacy-status.test.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SKILL_ROOT = path.resolve(__dirname, '..');

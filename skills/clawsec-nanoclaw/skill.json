@@ -1,23 +1,19 @@
 {
   "name": "clawsec-nanoclaw",
-  "version": "0.0.10",
-  "description": "ClawSec security suite for NanoClaw - Advisory feed monitoring, MCP tools for vulnerability checking, and Ed25519 signature verification for containerized WhatsApp bot agents",
+  "version": "0.0.11",
+  "description": "Deprecated, runtime-unverified NanoClaw v1-era integration prototype retained only as migration and test-vector evidence; incompatible with NanoClaw v2",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security/",
+  "installable": false,
   "keywords": [
     "security",
     "nanoclaw",
-    "whatsapp-bot",
-    "mcp-tools",
-    "advisory",
-    "feed",
-    "threat-intel",
-    "containers",
-    "signature-verification",
-    "vulnerability-scanning",
-    "agents",
-    "ai"
+    "legacy",
+    "deprecated",
+    "migration",
+    "historical",
+    "test-vectors"
   ],
   "platform": "nanoclaw",
   "sbom": {
@@ -25,7 +21,7 @@
       {
         "path": "SKILL.md",
         "required": true,
-        "description": "NanoClaw skill documentation"
+        "description": "Historical-template status and migration guidance"
       },
       {
         "path": "CHANGELOG.md",
@@ -35,106 +31,30 @@
       {
         "path": "INSTALL.md",
         "required": true,
-        "description": "Installation guide for NanoClaw deployments"
-      },
-      {
-        "path": "mcp-tools/advisory-tools.ts",
-        "required": true,
-        "description": "MCP tools for advisory checking in container context"
-      },
-      {
-        "path": "host-services/advisory-cache.ts",
-        "required": true,
-        "description": "Host-side advisory cache manager with periodic feed fetching"
-      },
-      {
-        "path": "host-services/ipc-handlers.ts",
-        "required": true,
-        "description": "IPC handlers for MCP tool requests"
-      },
-      {
-        "path": "lib/signatures.ts",
-        "required": true,
-        "description": "Ed25519 signature verification utilities"
-      },
-      {
-        "path": "lib/local_file_io.ts",
-        "required": true,
-        "description": "Local file access helpers used by signature verification routines"
-      },
-      {
-        "path": "lib/advisories.ts",
-        "required": true,
-        "description": "Advisory matching and vulnerability detection"
-      },
-      {
-        "path": "lib/types.ts",
-        "required": true,
-        "description": "TypeScript type definitions"
-      },
-      {
-        "path": "lib/risk.ts",
-        "required": true,
-        "description": "Shared advisory risk evaluation logic for host and MCP tools"
-      },
-      {
-        "path": "advisories/feed-signing-public.pem",
-        "required": true,
-        "description": "Pinned Ed25519 public key for feed signature verification"
-      },
-      {
-        "path": "mcp-tools/signature-verification.ts",
-        "required": true,
-        "description": "Phase 1: MCP tool for skill package signature verification"
-      },
-      {
-        "path": "host-services/skill-signature-handler.ts",
-        "required": true,
-        "description": "Phase 1: Host-side signature verification service"
+        "description": "Historical integration record; explicitly not an installation guide"
       },
       {
         "path": "docs/SKILL_SIGNING.md",
         "required": true,
-        "description": "Phase 1: Documentation for skill signing and verification"
-      },
-      {
-        "path": "mcp-tools/integrity-tools.ts",
-        "required": true,
-        "description": "Phase 2: MCP tools for file integrity monitoring"
-      },
-      {
-        "path": "host-services/integrity-handler.ts",
-        "required": true,
-        "description": "Phase 2: Host-side integrity monitoring service"
-      },
-      {
-        "path": "guardian/integrity-monitor.ts",
-        "required": true,
-        "description": "Phase 2: Core file integrity monitoring engine"
-      },
-      {
-        "path": "guardian/policy.json",
-        "required": true,
-        "description": "Phase 2: NanoClaw-specific file protection policy"
+        "description": "Historical signature component record"
       },
       {
         "path": "docs/INTEGRITY.md",
         "required": true,
-        "description": "Phase 2: Documentation for file integrity monitoring"
+        "description": "Historical integrity component record"
       }
     ]
   },
-  "capabilities": [
-    "Advisory feed monitoring from clawsec.prompt.security",
-    "MCP tools for agent-initiated vulnerability scans",
-    "Exploitability-aware advisory prioritization for agent environments",
-    "Pre-installation skill safety checks",
-    "Ed25519 signature verification for advisory feeds",
-    "Platform metadata preserved in advisory records for downstream filtering",
-    "Containerized agent support with IPC communication"
-  ],
+  "capabilities": [],
   "nanoclaw": {
-    "mcp_tools": [
+    "status": "deprecated-runtime-unverified",
+    "lineage": "v1-era",
+    "runtime_verified": false,
+    "supported_versions": [],
+    "incompatible_generations": [
+      "v2"
+    ],
+    "historical_mcp_tool_names": [
       "clawsec_check_advisories",
       "clawsec_check_skill_safety",
       "clawsec_list_advisories",
@@ -145,11 +65,7 @@
       "clawsec_integrity_status",
       "clawsec_verify_audit"
     ],
-    "requires": {
-      "node": ">=18.0.0",
-      "nanoclaw": ">=0.1.0"
-    },
-    "integration": {
+    "historical_integration_assumptions": {
       "mcp_tools_file": "container/agent-runner/src/ipc-mcp-stdio.ts",
       "ipc_handlers_file": "src/ipc.ts",
       "cache_location": "/workspace/project/data/clawsec-advisory-cache.json"

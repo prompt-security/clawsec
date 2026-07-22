@@ -1,327 +1,92 @@
-# ClawSec for NanoClaw - Installation Guide
+# Historical NanoClaw Integration Record
 
-This guide shows how to add ClawSec security monitoring to your NanoClaw deployment.
+> **Do not install this package.** This file preserves the failed assumptions of an earlier NanoClaw v1-era integration template. It is not an installation guide.
 
-## Overview
+## Classification
 
-ClawSec provides security advisory monitoring for NanoClaw through:
-- **MCP Tools**: Agents can check for vulnerabilities via `clawsec_check_advisories`
-- **Advisory Feed**: Automatic monitoring of https://clawsec.prompt.security/advisories/feed.json
-- **Signature Verification**: Ed25519-signed feeds ensure integrity
-- **Exploitability Context**: Advisories include exploitability score and rationale for triage
+- Package: `clawsec-nanoclaw`
+- Version: `0.0.11`
+- Status: historical and unverified
+- Supported NanoClaw versions: none asserted
+- NanoClaw v2: incompatible
+- Runtime activation: prohibited until a separate implementation passes its own acceptance suite
 
-## Prerequisites
+NanoClaw has no reviewed direct Agent Skills CLI target; do not substitute an OpenClaw or another unrelated target.
 
-- NanoClaw >= 0.1.0
-- Node.js >= 18.0.0
-- Write access to NanoClaw installation directory
+## Why the Former Procedure Was Withdrawn
 
-## Installation Steps
+The previous procedure instructed operators to copy modules into a NanoClaw checkout and import them from the agent runner. That does not establish a working module boundary.
 
-### 1. Copy Skill Files
+The files under `mcp-tools/` declare these identifiers without importing or receiving them:
 
-Copy the `clawsec-nanoclaw` skill directory to your NanoClaw installation:
+- `server`
+- `writeIpcFile`
+- `TASKS_DIR`
+- `groupFolder`
 
-```bash
-# From the ClawSec repository
-cp -r skills/clawsec-nanoclaw /path/to/your/nanoclaw/skills/
-```
+TypeScript `declare` statements emit no JavaScript. ES modules also do not inherit lexical variables from their importers. Importing these files therefore cannot bind the identifiers that their top-level registration and handlers use.
 
-### 2. Integrate MCP Tools
+Additional retained assumptions were not qualified against an upstream runtime:
 
-Add the ClawSec MCP tools to your NanoClaw container agent runner.
+- `guardian/integrity-monitor.ts` declares a `glob` namespace but imports or receives no runtime implementation, so `glob.sync` is unbound.
+- `host-services/ipc-handlers.ts` declares `writeResponse` but imports or implements no such function.
+- `host-services/skill-signature-handler.ts` uses CommonJS `__dirname` in an ES module without defining an equivalent ESM path.
+- Docker Compose restart commands did not match the reviewed v1 service model.
+- Some host services hard-code paths that belong to the container view.
+- Group, task, cache, result, and integrity paths are not bound to one verified NanoClaw layout.
+- The host IPC wrapper is incomplete and has no end-to-end response-path test.
+- No apply, update, removal, interruption-recovery, or rollback transaction was tested.
 
-**File**: `container/agent-runner/src/ipc-mcp-stdio.ts`
+The old commands and code snippets were removed so an agent cannot mistake them for a supported installation path.
 
-```typescript
-// Add these imports at the top to register all ClawSec MCP tools:
+## NanoClaw v2 Boundary
 
-// Advisory tools: clawsec_check_advisories, clawsec_check_skill_safety,
-//                 clawsec_list_advisories, clawsec_refresh_cache
-import '../../../skills/clawsec-nanoclaw/mcp-tools/advisory-tools.js';
+NanoClaw v2 is a ground-up rewrite. Current official documentation describes:
 
-// Signature verification: clawsec_verify_skill_package
-import '../../../skills/clawsec-nanoclaw/mcp-tools/signature-verification.js';
+- A Node.js host and one container per active session.
+- Per-session `inbound.db` and `outbound.db` files with opposite writer ownership.
+- Additive code-carrying skills executed by a coding harness.
+- Skills that copy reviewed files, append explicit registration imports, pin dependencies, run integration tests, and provide `REMOVE.md` when state is left behind.
+- Scheduled tasks managed by current host surfaces rather than the retired v1 `schedule_task` MCP example.
 
-// Integrity monitoring: clawsec_check_integrity, clawsec_approve_change,
-//                       clawsec_integrity_status, clawsec_verify_audit
-import '../../../skills/clawsec-nanoclaw/mcp-tools/integrity-tools.js';
-```
+These upstream facts were observed on 2026-07-22. Reverify the current official documentation and source revision before relying on them for a migration decision.
 
-Each file calls `server.tool()` directly to register its tools. The `server`,
-`writeIpcFile`, `TASKS_DIR`, and `groupFolder` variables must be available in
-the scope where these files are imported (they are declared as ambient globals
-in each tool file).
+This package instead preserves v1-era message-file IPC, runner reach-ins, and path assumptions. Do not translate them by changing path strings.
 
-### 3. Integrate IPC Handlers
+## Existing Fork Assessment
 
-Add the host-side IPC handlers for ClawSec operations.
+If an operator already has a historical customization, perform a read-only assessment:
 
-**File**: `src/ipc.ts`
+1. Record the exact NanoClaw commit and local modifications.
+2. Locate every ClawSec file, import, service, task, cache, baseline, and result path.
+3. Determine whether any process actually loads the modules and capture its logs without restarting it.
+4. Record file digests, ownership, permissions, host/container location, and dependencies.
+5. Identify how to disable the customization without deleting state.
+6. Prepare rollback and migration steps for operator review.
 
-```typescript
-// Add these imports at the top
-import { handleAdvisoryIpc } from '../skills/clawsec-nanoclaw/host-services/ipc-handlers.js';
-import { AdvisoryCacheManager } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
-import { SkillSignatureVerifier } from '../skills/clawsec-nanoclaw/host-services/skill-signature-handler.js';
+If current authorization does not permit access to live logs, record runtime execution evidence as unknown. Do not infer that the customization works or is inactive.
 
-// Initialize these once in host startup and pass through deps
-const advisoryCacheManager = new AdvisoryCacheManager('/workspace/project/data', logger);
-const signatureVerifier = new SkillSignatureVerifier();
+Do not run the historical setup or removal instructions from an older release. Do not mutate the deployment merely to test whether the integration works.
 
-// In processTaskIpc switch:
-case 'refresh_advisory_cache':
-case 'verify_skill_signature':
-  await handleAdvisoryIpc(
-    data,
-    { advisoryCacheManager, signatureVerifier },
-    logger,
-    sourceGroup
-  );
-  break;
-default:
-  // existing task handling
-}
-```
+## Qualification Required for Any Replacement
 
-### 4. Start Advisory Cache Service
+A new NanoClaw package must be developed separately and must provide:
 
-Add the advisory cache manager to your host services.
+- A declared, pinned NanoClaw v2 support range.
+- A complete additive apply plan with exact preimages and postimages.
+- An explicit registration boundary; no ambient globals.
+- Integration tests that fail when required wiring is absent.
+- Correct host/container path ownership and database-writer invariants.
+- Idempotent apply, update, resume, remove, and rollback behavior.
+- `REMOVE.md` for every persistent change.
+- Remote harness acceptance using the exact copied candidate bytes.
+- Signed qualification and installation receipts before stable release.
 
-**File**: `src/index.ts` (or your main entry point)
+Treat a successor as available only when the current published release and its acceptance evidence prove that status. A roadmap entry, source directory, branch, pull request, or version-shaped label is not availability evidence.
 
-```typescript
-import { AdvisoryCacheManager } from '../skills/clawsec-nanoclaw/host-services/advisory-cache.js';
+## Official References
 
-// Start the service when your host process starts
-async function main() {
-  // ... your existing initialization ...
-
-  // Initialize cache manager and prime it at startup
-  const advisoryCacheManager = new AdvisoryCacheManager('/workspace/project/data', logger);
-  await advisoryCacheManager.initialize();
-
-  // Recommended refresh cadence (6h)
-  setInterval(() => {
-    advisoryCacheManager.refresh().catch((error) => {
-      logger.error({ error }, 'Periodic advisory cache refresh failed');
-    });
-  }, 6 * 60 * 60 * 1000);
-
-  // ... rest of your startup ...
-}
-```
-
-### 5. Restart NanoClaw
-
-Restart your NanoClaw instance to load the new MCP tools and services:
-
-```bash
-# Stop NanoClaw
-docker-compose down
-
-# Start with new configuration
-docker-compose up -d
-```
-
-## Verification
-
-Test that ClawSec is working:
-
-### 1. Check MCP Tools Available
-
-From within a NanoClaw agent session, the following tools should be available:
-
-**Advisory Tools** (mcp-tools/advisory-tools.ts):
-- `clawsec_check_advisories` - Scan installed skills for vulnerabilities
-- `clawsec_check_skill_safety` - Pre-installation safety check
-- `clawsec_list_advisories` - List all advisories with filtering
-- `clawsec_refresh_cache` - Request immediate advisory cache refresh
-
-**Signature Verification** (mcp-tools/signature-verification.ts):
-- `clawsec_verify_skill_package` - Verify Ed25519 signature on skill packages
-  - Uses pinned ClawSec public key (no runtime key override)
-  - Accepts staged package/signature paths only under `/tmp`, `/var/tmp`, `/workspace/ipc`, `/workspace/project/data`, `/workspace/project/tmp`, `/workspace/project/downloads`
-
-**Integrity Monitoring** (mcp-tools/integrity-tools.ts):
-- `clawsec_check_integrity` - Check protected files for unauthorized changes
-- `clawsec_approve_change` - Approve intentional file modification as new baseline
-- `clawsec_integrity_status` - View current baseline status
-- `clawsec_verify_audit` - Verify audit log hash chain integrity
-
-### 2. Test Advisory Checking
-
-Ask your NanoClaw agent:
-```
-Check if any of my installed skills have security advisories
-```
-
-The agent should use the `clawsec_check_advisories` tool and report results.
-
-### 3. Check Advisory Cache
-
-Verify the cache file was created:
-```bash
-cat /workspace/project/data/clawsec-advisory-cache.json
-```
-
-You should see:
-- `feed`: Array of advisories
-- `fetchedAt`: Timestamp of last update
-- `verified`: Should be `true`
-- `publicKeyFingerprint`: SHA-256 fingerprint of the pinned signing key
-
-## Usage Examples
-
-### Agent Commands
-
-Once installed, your NanoClaw agents can:
-
-**Check for vulnerabilities:**
-```
-Scan my installed skills for security issues
-```
-
-**Pre-installation check:**
-```
-Is it safe to install skill-name@1.0.0?
-```
-
-**List all advisories:**
-```
-Show me all ClawSec security advisories
-```
-
-### Manual Tool Invocation
-
-You can also call the MCP tools directly from agent code:
-
-```typescript
-// Check all installed skills
-const result = await tools.clawsec_check_advisories({
-  installRoot: '/home/node/.claude/skills'
-});
-
-// Check specific skill before installation
-const safetyCheck = await tools.clawsec_check_skill_safety({
-  skillName: 'risky-skill',
-  skillVersion: '1.0.0'
-});
-```
-
-## Configuration
-
-### Cache Location
-
-Default: `/workspace/project/data/clawsec-advisory-cache.json`
-
-To change, pass a different data directory path to `new AdvisoryCacheManager(dataDir, logger)`.
-
-### Refresh Interval
-
-Default: 6 hours
-
-To change, update the `setInterval(...)` duration (in milliseconds) in host startup.
-
-### Feed URL
-
-Default: `https://clawsec.prompt.security/advisories/feed.json`
-
-To use a mirror or custom feed, update `FEED_URL` in `skills/clawsec-nanoclaw/host-services/advisory-cache.ts`.
-
-## Platform-Specific Advisories
-
-ClawSec advisories can target specific platforms:
-
-- **`platforms: ["nanoclaw"]`**: Only affects NanoClaw
-- **`platforms: ["openclaw"]`**: Only affects OpenClaw/MoltBot
-- **`platforms: ["openclaw", "nanoclaw"]`**: Affects both
-- **No `platforms` field**: Applies to all platforms
-
-Platform metadata is preserved in advisory records and can be filtered by your policy layer.
-
-## Security
-
-### Signature Verification
-
-All advisory feeds are Ed25519 signed. The public key is pinned in:
-```
-skills/clawsec-nanoclaw/advisories/feed-signing-public.pem
-```
-
-Feeds failing signature verification are rejected.
-
-### Cache Integrity
-
-The advisory cache includes:
-- Cryptographic signature of feed contents
-- Verification status
-- Timestamp of last successful fetch
-
-Never manually edit the cache file - it will break signature verification.
-
-## Troubleshooting
-
-### Tools Not Appearing
-
-**Problem**: MCP tools not showing up in agent
-
-**Solution**:
-1. Check that you added the import and registration in `ipc-mcp-stdio.ts`
-2. Restart the container
-3. Check container logs for import errors
-
-### Cache Not Updating
-
-**Problem**: Advisory cache is empty or stale
-
-**Solution**:
-1. Check that `AdvisoryCacheManager.initialize()` is called in your host entry point
-2. Verify network access to `clawsec.prompt.security`
-3. Check host logs for fetch errors
-4. Manually trigger: `curl https://clawsec.prompt.security/advisories/feed.json`
-
-### Signature Verification Failing
-
-**Problem**: Cache shows `"verified": false`
-
-**Solution**:
-1. Ensure public key file exists at correct path
-2. Check file permissions (should be readable)
-3. Verify feed URL is correct (not using HTTP instead of HTTPS)
-4. Check for corrupted downloads (try clearing cache and refetching)
-
-### IPC Communication Issues
-
-**Problem**: Tools return errors about IPC
-
-**Solution**:
-1. Verify IPC handlers are registered in `src/ipc.ts`
-2. Check that IPC directory exists and is writable
-3. Ensure host process is running
-4. Check host logs for handler errors
-
-## Uninstallation
-
-To remove ClawSec from NanoClaw:
-
-1. Remove MCP tool registration from `ipc-mcp-stdio.ts`
-2. Remove IPC handler registration from `src/ipc.ts`
-3. Remove `AdvisoryCacheManager` initialization from host entry point
-4. Delete the skill directory: `rm -rf skills/clawsec-nanoclaw`
-5. Delete the cache file: `rm /workspace/project/data/clawsec-advisory-cache.json`
-6. Restart NanoClaw
-
-## Support
-
-- **Documentation**: https://clawsec.prompt.security/
-- **Issues**: https://github.com/prompt-security/clawsec/issues
-- **Security**: security@prompt.security
-
-## License
-
-AGPL-3.0-or-later
-
----
-
-**Questions?** Open an issue or check the main ClawSec documentation.
+- [NanoClaw architecture](https://docs.nanoclaw.dev/concepts/architecture)
+- [NanoClaw v2 skills](https://docs.nanoclaw.dev/extend/overview)
+- [Writing NanoClaw skills](https://docs.nanoclaw.dev/extend/writing-skills)
+- [Migrate from NanoClaw v1](https://docs.nanoclaw.dev/migrate-from-v1)
