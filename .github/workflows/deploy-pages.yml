@@ -188,8 +188,26 @@ jobs:
                   fi
                 done
 
+                # Project catalog installability without modifying immutable release metadata.
+                CATALOG_INSTALLABILITY_ARGS=(
+                  --release-skill-json "$MIRROR_DIR/skill.json"
+                  --expected-skill-name "$SKILL_NAME"
+                )
+                REPOSITORY_SKILL_JSON="skills/${SKILL_NAME}/skill.json"
+                if [ -f "$REPOSITORY_SKILL_JSON" ]; then
+                  CATALOG_INSTALLABILITY_ARGS+=(
+                    --repository-skill-json "$REPOSITORY_SKILL_JSON"
+                  )
+                fi
+                EFFECTIVE_INSTALLABLE="$(
+                  node scripts/ci/project_skill_catalog_installability.mjs \
+                    "${CATALOG_INSTALLABILITY_ARGS[@]}"
+                )"
+
                 # Build skill entry for index
-                SKILL_DATA=$(jq -c --arg tag "$TAG" '
+                SKILL_DATA=$(jq -c \
+                  --arg tag "$TAG" \
+                  --argjson installable "$EFFECTIVE_INSTALLABLE" '
                   . as $skill |
                   def object_or_empty($value):
                     if ($value | type) == "object" then $value else {} end;
@@ -216,6 +234,7 @@ jobs:
                     category: (platform_meta.category // object_field("openclaw").category // object_field("hermes").category // object_field("nanoclaw").category // object_field("picoclaw").category // "utility"),
                     platforms: platform_list,
                     trust: .trust.level,
+                    installable: $installable,
                     tag: $tag
                   }
                 ' "$MIRROR_DIR/skill.json")

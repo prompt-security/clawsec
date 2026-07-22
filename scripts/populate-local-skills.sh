@@ -17,6 +17,29 @@ echo "=== ClawSec Local Skills Populator ==="
 echo "Project root: $PROJECT_ROOT"
 echo ""
 
+echo "=== Preflighting Public Skill Lifecycle Metadata ==="
+for SKILL_DIR in "$PROJECT_ROOT/skills"/*/; do
+  SKILL_NAME=$(basename "$SKILL_DIR")
+  SKILL_JSON="$SKILL_DIR/skill.json"
+
+  if [ ! -f "$SKILL_JSON" ]; then
+    continue
+  fi
+
+  IS_INTERNAL=$(jq -r '.openclaw.internal // false' "$SKILL_JSON")
+  if [ "$IS_INTERNAL" = "true" ]; then
+    continue
+  fi
+
+  node "$PROJECT_ROOT/scripts/ci/project_skill_catalog_installability.mjs" \
+    --release-skill-json "$SKILL_JSON" \
+    --repository-skill-json "$SKILL_JSON" \
+    --expected-skill-name "$SKILL_NAME" \
+    >/dev/null
+done
+echo "Lifecycle metadata preflight passed."
+echo ""
+
 # Create directories
 mkdir -p "$PUBLIC_SKILLS_DIR"
 mkdir -p "$DIST_DIR"
@@ -167,8 +190,18 @@ EOF
   
   echo "  ✓ Generated: checksums.json"
   
+  # Local metadata is both the package source and the current repository lifecycle source.
+  EFFECTIVE_INSTALLABLE="$(
+    node "$PROJECT_ROOT/scripts/ci/project_skill_catalog_installability.mjs" \
+      --release-skill-json "$SKILL_JSON" \
+      --repository-skill-json "$SKILL_JSON" \
+      --expected-skill-name "$SKILL_NAME"
+  )"
+
   # Build skill entry for index
-  SKILL_DATA=$(jq -c --arg tag "$TAG" '
+  SKILL_DATA=$(jq -c \
+    --arg tag "$TAG" \
+    --argjson installable "$EFFECTIVE_INSTALLABLE" '
     . as $skill |
     def object_or_empty($value):
       if ($value | type) == "object" then $value else {} end;
@@ -194,6 +227,7 @@ EOF
       emoji: (platform_meta.emoji // object_field("openclaw").emoji // object_field("hermes").emoji // object_field("nanoclaw").emoji // object_field("picoclaw").emoji // "📦"),
       category: (platform_meta.category // object_field("openclaw").category // object_field("hermes").category // object_field("nanoclaw").category // object_field("picoclaw").category // "utility"),
       platforms: platform_list,
+      installable: $installable,
       tag: $tag
     }
   ' "$SKILL_JSON")
