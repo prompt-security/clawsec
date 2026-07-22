@@ -88,6 +88,7 @@ export interface SkillMetadata {
   emoji: string;
   category: string;
   platforms?: AdvisoryPlatformSlug[];
+  installable?: boolean;
   tag: string;
 }
 
@@ -107,7 +108,7 @@ export interface SkillChecksums {
     sha256: string;
     size: number;
     path?: string;
-    url: string;
+    url?: string;
   }>;
 }
 
@@ -128,6 +129,7 @@ export interface SkillJson {
   name: string;
   version: string;
   description: string;
+  installable?: boolean;
   author: string;
   license: string;
   homepage: string;
@@ -145,4 +147,30 @@ export interface SkillJson {
   hermes?: SkillPlatformMetadata | null;
   nanoclaw?: SkillPlatformMetadata | null;
   picoclaw?: SkillPlatformMetadata | null;
+}
+
+export type SkillLifecycleState = 'installable' | 'historical' | 'blocked';
+
+export interface SkillLifecycleView {
+  canInstall: boolean;
+  showCopyControls: boolean;
+  showPlatforms: boolean;
+  showTriggers: boolean;
+  showDocumentation: boolean;
+  historicalEvidence: boolean;
+}
+
+export interface SkillDocumentation {
+  filename: string;
+  content: string;
+}
+
+export interface SkillDetailLoadResult {
+  state: SkillLifecycleState;
+  reason: string;
+  record: SkillMetadata | null;
+  skillData: SkillJson | null;
+  checksums: SkillChecksums | null;
+  doc: SkillDocumentation | null;
+  view: SkillLifecycleView;
 }
