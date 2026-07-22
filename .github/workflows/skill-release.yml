@@ -1727,43 +1727,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete superseded releases
-        run: |
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          CURRENT_VERSION="${{ steps.parse.outputs.version }}"
-
-          # Extract major version from current release
-          CURRENT_MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
-
-          echo "Current release: $SKILL_NAME v$CURRENT_VERSION (major: $CURRENT_MAJOR)"
-
-          # List all releases for this skill
-          gh release list --limit 100 | grep "^${SKILL_NAME} " | while read -r line; do
-            # Extract tag from release list (3rd tab-delimited column)
-            TAG=$(echo "$line" | awk -F'\t' '{print $3}')
-            VERSION="${TAG#${SKILL_NAME}-v}"
-
-            # Skip current version
-            if [ "$VERSION" = "$CURRENT_VERSION" ]; then
-              continue
-            fi
-
-            # Extract major version
-            RELEASE_MAJOR=$(echo "$VERSION" | cut -d. -f1)
-
-            # Only delete if same major version (preserve old majors for backwards compat)
-            if [ "$RELEASE_MAJOR" = "$CURRENT_MAJOR" ]; then
-              echo "Deleting $TAG (superseded by v$CURRENT_VERSION)"
-              gh release delete "$TAG" --yes || echo "Warning: Could not delete $TAG"
-            else
-              echo "Keeping $TAG as latest for major version $RELEASE_MAJOR"
-            fi
-          done
-
-          echo "Superseded release cleanup complete"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish-clawhub:
     # Separate blocking job for ClawHub publishing - runs after GitHub release.
     # It publishes the verified GitHub release payload, never the raw source directory.
