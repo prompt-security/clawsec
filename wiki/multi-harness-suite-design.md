@@ -1121,12 +1121,12 @@ Wave 1 is not one aggregate hardening PR. Each row below is its own pipeline, to
 
 The temporary Wave 1 stable-tag policy is intentionally simpler than the final signed lifecycle gate: it blocks all new public prerelease writes immediately while preserving exact historical evidence. `release-cutover-gate-v1` later replaces that repository policy with the monotonic signed policy/root serial and frozen ref/digest verification; neither mechanism treats a historical prerelease as active or install-authorized.
 
-Keep current skill runtime behavior unchanged throughout Wave 1.
+Keep current skill runtime behavior unchanged throughout Wave 1 except for the explicit NanoClaw truthfulness boundary below. That unit changes installability and release-payload claims without reactivating or extending the legacy runtime.
 
 PR `nanoclaw-v2-truthfulness`:
 
-- Change only the existing `skills/clawsec-nanoclaw` package: mark it as a v1-only legacy integration that is incompatible with NanoClaw v2, align its version and skill-owned documentation, and add a truthfulness regression test.
-- Preserve the TypeScript implementation and policy as migration evidence and test-vector input. Do not ship that active v1 IPC implementation inside the future compatibility facade; the facade delegates migration to canonical successors instead of reactivating retired behavior.
+- Change only the existing `skills/clawsec-nanoclaw` package: mark it as a historical, runtime-unverified NanoClaw v1-era record with `installable: false`, no supported NanoClaw range, and explicit NanoClaw v2 incompatibility; align its version and skill-owned documentation and add a truthfulness regression test.
+- Preserve the TypeScript implementation and policy in repository history as migration evidence and test-vector input, but exclude executable legacy code, policies, and embedded keys from the release SBOM. Do not ship that active v1 IPC implementation inside the future compatibility facade; the facade delegates migration to canonical successors instead of reactivating retired behavior.
 - Do not edit repository-wide wiki, README, matrix sources, generators, release pipelines, tags, or publications in this changed-skill PR.
 
 PR `docs-nanoclaw-v2-truthfulness`:
@@ -1136,8 +1136,8 @@ PR `docs-nanoclaw-v2-truthfulness`:
 
 PR `nanoclaw-v2-matrix-filter-v1`:
 
-- In a separate metadata/tooling PR dependent on the changed-skill PR, make current capability and availability generators honor the explicit v1-only range and legacy/v2-incompatible classification.
-- Prove the legacy package remains discoverable as migration history but cannot satisfy a NanoClaw v2 support query. Do not change the skill or public prose in this PR.
+- In a separate metadata/tooling PR dependent on the changed-skill PR, make current capability and availability generators honor `installable: false`, the absence of a supported range, and the historical/v2-incompatible classification.
+- Prove the legacy package remains discoverable as migration history but cannot satisfy an installable-support query for NanoClaw v1, v2, or an unspecified version. Do not change the skill or public prose in this PR.
 
 Every applicable Wave 1 hardening unit lands before new package releases begin. The NanoClaw truthfulness PR can run alongside those units, but must land before any v2 implementation or public v2 support claim.
 
@@ -1517,7 +1517,7 @@ The initial split mappings are:
 | Legacy identity | Disposition | Primary successor | Ordered migration targets |
 | --- | --- | --- | --- |
 | `clawsec-suite` | Compatibility facade | `clawsec-suite-openclaw` | OpenClaw core required, suite required; optional guardians offered separately |
-| `clawsec-nanoclaw` | v1-only compatibility facade | `clawsec-suite-nanoclaw` | NanoClaw v2 core required, suite required, drift guardian optional; no v1 IPC state is activated in v2 |
+| `clawsec-nanoclaw` | Historical non-installable record now; future compatibility facade only after canonical successors are active | `clawsec-suite-nanoclaw` | NanoClaw v2 core required, suite required, drift guardian optional; no v1 IPC state is activated in v2 |
 | `hermes-attestation-guardian` | Compatibility facade | `clawsec-drift-guardian-hermes` | Hermes core required, drift guardian required, suite optional |
 | `picoclaw-security-guardian` | Compatibility facade | `clawsec-drift-guardian-picoclaw` | PicoClaw core required, drift guardian required, suite optional |
 | `soul-guardian` | Compatibility facade and state migration | `clawsec-drift-guardian-openclaw` | OpenClaw core required first, then OpenClaw drift guardian required; both are covered by the migration receipt |
