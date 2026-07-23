@@ -1,0 +1,56 @@
+{
+  "contract": "clawsec.result-reason-codes/v1",
+  "contract_version": "1",
+  "reasons": [
+    {
+      "code": "assurance_unavailable",
+      "outcome": "degraded",
+      "description": "Required assurance or coverage was unavailable, but a bounded result was still produced."
+    },
+    {
+      "code": "intentionally_unsupported",
+      "outcome": "unsupported",
+      "description": "The executor declares the operation but reports it unavailable for the current harness instance or scope."
+    },
+    {
+      "code": "internal_failure",
+      "outcome": "error",
+      "description": "The executor failed unexpectedly."
+    },
+    {
+      "code": "invalid_input",
+      "outcome": "error",
+      "description": "The operation input could not be parsed or validated."
+    },
+    {
+      "code": "operation_completed",
+      "outcome": "pass",
+      "description": "The executor reports that the operation completed as intended; proof-bearing claims require a typed result."
+    },
+    {
+      "code": "operation_not_applicable",
+      "outcome": "not_applicable",
+      "description": "The operation is valid but unnecessary for the current subject."
+    },
+    {
+      "code": "policy_blocked",
+      "outcome": "blocked",
+      "description": "A security or operator policy refused the operation."
+    },
+    {
+      "code": "prerequisite_missing",
+      "outcome": "blocked",
+      "description": "A required declared prerequisite was absent or incompatible."
+    },
+    {
+      "code": "security_finding_detected",
+      "outcome": "finding",
+      "description": "The operation completed and found a security-relevant condition."
+    },
+    {
+      "code": "user_confirmation_required",
+      "outcome": "confirmation_required",
+      "description": "Explicit operator confirmation is required before mutation."
+    }
+  ]
+}

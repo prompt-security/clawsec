@@ -1,0 +1,245 @@
+{
+  "contract": "clawsec.result-operation-policy/v1",
+  "contract_version": "1",
+  "operations": {
+    "core.doctor": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "executor"
+      ]
+    },
+    "core.evaluate-advisories": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "core.install-release": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "core.inventory": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "core.plan-release": {
+      "effect_class": "planning",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "core.remove-release": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "core.update-release": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "core.verify-feed": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "core.verify-receipt": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "core.verify-release": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "component",
+        "scope"
+      ]
+    },
+    "guardian.status": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "executor"
+      ]
+    },
+    "posture.diff": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "posture.snapshot": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "posture.verify": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "suite.catalog": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "suite.disable": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "suite.doctor": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "executor"
+      ]
+    },
+    "suite.enable": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "suite.install": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "component"
+      ]
+    },
+    "suite.recommend": {
+      "effect_class": "planning",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "suite.recurring-advisory-verification": {
+      "effect_class": "mutation",
+      "subject_kinds": [
+        "scope"
+      ]
+    },
+    "suite.status": {
+      "effect_class": "read_only",
+      "subject_kinds": [
+        "scope"
+      ]
+    }
+  },
+  "effect_classes": {
+    "mutation": {
+      "blocked": {
+        "allowed_states": [
+          "proposed"
+        ],
+        "minimum_count": 0
+      },
+      "confirmation_required": {
+        "allowed_states": [
+          "proposed"
+        ],
+        "minimum_count": 1
+      },
+      "degraded": null,
+      "error": {
+        "allowed_states": [
+          "applied",
+          "failed",
+          "proposed",
+          "rolled_back"
+        ],
+        "minimum_count": 0
+      },
+      "finding": null,
+      "not_applicable": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "pass": {
+        "allowed_states": [
+          "applied"
+        ],
+        "minimum_count": 1
+      },
+      "unsupported": {
+        "allowed_states": [],
+        "minimum_count": 0
+      }
+    },
+    "planning": {
+      "blocked": {
+        "allowed_states": [
+          "proposed"
+        ],
+        "minimum_count": 0
+      },
+      "confirmation_required": null,
+      "degraded": {
+        "allowed_states": [
+          "proposed"
+        ],
+        "minimum_count": 0
+      },
+      "error": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "finding": null,
+      "not_applicable": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "pass": {
+        "allowed_states": [
+          "proposed"
+        ],
+        "minimum_count": 1
+      },
+      "unsupported": {
+        "allowed_states": [],
+        "minimum_count": 0
+      }
+    },
+    "read_only": {
+      "blocked": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "confirmation_required": null,
+      "degraded": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "error": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "finding": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "not_applicable": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "pass": {
+        "allowed_states": [],
+        "minimum_count": 0
+      },
+      "unsupported": {
+        "allowed_states": [],
+        "minimum_count": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "contract": "clawsec.result-outcomes/v1",
+  "contract_version": "1",
+  "outcomes": [
+    {
+      "name": "blocked",
+      "description": "The executor reports that policy or a required prerequisite prevented completion."
+    },
+    {
+      "name": "confirmation_required",
+      "description": "The executor reports that it stopped before mutation and needs explicit operator confirmation; authorization requires a typed plan result."
+    },
+    {
+      "name": "degraded",
+      "description": "The executor reports useful information with weaker assurance or coverage than intended."
+    },
+    {
+      "name": "error",
+      "description": "The executor reports that execution failed because of invalid input or an internal failure."
+    },
+    {
+      "name": "finding",
+      "description": "The executor reports that the operation completed and found a security-relevant condition."
+    },
+    {
+      "name": "not_applicable",
+      "description": "The executor reports that the operation is valid but unnecessary for the current subject."
+    },
+    {
+      "name": "pass",
+      "description": "The executor reports that the operation completed as intended; this outcome alone is not proof of verification or mutation."
+    },
+    {
+      "name": "unsupported",
+      "description": "The executor reports that a declared operation cannot be provided for the current harness or scope."
+    }
+  ]
+}

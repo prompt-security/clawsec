@@ -1,0 +1,31 @@
+{
+  "schema": "clawsec.result/v1",
+  "executor": {
+    "schema": "clawsec.component-ref/v1",
+    "name": "clawsec-core-nanoclaw",
+    "version": "0.1.0-rc.1",
+    "harness": "nanoclaw",
+    "role": "core",
+    "metadata_digest": "sha256:765f343f11e9367051b5ed95daed35ff318945c672df0f5509c0dbcd1276eea5"
+  },
+  "subject": {
+    "kind": "executor"
+  },
+  "invocation": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "operation": "core.doctor",
+    "harness": {
+      "name": "nanoclaw",
+      "version": "2.1.17"
+    },
+    "scope": {
+      "kind": "nanoclaw.checkout",
+      "ref": "nanoclaw-v2-lab-01"
+    }
+  },
+  "reported_at": "2026-07-23T10:01:00Z",
+  "outcome": "pass",
+  "reason_code": "operation_completed",
+  "summary": "Synthetic contract fixture: the executor reports NanoClaw core doctor completion.",
+  "effects": []
+}

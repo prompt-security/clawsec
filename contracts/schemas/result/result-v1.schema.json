@@ -1,0 +1,322 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/result/result-v1.schema.json",
+  "title": "ClawSec base operation result v1",
+  "description": "Closed harness-neutral execution summary. Typed advisory, composition, plan, and receipt contracts contain this base result when they need proof-bearing details.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "executor",
+    "subject",
+    "invocation",
+    "reported_at",
+    "outcome",
+    "reason_code",
+    "summary",
+    "effects"
+  ],
+  "properties": {
+    "schema": {
+      "const": "clawsec.result/v1"
+    },
+    "executor": {
+      "$ref": "https://clawsec.prompt.security/contracts/schemas/component/component-ref-v1.schema.json"
+    },
+    "subject": {
+      "$ref": "#/definitions/subject"
+    },
+    "invocation": {
+      "$ref": "#/definitions/invocation"
+    },
+    "reported_at": {
+      "$ref": "#/definitions/timestamp"
+    },
+    "outcome": {
+      "$ref": "#/definitions/outcome"
+    },
+    "reason_code": {
+      "$ref": "#/definitions/reasonCode"
+    },
+    "summary": {
+      "$ref": "#/definitions/summary"
+    },
+    "effects": {
+      "description": "Bounded executor-reported summaries. Detailed plan, receipt, and ownership records belong in typed contracts.",
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/definitions/effect"
+      }
+    }
+  },
+  "definitions": {
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^(?:core|suite|guardian|posture)\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "invocationId": {
+      "description": "Lowercase UUID v4 used only to correlate this invocation. It does not prove freshness, authorization, or a parent-child relationship.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "timestamp": {
+      "description": "UTC RFC 3339 timestamp.",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "outcome": {
+      "enum": [
+        "pass",
+        "finding",
+        "confirmation_required",
+        "blocked",
+        "degraded",
+        "unsupported",
+        "not_applicable",
+        "error"
+      ]
+    },
+    "reasonCode": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "openclaw",
+            "hermes",
+            "nanoclaw",
+            "picoclaw"
+          ]
+        },
+        "version": {
+          "description": "Actual detected harness version, or null only when the result cannot safely identify it.",
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "host",
+            "openclaw.workspace",
+            "openclaw.project-agent",
+            "openclaw.personal-agent",
+            "openclaw.managed",
+            "openclaw.global",
+            "hermes.profile",
+            "nanoclaw.checkout",
+            "picoclaw.home",
+            "picoclaw.workspace",
+            "picoclaw.global"
+          ]
+        },
+        "ref": {
+          "description": "Opaque non-secret scope identifier, never an absolute filesystem path or URL.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]*$"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "host"
+            }
+          },
+          "not": {
+            "required": [
+              "ref"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "not": {
+                "const": "host"
+              }
+            }
+          },
+          "required": [
+            "ref"
+          ]
+        }
+      ]
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "operation",
+        "harness",
+        "scope"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/invocationId"
+        },
+        "operation": {
+          "$ref": "#/definitions/capabilityId"
+        },
+        "harness": {
+          "$ref": "#/definitions/harness"
+        },
+        "scope": {
+          "$ref": "#/definitions/scope"
+        }
+      }
+    },
+    "subject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "executor"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "scope"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "component"
+          ],
+          "properties": {
+            "kind": {
+              "const": "component"
+            },
+            "component": {
+              "$ref": "https://clawsec.prompt.security/contracts/schemas/component/component-ref-v1.schema.json"
+            }
+          }
+        }
+      ]
+    },
+    "effect": {
+      "description": "Executor-reported effect summary. It is not a plan, receipt, ownership record, or proof that the state change occurred.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_id",
+        "state",
+        "target",
+        "summary"
+      ],
+      "properties": {
+        "effect_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "state": {
+          "enum": [
+            "proposed",
+            "applied",
+            "failed",
+            "rolled_back"
+          ]
+        },
+        "target": {
+          "$ref": "#/definitions/effectTarget"
+        },
+        "summary": {
+          "$ref": "#/definitions/summary"
+        }
+      }
+    },
+    "effectTarget": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "relative_path"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))[A-Za-z0-9._@+-]+(?:/[A-Za-z0-9._@+-]+)*$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "const": "harness_resource"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]{0,511}$"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
