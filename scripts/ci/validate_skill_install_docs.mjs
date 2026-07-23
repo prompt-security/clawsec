@@ -4,6 +4,7 @@ import { existsSync, lstatSync, realpathSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import https from "node:https";
 import path from "node:path";
+import { inspectNonInstallableMarkdown } from "./noninstallable_public_installer_policy.mjs";
 import { isTestReleasePath } from "./release_path_policy.mjs";
 import { resolveSkillInstallability } from "./skill_installability.mjs";
 import { resolveDirectSkillsCliTargets } from "./skill_platforms.mjs";
@@ -537,6 +538,18 @@ function packagedSkillFiles(skill) {
   return files;
 }
 
+function hasUnsafePackagePathCharacter(value) {
+  return [...value].some((character) => {
+    const codePoint = character.codePointAt(0);
+    return (
+      codePoint < 0x20 ||
+      (codePoint >= 0x7f && codePoint <= 0x9f) ||
+      codePoint === 0x2028 ||
+      codePoint === 0x2029
+    );
+  });
+}
+
 function localInstallReferences(markdown, { docPath, skillRoot }) {
   const references = [];
   for (const match of markdown.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g)) {
@@ -568,6 +581,25 @@ function localInstallReferences(markdown, { docPath, skillRoot }) {
     }
   }
   return [...new Set(references)];
+}
+
+async function validateNonInstallableMarkdown({ docPath, displayPath, requirePrologue }) {
+  const failures = [];
+  const inspection = inspectNonInstallableMarkdown(await readFile(docPath));
+  if (
+    requirePrologue &&
+    inspection.markdown !== null &&
+    !hasNonInstallableDocPrologue(inspection.markdown)
+  ) {
+    failures.push(
+      `Missing required non-installable document prologue in ${displayPath}: ` +
+      NON_INSTALLABLE_DOC_PROLOGUE,
+    );
+  }
+  for (const issue of inspection.issues) {
+    failures.push(`Invalid non-installable documentation in ${displayPath}: ${issue}.`);
+  }
+  return failures;
 }
 
 async function validateSkill({ root, skillDir, repository, getAgentTypes }) {
@@ -609,17 +641,16 @@ async function validateSkill({ root, skillDir, repository, getAgentTypes }) {
       continue;
     }
 
-    const rawMarkdown = await readFile(docPath, "utf8");
     if (!installability.installable) {
-      if (!hasNonInstallableDocPrologue(rawMarkdown)) {
-        failures.push(
-          `Missing required non-installable document prologue in ${path.join(skillDir, filename)}: ` +
-          NON_INSTALLABLE_DOC_PROLOGUE,
-        );
-      }
+      failures.push(...await validateNonInstallableMarkdown({
+        docPath,
+        displayPath: path.join(skillDir, filename),
+        requirePrologue: true,
+      }));
       continue;
     }
 
+    const rawMarkdown = await readFile(docPath, "utf8");
     const markdown = stripHtmlComments(rawMarkdown);
     const commands = parseSkillsAddCommands(markdown);
     const commandsForSkill = commands.filter((command) => command.skillValues.includes(skillName));
@@ -692,6 +723,55 @@ async function validateSkill({ root, skillDir, repository, getAgentTypes }) {
         const command = `npx skills add ${repository} --skill ${skillName} -a ${agent} -y`;
         failures.push(`Missing required npx skills install command in ${path.join(skillDir, filename)}: ${command}`);
       }
+    }
+  }
+
+  if (!installability.installable) {
+    for (const filename of packagedFiles) {
+      if (hasUnsafePackagePathCharacter(filename)) {
+        failures.push(
+          `Unsafe package-visible path for ${skillDir}: control characters are not allowed.`,
+        );
+        continue;
+      }
+      if (/\.mdx$/i.test(filename)) {
+        failures.push(
+          `Unsupported package-visible MDX path for non-installable skill ${skillDir}: ${filename}.`,
+        );
+        continue;
+      }
+      if (!/\.md$/i.test(filename) || DOC_FILENAMES.includes(filename)) {
+        continue;
+      }
+
+      const docPath = path.resolve(skillRoot, filename.split("/").join(path.sep));
+      const skillPrefix = `${path.resolve(skillRoot)}${path.sep}`;
+      const displayPath = `${skillDir}/${filename}`;
+      if (!docPath.startsWith(skillPrefix)) {
+        failures.push(`Unsafe package-visible Markdown path for ${skillDir}: ${filename}.`);
+        continue;
+      }
+
+      let docStat;
+      try {
+        docStat = lstatSync(docPath);
+      } catch (error) {
+        if (error?.code === "ENOENT") {
+          continue;
+        }
+        failures.push(`Unable to inspect package-visible Markdown file: ${displayPath}`);
+        continue;
+      }
+      if (!docStat.isFile()) {
+        failures.push(`Package-visible Markdown path is not a regular file: ${displayPath}`);
+        continue;
+      }
+
+      failures.push(...await validateNonInstallableMarkdown({
+        docPath,
+        displayPath,
+        requirePrologue: false,
+      }));
     }
   }
 
