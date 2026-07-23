@@ -1098,8 +1098,66 @@ jobs:
             echo "::endgroup::"
           done
 
+  stable-publication-policy:
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.policy.outputs.tag }}
+      skill_name: ${{ steps.policy.outputs.skill_name }}
+      version: ${{ steps.policy.outputs.version }}
+      publication_eligible: ${{ steps.policy.outputs.publication_eligible }}
+      reason_code: ${{ steps.policy.outputs.reason_code }}
+    steps:
+      - name: Checkout protected default-branch policy
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Enforce final-version public tag policy
+        id: policy
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_REF: ${{ github.ref }}
+          REQUESTED_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          decision="$(node scripts/ci/stable_tag_policy.mjs --tag "$REQUESTED_TAG")"
+          printf '%s\n' "$decision" | jq -e \
+            '.publication_eligible == true and .stable_authorized == false' >/dev/null
+
+          validated_tag="$(printf '%s\n' "$decision" | jq -r '.tag')"
+          skill_name="$(printf '%s\n' "$decision" | jq -r '.package_name')"
+          version="$(printf '%s\n' "$decision" | jq -r '.version')"
+          reason_code="$(printf '%s\n' "$decision" | jq -r '.reason_code')"
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            test "$REQUESTED_REF" = "refs/tags/${validated_tag}"
+          else
+            git show-ref --verify --quiet "refs/tags/${validated_tag}"
+          fi
+
+          {
+            printf 'tag=%s\n' "$validated_tag"
+            printf 'skill_name=%s\n' "$skill_name"
+            printf 'version=%s\n' "$version"
+            printf 'publication_eligible=true\n'
+            printf 'reason_code=%s\n' "$reason_code"
+          } >> "$GITHUB_OUTPUT"
+
   release-tag:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: stable-publication-policy
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -1113,23 +1171,24 @@ jobs:
       publish_clawhub: ${{ steps.publishable.outputs.publish_clawhub }}
       clawhub_slug: ${{ steps.publishable.outputs.clawhub_slug }}
     steps:
-      - name: Parse tag
+      - name: Use validated stable publication policy outputs
         id: parse
+        env:
+          VALIDATED_TAG: ${{ needs.stable-publication-policy.outputs.tag }}
+          VALIDATED_SKILL_NAME: ${{ needs.stable-publication-policy.outputs.skill_name }}
+          VALIDATED_VERSION: ${{ needs.stable-publication-policy.outputs.version }}
         run: |
-          TAG="${{ github.ref_name }}"
-          # Extract skill name (everything before -v)
-          SKILL_NAME="${TAG%-v*}"
-          # Extract version (everything after -v)
-          VERSION="${TAG#*-v}"
-
-          echo "skill_name=${SKILL_NAME}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "skill_path=skills/${SKILL_NAME}" >> $GITHUB_OUTPUT
-
-          echo "Parsed tag: skill=${SKILL_NAME}, version=${VERSION}"
+          set -euo pipefail
+          printf 'skill_name=%s\n' "$VALIDATED_SKILL_NAME" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$VALIDATED_VERSION" >> "$GITHUB_OUTPUT"
+          printf 'skill_path=skills/%s\n' "$VALIDATED_SKILL_NAME" >> "$GITHUB_OUTPUT"
+          printf 'Validated tag: %s\n' "$VALIDATED_TAG"
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: refs/tags/${{ needs.stable-publication-policy.outputs.tag }}
+          persist-credentials: false
 
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
@@ -1332,7 +1391,7 @@ jobs:
           SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
           SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
           VERSION="${{ steps.parse.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${{ needs.stable-publication-policy.outputs.tag }}"
 
           mkdir -p release-assets
 
@@ -1627,7 +1686,7 @@ jobs:
           CLAWHUB_SLUG="${{ steps.publishable.outputs.clawhub_slug }}"
           VERSION="${{ steps.parse.outputs.version }}"
           REPO="${{ github.repository }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${{ needs.stable-publication-policy.outputs.tag }}"
 
           {
             echo "quick_install<<INSTALL_EOF"
@@ -1712,7 +1771,7 @@ jobs:
           CHANGELOG: ${{ steps.changelog.outputs.changelog }}
           QUICK_INSTALL: ${{ steps.install.outputs.quick_install }}
           REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.stable-publication-policy.outputs.tag }}
         run: |
           set -euo pipefail
           node -e '
@@ -1757,11 +1816,11 @@ jobs:
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: "${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}"
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ needs.stable-publication-policy.outputs.tag }}
           files: release-assets/*
           body_path: ${{ runner.temp }}/skill-release-body.md
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -1769,8 +1828,12 @@ jobs:
     # Separate blocking job for ClawHub publishing - runs after GitHub release.
     # It publishes the verified GitHub release payload, never the raw source directory.
     # Retriggerable: can be manually triggered for failed publishes.
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    needs: release-tag
+    if: >-
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/') &&
+      needs.stable-publication-policy.outputs.publication_eligible == 'true' &&
+      needs.release-tag.outputs.publish_clawhub == 'true'
+    needs: [stable-publication-policy, release-tag]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1786,6 +1849,9 @@ jobs:
       - name: Checkout
         if: needs.release-tag.outputs.publish_clawhub == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: refs/tags/${{ needs.stable-publication-policy.outputs.tag }}
+          persist-credentials: false
 
       - name: Setup Node
         if: needs.release-tag.outputs.publish_clawhub == 'true'
@@ -1802,7 +1868,7 @@ jobs:
           set -euo pipefail
           SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
           VERSION="${{ needs.release-tag.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${{ needs.stable-publication-policy.outputs.tag }}"
           RELEASE_DIR="$RUNNER_TEMP/clawhub-release"
           OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
 
@@ -1958,30 +2024,34 @@ jobs:
   republish-clawhub:
     # Manual workflow to republish a specific tag to ClawHub
     # Usage: Go to Actions → Skill Release → Run workflow → Enter tag name
-    if: github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      needs.stable-publication-policy.outputs.publication_eligible == 'true'
+    needs: stable-publication-policy
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
-      - name: Parse tag
+      - name: Use validated stable publication policy outputs
         id: parse
+        env:
+          VALIDATED_TAG: ${{ needs.stable-publication-policy.outputs.tag }}
+          VALIDATED_SKILL_NAME: ${{ needs.stable-publication-policy.outputs.skill_name }}
+          VALIDATED_VERSION: ${{ needs.stable-publication-policy.outputs.version }}
         run: |
-          TAG="${{ github.event.inputs.tag }}"
-          # Extract skill name (everything before -v)
-          SKILL_NAME="${TAG%-v*}"
-          # Extract version (everything after -v)
-          VERSION="${TAG#*-v}"
-
-          echo "skill_name=${SKILL_NAME}" >> $GITHUB_OUTPUT
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "skill_path=skills/${SKILL_NAME}" >> $GITHUB_OUTPUT
-
-          echo "Parsed tag: skill=${SKILL_NAME}, version=${VERSION}"
+          set -euo pipefail
+          printf 'skill_name=%s\n' "$VALIDATED_SKILL_NAME" >> "$GITHUB_OUTPUT"
+          printf 'version=%s\n' "$VALIDATED_VERSION" >> "$GITHUB_OUTPUT"
+          printf 'skill_path=skills/%s\n' "$VALIDATED_SKILL_NAME" >> "$GITHUB_OUTPUT"
+          printf 'Validated tag: %s\n' "$VALIDATED_TAG"
 
       - name: Checkout workflow helpers
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
 
       - name: Prepare current ClawHub workflow helpers
         run: |
@@ -1995,7 +2065,8 @@ jobs:
       - name: Checkout tag
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event.inputs.tag }}
+          ref: refs/tags/${{ needs.stable-publication-policy.outputs.tag }}
+          persist-credentials: false
 
       - name: Validate skill exists
         run: |
@@ -2045,7 +2116,7 @@ jobs:
           set -euo pipefail
           SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
           VERSION="${{ steps.parse.outputs.version }}"
-          TAG="${{ github.event.inputs.tag }}"
+          TAG="${{ needs.stable-publication-policy.outputs.tag }}"
           RELEASE_DIR="$RUNNER_TEMP/clawhub-release"
           OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
 

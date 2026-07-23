@@ -17,6 +17,7 @@ const fixtureRoot = await mkdtemp(path.join(tmpdir(), "clawsec-release-script-in
 const skillDir = path.join(fixtureRoot, "skills", "retired-skill");
 const scriptsDir = path.join(fixtureRoot, "scripts");
 const ciDir = path.join(scriptsDir, "ci");
+const releasePolicyDir = path.join(fixtureRoot, "contracts", "release-policy");
 const fakeBinDir = path.join(fixtureRoot, "fake-bin");
 const ghAttemptPath = path.join(fixtureRoot, "gh-attempted");
 const childPath = `${fakeBinDir}:${path.dirname(process.execPath)}:${process.env.PATH ?? ""}`;
@@ -43,11 +44,18 @@ try {
   await Promise.all([
     mkdir(skillDir, { recursive: true }),
     mkdir(ciDir, { recursive: true }),
+    mkdir(releasePolicyDir, { recursive: true }),
     mkdir(fakeBinDir, { recursive: true }),
   ]);
   await Promise.all([
     cp("scripts/release-skill.sh", path.join(scriptsDir, "release-skill.sh")),
     cp("scripts/ci/skill_installability.mjs", path.join(ciDir, "skill_installability.mjs")),
+    cp("scripts/ci/stable_tag_policy.mjs", path.join(ciDir, "stable_tag_policy.mjs")),
+    cp("scripts/ci/lifecycle_semver.mjs", path.join(ciDir, "lifecycle_semver.mjs")),
+    cp(
+      "contracts/release-policy/legacy-prereleases-v1.json",
+      path.join(releasePolicyDir, "legacy-prereleases-v1.json"),
+    ),
     writeFile(
       path.join(skillDir, "skill.json"),
       `${JSON.stringify({

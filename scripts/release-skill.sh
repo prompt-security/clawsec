@@ -75,19 +75,21 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
+TAG="${SKILL_NAME}-v${VERSION}"
+
+# This is the public release helper, not the private beta/RC candidate builder.
+# Enforce the shared stable-tag policy before any source, Git, tag, or release mutation.
+if ! node scripts/ci/stable_tag_policy.mjs --tag "$TAG" >/dev/null; then
+  echo "Error: Public release preparation requires a strict final SemVer tag." >&2
+  echo "Build beta and RC candidates through the private lab-candidate flow." >&2
+  exit 1
+fi
+
 if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
   INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH" --require-publication)"
 else
   INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH")"
 fi
-
-# Validate semver format (supports prerelease like 1.0.0-beta1)
-if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
-  echo "Error: Invalid version format. Use semver (e.g., 1.0.0, 1.1.0-beta1)"
-  exit 1
-fi
-
-TAG="${SKILL_NAME}-v${VERSION}"
 
 # Check for uncommitted changes in skill directory
 if ! git diff --quiet "$SKILL_PATH/" 2>/dev/null; then
