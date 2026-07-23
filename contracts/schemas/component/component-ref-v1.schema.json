@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/component/component-ref-v1.schema.json",
+  "title": "ClawSec component reference v1",
+  "description": "Identity and exact-metadata digest syntax used by later contracts. Schema validation does not verify the digest against bytes or establish authorization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "name",
+    "version",
+    "harness",
+    "role",
+    "metadata_digest"
+  ],
+  "properties": {
+    "schema": {
+      "const": "clawsec.component-ref/v1"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "harness": {
+      "enum": [
+        "openclaw",
+        "hermes",
+        "nanoclaw",
+        "picoclaw"
+      ]
+    },
+    "role": {
+      "enum": [
+        "core",
+        "suite",
+        "guardian"
+      ]
+    },
+    "family": {
+      "const": "drift"
+    },
+    "metadata_digest": {
+      "description": "SHA-256 digest of the exact skill.json bytes shipped in the artifact, prefixed with sha256:.",
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "role": {
+            "const": "guardian"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "then": {
+        "required": [
+          "family"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "family"
+          ]
+        }
+      }
+    }
+  ]
+}

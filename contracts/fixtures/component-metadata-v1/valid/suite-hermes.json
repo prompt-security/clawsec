@@ -1,0 +1,49 @@
+{
+  "name": "clawsec-suite-hermes",
+  "version": "0.1.0-rc.1",
+  "description": "Contract fixture only; this is not a Hermes support claim.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "platform": "hermes",
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true
+      }
+    ]
+  },
+  "hermes": {},
+  "clawsec": {
+    "contract_version": "1",
+    "role": "suite",
+    "maturity": "experimental",
+    "supported_harness": {
+      "name": "hermes",
+      "minimum_version": "0.0.0",
+      "maximum_version_exclusive": "0.0.1"
+    },
+    "provides": [
+      "suite.catalog",
+      "suite.disable",
+      "suite.doctor",
+      "suite.enable",
+      "suite.install",
+      "suite.recommend",
+      "suite.status"
+    ],
+    "management_protocol_provides": [],
+    "management_protocol_requires": [
+      "clawsec-core/v1"
+    ],
+    "install_requires": [],
+    "runtime_requires": [
+      {
+        "name": "clawsec-core-hermes",
+        "minimum_version": "0.1.0-rc.1",
+        "maximum_version_exclusive": "1.0.0"
+      }
+    ],
+    "legacy_names": []
+  }
+}

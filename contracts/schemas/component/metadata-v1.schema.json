@@ -1,0 +1,307 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/component/metadata-v1.schema.json",
+  "title": "ClawSec package metadata v1",
+  "description": "Normalized identity, role, harness support, capability, dependency, maturity, and NanoClaw v2 native metadata for one canonical ClawSec package.",
+  "type": "object",
+  "required": [
+    "name",
+    "version",
+    "platform",
+    "sbom",
+    "clawsec"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "enum": [
+        "openclaw",
+        "hermes",
+        "nanoclaw",
+        "picoclaw"
+      ]
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "openclaw",
+          "hermes",
+          "nanoclaw",
+          "picoclaw"
+        ]
+      }
+    },
+    "openclaw": {
+      "type": "object"
+    },
+    "hermes": {
+      "type": "object"
+    },
+    "nanoclaw": {
+      "description": "Contract v1 keeps the canonical NanoClaw platform block empty. V2 host placement and ownership are declared only in clawsec.native.",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "picoclaw": {
+      "type": "object"
+    },
+    "sbom": {
+      "type": "object",
+      "required": [
+        "files"
+      ],
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "path"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "clawsec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "role",
+        "maturity",
+        "supported_harness",
+        "provides",
+        "management_protocol_provides",
+        "management_protocol_requires",
+        "install_requires",
+        "runtime_requires",
+        "legacy_names"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "1"
+        },
+        "role": {
+          "enum": [
+            "core",
+            "suite",
+            "guardian"
+          ]
+        },
+        "family": {
+          "const": "drift"
+        },
+        "maturity": {
+          "description": "Capability maturity vocabulary only. stable requires separate conformance and catalog authorization; deprecated requires a separate compatibility successor mapping.",
+          "enum": [
+            "draft",
+            "experimental",
+            "stable",
+            "deprecated",
+            "internal"
+          ]
+        },
+        "supported_harness": {
+          "$ref": "#/definitions/supportedHarness"
+        },
+        "provides": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+          }
+        },
+        "management_protocol_provides": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "const": "clawsec-core/v1"
+          }
+        },
+        "management_protocol_requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "const": "clawsec-core/v1"
+          }
+        },
+        "install_requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/packageDependency"
+          }
+        },
+        "runtime_requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/packageDependency"
+          }
+        },
+        "legacy_names": {
+          "description": "Non-authoritative migration inputs. A legacy monolith may appear on multiple canonical successors; this field never creates an alias or installation redirect.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          }
+        },
+        "default_mode": {
+          "const": "read-only"
+        },
+        "native": {
+          "$ref": "#/definitions/nanoclawNative"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "const": "guardian"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "then": {
+            "required": [
+              "family",
+              "default_mode"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "family"
+                  ]
+                },
+                {
+                  "required": [
+                    "default_mode"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "supportedHarness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "minimum_version",
+        "maximum_version_exclusive"
+      ],
+      "properties": {
+        "name": {
+          "enum": [
+            "openclaw",
+            "hermes",
+            "nanoclaw",
+            "picoclaw"
+          ]
+        },
+        "minimum_version": {
+          "description": "Inclusive final SemVer harness bound. Prerelease and build metadata are forbidden.",
+          "type": "string",
+          "minLength": 1
+        },
+        "maximum_version_exclusive": {
+          "description": "Exclusive final SemVer harness bound. Prerelease and build metadata are forbidden.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "packageDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "minimum_version",
+        "maximum_version_exclusive"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "minimum_version": {
+          "description": "Inclusive compatibility bound. Must be final SemVer or a canonical beta.N/rc.N prerelease, without build metadata. Exact candidate selection and lifecycle authorization are separate contracts.",
+          "type": "string",
+          "minLength": 1
+        },
+        "maximum_version_exclusive": {
+          "description": "Exclusive final SemVer compatibility bound. Prerelease and build metadata are forbidden.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "nanoclawNative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "install_location",
+        "apply_leaves_state",
+        "remove_document_required",
+        "installation_owner",
+        "removal_owner"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "utility",
+            "operational"
+          ]
+        },
+        "install_location": {
+          "type": "string",
+          "pattern": "^\\.claude/skills/[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "apply_leaves_state": {
+          "type": "boolean"
+        },
+        "remove_document_required": {
+          "type": "boolean"
+        },
+        "installation_owner": {
+          "const": "nanoclaw-host"
+        },
+        "removal_owner": {
+          "const": "nanoclaw-host"
+        }
+      }
+    }
+  }
+}

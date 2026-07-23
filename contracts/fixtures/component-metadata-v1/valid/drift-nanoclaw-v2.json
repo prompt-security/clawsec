@@ -1,0 +1,56 @@
+{
+  "name": "clawsec-drift-guardian-nanoclaw",
+  "version": "0.1.0-rc.1",
+  "description": "Contract fixture only; this is not a NanoClaw v2 support claim.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "platform": "nanoclaw",
+  "sbom": {
+    "files": [
+      {
+        "path": "REMOVE.md",
+        "required": true
+      },
+      {
+        "path": "SKILL.md",
+        "required": true
+      }
+    ]
+  },
+  "nanoclaw": {},
+  "clawsec": {
+    "contract_version": "1",
+    "role": "guardian",
+    "family": "drift",
+    "maturity": "experimental",
+    "supported_harness": {
+      "name": "nanoclaw",
+      "minimum_version": "2.1.17",
+      "maximum_version_exclusive": "2.2.0"
+    },
+    "provides": [
+      "guardian.status",
+      "posture.diff",
+      "posture.snapshot",
+      "posture.verify"
+    ],
+    "management_protocol_provides": [],
+    "management_protocol_requires": [
+      "clawsec-core/v1"
+    ],
+    "install_requires": [],
+    "runtime_requires": [],
+    "legacy_names": [
+      "clawsec-nanoclaw"
+    ],
+    "default_mode": "read-only",
+    "native": {
+      "category": "utility",
+      "install_location": ".claude/skills/clawsec-drift-guardian-nanoclaw",
+      "apply_leaves_state": true,
+      "remove_document_required": true,
+      "installation_owner": "nanoclaw-host",
+      "removal_owner": "nanoclaw-host"
+    }
+  }
+}
