@@ -231,10 +231,12 @@
           ]
         },
         "minimum_version": {
+          "description": "Inclusive final SemVer harness bound. Prerelease and build metadata are forbidden.",
           "type": "string",
           "minLength": 1
         },
         "maximum_version_exclusive": {
+          "description": "Exclusive final SemVer harness bound. Prerelease and build metadata are forbidden.",
           "type": "string",
           "minLength": 1
         }
@@ -254,10 +256,12 @@
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         },
         "minimum_version": {
+          "description": "Inclusive compatibility bound. Must be final SemVer or a canonical beta.N/rc.N prerelease, without build metadata. Exact candidate selection and lifecycle authorization are separate contracts.",
           "type": "string",
           "minLength": 1
         },
         "maximum_version_exclusive": {
+          "description": "Exclusive final SemVer compatibility bound. Prerelease and build metadata are forbidden.",
           "type": "string",
           "minLength": 1
         }

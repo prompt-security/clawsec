@@ -40,7 +40,7 @@
     "runtime_requires": [
       {
         "name": "clawsec-core-nanoclaw",
-        "minimum_version": "0.1.0",
+        "minimum_version": "0.1.0-rc.1",
         "maximum_version_exclusive": "1.0.0"
       }
     ],

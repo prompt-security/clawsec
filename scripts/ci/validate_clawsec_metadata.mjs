@@ -7,7 +7,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import Ajv from "ajv";
 
-import { compareSemverV2, parseSemverV2 } from "./lifecycle_semver.mjs";
+import {
+  classifyLifecycleVersion,
+  compareSemverV2,
+  parseSemverV2,
+} from "./lifecycle_semver.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const metadataSchemaPath = path.join(
@@ -250,7 +254,12 @@ function validatePackageVersion(version, errors, errorPath = "/version") {
   }
 }
 
-function validateBoundedVersionRange(range, errorPath, errors) {
+function validateBoundedVersionRange(
+  range,
+  errorPath,
+  errors,
+  { allowCandidateMinimum = false } = {},
+) {
   let minimum;
   let maximum;
   try {
@@ -261,17 +270,29 @@ function validateBoundedVersionRange(range, errorPath, errors) {
     return false;
   }
 
+  const minimumLifecycle = classifyLifecycleVersion(range.minimum_version);
+  const minimumIsAllowed = minimum.build.length === 0
+    && (
+      minimumLifecycle === "final"
+      || (
+        allowCandidateMinimum
+        && (minimumLifecycle === "beta" || minimumLifecycle === "rc")
+      )
+    );
+  const maximumIsFinal = maximum.prerelease.length === 0 && maximum.build.length === 0;
+
   if (
-    minimum.prerelease.length > 0
-    || minimum.build.length > 0
-    || maximum.prerelease.length > 0
-    || maximum.build.length > 0
+    !minimumIsAllowed
+    || !maximumIsFinal
   ) {
+    const message = allowCandidateMinimum
+      ? "dependency minimum_version must be final SemVer or canonical beta.N/rc.N without build metadata; maximum_version_exclusive must be final SemVer without build metadata"
+      : "version-range bounds must be final SemVer versions without build metadata";
     addError(
       errors,
       "VERSION_RANGE_INVALID",
       errorPath,
-      "version-range bounds must be final SemVer versions without build metadata",
+      message,
     );
     return false;
   }
@@ -427,7 +448,12 @@ function validateDependencies(dependencies, errorPath, skill, errors) {
   const seenNames = new Set();
   for (const [index, dependency] of dependencies.entries()) {
     const dependencyPath = `${errorPath}/${index}`;
-    validateBoundedVersionRange(dependency, dependencyPath, errors);
+    validateBoundedVersionRange(
+      dependency,
+      dependencyPath,
+      errors,
+      { allowCandidateMinimum: true },
+    );
     if (seenNames.has(dependency.name)) {
       addError(
         errors,

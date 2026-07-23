@@ -140,6 +140,53 @@ try {
   const suiteHermes = fixtures.get("suite-hermes.json");
   const driftPicoclaw = fixtures.get("drift-picoclaw.json");
   const coreNanoclaw = fixtures.get("core-nanoclaw-v2.json");
+  const suiteNanoclaw = fixtures.get("suite-nanoclaw-v2.json");
+
+  const rcSuiteCoreCandidates = [
+    {
+      suite: suiteHermes,
+      coreName: "clawsec-core-hermes",
+      coreVersion: "0.1.0-rc.1",
+    },
+    {
+      suite: suiteNanoclaw,
+      coreName: coreNanoclaw.name,
+      coreVersion: coreNanoclaw.version,
+    },
+  ];
+  for (const { suite, coreName, coreVersion } of rcSuiteCoreCandidates) {
+    const coreDependency = suite.clawsec.runtime_requires[0];
+    assert.equal(coreDependency.name, coreName);
+    assert.equal(
+      coreDependency.minimum_version,
+      coreVersion,
+      `${suite.name}@${suite.version} must start compatibility at ${coreName}@${coreVersion}`,
+    );
+  }
+
+  for (const minimumVersion of [
+    "0.1.0-beta.1",
+    "0.1.0-rc.1",
+    "0.1.0",
+  ]) {
+    const suite = clone(suiteHermes);
+    suite.clawsec.runtime_requires[0].minimum_version = minimumVersion;
+    const skillDir = await materializeSkill(
+      suite,
+      `valid-dependency-minimum-${minimumVersion.replaceAll(".", "-")}`,
+    );
+    const result = validateClawsecMetadata({
+      skill: suite,
+      skillDir,
+      requireClawsec: true,
+    });
+    assert.equal(
+      result.valid,
+      true,
+      `dependency minimum ${minimumVersion} must pass metadata validation: `
+        + JSON.stringify(result.errors),
+    );
+  }
 
   const invalidCases = [
     {
@@ -220,6 +267,70 @@ try {
       mutate: (skill) => {
         skill.clawsec.supported_harness.minimum_version = "2.0.0";
         skill.clawsec.supported_harness.maximum_version_exclusive = "1.0.0";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "harness-prerelease-lower-bound",
+      base: coreOpenclaw,
+      mutate: (skill) => {
+        skill.clawsec.supported_harness.minimum_version = "0.1.0-rc.1";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "harness-prerelease-upper-bound",
+      base: coreOpenclaw,
+      mutate: (skill) => {
+        skill.clawsec.supported_harness.maximum_version_exclusive = "1.0.0-rc.1";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "harness-build-lower-bound",
+      base: coreOpenclaw,
+      mutate: (skill) => {
+        skill.clawsec.supported_harness.minimum_version = "0.1.0+build";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "harness-build-upper-bound",
+      base: coreOpenclaw,
+      mutate: (skill) => {
+        skill.clawsec.supported_harness.maximum_version_exclusive = "1.0.0+build";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "dependency-legacy-prerelease-lower-bound",
+      base: suiteHermes,
+      mutate: (skill) => {
+        skill.clawsec.runtime_requires[0].minimum_version = "0.1.0-rc1";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "dependency-build-lower-bound",
+      base: suiteHermes,
+      mutate: (skill) => {
+        skill.clawsec.runtime_requires[0].minimum_version = "0.1.0-rc.1+lab";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "dependency-prerelease-upper-bound",
+      base: suiteHermes,
+      mutate: (skill) => {
+        skill.clawsec.runtime_requires[0].maximum_version_exclusive = "1.0.0-rc.1";
+      },
+      code: "VERSION_RANGE_INVALID",
+    },
+    {
+      name: "dependency-build-upper-bound",
+      base: suiteHermes,
+      mutate: (skill) => {
+        skill.clawsec.runtime_requires[0].maximum_version_exclusive = "1.0.0+build";
       },
       code: "VERSION_RANGE_INVALID",
     },
