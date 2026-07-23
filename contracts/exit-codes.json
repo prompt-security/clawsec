@@ -1,0 +1,39 @@
+{
+  "contract": "clawsec.cli-exit-codes/v1",
+  "contract_version": "1",
+  "passthrough_child_exit_codes": false,
+  "entries": [
+    {
+      "code": 0,
+      "outcome": "pass"
+    },
+    {
+      "code": 1,
+      "outcome": "error"
+    },
+    {
+      "code": 2,
+      "outcome": "finding"
+    },
+    {
+      "code": 3,
+      "outcome": "blocked"
+    },
+    {
+      "code": 4,
+      "outcome": "degraded"
+    },
+    {
+      "code": 5,
+      "outcome": "unsupported"
+    },
+    {
+      "code": 6,
+      "outcome": "not_applicable"
+    },
+    {
+      "code": 42,
+      "outcome": "confirmation_required"
+    }
+  ]
+}
