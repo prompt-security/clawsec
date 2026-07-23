@@ -25,7 +25,7 @@ import {
 
 const helperPath = fileURLToPath(new URL("./ci/stable_tag_policy.mjs", import.meta.url));
 const workflowPath = fileURLToPath(
-  new URL("../.github/workflows/skill-release.yml", import.meta.url),
+  new URL("../.github/workflows/controlled-skill-release.yml", import.meta.url),
 );
 const releaseScriptPath = fileURLToPath(new URL("./release-skill.sh", import.meta.url));
 const inventoryPath = fileURLToPath(
@@ -263,10 +263,11 @@ assert.match(policyJob, /permissions:\n\s+contents: read/);
 assert.doesNotMatch(policyJob, /contents: write|pages: write|id-token: write|secrets\.|CLAWHUB_TOKEN/);
 assert.match(policyJob, /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
 assert.match(policyJob, /fetch-depth: 0[\s\S]*persist-credentials: false/);
-assert.match(policyJob, /REQUESTED_TAG: \$\{\{ github\.event_name == 'workflow_dispatch'/);
+assert.match(policyJob, /REQUESTED_TAG: \$\{\{ inputs\.tag \}\}/);
 assert.match(policyJob, /stable_tag_policy\.mjs --tag "\$REQUESTED_TAG"/);
 assert.match(policyJob, /git show-ref --verify --quiet "refs\/tags\/\$\{validated_tag\}"/);
-assert.match(policyJob, /"\$REQUESTED_REF" = "refs\/tags\/\$\{validated_tag\}"/);
+assert.match(policyJob, /"\$REQUESTED_REF" = "refs\/heads\/\$DEFAULT_BRANCH"/);
+assert.match(policyJob, /controlled_tag_creation\.mjs verify-release/);
 
 assert.match(releaseJob, /needs: stable-publication-policy/);
 assert.match(releaseJob, /permissions:\n\s+contents: write/);
@@ -274,8 +275,9 @@ assert.match(releaseJob, /VALIDATED_TAG: \$\{\{ needs\.stable-publication-policy
 assert.doesNotMatch(releaseJob, /github\.ref_name|github\.event\.inputs\.tag/);
 assert.match(
   releaseJob,
-  /ref: refs\/tags\/\$\{\{ needs\.stable-publication-policy\.outputs\.tag \}\}/,
+  /ref: \$\{\{ needs\.stable-publication-policy\.outputs\.peeled_commit_oid \}\}/,
 );
+assert.match(releaseJob, /inputs\.operation == 'controlled_release'/);
 assert.match(releaseJob, /tag_name: \$\{\{ needs\.stable-publication-policy\.outputs\.tag \}\}/);
 assert.match(releaseJob, /prerelease: false/);
 
@@ -284,11 +286,13 @@ assert.match(publishJob, /needs\.stable-publication-policy\.outputs\.publication
 assert.match(publishJob, /CLAWHUB_TOKEN: \$\{\{ secrets\.CLAWHUB_TOKEN \}\}/);
 assert.match(
   publishJob,
-  /ref: refs\/tags\/\$\{\{ needs\.stable-publication-policy\.outputs\.tag \}\}/,
+  /ref: \$\{\{ needs\.stable-publication-policy\.outputs\.peeled_commit_oid \}\}/,
 );
+assert.match(publishJob, /inputs\.operation == 'controlled_release'/);
 
 assert.match(republishJob, /needs: stable-publication-policy/);
 assert.match(republishJob, /needs\.stable-publication-policy\.outputs\.publication_eligible == 'true'/);
+assert.match(republishJob, /inputs\.operation == 'republish_clawhub'/);
 assert.match(republishJob, /VALIDATED_TAG: \$\{\{ needs\.stable-publication-policy\.outputs\.tag \}\}/);
 assert.doesNotMatch(republishJob, /github\.event\.inputs\.tag|github\.ref_name/);
 assert.match(
@@ -313,16 +317,21 @@ const scriptPolicyIndex = requiredIndex(
   "release-skill.sh must call the shared stable tag policy",
 );
 for (const [needle, operation] of [
-  ["TEMP_DIR=$(mktemp -d)", "temporary mutation staging"],
-  ['jq --arg v "$VERSION"', "skill metadata write"],
+  ['TEMP_DIR="$(mktemp -d)"', "temporary mutation staging"],
+  ['jq --arg version "$VERSION"', "skill metadata write"],
   ['git add "$file"', "Git staging"],
   ['git commit -m "chore($SKILL_NAME): bump version to $VERSION"', "Git commit"],
-  ['git tag -a "$TAG"', "tag creation"],
-  ['gh release create "$TAG"', "GitHub Release creation"],
 ]) {
   assert.ok(
     scriptPolicyIndex < requiredIndex(releaseScript, needle, `${operation} must remain present`),
     `stable tag policy must run before ${operation}`,
+  );
+}
+for (const forbidden of ["--force-tag", "git tag", "gh release create", "git reset --hard"]) {
+  assert.equal(
+    releaseScript.includes(forbidden),
+    false,
+    `version-preparation helper must not contain ${forbidden}`,
   );
 }
 assert.doesNotMatch(
@@ -369,6 +378,10 @@ try {
     writeFile(
       path.join(fixtureSkillDir, "skill.json"),
       `${JSON.stringify({ name: "stable-skill", version: "0.1.0", installable: true }, null, 2)}\n`,
+    ),
+    writeFile(
+      path.join(fixtureSkillDir, "SKILL.md"),
+      "---\nname: stable-skill\nversion: 0.1.0\n---\n\n# Stable skill\n",
     ),
     writeFile(
       path.join(fakeBinDir, "gh"),

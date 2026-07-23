@@ -1,0 +1,283 @@
+name: Create Skill Release Tag
+run-name: Create ${{ inputs.package_name }} v${{ inputs.version }} from ${{ inputs.protected_main_commit }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: 'Skill package directory name (for example, clawsec-suite)'
+        required: true
+        type: string
+      version:
+        description: 'Final SemVer only (for example, 0.2.0)'
+        required: true
+        type: string
+      protected_main_commit:
+        description: 'Exact 40-character commit currently at protected main'
+        required: true
+        type: string
+
+permissions: read-all
+
+concurrency:
+  group: controlled-skill-tag-${{ inputs.package_name }}-v${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.preflight.outputs.tag }}
+      protected_main_commit: ${{ steps.preflight.outputs.protected_main_commit }}
+      release_attempt_id: ${{ steps.preflight.outputs.release_attempt_id }}
+      preflight: ${{ steps.preflight.outputs.preflight }}
+    steps:
+      - name: Require protected default-branch dispatch and enabled controller
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RELEASE_ENABLED: ${{ vars.CLAWSEC_CONTROLLED_RELEASE_ENABLED }}
+          WORKFLOW_REF: ${{ github.ref }}
+          RELEASE_APP_CLIENT_ID: ${{ vars.CLAWSEC_RELEASE_APP_CLIENT_ID }}
+          RELEASE_APP_ID: ${{ vars.CLAWSEC_RELEASE_APP_ID }}
+          RELEASE_TAG_RULESET_ID: ${{ vars.CLAWSEC_RELEASE_TAG_RULESET_ID }}
+          RELEASE_TAG_RULESET_UPDATED_AT: ${{ vars.CLAWSEC_RELEASE_TAG_RULESET_UPDATED_AT }}
+        run: |
+          set -euo pipefail
+          test "$DEFAULT_BRANCH" = "main"
+          test "$WORKFLOW_REF" = "refs/heads/$DEFAULT_BRANCH"
+          test "$RELEASE_ENABLED" = "true"
+          test -n "$RELEASE_APP_CLIENT_ID"
+          test -n "$RELEASE_APP_ID"
+          test -n "$RELEASE_TAG_RULESET_ID"
+          test -n "$RELEASE_TAG_RULESET_UPDATED_AT"
+
+      - name: Checkout current protected policy
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: policy
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout requested protected-main source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.protected_main_commit }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Validate source and preflight server state without writes
+        id: preflight
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          PROTECTED_MAIN_COMMIT: ${{ inputs.protected_main_commit }}
+          RELEASE_APP_ID: ${{ vars.CLAWSEC_RELEASE_APP_ID }}
+          RELEASE_ATTEMPT_ID: ${{ github.repository_id }}:${{ github.run_id }}
+          RELEASE_TAG_RULESET_ID: ${{ vars.CLAWSEC_RELEASE_TAG_RULESET_ID }}
+          RELEASE_TAG_RULESET_UPDATED_AT: ${{ vars.CLAWSEC_RELEASE_TAG_RULESET_UPDATED_AT }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          decision="$(node policy/scripts/ci/controlled_tag_creation.mjs preflight \
+            --package "$PACKAGE_NAME" \
+            --version "$VERSION" \
+            --source-commit "$PROTECTED_MAIN_COMMIT" \
+            --release-attempt-id "$RELEASE_ATTEMPT_ID" \
+            --repository "$REPOSITORY" \
+            --ruleset-id "$RELEASE_TAG_RULESET_ID" \
+            --ruleset-updated-at "$RELEASE_TAG_RULESET_UPDATED_AT" \
+            --app-id "$RELEASE_APP_ID" \
+            --default-branch "$DEFAULT_BRANCH" \
+            --repo-root "$GITHUB_WORKSPACE/source")"
+          printf '%s\n' "$decision" | jq -e \
+            '.source_checkout_verified == true and (.preflight == "new_tag" or .preflight == "exact_retry")' \
+            >/dev/null
+          {
+            printf 'tag=%s\n' "$(printf '%s\n' "$decision" | jq -r '.tag')"
+            printf 'protected_main_commit=%s\n' \
+              "$(printf '%s\n' "$decision" | jq -r '.protected_main_commit')"
+            printf 'release_attempt_id=%s\n' \
+              "$(printf '%s\n' "$decision" | jq -r '.release_attempt_id')"
+            printf 'preflight=%s\n' "$(printf '%s\n' "$decision" | jq -r '.preflight')"
+          } >> "$GITHUB_OUTPUT"
+
+  write-annotated-tag:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: clawsec-stable-release
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.write.outputs.tag }}
+      tag_object_oid: ${{ steps.write.outputs.tag_object_oid }}
+      peeled_commit_oid: ${{ steps.write.outputs.peeled_commit_oid }}
+      protected_main_commit: ${{ steps.write.outputs.protected_main_commit }}
+      release_attempt_id: ${{ steps.write.outputs.release_attempt_id }}
+      operation: ${{ steps.write.outputs.operation }}
+      tag_ruleset_id: ${{ steps.write.outputs.tag_ruleset_id }}
+      tag_ruleset_updated_at: ${{ steps.write.outputs.tag_ruleset_updated_at }}
+      release_app_id: ${{ steps.write.outputs.release_app_id }}
+    steps:
+      - name: Checkout current protected policy
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: policy
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout requested protected-main source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.validate.outputs.protected_main_commit }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Recheck enabled controller after environment approval
+        env:
+          RELEASE_ENABLED: ${{ vars.CLAWSEC_CONTROLLED_RELEASE_ENABLED }}
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_ENABLED" != "true" ]]; then
+            echo "Controlled stable releases are disabled after environment approval." >&2
+            exit 1
+          fi
+
+      - name: Mint repository-scoped release App token
+        id: release-app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.CLAWSEC_RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CLAWSEC_RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Preflight ruleset and create or exactly resume annotated tag
+        id: write
+        env:
+          CONTROLLED_TAG_TOKEN: ${{ steps.release-app-token.outputs.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          PROTECTED_MAIN_COMMIT: ${{ needs.validate.outputs.protected_main_commit }}
+          RELEASE_APP_ID: ${{ vars.CLAWSEC_RELEASE_APP_ID }}
+          RELEASE_ATTEMPT_ID: ${{ needs.validate.outputs.release_attempt_id }}
+          RELEASE_TAG_RULESET_ID: ${{ vars.CLAWSEC_RELEASE_TAG_RULESET_ID }}
+          RELEASE_TAG_RULESET_UPDATED_AT: ${{ vars.CLAWSEC_RELEASE_TAG_RULESET_UPDATED_AT }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          result="$(node policy/scripts/ci/controlled_tag_creation.mjs create \
+            --package "$PACKAGE_NAME" \
+            --version "$VERSION" \
+            --source-commit "$PROTECTED_MAIN_COMMIT" \
+            --release-attempt-id "$RELEASE_ATTEMPT_ID" \
+            --repository "$REPOSITORY" \
+            --default-branch "$DEFAULT_BRANCH" \
+            --ruleset-id "$RELEASE_TAG_RULESET_ID" \
+            --ruleset-updated-at "$RELEASE_TAG_RULESET_UPDATED_AT" \
+            --app-id "$RELEASE_APP_ID" \
+            --repo-root "$GITHUB_WORKSPACE/source")"
+          printf '%s\n' "$result" | jq -e \
+            '(.operation == "created" or .operation == "resumed") and
+             (.tag_object_oid | test("^[0-9a-f]{40}$")) and
+             (.peeled_commit_oid | test("^[0-9a-f]{40}$"))' >/dev/null
+          {
+            printf 'tag=%s\n' "$(printf '%s\n' "$result" | jq -r '.tag')"
+            printf 'tag_object_oid=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.tag_object_oid')"
+            printf 'peeled_commit_oid=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.peeled_commit_oid')"
+            printf 'protected_main_commit=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.protected_main_commit')"
+            printf 'release_attempt_id=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.release_attempt_id')"
+            printf 'operation=%s\n' "$(printf '%s\n' "$result" | jq -r '.operation')"
+            printf 'tag_ruleset_id=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.tag_ruleset_id')"
+            printf 'tag_ruleset_updated_at=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.tag_ruleset_updated_at')"
+            printf 'release_app_id=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.release_app_id')"
+          } >> "$GITHUB_OUTPUT"
+
+  dispatch-release:
+    needs: write-annotated-tag
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Checkout current protected policy
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Reverify exact tuple and dispatch current release workflow
+        id: dispatch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PEELED_COMMIT_OID: ${{ needs.write-annotated-tag.outputs.peeled_commit_oid }}
+          PROTECTED_MAIN_COMMIT: ${{ needs.write-annotated-tag.outputs.protected_main_commit }}
+          RELEASE_ATTEMPT_ID: ${{ needs.write-annotated-tag.outputs.release_attempt_id }}
+          RELEASE_APP_ID: ${{ needs.write-annotated-tag.outputs.release_app_id }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG_RULESET_ID: ${{ needs.write-annotated-tag.outputs.tag_ruleset_id }}
+          RELEASE_TAG_RULESET_UPDATED_AT: ${{ needs.write-annotated-tag.outputs.tag_ruleset_updated_at }}
+          TAG: ${{ needs.write-annotated-tag.outputs.tag }}
+          TAG_OBJECT_OID: ${{ needs.write-annotated-tag.outputs.tag_object_oid }}
+        run: |
+          set -euo pipefail
+          result="$(node scripts/ci/controlled_tag_creation.mjs dispatch-release \
+            --tag "$TAG" \
+            --tag-object-oid "$TAG_OBJECT_OID" \
+            --peeled-commit-oid "$PEELED_COMMIT_OID" \
+            --protected-main-commit "$PROTECTED_MAIN_COMMIT" \
+            --release-attempt-id "$RELEASE_ATTEMPT_ID" \
+            --repository "$REPOSITORY" \
+            --ruleset-id "$RELEASE_TAG_RULESET_ID" \
+            --ruleset-updated-at "$RELEASE_TAG_RULESET_UPDATED_AT" \
+            --app-id "$RELEASE_APP_ID" \
+            --default-branch "$DEFAULT_BRANCH")"
+          printf '%s\n' "$result" | jq -e \
+            '.provenance_verified == true and (.downstream_workflow_run_id | type == "number")' \
+            >/dev/null
+          {
+            printf 'workflow_run_id=%s\n' \
+              "$(printf '%s\n' "$result" | jq -r '.downstream_workflow_run_id')"
+            printf 'html_url=%s\n' "$(printf '%s\n' "$result" | jq -r '.downstream_html_url')"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Record downstream release run
+        env:
+          DOWNSTREAM_HTML_URL: ${{ steps.dispatch.outputs.html_url }}
+          DOWNSTREAM_RUN_ID: ${{ steps.dispatch.outputs.workflow_run_id }}
+        run: |
+          {
+            printf 'Controlled release workflow run: [%s](%s)\n' \
+              "$DOWNSTREAM_RUN_ID" "$DOWNSTREAM_HTML_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

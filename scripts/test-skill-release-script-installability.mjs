@@ -65,6 +65,10 @@ try {
       }, null, 2)}\n`,
     ),
     writeFile(
+      path.join(skillDir, "SKILL.md"),
+      "---\nname: retired-skill\nversion: 0.0.1\n---\n\n# Retired skill\n",
+    ),
+    writeFile(
       path.join(skillDir, "CHANGELOG.md"),
       "# Changelog\n\n## [0.0.2] - 2026-07-22\n\n- Test release.\n",
     ),
@@ -85,8 +89,8 @@ try {
 
   const mainHead = runGit("rev-parse", "HEAD");
   const fullRelease = run("bash", ["scripts/release-skill.sh", "retired-skill", "0.0.2"]);
-  assert.equal(fullRelease.status, 1, "main-branch release of a non-installable skill must fail");
-  assert.match(fullRelease.stderr, /Publication denied .*"installable": false/);
+  assert.equal(fullRelease.status, 1, "main-branch version preparation must fail");
+  assert.match(fullRelease.stderr, /must run on a review branch, not protected main/);
   assert.equal(runGit("rev-parse", "HEAD"), mainHead, "denial must happen before commit creation");
   assert.equal(runGit("status", "--short"), "", "denial must happen before file mutation or staging");
   assert.equal(runGit("tag", "--list"), "", "denial must happen before tag creation");
@@ -102,7 +106,7 @@ try {
   assert.match(prepOnly.stdout, /signed denial evidence/);
   assert.match(
     prepOnly.stdout,
-    /Do not create or push a public tag, GitHub Release, or skill-store publication/,
+    /Do not request a public tag, GitHub Release, store publication, or catalog activation/,
   );
   assert.equal(runGit("tag", "--list"), "", "review-only preparation must not create a tag");
   assert.equal(existsSync(ghAttemptPath), false, "review-only preparation must not create a release");
