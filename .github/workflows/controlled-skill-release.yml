@@ -1,9 +1,6 @@
 name: Skill Release
 
 on:
-  push:
-    tags:
-      - '*-v[0-9]*.[0-9]*.[0-9]*'
   pull_request:
     paths:
       - 'skills/**'
@@ -11,14 +8,51 @@ on:
       - '!skills/clawsec-feed/advisories/feed.json.sig'
       - '!skills/clawsec-suite/advisories/feed.json'
       - '!skills/clawsec-suite/advisories/feed.json.sig'
-      - '.github/workflows/skill-release.yml'
+      - '.github/workflows/controlled-skill-release.yml'
+      - '.github/workflows/create-skill-release-tag.yml'
       - 'scripts/ci/**'
       - 'scripts/test-skill-*.mjs'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag to re-publish to ClawHub (e.g., clawsec-suite-v0.0.10)'
+      operation:
+        description: 'Controlled stable release or stable ClawHub republish'
         required: true
+        default: republish_clawhub
+        type: choice
+        options:
+          - republish_clawhub
+          - controlled_release
+      tag:
+        description: 'Stable package-qualified tag (for example, clawsec-suite-v0.2.0)'
+        required: true
+        type: string
+      tag_object_oid:
+        description: 'Controlled release annotated tag-object ID'
+        required: false
+        type: string
+      peeled_commit_oid:
+        description: 'Controlled release peeled commit ID'
+        required: false
+        type: string
+      protected_main_commit:
+        description: 'Commit verified at protected main before tag creation'
+        required: false
+        type: string
+      release_attempt_id:
+        description: 'Durable repository_id:controller_run_id attempt ID'
+        required: false
+        type: string
+      tag_ruleset_id:
+        description: 'Operator-reviewed tag ruleset ID'
+        required: false
+        type: string
+      tag_ruleset_updated_at:
+        description: 'Exact updated_at of the operator-reviewed tag ruleset'
+        required: false
+        type: string
+      release_app_id:
+        description: 'Dedicated release GitHub App ID bound into the tag proof'
+        required: false
         type: string
 
 permissions: read-all
@@ -27,7 +61,7 @@ permissions: read-all
 # .github/clawhub-cli/package-lock.json — bump it there.
 
 concurrency:
-  group: skill-release-${{ github.ref }}
+  group: skill-release-${{ github.event.pull_request.number || inputs.tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -1100,8 +1134,8 @@ jobs:
 
   stable-publication-policy:
     if: >-
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch' &&
+      (inputs.operation == 'controlled_release' || inputs.operation == 'republish_clawhub')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1111,6 +1145,13 @@ jobs:
       version: ${{ steps.policy.outputs.version }}
       publication_eligible: ${{ steps.policy.outputs.publication_eligible }}
       reason_code: ${{ steps.policy.outputs.reason_code }}
+      tag_object_oid: ${{ steps.policy.outputs.tag_object_oid }}
+      peeled_commit_oid: ${{ steps.policy.outputs.peeled_commit_oid }}
+      protected_main_commit: ${{ steps.policy.outputs.protected_main_commit }}
+      release_attempt_id: ${{ steps.policy.outputs.release_attempt_id }}
+      tag_ruleset_id: ${{ steps.policy.outputs.tag_ruleset_id }}
+      tag_ruleset_updated_at: ${{ steps.policy.outputs.tag_ruleset_updated_at }}
+      release_app_id: ${{ steps.policy.outputs.release_app_id }}
     steps:
       - name: Checkout protected default-branch policy
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1127,11 +1168,33 @@ jobs:
       - name: Enforce final-version public tag policy
         id: policy
         env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           EVENT_NAME: ${{ github.event_name }}
+          GITHUB_TOKEN: ${{ github.token }}
+          OPERATION: ${{ inputs.operation }}
+          PEELED_COMMIT_OID: ${{ inputs.peeled_commit_oid }}
+          PROTECTED_MAIN_COMMIT: ${{ inputs.protected_main_commit }}
+          RELEASE_APP_ID: ${{ inputs.release_app_id }}
+          RELEASE_ATTEMPT_ID: ${{ inputs.release_attempt_id }}
+          RELEASE_TAG_RULESET_ID: ${{ inputs.tag_ruleset_id }}
+          RELEASE_TAG_RULESET_UPDATED_AT: ${{ inputs.tag_ruleset_updated_at }}
+          REPOSITORY: ${{ github.repository }}
           REQUESTED_REF: ${{ github.ref }}
-          REQUESTED_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+          REQUESTED_TAG: ${{ inputs.tag }}
+          TAG_OBJECT_OID: ${{ inputs.tag_object_oid }}
         run: |
           set -euo pipefail
+          test "$EVENT_NAME" = "workflow_dispatch"
+          test "$DEFAULT_BRANCH" = "main"
+          test "$REQUESTED_REF" = "refs/heads/$DEFAULT_BRANCH"
+          case "$OPERATION" in
+            controlled_release|republish_clawhub) ;;
+            *)
+              echo "::error::Unsupported release operation"
+              exit 1
+              ;;
+          esac
+
           decision="$(node scripts/ci/stable_tag_policy.mjs --tag "$REQUESTED_TAG")"
           printf '%s\n' "$decision" | jq -e \
             '.publication_eligible == true and .stable_authorized == false' >/dev/null
@@ -1141,10 +1204,34 @@ jobs:
           version="$(printf '%s\n' "$decision" | jq -r '.version')"
           reason_code="$(printf '%s\n' "$decision" | jq -r '.reason_code')"
 
-          if [ "$EVENT_NAME" = "push" ]; then
-            test "$REQUESTED_REF" = "refs/tags/${validated_tag}"
-          else
-            git show-ref --verify --quiet "refs/tags/${validated_tag}"
+          git show-ref --verify --quiet "refs/tags/${validated_tag}"
+
+          verified_tag_object_oid=""
+          verified_peeled_commit_oid=""
+          verified_protected_main_commit=""
+          verified_release_attempt_id=""
+          verified_tag_ruleset_id=""
+          verified_tag_ruleset_updated_at=""
+          verified_release_app_id=""
+          if [ "$OPERATION" = "controlled_release" ]; then
+            provenance="$(node scripts/ci/controlled_tag_creation.mjs verify-release \
+              --tag "$validated_tag" \
+              --tag-object-oid "$TAG_OBJECT_OID" \
+              --peeled-commit-oid "$PEELED_COMMIT_OID" \
+              --protected-main-commit "$PROTECTED_MAIN_COMMIT" \
+              --release-attempt-id "$RELEASE_ATTEMPT_ID" \
+              --repository "$REPOSITORY" \
+              --ruleset-id "$RELEASE_TAG_RULESET_ID" \
+              --ruleset-updated-at "$RELEASE_TAG_RULESET_UPDATED_AT" \
+              --app-id "$RELEASE_APP_ID")"
+            printf '%s\n' "$provenance" | jq -e '.provenance_verified == true' >/dev/null
+            verified_tag_object_oid="$(printf '%s\n' "$provenance" | jq -r '.tag_object_oid')"
+            verified_peeled_commit_oid="$(printf '%s\n' "$provenance" | jq -r '.peeled_commit_oid')"
+            verified_protected_main_commit="$(printf '%s\n' "$provenance" | jq -r '.protected_main_commit')"
+            verified_release_attempt_id="$(printf '%s\n' "$provenance" | jq -r '.release_attempt_id')"
+            verified_tag_ruleset_id="$(printf '%s\n' "$provenance" | jq -r '.tag_ruleset_id')"
+            verified_tag_ruleset_updated_at="$(printf '%s\n' "$provenance" | jq -r '.tag_ruleset_updated_at')"
+            verified_release_app_id="$(printf '%s\n' "$provenance" | jq -r '.release_app_id')"
           fi
 
           {
@@ -1153,10 +1240,20 @@ jobs:
             printf 'version=%s\n' "$version"
             printf 'publication_eligible=true\n'
             printf 'reason_code=%s\n' "$reason_code"
+            printf 'tag_object_oid=%s\n' "$verified_tag_object_oid"
+            printf 'peeled_commit_oid=%s\n' "$verified_peeled_commit_oid"
+            printf 'protected_main_commit=%s\n' "$verified_protected_main_commit"
+            printf 'release_attempt_id=%s\n' "$verified_release_attempt_id"
+            printf 'tag_ruleset_id=%s\n' "$verified_tag_ruleset_id"
+            printf 'tag_ruleset_updated_at=%s\n' "$verified_tag_ruleset_updated_at"
+            printf 'release_app_id=%s\n' "$verified_release_app_id"
           } >> "$GITHUB_OUTPUT"
 
   release-tag:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'controlled_release' &&
+      needs.stable-publication-policy.outputs.publication_eligible == 'true'
     needs: stable-publication-policy
     runs-on: ubuntu-latest
     permissions:
@@ -1187,8 +1284,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: refs/tags/${{ needs.stable-publication-policy.outputs.tag }}
+          ref: ${{ needs.stable-publication-policy.outputs.peeled_commit_oid }}
           persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+
+      - name: Reverify controlled tag provenance before release writes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PEELED_COMMIT_OID: ${{ needs.stable-publication-policy.outputs.peeled_commit_oid }}
+          PROTECTED_MAIN_COMMIT: ${{ needs.stable-publication-policy.outputs.protected_main_commit }}
+          RELEASE_APP_ID: ${{ needs.stable-publication-policy.outputs.release_app_id }}
+          RELEASE_ATTEMPT_ID: ${{ needs.stable-publication-policy.outputs.release_attempt_id }}
+          RELEASE_TAG_RULESET_ID: ${{ needs.stable-publication-policy.outputs.tag_ruleset_id }}
+          RELEASE_TAG_RULESET_UPDATED_AT: ${{ needs.stable-publication-policy.outputs.tag_ruleset_updated_at }}
+          REPOSITORY: ${{ github.repository }}
+          TAG: ${{ needs.stable-publication-policy.outputs.tag }}
+          TAG_OBJECT_OID: ${{ needs.stable-publication-policy.outputs.tag_object_oid }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/controlled_tag_creation.mjs verify-release \
+            --tag "$TAG" \
+            --tag-object-oid "$TAG_OBJECT_OID" \
+            --peeled-commit-oid "$PEELED_COMMIT_OID" \
+            --protected-main-commit "$PROTECTED_MAIN_COMMIT" \
+            --release-attempt-id "$RELEASE_ATTEMPT_ID" \
+            --repository "$REPOSITORY" \
+            --ruleset-id "$RELEASE_TAG_RULESET_ID" \
+            --ruleset-updated-at "$RELEASE_TAG_RULESET_UPDATED_AT" \
+            --app-id "$RELEASE_APP_ID" \
+            | jq -e '.provenance_verified == true' >/dev/null
 
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
@@ -1288,11 +1416,6 @@ jobs:
           echo "publish_clawhub=${PUBLISH_CLAWHUB}" >> $GITHUB_OUTPUT
           echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
-
-      - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 20
 
       - name: Validate npx skills install docs
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
@@ -1829,8 +1952,8 @@ jobs:
     # It publishes the verified GitHub release payload, never the raw source directory.
     # Retriggerable: can be manually triggered for failed publishes.
     if: >-
-      github.event_name == 'push' &&
-      startsWith(github.ref, 'refs/tags/') &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'controlled_release' &&
       needs.stable-publication-policy.outputs.publication_eligible == 'true' &&
       needs.release-tag.outputs.publish_clawhub == 'true'
     needs: [stable-publication-policy, release-tag]
@@ -1850,7 +1973,7 @@ jobs:
         if: needs.release-tag.outputs.publish_clawhub == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: refs/tags/${{ needs.stable-publication-policy.outputs.tag }}
+          ref: ${{ needs.stable-publication-policy.outputs.peeled_commit_oid }}
           persist-credentials: false
 
       - name: Setup Node
@@ -2022,10 +2145,10 @@ jobs:
           echo "✓ Verified published ClawHub package matches the signed release payload"
 
   republish-clawhub:
-    # Manual workflow to republish a specific tag to ClawHub
-    # Usage: Go to Actions → Skill Release → Run workflow → Enter tag name
+    # Manual current-policy path to republish a stable tag to ClawHub.
     if: >-
       github.event_name == 'workflow_dispatch' &&
+      inputs.operation == 'republish_clawhub' &&
       needs.stable-publication-policy.outputs.publication_eligible == 'true'
     needs: stable-publication-policy
     runs-on: ubuntu-latest

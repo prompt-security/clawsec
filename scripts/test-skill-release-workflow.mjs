@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const workflowPath = new URL('../.github/workflows/skill-release.yml', import.meta.url);
+const workflowPath = new URL('../.github/workflows/controlled-skill-release.yml', import.meta.url);
 const ciWorkflowPath = new URL('../.github/workflows/ci.yml', import.meta.url);
 const clawhubLockPath = new URL('../.github/clawhub-cli/package-lock.json', import.meta.url);
 const validateSkillInstallDocsPath = new URL('./ci/validate_skill_install_docs.mjs', import.meta.url);
@@ -86,7 +86,7 @@ for (const generatedFeedPath of [
 
 assert.match(
   workflow,
-  /pull_request:[\s\S]*paths:[\s\S]*- '\.github\/workflows\/skill-release\.yml'[\s\S]*- 'scripts\/ci\/\*\*'/,
+  /pull_request:[\s\S]*paths:[\s\S]*- '\.github\/workflows\/controlled-skill-release\.yml'[\s\S]*- '\.github\/workflows\/create-skill-release-tag\.yml'[\s\S]*- 'scripts\/ci\/\*\*'/,
   'Skill release workflow must also run when the release pipeline itself changes',
 );
 
@@ -531,7 +531,7 @@ assert.match(
 
 assert.ok(
   workflow.includes('simulated_version | test("^[0-9]+\\\\.[0-9]+\\\\.[0-9]+(-[a-zA-Z0-9]+)?$")'),
-  'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
+  'PR release simulation must continue recognizing legacy candidate versions while public preparation is stable-only',
 );
 
 assert.ok(
@@ -544,34 +544,49 @@ assert.ok(
   'release-skill.sh must update hardcoded release verification VERSION assignments when bumping a skill',
 );
 
-const releaseScriptInstallabilityIndex = requiredIndex(
+const releaseScriptPolicyIndex = requiredIndex(
   releaseSkillScript,
-  'node scripts/ci/skill_installability.mjs "$SKILL_PATH" --require-publication',
-  'release-skill.sh must enforce publication eligibility in full-release mode',
+  'node scripts/ci/stable_tag_policy.mjs --tag "$TAG"',
+  'release-skill.sh must enforce the shared stable policy before preparation',
 );
 for (const [needle, description] of [
-  ['jq --arg v "$VERSION"', 'version mutation'],
-  ['git add "$file"', 'staging'],
+  ['jq --arg version "$VERSION"', 'version mutation'],
+  ['git add -- "$file"', 'staging'],
   ['git commit -m', 'commit creation'],
-  ['git tag -a "$TAG"', 'tag creation'],
-  ['gh release create "$TAG"', 'GitHub release creation'],
 ]) {
   assert.ok(
-    releaseScriptInstallabilityIndex
+    releaseScriptPolicyIndex
       < requiredIndex(releaseSkillScript, needle, `release-skill.sh must contain ${description}`),
-    `release-skill.sh must reject a non-installable full release before ${description}`,
+    `release-skill.sh must enforce final-version policy before ${description}`,
   );
 }
 assert.match(
   releaseSkillScript,
-  /if \[\[ "\$IS_RELEASE_BRANCH" == "true" \|\| "\$FORCE_TAG" == "true" \]\]; then[\s\S]*skill_installability\.mjs "\$SKILL_PATH" --require-publication[\s\S]*else[\s\S]*skill_installability\.mjs "\$SKILL_PATH"/,
-  'release-skill.sh must validate all modes while requiring publication eligibility only for tag-capable mode',
+  /git status --porcelain=v1 --untracked-files=all[\s\S]*jq --arg version "\$VERSION"/,
+  'release-skill.sh must reject globally dirty source before version mutation',
 );
 assert.match(
   releaseSkillScript,
-  /if \[\[ "\$INSTALLABLE" == "false" \]\]; then[\s\S]*signed denial evidence[\s\S]*Do not create or push a public tag, GitHub Release, or skill-store publication/,
+  /restoring the original clean tree[\s\S]*cp -p "\$\{BACKUP_FILES\[\$index\]\}" "\$\{TARGET_FILES\[\$index\]\}"[\s\S]*git add -- "\$\{TARGET_FILES\[@\]\}"[\s\S]*trap cleanup EXIT/,
+  'release-skill.sh must restore both worktree files and index state when preparation fails',
+);
+assert.match(
+  releaseSkillScript,
+  /PREPARATION_COMPLETED=false[\s\S]*\[ "\$PREPARATION_COMPLETED" != "true" \][\s\S]*trap 'handle_signal 129' HUP[\s\S]*trap 'handle_signal 130' INT[\s\S]*trap 'handle_signal 143' TERM[\s\S]*PREPARATION_COMPLETED=true/,
+  'release-skill.sh must roll back incomplete preparation after fatal signals',
+);
+assert.match(
+  releaseSkillScript,
+  /if \[ "\$INSTALLABLE" = "false" \]; then[\s\S]*signed denial evidence[\s\S]*Do not request a public tag, GitHub Release, store publication, or catalog activation/,
   'Non-installable prep mode must not print follow-up instructions that authorize publication',
 );
+for (const forbidden of ['--force-tag', 'git tag', 'gh release create', 'git reset --hard']) {
+  assert.equal(
+    releaseSkillScript.includes(forbidden),
+    false,
+    `release-skill.sh must not retain direct release primitive: ${forbidden}`,
+  );
+}
 
 assert.match(
   workflow,

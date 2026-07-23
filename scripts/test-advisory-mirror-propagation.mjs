@@ -48,7 +48,10 @@ const feedUtils = await readFile(new URL("scripts/feed-utils.sh", root), "utf8")
 assert.ok(feedUtils.includes("skills/clawsec-suite/advisories/feed.json"));
 assert.ok(feedUtils.includes('for target in "$SKILL_FEED_PATH" "$SUITE_FEED_PATH" "$PUBLIC_FEED_PATH"'));
 
-const releaseWorkflow = await readFile(new URL(".github/workflows/skill-release.yml", root), "utf8");
+const releaseWorkflow = await readFile(
+  new URL(".github/workflows/controlled-skill-release.yml", root),
+  "utf8",
+);
 const installDocValidator = await readFile(new URL("scripts/ci/validate_skill_install_docs.mjs", root), "utf8");
 for (const mirrorPath of [
   "skills/clawsec-feed/advisories/feed.json",

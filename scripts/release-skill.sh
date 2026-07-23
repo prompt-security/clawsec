@@ -1,383 +1,224 @@
 #!/bin/bash
-# Usage: ./scripts/release-skill.sh <skill-name> <version> [--force-tag]
-# Example: ./scripts/release-skill.sh clawsec-feed 1.1.0
+# Usage: ./scripts/release-skill.sh <skill-name> <final-version>
+# Example: ./scripts/release-skill.sh clawsec-suite 0.2.0
 #
-# This script ensures version consistency by:
-# 1. Updating skill.json with the new version
-# 2. Updating any hardcoded version URLs in skill.json and SKILL.md
-# 3. Committing the changes
-# 4. Creating the git tag (only on main/master branch)
-#
-# Branch-aware workflow:
-#   Feature branch: Updates versions, commits, pushes → CI validates build
-#   Main branch:    Updates versions, commits, creates tag → push triggers release
-#
-# Use --force-tag to create a tag even when not on main/master.
+# This is a preparation helper. It updates and commits a final version on a
+# review branch. It never creates or pushes a tag and never creates a GitHub
+# Release. After the reviewed change reaches protected main, use the
+# "Create Skill Release Tag" workflow with that exact main commit.
 
 set -euo pipefail
 
-# Parse arguments
-FORCE_TAG=false
-POSITIONAL_ARGS=()
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <skill-name> <final-version>" >&2
+  echo "Example: $0 clawsec-suite 0.2.0" >&2
+  exit 1
+fi
 
-for arg in "$@"; do
-  case $arg in
-    --force-tag)
-      FORCE_TAG=true
-      ;;
-    *)
-      POSITIONAL_ARGS+=("$arg")
-      ;;
-  esac
+SKILL_NAME="$1"
+VERSION="$2"
+SKILL_PATH="skills/$SKILL_NAME"
+TAG="${SKILL_NAME}-v${VERSION}"
+
+if ! [[ "$SKILL_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+  echo "Error: skill name must use lowercase alphanumeric kebab-case." >&2
+  exit 1
+fi
+
+for required_command in git jq node; do
+  if ! command -v "$required_command" >/dev/null 2>&1; then
+    echo "Error: $required_command is required." >&2
+    exit 1
+  fi
 done
 
-if [ "${#POSITIONAL_ARGS[@]}" -ne 2 ]; then
-  echo "Usage: $0 <skill-name> <version> [--force-tag]"
-  echo "Example: $0 clawsec-feed 1.1.0"
-  exit 1
-fi
-
-SKILL_NAME="${POSITIONAL_ARGS[0]}"
-VERSION="${POSITIONAL_ARGS[1]}"
-SKILL_PATH="skills/$SKILL_NAME"
-
-# Initialize variables
-RELEASE_NOTES=""
-
-# Ensure we're on a branch (not detached HEAD) so release flow works from feature branches
 CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
 if [ -z "$CURRENT_BRANCH" ]; then
-  echo "Error: Detached HEAD detected. Checkout a branch before running release." >&2
+  echo "Error: detached HEAD detected. Checkout a review branch first." >&2
   exit 1
 fi
-
-# Determine if we're on a release branch (main/master)
-IS_RELEASE_BRANCH=false
-if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "master" ]]; then
-  IS_RELEASE_BRANCH=true
-fi
-
-# Security: Validate skill name to prevent path injection
-# Only allow lowercase alphanumeric characters and hyphens
-if ! [[ "$SKILL_NAME" =~ ^[a-z0-9-]+$ ]]; then
-  echo "Error: Invalid skill name. Only lowercase alphanumeric characters and hyphens are allowed."
-  echo "Example: clawsec-feed, prompt-agent, clawtributor"
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+  echo "Error: version preparation must run on a review branch, not protected $CURRENT_BRANCH." >&2
   exit 1
 fi
 
 if [ ! -f "$SKILL_PATH/skill.json" ]; then
-  echo "Error: $SKILL_PATH/skill.json not found"
+  echo "Error: $SKILL_PATH/skill.json not found." >&2
+  exit 1
+fi
+if [ ! -f "$SKILL_PATH/SKILL.md" ]; then
+  echo "Error: $SKILL_PATH/SKILL.md not found." >&2
   exit 1
 fi
 
-if ! command -v node >/dev/null 2>&1; then
-  echo "Error: Node.js is required to evaluate skill publication eligibility" >&2
-  exit 1
-fi
-
-TAG="${SKILL_NAME}-v${VERSION}"
-
-# This is the public release helper, not the private beta/RC candidate builder.
-# Enforce the shared stable-tag policy before any source, Git, tag, or release mutation.
+# The shared stable policy runs before any source or Git mutation. Beta and RC
+# candidates belong to the private lab flow and never enter this helper.
 if ! node scripts/ci/stable_tag_policy.mjs --tag "$TAG" >/dev/null; then
-  echo "Error: Public release preparation requires a strict final SemVer tag." >&2
+  echo "Error: public release preparation requires a strict final SemVer." >&2
   echo "Build beta and RC candidates through the private lab-candidate flow." >&2
   exit 1
 fi
 
-if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
-  INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH" --require-publication)"
-else
-  INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH")"
-fi
+INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH")"
 
-# Check for uncommitted changes in skill directory
-if ! git diff --quiet "$SKILL_PATH/" 2>/dev/null; then
-  echo "Error: $SKILL_PATH/ has uncommitted changes. Please commit or stash them first."
+# Prevent a scoped release commit from silently capturing unrelated staged,
+# tracked, or untracked content.
+if [ -n "$(git status --porcelain=v1 --untracked-files=all)" ]; then
+  echo "Error: repository must be globally clean before version preparation." >&2
   exit 1
 fi
 
-echo "Releasing $SKILL_NAME version $VERSION"
-echo "Branch: $CURRENT_BRANCH"
-if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
-  echo "Mode: Full release (will create tag)"
-else
-  echo "Mode: Prep only (tag deferred until merge to main)"
-fi
-echo "======================================="
+TEMP_DIR="$(mktemp -d)"
+ORIGINAL_HEAD="$(git rev-parse HEAD)"
+APPLY_STARTED=false
+PREPARATION_COMPLETED=false
+PREPARED_FILES=()
+TARGET_FILES=()
+BACKUP_FILES=()
 
-# Create a temporary directory for atomic operations
-TEMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TEMP_DIR"' EXIT
+cleanup() {
+  local status=$?
+  trap - EXIT HUP INT TERM
 
-# Track files that need to be staged
-FILES_TO_STAGE=()
-
-# Update version in skill.json
-echo "Updating $SKILL_PATH/skill.json version to $VERSION..."
-if ! jq --arg v "$VERSION" '.version = $v' "$SKILL_PATH/skill.json" > "$TEMP_DIR/skill.json"; then
-  echo "Error: Failed to update version in skill.json"
-  exit 1
-fi
-mv "$TEMP_DIR/skill.json" "$SKILL_PATH/skill.json"
-FILES_TO_STAGE+=("$SKILL_PATH/skill.json")
-
-# Update any hardcoded version URLs in skill.json (openclaw.feed_url pattern)
-if jq -e '.openclaw.feed_url' "$SKILL_PATH/skill.json" >/dev/null 2>&1; then
-  echo "Updating openclaw.feed_url to use tag $TAG..."
-  if ! jq --arg tag "$TAG" '.openclaw.feed_url = (.openclaw.feed_url | gsub("/[^/]+-v[0-9.]+(-[a-zA-Z0-9]+)?/"; "/\($tag)/"))' "$SKILL_PATH/skill.json" > "$TEMP_DIR/skill.json"; then
-    echo "Error: Failed to update feed_url in skill.json"
-    exit 1
-  fi
-  mv "$TEMP_DIR/skill.json" "$SKILL_PATH/skill.json"
-fi
-
-# Update version in SKILL.md frontmatter and ALL hardcoded version URLs (if file exists)
-if [ -f "$SKILL_PATH/SKILL.md" ]; then
-  echo "Updating $SKILL_PATH/SKILL.md frontmatter version to $VERSION..."
-
-  # Verify version line exists before sed
-  if ! grep -qE "^version: " "$SKILL_PATH/SKILL.md"; then
-    echo "Error: SKILL.md missing 'version:' line in frontmatter" >&2
-    echo "  Expected format: 'version: X.Y.Z' at start of line" >&2
-    exit 1
-  fi
-
-  # Apply sed and verify substitution occurred
-  sed "s/^version: .*/version: $VERSION/" "$SKILL_PATH/SKILL.md" > "$TEMP_DIR/SKILL.md"
-
-  if ! grep -qF "version: $VERSION" "$TEMP_DIR/SKILL.md"; then
-    echo "Error: Failed to update version in SKILL.md frontmatter" >&2
-    echo "  Target version: $VERSION" >&2
-    exit 1
-  fi
-
-  echo "  ✓ Version updated to $VERSION"
-
-  echo "Updating release verification VERSION assignments in SKILL.md..."
-  VERSION_ASSIGNMENT_PATTERN='^VERSION="[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?"$'
-  if grep -qE "$VERSION_ASSIGNMENT_PATTERN" "$TEMP_DIR/SKILL.md"; then
-    sed -E "s|$VERSION_ASSIGNMENT_PATTERN|VERSION=\"$VERSION\"|g" "$TEMP_DIR/SKILL.md" > "$TEMP_DIR/SKILL.md.tmp"
-
-    if ! grep -qF "VERSION=\"$VERSION\"" "$TEMP_DIR/SKILL.md.tmp"; then
-      echo "Warning: VERSION assignment found but substitution may have failed" >&2
-    else
-      VERSION_ASSIGNMENT_COUNT=$(grep -cF "VERSION=\"$VERSION\"" "$TEMP_DIR/SKILL.md.tmp")
-      echo "  ✓ Updated $VERSION_ASSIGNMENT_COUNT VERSION assignment(s)"
-    fi
-
-    mv "$TEMP_DIR/SKILL.md.tmp" "$TEMP_DIR/SKILL.md"
-  else
-    echo "  ℹ No hardcoded release verification VERSION assignments found"
-  fi
-
-  echo "Updating hardcoded version URLs in SKILL.md to use tag $TAG..."
-  # Replace all hardcoded version URLs: download/SKILLNAME-vX.Y.Z(-prerelease)?/ -> download/TAG/
-  # This handles patterns like: download/clawsec-feed-v1.0.0/ or download/prompt-agent-v1.0.0-beta1/
-  PATTERN="/download/${SKILL_NAME}-v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/"
-
-  # Check if pattern exists (warn if not, don't fail - some skills may not self-reference)
-  if grep -qE "$PATTERN" "$TEMP_DIR/SKILL.md"; then
-    sed -E "s|$PATTERN|/download/${TAG}/|g" "$TEMP_DIR/SKILL.md" > "$TEMP_DIR/SKILL.md.tmp"
-
-    # Verify substitution occurred
-    if ! grep -qF "/download/${TAG}/" "$TEMP_DIR/SKILL.md.tmp"; then
-      echo "Warning: URL pattern found but substitution may have failed" >&2
-    else
-      URL_COUNT=$(grep -cF "/download/${TAG}/" "$TEMP_DIR/SKILL.md.tmp")
-      echo "  ✓ Updated $URL_COUNT hardcoded URL(s)"
-    fi
-
-    mv "$TEMP_DIR/SKILL.md.tmp" "$TEMP_DIR/SKILL.md"
-  else
-    echo "  ℹ No hardcoded version URLs found (OK if skill doesn't self-reference)"
-  fi
-
-  mv "$TEMP_DIR/SKILL.md" "$SKILL_PATH/SKILL.md"
-  FILES_TO_STAGE+=("$SKILL_PATH/SKILL.md")
-fi
-
-# Update hardcoded version URLs in other markdown files (heartbeat.md, reporting.md, etc.)
-for md_file in "$SKILL_PATH"/*.md; do
-  if [ -f "$md_file" ] && [ "$md_file" != "$SKILL_PATH/SKILL.md" ]; then
-    filename=$(basename "$md_file")
-    echo "Updating hardcoded version URLs in $filename..."
-
-    PATTERN="/download/${SKILL_NAME}-v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/"
-
-    # Check if pattern exists
-    if grep -qE "$PATTERN" "$md_file"; then
-      sed -E "s|$PATTERN|/download/${TAG}/|g" "$md_file" > "$TEMP_DIR/$filename"
-
-      # Verify substitution occurred
-      if ! grep -qF "/download/${TAG}/" "$TEMP_DIR/$filename"; then
-        echo "  Warning: URL pattern found but substitution may have failed in $filename" >&2
-      else
-        URL_COUNT=$(grep -cF "/download/${TAG}/" "$TEMP_DIR/$filename")
-        echo "  ✓ Updated $URL_COUNT URL(s) in $filename"
-      fi
-
-      mv "$TEMP_DIR/$filename" "$md_file"
-      FILES_TO_STAGE+=("$md_file")
-    else
-      echo "  ℹ No hardcoded version URLs found in $filename (skipping)"
-    fi
-  fi
-done
-
-# Show what changed
-echo ""
-echo "Changes to $SKILL_PATH/:"
-git diff "$SKILL_PATH/" || true
-echo ""
-
-# Stage all changed files atomically
-echo "Staging changes..."
-for file in "${FILES_TO_STAGE[@]}"; do
-  git add "$file"
-done
-
-# Verify staged changes before committing
-MADE_COMMIT=false
-if git diff --cached --quiet; then
-  echo "Note: Version already at $VERSION — no changes to commit"
-  COMMIT_SHA=$(git rev-parse HEAD)
-else
-  # Commit the version bump
-  echo "Committing changes..."
-  if ! git commit -m "chore($SKILL_NAME): bump version to $VERSION"; then
-    echo "Error: Failed to commit changes"
-    exit 1
-  fi
-  COMMIT_SHA=$(git rev-parse HEAD)
-  MADE_COMMIT=true
-fi
-
-# Save commit SHA for recovery
-echo "Committed: $COMMIT_SHA"
-
-# Create tag only on release branches (or if forced)
-if [[ "$IS_RELEASE_BRANCH" == "true" || "$FORCE_TAG" == "true" ]]; then
-  # Check if tag already exists (only matters when we're creating one)
-  if git rev-parse "$TAG" >/dev/null 2>&1; then
-    echo "Error: Tag $TAG already exists"
-    if [[ "$MADE_COMMIT" == "true" ]]; then
-      echo "Rolling back version-bump commit..."
-      git reset --hard HEAD~1
-    fi
-    exit 1
-  fi
-
-  echo "Creating tag: $TAG"
-  if ! git tag -a "$TAG" -m "$SKILL_NAME version $VERSION"; then
-    echo "Error: Failed to create tag $TAG" >&2
-    echo "" >&2
-    echo "The commit has been created but NOT tagged:" >&2
-    echo "  Commit: $COMMIT_SHA" >&2
-    echo "" >&2
-    echo "Recovery options:" >&2
-    echo "  1. Fix the issue and tag manually:" >&2
-    echo "     git tag -a '$TAG' -m '$SKILL_NAME version $VERSION' $COMMIT_SHA" >&2
-    echo "" >&2
-    echo "  2. Investigate why tagging failed:" >&2
-    echo "     - Check if tag exists: git tag -l '$TAG'" >&2
-    echo "     - Check permissions: ls -ld .git/refs/tags" >&2
-    echo "" >&2
-    echo "  3. To rollback the commit (if desired):" >&2
-    echo "     git reset --hard HEAD~1" >&2
-    echo "" >&2
-    echo "The commit has NOT been pushed. Fix the issue before pushing." >&2
-    exit 1
-  fi
-
-  # Extract changelog entry for this version and create GitHub release
-  RELEASE_NOTES=""
-  GH_RELEASE_CREATED=false
-  if [ -f "$SKILL_PATH/CHANGELOG.md" ]; then
-    echo "Extracting changelog entry for version $VERSION..."
-
-    # Extract the changelog section for this version
-    # Pattern: ## [VERSION] - DATE ... until next ## [ or end of file
-    RELEASE_NOTES=$(awk -v version="$VERSION" '
-      BEGIN { in_section = 0; found = 0 }
-      $0 ~ ("^## \\[" version "\\]") { in_section = 1; found = 1; next }
-      in_section && /^## \[/ && found { exit }
-      in_section { print }
-    ' "$SKILL_PATH/CHANGELOG.md" | sed '/^$/d' | sed '1{/^$/d;}')
-
-    if [ -n "$RELEASE_NOTES" ]; then
-      echo "Found changelog entry with $(echo "$RELEASE_NOTES" | wc -l) lines"
-
-      # Create GitHub release with changelog notes
-      echo "Creating GitHub release with changelog notes..."
-      if command -v gh >/dev/null 2>&1; then
-        if ! echo "$RELEASE_NOTES" | gh release create "$TAG" \
-          --title "$SKILL_NAME v$VERSION" \
-          --notes-file -; then
-          echo "Warning: Failed to create GitHub release, but tag was created successfully" >&2
-          echo "You can manually create the release at: https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]\([^.]*\).*/\1/')/releases/new" >&2
-        else
-          echo "✓ GitHub release created with changelog notes"
-          GH_RELEASE_CREATED=true
+  if [ "$APPLY_STARTED" = "true" ] && [ "$PREPARATION_COMPLETED" != "true" ]; then
+    current_head="$(git rev-parse HEAD 2>/dev/null || true)"
+    if [ "$current_head" = "$ORIGINAL_HEAD" ]; then
+      echo "Version preparation failed; restoring the original clean tree." >&2
+      rollback_failed=false
+      for index in "${!TARGET_FILES[@]}"; do
+        if ! cp -p "${BACKUP_FILES[$index]}" "${TARGET_FILES[$index]}"; then
+          rollback_failed=true
         fi
-      else
-        echo "Warning: GitHub CLI (gh) not found. Skipping automatic release creation." >&2
-        echo "Install GitHub CLI and run manually:" >&2
-        echo "  gh release create '$TAG' --title '$SKILL_NAME v$VERSION' --notes-file <(echo \"$RELEASE_NOTES\")" >&2
+      done
+      if ! git add -- "${TARGET_FILES[@]}"; then
+        rollback_failed=true
+      fi
+      if [ -n "$(git status --porcelain=v1 --untracked-files=all)" ]; then
+        echo "Error: repository is not clean after automatic rollback." >&2
+        rollback_failed=true
+      fi
+      if [ "$rollback_failed" = "true" ]; then
+        echo "Error: automatic rollback was incomplete; inspect the listed skill files." >&2
       fi
     else
-      echo "Warning: No changelog entry found for version $VERSION" >&2
+      echo "Warning: HEAD changed during preparation; refusing to overwrite the new commit." >&2
     fi
-  else
-    echo "No CHANGELOG.md found in $SKILL_PATH - skipping release notes"
   fi
 
-  echo ""
-  echo "Done! To release, push the tag:"
-  if [[ "$MADE_COMMIT" == "true" ]]; then
-    echo "  git push origin $CURRENT_BRANCH"
-  fi
-  echo "  git push origin $TAG"
-  echo ""
-  echo "Or to undo:"
-  if [[ "$MADE_COMMIT" == "true" ]]; then
-    echo "  git reset --hard HEAD~1 && git tag -d $TAG"
-  else
-    echo "  git tag -d $TAG"
-  fi
-  if [[ "$GH_RELEASE_CREATED" == "true" ]]; then
-    echo ""
-    echo "Note: GitHub release was created automatically with changelog notes."
-  fi
-else
-  # Feature branch: skip tagging, instruct user on next steps
-  if [[ "$INSTALLABLE" == "false" ]]; then
-    echo ""
-    echo "Done! Non-installable package version updated and committed for review."
-    echo ""
-    echo "Next step: push this branch so CI can build signed denial evidence."
-    echo "  git push origin $CURRENT_BRANCH"
-    echo ""
-    echo "Do not create or push a public tag, GitHub Release, or skill-store publication for this package."
-    exit 0
-  fi
+  rm -rf "$TEMP_DIR"
+  exit "$status"
+}
+trap cleanup EXIT
 
-  echo ""
-  echo "Done! Version updated and committed (tag deferred)."
-  echo ""
-  echo "Next steps:"
-  echo "  1. Push your branch for CI validation:"
-  echo "     git push origin $CURRENT_BRANCH"
-  echo ""
-  echo "  2. After CI passes and PR is merged to main, create the tag and release:"
-  echo "     git checkout main && git pull"
-  echo "     git tag -a '$TAG' $COMMIT_SHA -m '$SKILL_NAME version $VERSION'"
-  echo "     git push origin $TAG"
-  if [ -f "$SKILL_PATH/CHANGELOG.md" ]; then
-    echo "     # Create GitHub release with changelog (requires GitHub CLI):"
-    echo "     gh release create '$TAG' --title '$SKILL_NAME v$VERSION' --generate-notes"
-  fi
-  echo ""
-  echo "Or to undo the version bump:"
-  echo "  git reset --hard HEAD~1"
+handle_signal() {
+  local signal_status="$1"
+  trap - HUP INT TERM
+  exit "$signal_status"
+}
+trap 'handle_signal 129' HUP
+trap 'handle_signal 130' INT
+trap 'handle_signal 143' TERM
+
+queue_prepared_file() {
+  PREPARED_FILES+=("$1")
+  TARGET_FILES+=("$2")
+}
+
+echo "Preparing $SKILL_NAME version $VERSION on review branch $CURRENT_BRANCH"
+
+if ! jq --arg version "$VERSION" '.version = $version' \
+  "$SKILL_PATH/skill.json" > "$TEMP_DIR/skill.json"; then
+  echo "Error: failed to update $SKILL_PATH/skill.json." >&2
+  exit 1
 fi
+
+if jq -e '.openclaw.feed_url' "$TEMP_DIR/skill.json" >/dev/null 2>&1; then
+  if ! jq --arg tag "$TAG" \
+    '.openclaw.feed_url = (.openclaw.feed_url | gsub("/[^/]+-v[0-9.]+(-[a-zA-Z0-9.]+)?/"; "/\($tag)/"))' \
+    "$TEMP_DIR/skill.json" > "$TEMP_DIR/skill.json.next"; then
+    echo "Error: failed to update openclaw.feed_url." >&2
+    exit 1
+  fi
+  mv "$TEMP_DIR/skill.json.next" "$TEMP_DIR/skill.json"
+fi
+queue_prepared_file "$TEMP_DIR/skill.json" "$SKILL_PATH/skill.json"
+
+if ! grep -qE '^version: ' "$SKILL_PATH/SKILL.md"; then
+  echo "Error: SKILL.md is missing a frontmatter version." >&2
+  exit 1
+fi
+sed "s/^version: .*/version: $VERSION/" \
+  "$SKILL_PATH/SKILL.md" > "$TEMP_DIR/SKILL.md"
+if ! grep -qF "version: $VERSION" "$TEMP_DIR/SKILL.md"; then
+  echo "Error: failed to update SKILL.md frontmatter version." >&2
+  exit 1
+fi
+
+VERSION_ASSIGNMENT_PATTERN='^VERSION="[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?"$'
+if grep -qE "$VERSION_ASSIGNMENT_PATTERN" "$TEMP_DIR/SKILL.md"; then
+  sed -E "s|$VERSION_ASSIGNMENT_PATTERN|VERSION=\"$VERSION\"|g" \
+    "$TEMP_DIR/SKILL.md" > "$TEMP_DIR/SKILL.md.next"
+  mv "$TEMP_DIR/SKILL.md.next" "$TEMP_DIR/SKILL.md"
+fi
+
+DOWNLOAD_PATTERN="/download/${SKILL_NAME}-v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?/"
+if grep -qE "$DOWNLOAD_PATTERN" "$TEMP_DIR/SKILL.md"; then
+  sed -E "s|$DOWNLOAD_PATTERN|/download/${TAG}/|g" \
+    "$TEMP_DIR/SKILL.md" > "$TEMP_DIR/SKILL.md.next"
+  mv "$TEMP_DIR/SKILL.md.next" "$TEMP_DIR/SKILL.md"
+fi
+queue_prepared_file "$TEMP_DIR/SKILL.md" "$SKILL_PATH/SKILL.md"
+
+for markdown_file in "$SKILL_PATH"/*.md; do
+  if [ ! -f "$markdown_file" ] || [ "$markdown_file" = "$SKILL_PATH/SKILL.md" ]; then
+    continue
+  fi
+  if ! grep -qE "$DOWNLOAD_PATTERN" "$markdown_file"; then
+    continue
+  fi
+  filename="$(basename "$markdown_file")"
+  sed -E "s|$DOWNLOAD_PATTERN|/download/${TAG}/|g" \
+    "$markdown_file" > "$TEMP_DIR/$filename"
+  queue_prepared_file "$TEMP_DIR/$filename" "$markdown_file"
+done
+
+mkdir "$TEMP_DIR/backups"
+for index in "${!TARGET_FILES[@]}"; do
+  backup_file="$TEMP_DIR/backups/$index"
+  cp -p "${TARGET_FILES[$index]}" "$backup_file"
+  BACKUP_FILES+=("$backup_file")
+done
+
+# No repository file is replaced until every transformation above has passed.
+# If staging or commit fails, the EXIT trap restores the exact clean inputs and
+# stages those originals to clear this helper's index changes without reset.
+APPLY_STARTED=true
+for index in "${!TARGET_FILES[@]}"; do
+  mv "${PREPARED_FILES[$index]}" "${TARGET_FILES[$index]}"
+done
+
+for file in "${TARGET_FILES[@]}"; do
+  git add -- "$file"
+done
+
+if git diff --cached --quiet; then
+  echo "No version-preparation changes were needed; $SKILL_NAME is already at $VERSION."
+else
+  git commit -m "chore($SKILL_NAME): bump version to $VERSION"
+fi
+
+COMMIT_SHA="$(git rev-parse HEAD)"
+echo "Prepared commit: $COMMIT_SHA"
+PREPARATION_COMPLETED=true
+
+if [ "$INSTALLABLE" = "false" ]; then
+  echo "This package is non-installable. Push the review branch for signed denial evidence."
+  echo "Do not request a public tag, GitHub Release, store publication, or catalog activation."
+  exit 0
+fi
+
+echo "Next steps:"
+echo "  1. Push $CURRENT_BRANCH and complete its review and CI."
+echo "  2. Merge through the protected-main process."
+echo "  3. Run 'Create Skill Release Tag' with package $SKILL_NAME, version $VERSION,"
+echo "     and the exact resulting protected-main commit."

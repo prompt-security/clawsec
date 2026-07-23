@@ -5,7 +5,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const validator = "scripts/ci/validate_skill_install_docs.mjs";
-const workflow = await readFile(".github/workflows/skill-release.yml", "utf8");
+const workflow = await readFile(".github/workflows/controlled-skill-release.yml", "utf8");
 const tempRoot = await mkdtemp(path.join(tmpdir(), "clawsec-install-docs-"));
 const agentTypesPath = path.join(tempRoot, "vercel-types.ts");
 
