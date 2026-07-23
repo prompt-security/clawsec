@@ -1,0 +1,48 @@
+{
+  "name": "clawsec-core-openclaw",
+  "version": "0.1.0-rc.1",
+  "description": "Contract fixture only; this is not an OpenClaw support claim.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "platform": "openclaw",
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true
+      }
+    ]
+  },
+  "openclaw": {},
+  "clawsec": {
+    "contract_version": "1",
+    "role": "core",
+    "maturity": "experimental",
+    "supported_harness": {
+      "name": "openclaw",
+      "minimum_version": "0.0.0",
+      "maximum_version_exclusive": "0.0.1"
+    },
+    "provides": [
+      "core.doctor",
+      "core.evaluate-advisories",
+      "core.install-release",
+      "core.inventory",
+      "core.plan-release",
+      "core.remove-release",
+      "core.update-release",
+      "core.verify-feed",
+      "core.verify-receipt",
+      "core.verify-release"
+    ],
+    "management_protocol_provides": [
+      "clawsec-core/v1"
+    ],
+    "management_protocol_requires": [],
+    "install_requires": [],
+    "runtime_requires": [],
+    "legacy_names": [
+      "clawsec-suite"
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "contract": "clawsec.capability-registry/v1",
+  "contract_version": "1",
+  "capabilities": [
+    {
+      "name": "core.doctor",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.evaluate-advisories",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.install-release",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.inventory",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.plan-release",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.remove-release",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.update-release",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.verify-feed",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.verify-receipt",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "core.verify-release",
+      "role": "core",
+      "required_for_stable": true
+    },
+    {
+      "name": "guardian.status",
+      "role": "guardian",
+      "family": "drift",
+      "required_for_stable": true
+    },
+    {
+      "name": "posture.diff",
+      "role": "guardian",
+      "family": "drift",
+      "required_for_stable": true
+    },
+    {
+      "name": "posture.snapshot",
+      "role": "guardian",
+      "family": "drift",
+      "required_for_stable": true
+    },
+    {
+      "name": "posture.verify",
+      "role": "guardian",
+      "family": "drift",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.catalog",
+      "role": "suite",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.disable",
+      "role": "suite",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.doctor",
+      "role": "suite",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.enable",
+      "role": "suite",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.install",
+      "role": "suite",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.recommend",
+      "role": "suite",
+      "required_for_stable": true
+    },
+    {
+      "name": "suite.recurring-advisory-verification",
+      "role": "suite",
+      "required_for_stable": false
+    },
+    {
+      "name": "suite.status",
+      "role": "suite",
+      "required_for_stable": true
+    }
+  ]
+}

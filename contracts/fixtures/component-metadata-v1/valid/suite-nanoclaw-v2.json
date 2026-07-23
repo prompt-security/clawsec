@@ -1,0 +1,59 @@
+{
+  "name": "clawsec-suite-nanoclaw",
+  "version": "0.1.0-rc.1",
+  "description": "Contract fixture only; this is not a NanoClaw v2 support claim.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "platform": "nanoclaw",
+  "sbom": {
+    "files": [
+      {
+        "path": "SKILL.md",
+        "required": true
+      }
+    ]
+  },
+  "nanoclaw": {},
+  "clawsec": {
+    "contract_version": "1",
+    "role": "suite",
+    "maturity": "experimental",
+    "supported_harness": {
+      "name": "nanoclaw",
+      "minimum_version": "2.1.17",
+      "maximum_version_exclusive": "2.2.0"
+    },
+    "provides": [
+      "suite.catalog",
+      "suite.disable",
+      "suite.doctor",
+      "suite.enable",
+      "suite.install",
+      "suite.recommend",
+      "suite.status"
+    ],
+    "management_protocol_provides": [],
+    "management_protocol_requires": [
+      "clawsec-core/v1"
+    ],
+    "install_requires": [],
+    "runtime_requires": [
+      {
+        "name": "clawsec-core-nanoclaw",
+        "minimum_version": "0.1.0",
+        "maximum_version_exclusive": "1.0.0"
+      }
+    ],
+    "legacy_names": [
+      "clawsec-nanoclaw"
+    ],
+    "native": {
+      "category": "operational",
+      "install_location": ".claude/skills/clawsec-suite-nanoclaw",
+      "apply_leaves_state": false,
+      "remove_document_required": false,
+      "installation_owner": "nanoclaw-host",
+      "removal_owner": "nanoclaw-host"
+    }
+  }
+}

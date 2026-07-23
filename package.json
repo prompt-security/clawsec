@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "gen:wiki-llms": "node scripts/generate-wiki-llms.mjs",
+    "test:metadata-contracts": "node scripts/test-skill-component-metadata.mjs",
     "populate-local-wiki": "./scripts/populate-local-wiki.sh",
     "predev": "npm run gen:wiki-llms",
     "dev": "vite",
@@ -32,6 +33,7 @@
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.58.1",
     "@vitejs/plugin-react": "^6.0.2",
+    "ajv": "6.14.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
