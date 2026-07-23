@@ -88,6 +88,103 @@ try {
     /Public install docs not applicable for non-installable-example: skill\.json declares "installable": false/,
   );
 
+  await writeSkill({
+    name: "non-installable-public-command",
+    metadata: { installable: false },
+    readme:
+      `${nonInstallableDocPrologue}\n\n` +
+      "```bash\nnpx skills add prompt-security/clawsec --skill non-installable-public-command -a openclaw -y\n```\n",
+    skillMd:
+      `---\nname: non-installable-public-command\n---\n\n${nonInstallableDocPrologue}\n`,
+  });
+  const publicCommand = runValidator(
+    ["--skills", "skills/non-installable-public-command"],
+    { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+  );
+  assert.equal(publicCommand.status, 1, "non-installable required docs must deny public installer authority");
+  assert.match(publicCommand.stderr, /forbidden public installer authority: skills add/);
+
+  await writeSkill({
+    name: "non-installable-packaged-command",
+    metadata: { installable: false },
+    readme: `${nonInstallableDocPrologue}\n`,
+    skillMd:
+      `---\nname: non-installable-packaged-command\n---\n\n${nonInstallableDocPrologue}\n`,
+    installMd: "# Unsupported installer\n\npnpm dlx clawhub@latest install target\n",
+  });
+  const packagedCommand = runValidator(
+    ["--skills", "skills/non-installable-packaged-command"],
+    { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+  );
+  assert.equal(packagedCommand.status, 1, "package-visible Markdown must deny public installer authority");
+  assert.match(
+    packagedCommand.stderr,
+    /skills\/non-installable-packaged-command\/INSTALL\.md[\s\S]*clawhub install/,
+  );
+
+  await writeSkill({
+    name: "non-installable-sbom-newline",
+    metadata: {
+      installable: false,
+      sbom: {
+        files: [{
+          path: "SAFE.md\nEVIL.md",
+          required: true,
+          description: "Ambiguous package-visible path",
+        }],
+      },
+    },
+    readme: `${nonInstallableDocPrologue}\n`,
+    skillMd:
+      `---\nname: non-installable-sbom-newline\n---\n\n${nonInstallableDocPrologue}\n`,
+  });
+  const newlineSkillRoot = path.join(tempRoot, "skills", "non-installable-sbom-newline");
+  await writeFile(path.join(newlineSkillRoot, "SAFE.md\nEVIL.md"), "# Safe combined filename\n");
+  await writeFile(path.join(newlineSkillRoot, "EVIL.md"), "npx skills add target\n");
+  const newlinePath = runValidator(
+    ["--skills", "skills/non-installable-sbom-newline"],
+    { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+  );
+  assert.equal(newlinePath.status, 1, "SBOM paths must not split into extra release files");
+  assert.match(
+    newlinePath.stderr,
+    /Unsafe package-visible path for skills\/non-installable-sbom-newline: control characters are not allowed/,
+  );
+  assert.doesNotMatch(
+    newlinePath.stderr,
+    /SAFE\.md\s+EVIL\.md/,
+    "unsafe path diagnostics must not reproduce control-character filenames",
+  );
+
+  await writeSkill({
+    name: "non-installable-mdx",
+    metadata: {
+      installable: false,
+      sbom: {
+        files: [{
+          path: "INSTALL.mdx",
+          required: true,
+          description: "Executable installation documentation",
+        }],
+      },
+    },
+    readme: `${nonInstallableDocPrologue}\n`,
+    skillMd: `---\nname: non-installable-mdx\n---\n\n${nonInstallableDocPrologue}\n`,
+  });
+  await writeFile(
+    path.join(tempRoot, "skills", "non-installable-mdx", "INSTALL.mdx"),
+    '# Unsupported installer\n\nsk{"i"}lls add target\n',
+  );
+  const packagedMdx = runValidator(
+    ["--skills", "skills/non-installable-mdx"],
+    { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+  );
+  assert.equal(packagedMdx.status, 1, "executable MDX must be denied for non-installable skills");
+  assert.match(
+    packagedMdx.stderr,
+    /Unsupported package-visible MDX path for non-installable skill skills\/non-installable-mdx: INSTALL\.mdx/,
+  );
+
   for (const [name, readme, skillMd] of [
     [
       "non-installable-missing-prologue",
