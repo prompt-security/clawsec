@@ -67,7 +67,9 @@ try {
     metadata: { installable: false },
     readme: `${nonInstallableDocPrologue}\n\n# Non-installable Example\n`,
     skillMd:
-      `\uFEFF---\r\nname: non-installable-example\r\nversion: 1.0.0\r\n---\r\n\r\n` +
+      `\uFEFF---\r\nname: non-installable-example\r\nversion: 1.0.0\r\nmetadata:\r\n` +
+      `  internal: true\r\nclawdis:\r\n  emoji: "shield"\r\n  requires:\r\n` +
+      `    bins: [bash, git, jq, gh]\r\n---\r\n\r\n` +
       `${nonInstallableDocPrologue}\r\n\r\n# Non-installable Example\r\n`,
   });
 
@@ -106,6 +108,36 @@ try {
       "non-installable-late-prologue",
       `# Late prologue\n\n${nonInstallableDocPrologue}\n`,
       `---\nname: non-installable-late-prologue\n---\n\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-malformed-frontmatter-comment",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: fake\n<!--\n---\n${nonInstallableDocPrologue}\n-->\n`,
+    ],
+    [
+      "non-installable-invalid-frontmatter-scalar",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: [unterminated\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-no-separation",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname:fake\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-quoted-no-separation",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname:"fake"\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-list-no-separation",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nbins:[bash, git]\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-control-character",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: bad\u007fvalue\n---\n${nonInstallableDocPrologue}\n`,
     ],
   ]) {
     await writeSkill({

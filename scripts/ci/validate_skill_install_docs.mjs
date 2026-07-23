@@ -208,21 +208,125 @@ function stripHtmlComments(markdown) {
   return markdown.replace(/<!--[\s\S]*?(?:-->|$)/g, "");
 }
 
+function isSupportedFrontmatterScalar(value) {
+  const scalar = value.trim();
+  if (
+    !scalar ||
+    /[<>{}]/.test(scalar) ||
+    [...scalar].some((character) => {
+      const codePoint = character.codePointAt(0);
+      return !(
+        (codePoint >= 0x20 && codePoint <= 0x7e) ||
+        codePoint === 0x85 ||
+        (codePoint >= 0xa0 && codePoint <= 0xd7ff) ||
+        (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+        (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+      );
+    })
+  ) {
+    return false;
+  }
+  if (/^"(?:[^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"$/.test(scalar)) {
+    return true;
+  }
+  if (/^'(?:[^']|'')*'$/.test(scalar)) {
+    return true;
+  }
+  if (/^\[(?:[A-Za-z0-9_.+/-]+(?:,\s*[A-Za-z0-9_.+/-]+)*)?\]$/.test(scalar)) {
+    return true;
+  }
+  const disallowedPlainScalarStart = "-?:,[]#&*!|>'\"%@`";
+  return (
+    !disallowedPlainScalarStart.includes(scalar[0]) &&
+    !scalar.includes("[") &&
+    !scalar.includes("]") &&
+    !/(?:^|\s)#/.test(scalar) &&
+    !/:\s/.test(scalar)
+  );
+}
+
+function frontmatterBodyStart(lines) {
+  if (lines[0]?.trimEnd() !== "---") {
+    return 0;
+  }
+
+  const closingIndex = lines.findIndex(
+    (line, index) => index > 0 && line.trimEnd() === "---",
+  );
+  if (closingIndex === -1) {
+    return null;
+  }
+
+  const indentationLevels = [0];
+  const keysByLevel = [new Set()];
+  let previousIndent = 0;
+  let previousOpensMapping = false;
+  let sawEntry = false;
+
+  for (const rawLine of lines.slice(1, closingIndex)) {
+    if (rawLine.trim() === "") {
+      continue;
+    }
+    if (rawLine.includes("\t")) {
+      return null;
+    }
+
+    const entry = rawLine.match(/^( *)([A-Za-z_][A-Za-z0-9_-]*):(?: +(.*))?$/);
+    if (!entry) {
+      return null;
+    }
+
+    const indent = entry[1].length;
+    const value = (entry[3] || "").trim();
+    if (indent % 2 !== 0 || (!sawEntry && indent !== 0)) {
+      return null;
+    }
+
+    if (sawEntry && indent > previousIndent) {
+      if (!previousOpensMapping || indent !== previousIndent + 2) {
+        return null;
+      }
+      indentationLevels.push(indent);
+      keysByLevel.push(new Set());
+    } else if (sawEntry && indent < previousIndent) {
+      if (previousOpensMapping) {
+        return null;
+      }
+      while (indentationLevels.at(-1) > indent) {
+        indentationLevels.pop();
+        keysByLevel.pop();
+      }
+      if (indentationLevels.at(-1) !== indent) {
+        return null;
+      }
+    } else if (sawEntry && previousOpensMapping) {
+      return null;
+    }
+
+    if (keysByLevel.at(-1).has(entry[2])) {
+      return null;
+    }
+    keysByLevel.at(-1).add(entry[2]);
+
+    previousIndent = indent;
+    previousOpensMapping = value === "";
+    if (!previousOpensMapping && !isSupportedFrontmatterScalar(value)) {
+      return null;
+    }
+    sawEntry = true;
+  }
+
+  return sawEntry && !previousOpensMapping ? closingIndex + 1 : null;
+}
+
 function hasNonInstallableDocPrologue(markdown) {
   const lines = markdown
     .replace(/^\uFEFF/, "")
     .replace(/\r\n?/g, "\n")
     .split("\n");
-  let lineIndex = 0;
-
-  if (lines[0]?.trimEnd() === "---") {
-    lineIndex = lines.findIndex(
-      (line, index) => index > 0 && line.trimEnd() === "---",
-    );
-    if (lineIndex === -1) {
-      return false;
-    }
-    lineIndex += 1;
+  let lineIndex = frontmatterBodyStart(lines);
+  if (lineIndex === null) {
+    return false;
   }
 
   while (lineIndex < lines.length && lines[lineIndex].trim() === "") {
