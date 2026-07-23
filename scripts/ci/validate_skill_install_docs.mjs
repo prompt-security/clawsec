@@ -5,11 +5,14 @@ import { spawnSync } from "node:child_process";
 import https from "node:https";
 import path from "node:path";
 import { isTestReleasePath } from "./release_path_policy.mjs";
+import { resolveSkillInstallability } from "./skill_installability.mjs";
 import { resolveDirectSkillsCliTargets } from "./skill_platforms.mjs";
 
 const DEFAULT_REPOSITORY = "prompt-security/clawsec";
 const DEFAULT_AGENT_TYPES_URL = "https://raw.githubusercontent.com/vercel-labs/skills/main/src/types.ts";
 const DOC_FILENAMES = ["README.md", "SKILL.md"];
+const NON_INSTALLABLE_DOC_PROLOGUE =
+  "This skill is intentionally non-installable. Do not publish or install it through public skill channels.";
 const NO_DIRECT_TARGET_PATTERN = /no\s+(?:reviewed\s+)?direct[\s\S]{0,80}(?:Agent Skills|Skills CLI)[\s\S]{0,40}target/i;
 
 function usage() {
@@ -203,6 +206,133 @@ function logicalShellLines(markdown) {
 
 function stripHtmlComments(markdown) {
   return markdown.replace(/<!--[\s\S]*?(?:-->|$)/g, "");
+}
+
+function hasOnlySupportedYamlCharacters(value) {
+  return [...value].every((character) => {
+    const codePoint = character.codePointAt(0);
+    return (
+      (codePoint >= 0x20 && codePoint <= 0x7e) ||
+      codePoint === 0x85 ||
+      (codePoint >= 0xa0 && codePoint <= 0xd7ff) ||
+      (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+      (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+    );
+  });
+}
+
+function isSupportedFrontmatterScalar(scalar) {
+  if (!scalar || !hasOnlySupportedYamlCharacters(scalar) || /[<>{}]/.test(scalar)) {
+    return false;
+  }
+  if (/^"(?:[^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"$/.test(scalar)) {
+    return true;
+  }
+  if (/^'(?:[^']|'')*'$/.test(scalar)) {
+    return true;
+  }
+  if (/^\[(?:[A-Za-z0-9_.+/-]+(?:,\s*[A-Za-z0-9_.+/-]+)*)?\]$/.test(scalar)) {
+    return true;
+  }
+  const disallowedPlainScalarStart = "-?:,[]#&*!|>'\"%@`";
+  return (
+    !disallowedPlainScalarStart.includes(scalar[0]) &&
+    !scalar.includes("[") &&
+    !scalar.includes("]") &&
+    !/(?:^|\s)#/.test(scalar) &&
+    !/:(?:\s|,|$)/.test(scalar)
+  );
+}
+
+function frontmatterBodyStart(lines) {
+  if (!/^--- *$/.test(lines[0] || "")) {
+    return 0;
+  }
+
+  const closingIndex = lines.findIndex(
+    (line, index) => index > 0 && /^--- *$/.test(line),
+  );
+  if (closingIndex === -1) {
+    return null;
+  }
+
+  const indentationLevels = [0];
+  const keysByLevel = [new Set()];
+  let previousIndent = 0;
+  let previousOpensMapping = false;
+  let sawEntry = false;
+
+  for (const rawLine of lines.slice(1, closingIndex)) {
+    if (/^ *$/.test(rawLine)) {
+      continue;
+    }
+    if (!hasOnlySupportedYamlCharacters(rawLine)) {
+      return null;
+    }
+
+    const entry = rawLine.match(/^( *)([A-Za-z_][A-Za-z0-9_-]*):(?: +(.*))?$/);
+    if (!entry) {
+      return null;
+    }
+
+    const indent = entry[1].length;
+    const value = (entry[3] || "").replace(/ +$/, "");
+    if (indent % 2 !== 0 || (!sawEntry && indent !== 0)) {
+      return null;
+    }
+
+    if (sawEntry && indent > previousIndent) {
+      if (!previousOpensMapping || indent !== previousIndent + 2) {
+        return null;
+      }
+      indentationLevels.push(indent);
+      keysByLevel.push(new Set());
+    } else if (sawEntry && indent < previousIndent) {
+      if (previousOpensMapping) {
+        return null;
+      }
+      while (indentationLevels.at(-1) > indent) {
+        indentationLevels.pop();
+        keysByLevel.pop();
+      }
+      if (indentationLevels.at(-1) !== indent) {
+        return null;
+      }
+    } else if (sawEntry && previousOpensMapping) {
+      return null;
+    }
+
+    if (keysByLevel.at(-1).has(entry[2])) {
+      return null;
+    }
+    keysByLevel.at(-1).add(entry[2]);
+
+    previousIndent = indent;
+    previousOpensMapping = value === "";
+    if (!previousOpensMapping && !isSupportedFrontmatterScalar(value)) {
+      return null;
+    }
+    sawEntry = true;
+  }
+
+  return sawEntry && !previousOpensMapping ? closingIndex + 1 : null;
+}
+
+function hasNonInstallableDocPrologue(markdown) {
+  const lines = markdown
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n");
+  let lineIndex = frontmatterBodyStart(lines);
+  if (lineIndex === null) {
+    return false;
+  }
+
+  while (lineIndex < lines.length && /^ *$/.test(lines[lineIndex])) {
+    lineIndex += 1;
+  }
+
+  return lines[lineIndex]?.replace(/ +$/, "") === NON_INSTALLABLE_DOC_PROLOGUE;
 }
 
 function tokenizeShellLine(line) {
@@ -440,27 +570,57 @@ function localInstallReferences(markdown, { docPath, skillRoot }) {
   return [...new Set(references)];
 }
 
-async function validateSkill({ root, skillDir, repository, agentTypes }) {
+async function validateSkill({ root, skillDir, repository, getAgentTypes }) {
   const skillJsonPath = path.join(root, skillDir, "skill.json");
   const skill = await readJson(skillJsonPath);
   const skillName = skill.name || path.basename(skillDir);
-  const resolution = resolveDirectSkillsCliTargets(skill, agentTypes);
+  const installability = resolveSkillInstallability(skill, skillJsonPath);
+  const resolution = installability.installable
+    ? resolveDirectSkillsCliTargets(skill, await getAgentTypes())
+    : null;
   const failures = [];
   const skillRoot = path.join(root, skillDir);
   const packagedFiles = packagedSkillFiles(skill);
 
-  for (const error of resolution.errors) {
+  for (const error of resolution?.errors || []) {
     failures.push(`Invalid npx skills target policy for ${skillDir}: ${error}`);
   }
 
   for (const filename of DOC_FILENAMES) {
     const docPath = path.join(root, skillDir, filename);
-    if (!existsSync(docPath)) {
+    let docStat;
+    try {
+      docStat = lstatSync(docPath);
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        failures.push(
+          `Unable to inspect required install documentation file: ${path.join(skillDir, filename)}`,
+        );
+        continue;
+      }
       failures.push(`Missing required install documentation file: ${path.join(skillDir, filename)}`);
       continue;
     }
 
-    const markdown = stripHtmlComments(await readFile(docPath, "utf8"));
+    if (!docStat.isFile()) {
+      failures.push(
+        `Required install documentation path is not a regular file: ${path.join(skillDir, filename)}`,
+      );
+      continue;
+    }
+
+    const rawMarkdown = await readFile(docPath, "utf8");
+    if (!installability.installable) {
+      if (!hasNonInstallableDocPrologue(rawMarkdown)) {
+        failures.push(
+          `Missing required non-installable document prologue in ${path.join(skillDir, filename)}: ` +
+          NON_INSTALLABLE_DOC_PROLOGUE,
+        );
+      }
+      continue;
+    }
+
+    const markdown = stripHtmlComments(rawMarkdown);
     const commands = parseSkillsAddCommands(markdown);
     const commandsForSkill = commands.filter((command) => command.skillValues.includes(skillName));
     const malformedCommands = commands.filter(
@@ -538,6 +698,7 @@ async function validateSkill({ root, skillDir, repository, agentTypes }) {
   return {
     skillDir,
     skillName,
+    installability,
     resolution,
     failures,
   };
@@ -545,7 +706,11 @@ async function validateSkill({ root, skillDir, repository, agentTypes }) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const agentTypes = parseAgentTypes(await readAgentTypeSource(options));
+  let agentTypesPromise;
+  const getAgentTypes = () => {
+    agentTypesPromise ??= readAgentTypeSource(options).then(parseAgentTypes);
+    return agentTypesPromise;
+  };
   let skillDirs = options.skillDirs;
 
   if (options.all) {
@@ -572,7 +737,7 @@ async function main() {
         root: options.root,
         skillDir,
         repository: options.repository,
-        agentTypes,
+        getAgentTypes,
       }),
     );
   }
@@ -586,6 +751,14 @@ async function main() {
   }
 
   for (const result of results) {
+    if (!result.installability.installable) {
+      console.log(
+        `Public install docs not applicable for ${result.skillName}: ` +
+        'skill.json declares "installable": false',
+      );
+      continue;
+    }
+
     if (result.resolution.status === "not_applicable") {
       console.log(
         `npx skills install docs not applicable for ${result.skillName}: ` +
