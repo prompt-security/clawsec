@@ -5,11 +5,14 @@ import { spawnSync } from "node:child_process";
 import https from "node:https";
 import path from "node:path";
 import { isTestReleasePath } from "./release_path_policy.mjs";
+import { resolveSkillInstallability } from "./skill_installability.mjs";
 import { resolveDirectSkillsCliTargets } from "./skill_platforms.mjs";
 
 const DEFAULT_REPOSITORY = "prompt-security/clawsec";
 const DEFAULT_AGENT_TYPES_URL = "https://raw.githubusercontent.com/vercel-labs/skills/main/src/types.ts";
 const DOC_FILENAMES = ["README.md", "SKILL.md"];
+const NON_INSTALLABLE_DOC_PROLOGUE =
+  "This skill is intentionally non-installable. Do not publish or install it through public skill channels.";
 const NO_DIRECT_TARGET_PATTERN = /no\s+(?:reviewed\s+)?direct[\s\S]{0,80}(?:Agent Skills|Skills CLI)[\s\S]{0,40}target/i;
 
 function usage() {
@@ -203,6 +206,30 @@ function logicalShellLines(markdown) {
 
 function stripHtmlComments(markdown) {
   return markdown.replace(/<!--[\s\S]*?(?:-->|$)/g, "");
+}
+
+function hasNonInstallableDocPrologue(markdown) {
+  const lines = markdown
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n");
+  let lineIndex = 0;
+
+  if (lines[0]?.trimEnd() === "---") {
+    lineIndex = lines.findIndex(
+      (line, index) => index > 0 && line.trimEnd() === "---",
+    );
+    if (lineIndex === -1) {
+      return false;
+    }
+    lineIndex += 1;
+  }
+
+  while (lineIndex < lines.length && lines[lineIndex].trim() === "") {
+    lineIndex += 1;
+  }
+
+  return lines[lineIndex]?.trimEnd() === NON_INSTALLABLE_DOC_PROLOGUE;
 }
 
 function tokenizeShellLine(line) {
@@ -440,27 +467,57 @@ function localInstallReferences(markdown, { docPath, skillRoot }) {
   return [...new Set(references)];
 }
 
-async function validateSkill({ root, skillDir, repository, agentTypes }) {
+async function validateSkill({ root, skillDir, repository, getAgentTypes }) {
   const skillJsonPath = path.join(root, skillDir, "skill.json");
   const skill = await readJson(skillJsonPath);
   const skillName = skill.name || path.basename(skillDir);
-  const resolution = resolveDirectSkillsCliTargets(skill, agentTypes);
+  const installability = resolveSkillInstallability(skill, skillJsonPath);
+  const resolution = installability.installable
+    ? resolveDirectSkillsCliTargets(skill, await getAgentTypes())
+    : null;
   const failures = [];
   const skillRoot = path.join(root, skillDir);
   const packagedFiles = packagedSkillFiles(skill);
 
-  for (const error of resolution.errors) {
+  for (const error of resolution?.errors || []) {
     failures.push(`Invalid npx skills target policy for ${skillDir}: ${error}`);
   }
 
   for (const filename of DOC_FILENAMES) {
     const docPath = path.join(root, skillDir, filename);
-    if (!existsSync(docPath)) {
+    let docStat;
+    try {
+      docStat = lstatSync(docPath);
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        failures.push(
+          `Unable to inspect required install documentation file: ${path.join(skillDir, filename)}`,
+        );
+        continue;
+      }
       failures.push(`Missing required install documentation file: ${path.join(skillDir, filename)}`);
       continue;
     }
 
-    const markdown = stripHtmlComments(await readFile(docPath, "utf8"));
+    if (!docStat.isFile()) {
+      failures.push(
+        `Required install documentation path is not a regular file: ${path.join(skillDir, filename)}`,
+      );
+      continue;
+    }
+
+    const rawMarkdown = await readFile(docPath, "utf8");
+    if (!installability.installable) {
+      if (!hasNonInstallableDocPrologue(rawMarkdown)) {
+        failures.push(
+          `Missing required non-installable document prologue in ${path.join(skillDir, filename)}: ` +
+          NON_INSTALLABLE_DOC_PROLOGUE,
+        );
+      }
+      continue;
+    }
+
+    const markdown = stripHtmlComments(rawMarkdown);
     const commands = parseSkillsAddCommands(markdown);
     const commandsForSkill = commands.filter((command) => command.skillValues.includes(skillName));
     const malformedCommands = commands.filter(
@@ -538,6 +595,7 @@ async function validateSkill({ root, skillDir, repository, agentTypes }) {
   return {
     skillDir,
     skillName,
+    installability,
     resolution,
     failures,
   };
@@ -545,7 +603,11 @@ async function validateSkill({ root, skillDir, repository, agentTypes }) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const agentTypes = parseAgentTypes(await readAgentTypeSource(options));
+  let agentTypesPromise;
+  const getAgentTypes = () => {
+    agentTypesPromise ??= readAgentTypeSource(options).then(parseAgentTypes);
+    return agentTypesPromise;
+  };
   let skillDirs = options.skillDirs;
 
   if (options.all) {
@@ -572,7 +634,7 @@ async function main() {
         root: options.root,
         skillDir,
         repository: options.repository,
-        agentTypes,
+        getAgentTypes,
       }),
     );
   }
@@ -586,6 +648,14 @@ async function main() {
   }
 
   for (const result of results) {
+    if (!result.installability.installable) {
+      console.log(
+        `Public install docs not applicable for ${result.skillName}: ` +
+        'skill.json declares "installable": false',
+      );
+      continue;
+    }
+
     if (result.resolution.status === "not_applicable") {
       console.log(
         `npx skills install docs not applicable for ${result.skillName}: ` +

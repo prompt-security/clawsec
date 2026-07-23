@@ -8,11 +8,16 @@ const validator = "scripts/ci/validate_skill_install_docs.mjs";
 const workflow = await readFile(".github/workflows/controlled-skill-release.yml", "utf8");
 const tempRoot = await mkdtemp(path.join(tmpdir(), "clawsec-install-docs-"));
 const agentTypesPath = path.join(tempRoot, "vercel-types.ts");
+const nonInstallableDocPrologue =
+  "This skill is intentionally non-installable. Do not publish or install it through public skill channels.";
 
-function runValidator(args) {
+function runValidator(args, { agentTypesFile = agentTypesPath } = {}) {
+  const agentTypeArgs = agentTypesFile === null
+    ? []
+    : ["--agent-types-file", agentTypesFile];
   return spawnSync(
     process.execPath,
-    [validator, "--root", tempRoot, "--agent-types-file", agentTypesPath, ...args],
+    [validator, "--root", tempRoot, ...agentTypeArgs, ...args],
     {
       encoding: "utf8",
     },
@@ -56,6 +61,101 @@ try {
     agentTypesPath,
     "export type AgentType = | 'codex' | 'hermes-agent' | 'openclaw' | 'universal';\n",
   );
+
+  await writeSkill({
+    name: "non-installable-example",
+    metadata: { installable: false },
+    readme: `${nonInstallableDocPrologue}\n\n# Non-installable Example\n`,
+    skillMd:
+      `\uFEFF---\r\nname: non-installable-example\r\nversion: 1.0.0\r\n---\r\n\r\n` +
+      `${nonInstallableDocPrologue}\r\n\r\n# Non-installable Example\r\n`,
+  });
+
+  const offlineNonInstallable = runValidator(
+    ["--skills", "skills/non-installable-example"],
+    { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+  );
+  assert.equal(
+    offlineNonInstallable.status,
+    0,
+    `non-installable docs must not load AgentTypes\nstdout:\n${offlineNonInstallable.stdout}\n` +
+      `stderr:\n${offlineNonInstallable.stderr}`,
+  );
+  assert.match(
+    offlineNonInstallable.stdout,
+    /Public install docs not applicable for non-installable-example: skill\.json declares "installable": false/,
+  );
+
+  for (const [name, readme, skillMd] of [
+    [
+      "non-installable-missing-prologue",
+      "# Missing prologue\n",
+      `---\nname: non-installable-missing-prologue\n---\n\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-only",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: non-installable-frontmatter-only\ndescription: ${nonInstallableDocPrologue}\n---\n\n# Hidden denial\n`,
+    ],
+    [
+      "non-installable-indented-prologue",
+      `  ${nonInstallableDocPrologue}\n`,
+      `---\nname: non-installable-indented-prologue\n---\n\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-late-prologue",
+      `# Late prologue\n\n${nonInstallableDocPrologue}\n`,
+      `---\nname: non-installable-late-prologue\n---\n\n${nonInstallableDocPrologue}\n`,
+    ],
+  ]) {
+    await writeSkill({
+      name,
+      metadata: { installable: false },
+      readme,
+      skillMd,
+    });
+    const invalidPrologue = runValidator(
+      ["--skills", `skills/${name}`],
+      { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+    );
+    assert.equal(invalidPrologue.status, 1, `${name} must fail the fixed-prologue contract`);
+    assert.match(invalidPrologue.stderr, /Missing required non-installable document prologue/);
+  }
+
+  await writeSkill({
+    name: "non-installable-invalid-type",
+    metadata: { installable: "false" },
+    readme: `${nonInstallableDocPrologue}\n`,
+    skillMd: `${nonInstallableDocPrologue}\n`,
+  });
+  const invalidInstallableType = runValidator(
+    ["--skills", "skills/non-installable-invalid-type"],
+    { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+  );
+  assert.equal(invalidInstallableType.status, 1, "installable metadata must be a strict boolean");
+  assert.match(invalidInstallableType.stderr, /"installable" must be a boolean when present/);
+
+  const externalDoc = path.join(tempRoot, "external-doc.md");
+  await writeFile(externalDoc, `${nonInstallableDocPrologue}\n`);
+  for (const filename of ["README.md", "SKILL.md"]) {
+    const name = `non-installable-symlink-${filename === "README.md" ? "readme" : "skill"}`;
+    await writeSkill({
+      name,
+      metadata: { installable: false },
+      readme: `${nonInstallableDocPrologue}\n`,
+      skillMd: `${nonInstallableDocPrologue}\n`,
+    });
+    const docPath = path.join(tempRoot, "skills", name, filename);
+    await rm(docPath);
+    await symlink(externalDoc, docPath);
+
+    const symlinkedDoc = runValidator(
+      ["--skills", `skills/${name}`],
+      { agentTypesFile: path.join(tempRoot, "missing-agent-types.ts") },
+    );
+    assert.equal(symlinkedDoc.status, 1, `${filename} symlinks must fail the regular-file contract`);
+    assert.match(symlinkedDoc.stderr, /Required install documentation path is not a regular file/);
+  }
 
   await writeSkill({
     name: "hermes-example",
