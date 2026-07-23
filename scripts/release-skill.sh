@@ -69,8 +69,60 @@ if [ -n "$(git status --porcelain=v1 --untracked-files=all)" ]; then
 fi
 
 TEMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TEMP_DIR"' EXIT
-FILES_TO_STAGE=()
+ORIGINAL_HEAD="$(git rev-parse HEAD)"
+APPLY_STARTED=false
+PREPARATION_COMPLETED=false
+PREPARED_FILES=()
+TARGET_FILES=()
+BACKUP_FILES=()
+
+cleanup() {
+  local status=$?
+  trap - EXIT HUP INT TERM
+
+  if [ "$APPLY_STARTED" = "true" ] && [ "$PREPARATION_COMPLETED" != "true" ]; then
+    current_head="$(git rev-parse HEAD 2>/dev/null || true)"
+    if [ "$current_head" = "$ORIGINAL_HEAD" ]; then
+      echo "Version preparation failed; restoring the original clean tree." >&2
+      rollback_failed=false
+      for index in "${!TARGET_FILES[@]}"; do
+        if ! cp -p "${BACKUP_FILES[$index]}" "${TARGET_FILES[$index]}"; then
+          rollback_failed=true
+        fi
+      done
+      if ! git add -- "${TARGET_FILES[@]}"; then
+        rollback_failed=true
+      fi
+      if [ -n "$(git status --porcelain=v1 --untracked-files=all)" ]; then
+        echo "Error: repository is not clean after automatic rollback." >&2
+        rollback_failed=true
+      fi
+      if [ "$rollback_failed" = "true" ]; then
+        echo "Error: automatic rollback was incomplete; inspect the listed skill files." >&2
+      fi
+    else
+      echo "Warning: HEAD changed during preparation; refusing to overwrite the new commit." >&2
+    fi
+  fi
+
+  rm -rf "$TEMP_DIR"
+  exit "$status"
+}
+trap cleanup EXIT
+
+handle_signal() {
+  local signal_status="$1"
+  trap - HUP INT TERM
+  exit "$signal_status"
+}
+trap 'handle_signal 129' HUP
+trap 'handle_signal 130' INT
+trap 'handle_signal 143' TERM
+
+queue_prepared_file() {
+  PREPARED_FILES+=("$1")
+  TARGET_FILES+=("$2")
+}
 
 echo "Preparing $SKILL_NAME version $VERSION on review branch $CURRENT_BRANCH"
 
@@ -79,18 +131,17 @@ if ! jq --arg version "$VERSION" '.version = $version' \
   echo "Error: failed to update $SKILL_PATH/skill.json." >&2
   exit 1
 fi
-mv "$TEMP_DIR/skill.json" "$SKILL_PATH/skill.json"
-FILES_TO_STAGE+=("$SKILL_PATH/skill.json")
 
-if jq -e '.openclaw.feed_url' "$SKILL_PATH/skill.json" >/dev/null 2>&1; then
+if jq -e '.openclaw.feed_url' "$TEMP_DIR/skill.json" >/dev/null 2>&1; then
   if ! jq --arg tag "$TAG" \
     '.openclaw.feed_url = (.openclaw.feed_url | gsub("/[^/]+-v[0-9.]+(-[a-zA-Z0-9.]+)?/"; "/\($tag)/"))' \
-    "$SKILL_PATH/skill.json" > "$TEMP_DIR/skill.json"; then
+    "$TEMP_DIR/skill.json" > "$TEMP_DIR/skill.json.next"; then
     echo "Error: failed to update openclaw.feed_url." >&2
     exit 1
   fi
-  mv "$TEMP_DIR/skill.json" "$SKILL_PATH/skill.json"
+  mv "$TEMP_DIR/skill.json.next" "$TEMP_DIR/skill.json"
 fi
+queue_prepared_file "$TEMP_DIR/skill.json" "$SKILL_PATH/skill.json"
 
 if ! grep -qE '^version: ' "$SKILL_PATH/SKILL.md"; then
   echo "Error: SKILL.md is missing a frontmatter version." >&2
@@ -116,8 +167,7 @@ if grep -qE "$DOWNLOAD_PATTERN" "$TEMP_DIR/SKILL.md"; then
     "$TEMP_DIR/SKILL.md" > "$TEMP_DIR/SKILL.md.next"
   mv "$TEMP_DIR/SKILL.md.next" "$TEMP_DIR/SKILL.md"
 fi
-mv "$TEMP_DIR/SKILL.md" "$SKILL_PATH/SKILL.md"
-FILES_TO_STAGE+=("$SKILL_PATH/SKILL.md")
+queue_prepared_file "$TEMP_DIR/SKILL.md" "$SKILL_PATH/SKILL.md"
 
 for markdown_file in "$SKILL_PATH"/*.md; do
   if [ ! -f "$markdown_file" ] || [ "$markdown_file" = "$SKILL_PATH/SKILL.md" ]; then
@@ -129,12 +179,26 @@ for markdown_file in "$SKILL_PATH"/*.md; do
   filename="$(basename "$markdown_file")"
   sed -E "s|$DOWNLOAD_PATTERN|/download/${TAG}/|g" \
     "$markdown_file" > "$TEMP_DIR/$filename"
-  mv "$TEMP_DIR/$filename" "$markdown_file"
-  FILES_TO_STAGE+=("$markdown_file")
+  queue_prepared_file "$TEMP_DIR/$filename" "$markdown_file"
 done
 
-for file in "${FILES_TO_STAGE[@]}"; do
-  git add "$file"
+mkdir "$TEMP_DIR/backups"
+for index in "${!TARGET_FILES[@]}"; do
+  backup_file="$TEMP_DIR/backups/$index"
+  cp -p "${TARGET_FILES[$index]}" "$backup_file"
+  BACKUP_FILES+=("$backup_file")
+done
+
+# No repository file is replaced until every transformation above has passed.
+# If staging or commit fails, the EXIT trap restores the exact clean inputs and
+# stages those originals to clear this helper's index changes without reset.
+APPLY_STARTED=true
+for index in "${!TARGET_FILES[@]}"; do
+  mv "${PREPARED_FILES[$index]}" "${TARGET_FILES[$index]}"
+done
+
+for file in "${TARGET_FILES[@]}"; do
+  git add -- "$file"
 done
 
 if git diff --cached --quiet; then
@@ -145,6 +209,7 @@ fi
 
 COMMIT_SHA="$(git rev-parse HEAD)"
 echo "Prepared commit: $COMMIT_SHA"
+PREPARATION_COMPLETED=true
 
 if [ "$INSTALLABLE" = "false" ]; then
   echo "This package is non-installable. Push the review branch for signed denial evidence."

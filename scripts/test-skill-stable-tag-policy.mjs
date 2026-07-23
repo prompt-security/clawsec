@@ -319,7 +319,7 @@ const scriptPolicyIndex = requiredIndex(
 for (const [needle, operation] of [
   ['TEMP_DIR="$(mktemp -d)"', "temporary mutation staging"],
   ['jq --arg version "$VERSION"', "skill metadata write"],
-  ['git add "$file"', "Git staging"],
+  ['git add -- "$file"', "Git staging"],
   ['git commit -m "chore($SKILL_NAME): bump version to $VERSION"', "Git commit"],
 ]) {
   assert.ok(

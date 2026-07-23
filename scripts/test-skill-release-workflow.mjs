@@ -551,7 +551,7 @@ const releaseScriptPolicyIndex = requiredIndex(
 );
 for (const [needle, description] of [
   ['jq --arg version "$VERSION"', 'version mutation'],
-  ['git add "$file"', 'staging'],
+  ['git add -- "$file"', 'staging'],
   ['git commit -m', 'commit creation'],
 ]) {
   assert.ok(
@@ -564,6 +564,16 @@ assert.match(
   releaseSkillScript,
   /git status --porcelain=v1 --untracked-files=all[\s\S]*jq --arg version "\$VERSION"/,
   'release-skill.sh must reject globally dirty source before version mutation',
+);
+assert.match(
+  releaseSkillScript,
+  /restoring the original clean tree[\s\S]*cp -p "\$\{BACKUP_FILES\[\$index\]\}" "\$\{TARGET_FILES\[\$index\]\}"[\s\S]*git add -- "\$\{TARGET_FILES\[@\]\}"[\s\S]*trap cleanup EXIT/,
+  'release-skill.sh must restore both worktree files and index state when preparation fails',
+);
+assert.match(
+  releaseSkillScript,
+  /PREPARATION_COMPLETED=false[\s\S]*\[ "\$PREPARATION_COMPLETED" != "true" \][\s\S]*trap 'handle_signal 129' HUP[\s\S]*trap 'handle_signal 130' INT[\s\S]*trap 'handle_signal 143' TERM[\s\S]*PREPARATION_COMPLETED=true/,
+  'release-skill.sh must roll back incomplete preparation after fatal signals',
 );
 assert.match(
   releaseSkillScript,

@@ -446,6 +446,19 @@ function verifyTagRecord(record, plan, expected = {}) {
   return record;
 }
 
+async function loadVerifiedTagRecord(
+  client,
+  repository,
+  plan,
+  { allowMissing = false, expected = {} } = {},
+) {
+  const record = await readTagRecord(client, repository, plan.tag, { allowMissing });
+  if (!record && allowMissing) {
+    return null;
+  }
+  return verifyTagRecord(record, plan, expected);
+}
+
 async function requireCurrentMain(client, repository, defaultBranch, sourceCommit) {
   const observed = await readDefaultBranchHead(client, repository, defaultBranch);
   if (observed !== sourceCommit) {
@@ -483,9 +496,8 @@ export async function createOrResumeControlledTag({
     appId,
   });
 
-  const existing = await readTagRecord(client, repository, plan.tag, { allowMissing: true });
+  const existing = await loadVerifiedTagRecord(client, repository, plan, { allowMissing: true });
   if (existing) {
-    verifyTagRecord(existing, plan);
     return { ...plan, ...existing, ...rulesetProof, operation: "resumed" };
   }
 
@@ -547,8 +559,7 @@ export async function createOrResumeControlledTag({
     // The exact tuple readback below is the only accepted recovery.
   }
 
-  const readback = await readTagRecord(client, repository, plan.tag);
-  verifyTagRecord(readback, plan);
+  const readback = await loadVerifiedTagRecord(client, repository, plan);
   return {
     ...plan,
     ...readback,
@@ -572,8 +583,9 @@ export async function verifyControlledReleaseTuple({
   if (peeledCommitOid !== plan.protected_main_commit) {
     fail("protected-main commit and peeled-commit inputs must be identical");
   }
-  const record = await readTagRecord(client, repository, plan.tag);
-  verifyTagRecord(record, plan, { tagObjectOid, peeledCommitOid });
+  const record = await loadVerifiedTagRecord(client, repository, plan, {
+    expected: { tagObjectOid, peeledCommitOid },
+  });
   return { ...plan, ...record, provenance_verified: true };
 }
 
@@ -608,9 +620,8 @@ export async function preflightControlledTag({
   if (plan.repository !== repository) {
     fail("release plan repository does not match the GitHub API repository");
   }
-  const existing = await readTagRecord(client, repository, plan.tag, { allowMissing: true });
+  const existing = await loadVerifiedTagRecord(client, repository, plan, { allowMissing: true });
   if (existing) {
-    verifyTagRecord(existing, plan);
     await requireProtectedMainAncestry({
       client,
       repository,
