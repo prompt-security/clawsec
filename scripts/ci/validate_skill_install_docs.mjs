@@ -208,22 +208,21 @@ function stripHtmlComments(markdown) {
   return markdown.replace(/<!--[\s\S]*?(?:-->|$)/g, "");
 }
 
-function isSupportedFrontmatterScalar(value) {
-  const scalar = value.trim();
-  if (
-    !scalar ||
-    /[<>{}]/.test(scalar) ||
-    [...scalar].some((character) => {
-      const codePoint = character.codePointAt(0);
-      return !(
-        (codePoint >= 0x20 && codePoint <= 0x7e) ||
-        codePoint === 0x85 ||
-        (codePoint >= 0xa0 && codePoint <= 0xd7ff) ||
-        (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
-        (codePoint >= 0x10000 && codePoint <= 0x10ffff)
-      );
-    })
-  ) {
+function hasOnlySupportedYamlCharacters(value) {
+  return [...value].every((character) => {
+    const codePoint = character.codePointAt(0);
+    return (
+      (codePoint >= 0x20 && codePoint <= 0x7e) ||
+      codePoint === 0x85 ||
+      (codePoint >= 0xa0 && codePoint <= 0xd7ff) ||
+      (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+      (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+    );
+  });
+}
+
+function isSupportedFrontmatterScalar(scalar) {
+  if (!scalar || !hasOnlySupportedYamlCharacters(scalar) || /[<>{}]/.test(scalar)) {
     return false;
   }
   if (/^"(?:[^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"$/.test(scalar)) {
@@ -241,17 +240,17 @@ function isSupportedFrontmatterScalar(value) {
     !scalar.includes("[") &&
     !scalar.includes("]") &&
     !/(?:^|\s)#/.test(scalar) &&
-    !/:\s/.test(scalar)
+    !/:(?:\s|,|$)/.test(scalar)
   );
 }
 
 function frontmatterBodyStart(lines) {
-  if (lines[0]?.trimEnd() !== "---") {
+  if (!/^--- *$/.test(lines[0] || "")) {
     return 0;
   }
 
   const closingIndex = lines.findIndex(
-    (line, index) => index > 0 && line.trimEnd() === "---",
+    (line, index) => index > 0 && /^--- *$/.test(line),
   );
   if (closingIndex === -1) {
     return null;
@@ -264,10 +263,10 @@ function frontmatterBodyStart(lines) {
   let sawEntry = false;
 
   for (const rawLine of lines.slice(1, closingIndex)) {
-    if (rawLine.trim() === "") {
+    if (/^ *$/.test(rawLine)) {
       continue;
     }
-    if (rawLine.includes("\t")) {
+    if (!hasOnlySupportedYamlCharacters(rawLine)) {
       return null;
     }
 
@@ -277,7 +276,7 @@ function frontmatterBodyStart(lines) {
     }
 
     const indent = entry[1].length;
-    const value = (entry[3] || "").trim();
+    const value = (entry[3] || "").replace(/ +$/, "");
     if (indent % 2 !== 0 || (!sawEntry && indent !== 0)) {
       return null;
     }
@@ -329,11 +328,11 @@ function hasNonInstallableDocPrologue(markdown) {
     return false;
   }
 
-  while (lineIndex < lines.length && lines[lineIndex].trim() === "") {
+  while (lineIndex < lines.length && /^ *$/.test(lines[lineIndex])) {
     lineIndex += 1;
   }
 
-  return lines[lineIndex]?.trimEnd() === NON_INSTALLABLE_DOC_PROLOGUE;
+  return lines[lineIndex]?.replace(/ +$/, "") === NON_INSTALLABLE_DOC_PROLOGUE;
 }
 
 function tokenizeShellLine(line) {

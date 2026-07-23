@@ -139,6 +139,46 @@ try {
       `${nonInstallableDocPrologue}\n`,
       `---\nname: bad\u007fvalue\n---\n${nonInstallableDocPrologue}\n`,
     ],
+    [
+      "non-installable-frontmatter-leading-trimmed-control",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: \u000bok\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-trailing-trimmed-control",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: ok\u000c\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-control-only-line",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: fake\n\u000b\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-control-opener",
+      `${nonInstallableDocPrologue}\n`,
+      `---\u000b\nname: fake\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-control-closer",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: fake\n---\u000c\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-frontmatter-trailing-colon",
+      `${nonInstallableDocPrologue}\n`,
+      `---\nname: fake:\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-prologue-control-suffix",
+      `${nonInstallableDocPrologue}\u000b\n`,
+      `---\nname: non-installable-prologue-control-suffix\n---\n${nonInstallableDocPrologue}\n`,
+    ],
+    [
+      "non-installable-prologue-control-prefix-line",
+      `\u000c\n${nonInstallableDocPrologue}\n`,
+      `---\nname: non-installable-prologue-control-prefix-line\n---\n${nonInstallableDocPrologue}\n`,
+    ],
   ]) {
     await writeSkill({
       name,
