@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/install/adapters/openclaw-v1.schema.json",
+  "title": "ClawSec OpenClaw install adapter profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "scope_identity_digest",
+    "skill_root_identity_digest",
+    "skill_root_path",
+    "reload_behavior"
+  ],
+  "properties": {
+    "kind": {
+      "const": "openclaw"
+    },
+    "scope_identity_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "skill_root_identity_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "skill_root_path": {
+      "$ref": "#/definitions/portableRelativePath"
+    },
+    "reload_behavior": {
+      "$ref": "#/definitions/reloadBehavior"
+    }
+  },
+  "definitions": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "portableRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*(?:^|/)[^/]*\\.(?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.[^/]*)?(?:/|$))[A-Za-z0-9._@+-]+(?:/[A-Za-z0-9._@+-]+)*$"
+    },
+    "reloadBehavior": {
+      "enum": [
+        "none",
+        "reload_harness",
+        "restart_harness"
+      ]
+    }
+  }
+}
