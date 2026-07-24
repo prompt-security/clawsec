@@ -1,0 +1,88 @@
+{
+  "contract": "clawsec.install-plan-policy/v1",
+  "contract_version": "1",
+  "maximum_plan_bytes": 1048576,
+  "maximum_validity_seconds": 900,
+  "maximum_actions": 64,
+  "maximum_blockers": 64,
+  "maximum_document_nodes": 4096,
+  "maximum_object_keys": 64,
+  "maximum_array_items": 64,
+  "maximum_install_tree_entries": 4096,
+  "maximum_archive_bytes": 134217728,
+  "maximum_installed_file_bytes": 67108864,
+  "maximum_install_tree_bytes": 268435456,
+  "maximum_planned_output_bytes": 268435456,
+  "maximum_planned_output_entries": 64,
+  "maximum_captured_preimage_bytes": 268435456,
+  "maximum_captured_preimage_entries": 64,
+  "maximum_expansion_ratio": 100,
+  "dispositions": {
+    "blocked": {
+      "result_outcome": "blocked",
+      "eligible_for_confirmation": false,
+      "authorizes_installation": false,
+      "minimum_actions": 0,
+      "maximum_actions": 0,
+      "minimum_blockers": 1,
+      "maximum_blockers": 64
+    },
+    "ready": {
+      "result_outcome": "pass",
+      "eligible_for_confirmation": true,
+      "authorizes_installation": false,
+      "minimum_actions": 1,
+      "maximum_actions": 64,
+      "minimum_blockers": 0,
+      "maximum_blockers": 0
+    }
+  },
+  "confirmation": {
+    "binding": "sha256_exact_plan_bytes",
+    "disclosure_source": "install_plan_actions",
+    "external_nonce_required": true,
+    "authenticated_principal_required": true,
+    "target_instance_binding_required": true,
+    "one_time_ledger_required": true,
+    "expires_with_plan": true,
+    "confirmation_authorizes_installation": false,
+    "apply_reverification_required": true
+  },
+  "filesystem": {
+    "path_flavor": "posix",
+    "target_anchor": "scope_root",
+    "paths_are_scope_relative": true,
+    "trailing_dot_segments_allowed": false,
+    "windows_device_basenames_allowed": false,
+    "symlinks_allowed": false,
+    "special_files_allowed": false,
+    "group_or_other_write_allowed": false,
+    "managed_entries_are_fresh_create_only": true,
+    "managed_entries_require_absent_prestate": true,
+    "existing_target_entries_are_blockers": true,
+    "install_tree_entries_require_manifest_entry_digest": true
+  },
+  "rollback": {
+    "state_mutating_actions_require_rollback": true,
+    "managed_create_rolls_back_by_removal": true,
+    "declared_transformation_requires_captured_preimage": true,
+    "non_state_mutating_actions_have_null_rollback": true,
+    "non_state_mutating_actions_excluded_from_rollback_order": true
+  },
+  "assurance": {
+    "exact_plan_bytes": "verified",
+    "exact_component_metadata": "verified_when_bound",
+    "caller_expected_artifact": "verified_when_bound",
+    "future_install_context": "verified_when_ready",
+    "provenance": "unverified",
+    "catalog_authorization": "unverified",
+    "release_signature_authorization": "unverified",
+    "advisory_verification": "unverified",
+    "operator_authorization": "unverified",
+    "artifact_source_membership": "unverified",
+    "action_state_derivation": "verified_when_bound",
+    "installation_authorization": "not_granted",
+    "execution": "not_executed",
+    "preconditions_at_apply_time": "unverified"
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "schema": "clawsec.install-plan/v1",
+  "path_flavor": "posix",
+  "result": {
+    "schema": "clawsec.result/v1",
+    "executor": {
+      "schema": "clawsec.component-ref/v1",
+      "name": "clawsec-core-nanoclaw",
+      "version": "0.1.0-rc.1",
+      "harness": "nanoclaw",
+      "role": "core",
+      "metadata_digest": "sha256:765f343f11e9367051b5ed95daed35ff318945c672df0f5509c0dbcd1276eea5"
+    },
+    "subject": {
+      "kind": "component",
+      "component": {
+        "schema": "clawsec.component-ref/v1",
+        "name": "clawsec-suite-nanoclaw",
+        "version": "0.1.0-rc.1",
+        "harness": "nanoclaw",
+        "role": "suite",
+        "metadata_digest": "sha256:a123a4f4451018ebafee26cfc7674a24bf33b7903a60ff69d25eb9251577e83a"
+      }
+    },
+    "invocation": {
+      "id": "66666666-6666-4666-8666-666666666666",
+      "operation": "core.plan-release",
+      "harness": {
+        "name": "nanoclaw",
+        "version": "2.1.17"
+      },
+      "scope": {
+        "kind": "nanoclaw.checkout",
+        "ref": "nanoclaw-v2-lab-01"
+      }
+    },
+    "reported_at": "2026-07-24T09:10:00Z",
+    "outcome": "blocked",
+    "reason_code": "prerequisite_missing",
+    "summary": "Synthetic contract fixture: an unowned target path prevents installation planning.",
+    "effects": []
+  },
+  "plan_id": "77777777-7777-4777-8777-777777777777",
+  "disposition": "blocked",
+  "expires_at": "2026-07-24T09:15:00Z",
+  "artifact": {
+    "channel": "private_lab",
+    "component": {
+      "schema": "clawsec.component-ref/v1",
+      "name": "clawsec-suite-nanoclaw",
+      "version": "0.1.0-rc.1",
+      "harness": "nanoclaw",
+      "role": "suite",
+      "metadata_digest": "sha256:a123a4f4451018ebafee26cfc7674a24bf33b7903a60ff69d25eb9251577e83a"
+    },
+    "authority": {
+      "kind": "private_candidate",
+      "contract": "clawsec.private-candidate/v1",
+      "document_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signature_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "root_fingerprint": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "expires_at": "2026-07-24T09:30:00Z"
+    },
+    "trust_policy_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "signed_checksum_manifest_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "detached_signature_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "archive_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "archive_byte_length": 2048,
+    "install_tree_manifest_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "install_tree_entry_count": 2,
+    "install_tree_total_bytes": 1024,
+    "release_manifest_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "verification_refs": {
+    "release_verification_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "advisory_state_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "install_policy_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "decision": "reported_allow"
+  },
+  "staged_input": {
+    "kind": "quarantine_snapshot",
+    "snapshot_digest": "sha256:9191919191919191919191919191919191919191919191919191919191919191",
+    "archive_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "install_tree_manifest_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "target_state": {
+    "target_instance_id": "nanoclaw-v2-lab-01",
+    "scope_root_identity_digest": "sha256:7676767676767676767676767676767676767676767676767676767676767676",
+    "ancestor_chain_digest": "sha256:7878787878787878787878787878787878787878787878787878787878787878",
+    "action_set_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "touched_prestate_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "touched_expected_poststate_digest": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "confirmation_requirements": null,
+  "adapter": {
+    "contract": "clawsec.nanoclaw-install-adapter/v1",
+    "implementation_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "configuration_digest": "sha256:abababababababababababababababababababababababababababababababab",
+    "profile": {
+      "kind": "nanoclaw_v2_host",
+      "upstream_baseline": {
+        "version": "2.1.17",
+        "commit": "ee7f891698760f21b9e79a850d64c7f633cd95ef"
+      },
+      "checkout_revision": "1234567890abcdef1234567890abcdef12345678",
+      "checkout_status": "dirty",
+      "checkout_identity_digest": "sha256:7676767676767676767676767676767676767676767676767676767676767676",
+      "ancestor_chain_digest": "sha256:7878787878787878787878787878787878787878787878787878787878787878",
+      "skill_root_identity_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "skill_root_path": ".claude/skills",
+      "dependency_lock_digest": "sha256:7474747474747474747474747474747474747474747474747474747474747474",
+      "validation_plan_digest": "sha256:7373737373737373737373737373737373737373737373737373737373737373",
+      "validation_steps": [
+        "postimage_manifest",
+        "host_build",
+        "host_tests",
+        "skill_tests"
+      ],
+      "coding_harness": null,
+      "reload_behavior": "none",
+      "host_authority": true,
+      "ipc_model": "sqlite_session_databases",
+      "legacy_v1_compatibility": false
+    }
+  },
+  "apply_context": null,
+  "actions": [],
+  "rollback_order": [],
+  "blockers": [
+    {
+      "blocker_id": "unowned-suite-path",
+      "code": "unowned_state",
+      "target": {
+        "anchor": "scope_root",
+        "path": ".claude/skills/clawsec-suite-nanoclaw"
+      },
+      "summary": "The target package path exists but is not owned by a verifiable ClawSec installation receipt."
+    }
+  ],
+  "assurance": {
+    "provenance": "unverified",
+    "catalog_authorization": "unverified",
+    "release_signature_authorization": "unverified",
+    "advisory_verification": "unverified",
+    "operator_authorization": "unverified",
+    "artifact_source_membership": "unverified",
+    "action_state_derivation": "verified_when_bound",
+    "installation_authorization": "not_granted",
+    "execution": "not_executed",
+    "preconditions_at_apply_time": "unverified"
+  }
+}

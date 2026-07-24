@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/install/adapters/nanoclaw-v2.schema.json",
+  "title": "ClawSec NanoClaw v2 host install adapter profile",
+  "description": "Closed host-authoritative profile for a specific NanoClaw v2 checkout and its required validation work.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "upstream_baseline",
+    "checkout_revision",
+    "checkout_status",
+    "checkout_identity_digest",
+    "ancestor_chain_digest",
+    "skill_root_identity_digest",
+    "skill_root_path",
+    "dependency_lock_digest",
+    "validation_plan_digest",
+    "validation_steps",
+    "coding_harness",
+    "reload_behavior",
+    "host_authority",
+    "ipc_model",
+    "legacy_v1_compatibility"
+  ],
+  "properties": {
+    "kind": {
+      "const": "nanoclaw_v2_host"
+    },
+    "upstream_baseline": {
+      "$ref": "#/definitions/upstreamBaseline"
+    },
+    "checkout_revision": {
+      "$ref": "#/definitions/sha40"
+    },
+    "checkout_status": {
+      "enum": [
+        "clean",
+        "dirty",
+        "conflicted"
+      ]
+    },
+    "checkout_identity_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "ancestor_chain_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "skill_root_identity_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "skill_root_path": {
+      "const": ".claude/skills"
+    },
+    "dependency_lock_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "validation_plan_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "validation_steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "contains": {
+        "const": "postimage_manifest"
+      },
+      "items": {
+        "enum": [
+          "postimage_manifest",
+          "host_build",
+          "host_tests",
+          "skill_tests",
+          "container_typecheck",
+          "container_build",
+          "container_tests"
+        ]
+      }
+    },
+    "coding_harness": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/codingHarness"
+        }
+      ]
+    },
+    "reload_behavior": {
+      "$ref": "#/definitions/reloadBehavior"
+    },
+    "host_authority": {
+      "const": true
+    },
+    "ipc_model": {
+      "const": "sqlite_session_databases"
+    },
+    "legacy_v1_compatibility": {
+      "const": false
+    }
+  },
+  "definitions": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "sha40": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "finalSemVer": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)$"
+    },
+    "exactSemVer": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?$"
+    },
+    "reloadBehavior": {
+      "enum": [
+        "none",
+        "reload_harness",
+        "restart_harness"
+      ]
+    },
+    "upstreamBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "commit"
+      ],
+      "properties": {
+        "version": {
+          "$ref": "#/definitions/finalSemVer"
+        },
+        "commit": {
+          "$ref": "#/definitions/sha40"
+        }
+      }
+    },
+    "exactVersionReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "const": "exact_version"
+        },
+        "value": {
+          "$ref": "#/definitions/exactSemVer"
+        }
+      }
+    },
+    "commitReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "const": "commit"
+        },
+        "value": {
+          "$ref": "#/definitions/sha40"
+        }
+      }
+    },
+    "contentDigestReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "const": "content_digest"
+        },
+        "value": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "immutableReference": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/exactVersionReference"
+        },
+        {
+          "$ref": "#/definitions/commitReference"
+        },
+        {
+          "$ref": "#/definitions/contentDigestReference"
+        }
+      ]
+    },
+    "codingHarness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "immutable_reference",
+        "implementation_digest",
+        "toolchain_digest",
+        "configuration_digest"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$"
+        },
+        "immutable_reference": {
+          "$ref": "#/definitions/immutableReference"
+        },
+        "implementation_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "toolchain_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "configuration_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    }
+  }
+}

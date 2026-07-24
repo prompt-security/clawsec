@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/install/adapters/picoclaw-v1.schema.json",
+  "title": "ClawSec PicoClaw install adapter profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "home_identity_digest",
+    "config_schema_version",
+    "config_digest",
+    "skill_root_identity_digest",
+    "native_install_status",
+    "reload_behavior"
+  ],
+  "properties": {
+    "kind": {
+      "const": "picoclaw"
+    },
+    "home_identity_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "config_schema_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$"
+    },
+    "config_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "skill_root_identity_digest": {
+      "$ref": "#/definitions/digest"
+    },
+    "native_install_status": {
+      "const": "prototype_pending"
+    },
+    "reload_behavior": {
+      "$ref": "#/definitions/reloadBehavior"
+    }
+  },
+  "definitions": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "reloadBehavior": {
+      "const": "none"
+    }
+  }
+}

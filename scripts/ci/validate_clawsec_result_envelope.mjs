@@ -1305,7 +1305,7 @@ function isStrictSemver(version) {
   }
 }
 
-function parseJsonObjectBytes(bytes, label, errorPath) {
+export function parseJsonObjectBytes(bytes, label, errorPath) {
   const errors = [];
   if (!(bytes instanceof Uint8Array)) {
     addError(

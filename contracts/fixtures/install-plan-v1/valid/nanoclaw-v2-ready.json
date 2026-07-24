@@ -1,0 +1,259 @@
+{
+  "schema": "clawsec.install-plan/v1",
+  "path_flavor": "posix",
+  "result": {
+    "schema": "clawsec.result/v1",
+    "executor": {
+      "schema": "clawsec.component-ref/v1",
+      "name": "clawsec-core-nanoclaw",
+      "version": "0.1.0-rc.1",
+      "harness": "nanoclaw",
+      "role": "core",
+      "metadata_digest": "sha256:765f343f11e9367051b5ed95daed35ff318945c672df0f5509c0dbcd1276eea5"
+    },
+    "subject": {
+      "kind": "component",
+      "component": {
+        "schema": "clawsec.component-ref/v1",
+        "name": "clawsec-suite-nanoclaw",
+        "version": "0.1.0-rc.1",
+        "harness": "nanoclaw",
+        "role": "suite",
+        "metadata_digest": "sha256:a123a4f4451018ebafee26cfc7674a24bf33b7903a60ff69d25eb9251577e83a"
+      }
+    },
+    "invocation": {
+      "id": "33333333-3333-4333-8333-333333333333",
+      "operation": "core.plan-release",
+      "harness": {
+        "name": "nanoclaw",
+        "version": "2.1.17"
+      },
+      "scope": {
+        "kind": "nanoclaw.checkout",
+        "ref": "nanoclaw-v2-lab-01"
+      }
+    },
+    "reported_at": "2026-07-24T09:00:00Z",
+    "outcome": "pass",
+    "reason_code": "operation_completed",
+    "summary": "Synthetic contract fixture: the core reports a ready NanoClaw v2 suite installation plan.",
+    "effects": [
+      {
+        "effect_id": "create-package-directory",
+        "state": "proposed",
+        "target": {
+          "kind": "relative_path",
+          "value": ".claude/skills/clawsec-suite-nanoclaw"
+        },
+        "summary": "Create the suite package directory in the selected NanoClaw checkout."
+      },
+      {
+        "effect_id": "write-skill-document",
+        "state": "proposed",
+        "target": {
+          "kind": "relative_path",
+          "value": ".claude/skills/clawsec-suite-nanoclaw/SKILL.md"
+        },
+        "summary": "Write the staged suite skill document into the selected NanoClaw checkout."
+      }
+    ]
+  },
+  "plan_id": "44444444-4444-4444-8444-444444444444",
+  "disposition": "ready",
+  "expires_at": "2026-07-24T09:05:00Z",
+  "artifact": {
+    "channel": "private_lab",
+    "component": {
+      "schema": "clawsec.component-ref/v1",
+      "name": "clawsec-suite-nanoclaw",
+      "version": "0.1.0-rc.1",
+      "harness": "nanoclaw",
+      "role": "suite",
+      "metadata_digest": "sha256:a123a4f4451018ebafee26cfc7674a24bf33b7903a60ff69d25eb9251577e83a"
+    },
+    "authority": {
+      "kind": "private_candidate",
+      "contract": "clawsec.private-candidate/v1",
+      "document_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "signature_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "root_fingerprint": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "expires_at": "2026-07-24T09:30:00Z"
+    },
+    "trust_policy_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "signed_checksum_manifest_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "detached_signature_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "archive_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "archive_byte_length": 2048,
+    "install_tree_manifest_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "install_tree_entry_count": 2,
+    "install_tree_total_bytes": 1024,
+    "release_manifest_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "verification_refs": {
+    "release_verification_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "advisory_state_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "install_policy_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "decision": "reported_allow"
+  },
+  "staged_input": {
+    "kind": "quarantine_snapshot",
+    "snapshot_digest": "sha256:9090909090909090909090909090909090909090909090909090909090909090",
+    "archive_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "install_tree_manifest_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "target_state": {
+    "target_instance_id": "nanoclaw-v2-lab-01",
+    "scope_root_identity_digest": "sha256:7676767676767676767676767676767676767676767676767676767676767676",
+    "ancestor_chain_digest": "sha256:7878787878787878787878787878787878787878787878787878787878787878",
+    "action_set_digest": "sha256:5f526ab27ea59ec8406600d680df90ccb51c746173f4a4626e7828928d29f24a",
+    "touched_prestate_digest": "sha256:3e76ce75c0f90c21a84990ff6a71c511410939e8eb2995d55498215e5a44f803",
+    "touched_expected_poststate_digest": "sha256:1e5da7e8b5a1c361a4ab8bf407d65d2922d316bac3dfb038fb0453cd7ab282af"
+  },
+  "confirmation_requirements": {
+    "binding": "sha256_exact_plan_bytes",
+    "disclosure_source": "install_plan_actions",
+    "external_nonce": "required",
+    "authenticated_principal": "required",
+    "target_instance_binding": "required",
+    "one_time_ledger": "required",
+    "expires_with_plan": true
+  },
+  "adapter": {
+    "contract": "clawsec.nanoclaw-install-adapter/v1",
+    "implementation_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "configuration_digest": "sha256:abababababababababababababababababababababababababababababababab",
+    "profile": {
+      "kind": "nanoclaw_v2_host",
+      "upstream_baseline": {
+        "version": "2.1.17",
+        "commit": "ee7f891698760f21b9e79a850d64c7f633cd95ef"
+      },
+      "checkout_revision": "1234567890abcdef1234567890abcdef12345678",
+      "checkout_status": "dirty",
+      "checkout_identity_digest": "sha256:7676767676767676767676767676767676767676767676767676767676767676",
+      "ancestor_chain_digest": "sha256:7878787878787878787878787878787878787878787878787878787878787878",
+      "skill_root_identity_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "skill_root_path": ".claude/skills",
+      "dependency_lock_digest": "sha256:7474747474747474747474747474747474747474747474747474747474747474",
+      "validation_plan_digest": "sha256:7373737373737373737373737373737373737373737373737373737373737373",
+      "validation_steps": [
+        "postimage_manifest",
+        "host_build",
+        "host_tests",
+        "skill_tests"
+      ],
+      "coding_harness": null,
+      "reload_behavior": "none",
+      "host_authority": true,
+      "ipc_model": "sqlite_session_databases",
+      "legacy_v1_compatibility": false
+    }
+  },
+  "apply_context": {
+    "executor": {
+      "schema": "clawsec.component-ref/v1",
+      "name": "clawsec-core-nanoclaw",
+      "version": "0.1.0-rc.1",
+      "harness": "nanoclaw",
+      "role": "core",
+      "metadata_digest": "sha256:765f343f11e9367051b5ed95daed35ff318945c672df0f5509c0dbcd1276eea5"
+    },
+    "subject": {
+      "kind": "component",
+      "component": {
+        "schema": "clawsec.component-ref/v1",
+        "name": "clawsec-suite-nanoclaw",
+        "version": "0.1.0-rc.1",
+        "harness": "nanoclaw",
+        "role": "suite",
+        "metadata_digest": "sha256:a123a4f4451018ebafee26cfc7674a24bf33b7903a60ff69d25eb9251577e83a"
+      }
+    },
+    "invocation": {
+      "id": "88888888-8888-4888-8888-888888888888",
+      "operation": "core.install-release",
+      "harness": {
+        "name": "nanoclaw",
+        "version": "2.1.17"
+      },
+      "scope": {
+        "kind": "nanoclaw.checkout",
+        "ref": "nanoclaw-v2-lab-01"
+      }
+    }
+  },
+  "actions": [
+    {
+      "action_id": "create-package-directory",
+      "kind": "managed_entry",
+      "operation": "create",
+      "target": {
+        "anchor": "scope_root",
+        "path": ".claude/skills/clawsec-suite-nanoclaw"
+      },
+      "before": {
+        "kind": "absent"
+      },
+      "after": {
+        "kind": "directory",
+        "mode": "0755",
+        "owner_identity_digest": "sha256:7171717171717171717171717171717171717171717171717171717171717171",
+        "group_identity_digest": "sha256:7272727272727272727272727272727272727272727272727272727272727272"
+      },
+      "tree_entry": {
+        "kind": "directory",
+        "path": ".",
+        "manifest_entry_digest": "sha256:1010101010101010101010101010101010101010101010101010101010101010",
+        "mode": "0755"
+      },
+      "rollback_source": null
+    },
+    {
+      "action_id": "write-skill-document",
+      "kind": "managed_entry",
+      "operation": "create",
+      "target": {
+        "anchor": "scope_root",
+        "path": ".claude/skills/clawsec-suite-nanoclaw/SKILL.md"
+      },
+      "before": {
+        "kind": "absent"
+      },
+      "after": {
+        "kind": "file",
+        "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "byte_length": 1024,
+        "mode": "0644",
+        "owner_identity_digest": "sha256:7171717171717171717171717171717171717171717171717171717171717171",
+        "group_identity_digest": "sha256:7272727272727272727272727272727272727272727272727272727272727272"
+      },
+      "tree_entry": {
+        "kind": "file",
+        "path": "SKILL.md",
+        "manifest_entry_digest": "sha256:1212121212121212121212121212121212121212121212121212121212121212",
+        "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+        "byte_length": 1024,
+        "mode": "0644"
+      },
+      "rollback_source": null
+    }
+  ],
+  "rollback_order": [
+    "write-skill-document",
+    "create-package-directory"
+  ],
+  "blockers": [],
+  "assurance": {
+    "provenance": "unverified",
+    "catalog_authorization": "unverified",
+    "release_signature_authorization": "unverified",
+    "advisory_verification": "unverified",
+    "operator_authorization": "unverified",
+    "artifact_source_membership": "unverified",
+    "action_state_derivation": "verified_when_bound",
+    "installation_authorization": "not_granted",
+    "execution": "not_executed",
+    "preconditions_at_apply_time": "unverified"
+  }
+}

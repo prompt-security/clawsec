@@ -1,0 +1,1259 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://clawsec.prompt.security/contracts/schemas/install/install-plan-v1.schema.json",
+  "title": "ClawSec install plan v1",
+  "description": "A bounded, non-authorizing proposal for installing one exact ClawSec artifact into one explicit harness scope. Every managed create binds one exact digest-referenced install-tree entry claim; membership is unverified here. Exact signature, advisory, operator-authorization, and apply-time precondition proof live outside this document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "result",
+    "plan_id",
+    "disposition",
+    "path_flavor",
+    "expires_at",
+    "artifact",
+    "verification_refs",
+    "staged_input",
+    "target_state",
+    "confirmation_requirements",
+    "adapter",
+    "apply_context",
+    "actions",
+    "rollback_order",
+    "blockers",
+    "assurance"
+  ],
+  "properties": {
+    "schema": {
+      "const": "clawsec.install-plan/v1"
+    },
+    "result": {
+      "$ref": "https://clawsec.prompt.security/contracts/schemas/result/result-v1.schema.json"
+    },
+    "plan_id": {
+      "$ref": "#/definitions/uuidV4"
+    },
+    "disposition": {
+      "enum": [
+        "blocked",
+        "ready"
+      ]
+    },
+    "path_flavor": {
+      "const": "posix"
+    },
+    "expires_at": {
+      "$ref": "#/definitions/timestamp"
+    },
+    "artifact": {
+      "$ref": "#/definitions/artifact"
+    },
+    "verification_refs": {
+      "$ref": "#/definitions/verificationRefs"
+    },
+    "staged_input": {
+      "$ref": "#/definitions/stagedInput"
+    },
+    "target_state": {
+      "$ref": "#/definitions/targetState"
+    },
+    "confirmation_requirements": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/confirmationRequirements"
+        }
+      ]
+    },
+    "adapter": {
+      "$ref": "#/definitions/adapter"
+    },
+    "apply_context": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/expectedContext"
+        }
+      ]
+    },
+    "actions": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/managedEntryAction"
+          },
+          {
+            "$ref": "#/definitions/declaredTransformationAction"
+          },
+          {
+            "$ref": "#/definitions/nativeOperationAction"
+          }
+        ]
+      }
+    },
+    "rollback_order": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/definitions/actionId"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/definitions/blocker"
+      }
+    },
+    "assurance": {
+      "$ref": "#/definitions/assurance"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "blocked"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "properties": {
+          "actions": {
+            "maxItems": 0
+          },
+          "rollback_order": {
+            "maxItems": 0
+          },
+          "blockers": {
+            "minItems": 1,
+            "maxItems": 64
+          },
+          "confirmation_requirements": {
+            "type": "null"
+          },
+          "apply_context": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "ready"
+          }
+        },
+        "required": [
+          "disposition"
+        ]
+      },
+      "then": {
+        "properties": {
+          "actions": {
+            "minItems": 1,
+            "maxItems": 64
+          },
+          "blockers": {
+            "maxItems": 0
+          },
+          "confirmation_requirements": {
+            "$ref": "#/definitions/confirmationRequirements"
+          },
+          "apply_context": {
+            "$ref": "#/definitions/expectedContext"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "adapter": {
+            "properties": {
+              "profile": {
+                "properties": {
+                  "native_install_status": {
+                    "const": "prototype_pending"
+                  }
+                },
+                "required": [
+                  "native_install_status"
+                ]
+              }
+            },
+            "required": [
+              "profile"
+            ]
+          }
+        },
+        "required": [
+          "adapter"
+        ]
+      },
+      "then": {
+        "properties": {
+          "disposition": {
+            "const": "blocked"
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "sha40": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "exactSemVer": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?$"
+    },
+    "boundedIdentifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@+-]*$"
+    },
+    "uuidV4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "actionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Four-digit octal mode with group and other write bits forbidden.",
+      "pattern": "^0[0-7][0145][0145]$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*(?:^|/)[^/]*\\.(?:/|$))(?!.*(?:^|/)(?:[Cc][Oo][Nn]|[Pp][Rr][Nn]|[Aa][Uu][Xx]|[Nn][Uu][Ll]|[Cc][Oo][Mm][1-9]|[Ll][Pp][Tt][1-9])(?:\\.[^/]*)?(?:/|$))[A-Za-z0-9._@+-]+(?:/[A-Za-z0-9._@+-]+)*$"
+    },
+    "anchoredPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anchor",
+        "path"
+      ],
+      "properties": {
+        "anchor": {
+          "const": "scope_root"
+        },
+        "path": {
+          "$ref": "#/definitions/relativePath"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "channel",
+        "component",
+        "authority",
+        "trust_policy_digest",
+        "signed_checksum_manifest_digest",
+        "detached_signature_digest",
+        "archive_digest",
+        "archive_byte_length",
+        "install_tree_manifest_digest",
+        "install_tree_entry_count",
+        "install_tree_total_bytes",
+        "release_manifest_digest"
+      ],
+      "properties": {
+        "channel": {
+          "enum": [
+            "private_lab",
+            "public_stable"
+          ]
+        },
+        "component": {
+          "$ref": "https://clawsec.prompt.security/contracts/schemas/component/component-ref-v1.schema.json"
+        },
+        "authority": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/privateCandidateAuthority"
+            },
+            {
+              "$ref": "#/definitions/activeCatalogEntryAuthority"
+            }
+          ]
+        },
+        "trust_policy_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "signed_checksum_manifest_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "detached_signature_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "archive_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "archive_byte_length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 134217728
+        },
+        "install_tree_manifest_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "install_tree_entry_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "install_tree_total_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 268435456
+        },
+        "release_manifest_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "privateCandidateAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract",
+        "document_digest",
+        "signature_digest",
+        "root_fingerprint",
+        "expires_at"
+      ],
+      "properties": {
+        "kind": {
+          "const": "private_candidate"
+        },
+        "contract": {
+          "const": "clawsec.private-candidate/v1"
+        },
+        "document_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "signature_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "root_fingerprint": {
+          "$ref": "#/definitions/digest"
+        },
+        "expires_at": {
+          "$ref": "#/definitions/timestamp"
+        }
+      }
+    },
+    "activeCatalogEntryAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "contract",
+        "document_digest",
+        "signature_digest",
+        "root_fingerprint",
+        "expires_at"
+      ],
+      "properties": {
+        "kind": {
+          "const": "active_catalog_entry"
+        },
+        "contract": {
+          "const": "clawsec.catalog-entry/v1"
+        },
+        "document_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "signature_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "root_fingerprint": {
+          "$ref": "#/definitions/digest"
+        },
+        "expires_at": {
+          "$ref": "#/definitions/timestamp"
+        }
+      }
+    },
+    "verificationRefs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release_verification_digest",
+        "advisory_state_digest",
+        "install_policy_digest",
+        "decision"
+      ],
+      "properties": {
+        "release_verification_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "advisory_state_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "install_policy_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "decision": {
+          "const": "reported_allow"
+        }
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "implementation_digest",
+        "configuration_digest",
+        "profile"
+      ],
+      "properties": {
+        "contract": {
+          "type": "string",
+          "pattern": "^clawsec\\.(?:openclaw|hermes|nanoclaw|picoclaw)-install-adapter/v1$"
+        },
+        "implementation_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "configuration_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "profile": {
+          "oneOf": [
+            {
+              "$ref": "https://clawsec.prompt.security/contracts/schemas/install/adapters/openclaw-v1.schema.json"
+            },
+            {
+              "$ref": "https://clawsec.prompt.security/contracts/schemas/install/adapters/hermes-v1.schema.json"
+            },
+            {
+              "$ref": "https://clawsec.prompt.security/contracts/schemas/install/adapters/nanoclaw-v2.schema.json"
+            },
+            {
+              "$ref": "https://clawsec.prompt.security/contracts/schemas/install/adapters/picoclaw-v1.schema.json"
+            }
+          ]
+        }
+      }
+    },
+    "stagedInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "snapshot_digest",
+        "archive_digest",
+        "install_tree_manifest_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "quarantine_snapshot"
+        },
+        "snapshot_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "archive_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "install_tree_manifest_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "targetState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_instance_id",
+        "scope_root_identity_digest",
+        "ancestor_chain_digest",
+        "action_set_digest",
+        "touched_prestate_digest",
+        "touched_expected_poststate_digest"
+      ],
+      "properties": {
+        "target_instance_id": {
+          "$ref": "#/definitions/boundedIdentifier"
+        },
+        "scope_root_identity_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "ancestor_chain_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "action_set_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "touched_prestate_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "touched_expected_poststate_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "confirmationRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding",
+        "disclosure_source",
+        "external_nonce",
+        "authenticated_principal",
+        "target_instance_binding",
+        "one_time_ledger",
+        "expires_with_plan"
+      ],
+      "properties": {
+        "binding": {
+          "const": "sha256_exact_plan_bytes"
+        },
+        "disclosure_source": {
+          "const": "install_plan_actions"
+        },
+        "external_nonce": {
+          "const": "required"
+        },
+        "authenticated_principal": {
+          "const": "required"
+        },
+        "target_instance_binding": {
+          "const": "required"
+        },
+        "one_time_ledger": {
+          "const": "required"
+        },
+        "expires_with_plan": {
+          "const": true
+        }
+      }
+    },
+    "expectedContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executor",
+        "subject",
+        "invocation"
+      ],
+      "properties": {
+        "executor": {
+          "$ref": "https://clawsec.prompt.security/contracts/schemas/component/component-ref-v1.schema.json"
+        },
+        "subject": {
+          "$ref": "https://clawsec.prompt.security/contracts/schemas/result/result-v1.schema.json#/definitions/subject"
+        },
+        "invocation": {
+          "$ref": "https://clawsec.prompt.security/contracts/schemas/result/result-v1.schema.json#/definitions/invocation"
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provenance",
+        "catalog_authorization",
+        "release_signature_authorization",
+        "advisory_verification",
+        "operator_authorization",
+        "artifact_source_membership",
+        "action_state_derivation",
+        "installation_authorization",
+        "execution",
+        "preconditions_at_apply_time"
+      ],
+      "properties": {
+        "provenance": {
+          "const": "unverified"
+        },
+        "catalog_authorization": {
+          "const": "unverified"
+        },
+        "release_signature_authorization": {
+          "const": "unverified"
+        },
+        "advisory_verification": {
+          "const": "unverified"
+        },
+        "operator_authorization": {
+          "const": "unverified"
+        },
+        "artifact_source_membership": {
+          "const": "unverified"
+        },
+        "action_state_derivation": {
+          "const": "verified_when_bound"
+        },
+        "installation_authorization": {
+          "const": "not_granted"
+        },
+        "execution": {
+          "const": "not_executed"
+        },
+        "preconditions_at_apply_time": {
+          "const": "unverified"
+        }
+      }
+    },
+    "absentState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "const": "absent"
+        }
+      }
+    },
+    "directoryState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "mode",
+        "owner_identity_digest",
+        "group_identity_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "directory"
+        },
+        "mode": {
+          "$ref": "#/definitions/mode"
+        },
+        "owner_identity_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "group_identity_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "fileState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "digest",
+        "byte_length",
+        "mode",
+        "owner_identity_digest",
+        "group_identity_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "file"
+        },
+        "digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 67108864
+        },
+        "mode": {
+          "$ref": "#/definitions/mode"
+        },
+        "owner_identity_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "group_identity_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "entryState": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/absentState"
+        },
+        {
+          "$ref": "#/definitions/directoryState"
+        },
+        {
+          "$ref": "#/definitions/fileState"
+        }
+      ]
+    },
+    "installTreeEntryPath": {
+      "description": "POSIX path claimed inside the digest-referenced package install tree. A single dot identifies the package root; membership is unverified here.",
+      "oneOf": [
+        {
+          "const": "."
+        },
+        {
+          "$ref": "#/definitions/relativePath"
+        }
+      ]
+    },
+    "installTreeDirectoryEntry": {
+      "description": "One exact digest-referenced directory-entry claim, including empty directories and the package root; membership is unverified here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "manifest_entry_digest",
+        "mode"
+      ],
+      "properties": {
+        "kind": {
+          "const": "directory"
+        },
+        "path": {
+          "$ref": "#/definitions/installTreeEntryPath"
+        },
+        "manifest_entry_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "mode": {
+          "$ref": "#/definitions/mode"
+        }
+      }
+    },
+    "installTreeFileEntry": {
+      "description": "One exact digest-referenced file-entry claim, including its content digest and byte length; membership is unverified here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "manifest_entry_digest",
+        "digest",
+        "byte_length",
+        "mode"
+      ],
+      "properties": {
+        "kind": {
+          "const": "file"
+        },
+        "path": {
+          "$ref": "#/definitions/relativePath"
+        },
+        "manifest_entry_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 67108864
+        },
+        "mode": {
+          "$ref": "#/definitions/mode"
+        }
+      }
+    },
+    "installTreeEntry": {
+      "description": "One exact digest-referenced install-tree entry claim used by a fresh managed create; membership is unverified here.",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/installTreeDirectoryEntry"
+        },
+        {
+          "$ref": "#/definitions/installTreeFileEntry"
+        }
+      ]
+    },
+    "capturedFileRollbackSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "digest",
+        "byte_length",
+        "mode",
+        "owner_identity_digest",
+        "group_identity_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "captured_file"
+        },
+        "digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 67108864
+        },
+        "mode": {
+          "$ref": "#/definitions/mode"
+        },
+        "owner_identity_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "group_identity_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "managedEntryAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "kind",
+        "operation",
+        "target",
+        "before",
+        "after",
+        "tree_entry",
+        "rollback_source"
+      ],
+      "properties": {
+        "action_id": {
+          "$ref": "#/definitions/actionId"
+        },
+        "kind": {
+          "const": "managed_entry"
+        },
+        "operation": {
+          "const": "create"
+        },
+        "target": {
+          "$ref": "#/definitions/anchoredPath"
+        },
+        "before": {
+          "$ref": "#/definitions/absentState"
+        },
+        "after": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/directoryState"
+            },
+            {
+              "$ref": "#/definitions/fileState"
+            }
+          ]
+        },
+        "tree_entry": {
+          "description": "The exact digest-referenced install-tree entry claim created at target; membership is unverified here.",
+          "$ref": "#/definitions/installTreeEntry"
+        },
+        "rollback_source": {
+          "type": "null"
+        }
+      }
+    },
+    "exactVersionReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "const": "exact_version"
+        },
+        "value": {
+          "$ref": "#/definitions/exactSemVer"
+        }
+      }
+    },
+    "commitReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "const": "commit"
+        },
+        "value": {
+          "$ref": "#/definitions/sha40"
+        }
+      }
+    },
+    "contentDigestReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "const": "content_digest"
+        },
+        "value": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "immutableReference": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/exactVersionReference"
+        },
+        {
+          "$ref": "#/definitions/commitReference"
+        },
+        {
+          "$ref": "#/definitions/contentDigestReference"
+        }
+      ]
+    },
+    "codingHarness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "immutable_reference",
+        "implementation_digest",
+        "toolchain_digest",
+        "configuration_digest"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$"
+        },
+        "immutable_reference": {
+          "$ref": "#/definitions/immutableReference"
+        },
+        "implementation_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "toolchain_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "configuration_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "allowedTransformationOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "before",
+        "after"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/definitions/anchoredPath"
+        },
+        "before": {
+          "$ref": "#/definitions/fileState"
+        },
+        "after": {
+          "$ref": "#/definitions/fileState"
+        }
+      }
+    },
+    "managedFileTreeEntryReference": {
+      "description": "Reference to an earlier managed file action and its exact digest-referenced install-tree entry claim; membership is unverified here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "managed_action_id",
+        "manifest_entry_digest"
+      ],
+      "properties": {
+        "managed_action_id": {
+          "$ref": "#/definitions/actionId"
+        },
+        "manifest_entry_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "transformationDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "release_manifest_digest",
+        "transformation_entry_digest",
+        "allowed_output",
+        "coding_harness"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/managedFileTreeEntryReference"
+        },
+        "release_manifest_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "transformation_entry_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "allowed_output": {
+          "$ref": "#/definitions/allowedTransformationOutput"
+        },
+        "coding_harness": {
+          "$ref": "#/definitions/codingHarness"
+        }
+      }
+    },
+    "declaredTransformationAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "kind",
+        "target",
+        "declaration",
+        "before",
+        "after",
+        "rollback_source"
+      ],
+      "properties": {
+        "action_id": {
+          "$ref": "#/definitions/actionId"
+        },
+        "kind": {
+          "const": "declared_transformation"
+        },
+        "target": {
+          "$ref": "#/definitions/anchoredPath"
+        },
+        "declaration": {
+          "$ref": "#/definitions/transformationDeclaration"
+        },
+        "before": {
+          "$ref": "#/definitions/fileState"
+        },
+        "after": {
+          "$ref": "#/definitions/fileState"
+        },
+        "rollback_source": {
+          "$ref": "#/definitions/capturedFileRollbackSource"
+        }
+      }
+    },
+    "harnessResourceTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value",
+        "identity_digest"
+      ],
+      "properties": {
+        "kind": {
+          "const": "harness_resource"
+        },
+        "value": {
+          "enum": [
+            "openclaw.runtime",
+            "hermes.runtime",
+            "nanoclaw.host",
+            "picoclaw.runtime"
+          ]
+        },
+        "identity_digest": {
+          "$ref": "#/definitions/digest"
+        }
+      }
+    },
+    "emptyArguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "maxProperties": 0
+    },
+    "reloadHarnessAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "kind",
+        "adapter_contract",
+        "operation",
+        "state_effect",
+        "target",
+        "arguments",
+        "precondition_digest",
+        "expected_postcondition_digest",
+        "rollback"
+      ],
+      "properties": {
+        "action_id": {
+          "$ref": "#/definitions/actionId"
+        },
+        "kind": {
+          "const": "native_operation"
+        },
+        "adapter_contract": {
+          "type": "string",
+          "pattern": "^clawsec\\.(?:openclaw|hermes|nanoclaw|picoclaw)-install-adapter/v1$"
+        },
+        "operation": {
+          "const": "reload_harness"
+        },
+        "state_effect": {
+          "const": "operational_non_mutating"
+        },
+        "target": {
+          "$ref": "#/definitions/harnessResourceTarget"
+        },
+        "arguments": {
+          "$ref": "#/definitions/emptyArguments"
+        },
+        "precondition_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "expected_postcondition_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "rollback": {
+          "type": "null"
+        }
+      }
+    },
+    "restartHarnessAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "kind",
+        "adapter_contract",
+        "operation",
+        "state_effect",
+        "target",
+        "arguments",
+        "precondition_digest",
+        "expected_postcondition_digest",
+        "rollback"
+      ],
+      "properties": {
+        "action_id": {
+          "$ref": "#/definitions/actionId"
+        },
+        "kind": {
+          "const": "native_operation"
+        },
+        "adapter_contract": {
+          "type": "string",
+          "pattern": "^clawsec\\.(?:openclaw|hermes|nanoclaw|picoclaw)-install-adapter/v1$"
+        },
+        "operation": {
+          "const": "restart_harness"
+        },
+        "state_effect": {
+          "const": "operational_non_mutating"
+        },
+        "target": {
+          "$ref": "#/definitions/harnessResourceTarget"
+        },
+        "arguments": {
+          "$ref": "#/definitions/emptyArguments"
+        },
+        "precondition_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "expected_postcondition_digest": {
+          "$ref": "#/definitions/digest"
+        },
+        "rollback": {
+          "type": "null"
+        }
+      }
+    },
+    "nativeOperationAction": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/reloadHarnessAction"
+        },
+        {
+          "$ref": "#/definitions/restartHarnessAction"
+        }
+      ]
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocker_id",
+        "code",
+        "summary"
+      ],
+      "properties": {
+        "blocker_id": {
+          "$ref": "#/definitions/actionId"
+        },
+        "code": {
+          "enum": [
+            "path_conflict",
+            "permission_denied",
+            "precondition_unavailable",
+            "resource_limit",
+            "rollback_unavailable",
+            "scope_ambiguous",
+            "symlink_detected",
+            "unowned_state",
+            "unsupported_native_operation"
+          ]
+        },
+        "target": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/anchoredPath"
+            },
+            {
+              "$ref": "https://clawsec.prompt.security/contracts/schemas/result/result-v1.schema.json#/definitions/effectTarget"
+            }
+          ]
+        },
+        "summary": {
+          "$ref": "#/definitions/summary"
+        }
+      }
+    }
+  }
+}
