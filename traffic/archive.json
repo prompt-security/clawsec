@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-07-28T04:23:27.079Z",
+  "updated_at": "2026-07-29T04:24:19.041Z",
   "daily": {
     "views": [
       {
@@ -314,6 +314,11 @@
         "timestamp": "2026-07-26T00:00:00Z",
         "count": 40,
         "uniques": 31
+      },
+      {
+        "timestamp": "2026-07-27T00:00:00Z",
+        "count": 20,
+        "uniques": 17
       }
     ],
     "clones": [
@@ -625,6 +630,11 @@
       {
         "timestamp": "2026-07-26T00:00:00Z",
         "count": 245,
+        "uniques": 47
+      },
+      {
+        "timestamp": "2026-07-27T00:00:00Z",
+        "count": 95,
         "uniques": 47
       }
     ]
@@ -3314,6 +3324,62 @@
           },
           {
             "referrer": "u0ptmdsjdxb.feishu.cn",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-07-29T04:24:19.041Z",
+        "date": "2026-07-29",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 127,
+            "uniques": 89
+          },
+          {
+            "referrer": "Google",
+            "count": 85,
+            "uniques": 58
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 6,
+            "uniques": 2
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 4,
+            "uniques": 2
+          },
+          {
+            "referrer": "Bing",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "lm.facebook.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "lobehub.com",
             "count": 1,
             "uniques": 1
           }
@@ -6488,6 +6554,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-07-29T04:24:19.041Z",
+        "date": "2026-07-29",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 306,
+            "uniques": 240
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 13,
+            "uniques": 13
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 11,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 11,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 11,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 5,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/hermes-attestation-guardian-v0.1.7",
+            "title": "/releases/tag/hermes-attestation-guardian-v0.1.7",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/README.md",
+            "title": "/blob/main/README.md",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/pyproject.toml",
+            "title": "/blob/main/pyproject.toml",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 3,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -7066,6 +7198,18 @@
       "clones_window": {
         "count": 2972,
         "uniques": 719
+      }
+    },
+    {
+      "captured_at": "2026-07-29T04:24:19.041Z",
+      "date": "2026-07-29",
+      "views_window": {
+        "count": 476,
+        "uniques": 285
+      },
+      "clones_window": {
+        "count": 2833,
+        "uniques": 702
       }
     }
   ]
