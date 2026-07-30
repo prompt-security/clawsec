@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ExternalLink, Github } from 'lucide-react';
 import { Advisory } from '../types';
 import { AdvisoryPlatformBadge } from './AdvisoryPlatformBadge';

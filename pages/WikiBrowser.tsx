@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { BookOpenText, ExternalLink, FileText } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import Markdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
