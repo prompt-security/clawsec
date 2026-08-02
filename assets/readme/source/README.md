@@ -4,6 +4,7 @@
 
 | Locale | Editable layout | Published asset |
 | --- | --- | --- |
+| English | `hero-layout.svg` | `../hero.webp` |
 | German | `hero-layout-de.svg` | `../hero-de.webp` |
 | Spanish | `hero-layout-es.svg` | `../hero-es.webp` |
 | French | `hero-layout-fr.svg` | `../hero-fr.webp` |
@@ -19,7 +20,7 @@ Keep the Prompt Security from SentinelOne lockup intact on its light plaque. The
 
 ## Translation assurance
 
-`hero-copy.json` is the exact copy and accessibility source for every localized banner. The translations were AI-generated, independently model-reviewed, and given literal English back-translations. They have not been certified by professional native translators.
+`hero-copy.json` is the exact copy and accessibility source for every banner. The translations were AI-generated, independently model-reviewed, and given literal English back-translations. They have not been certified by professional native translators.
 
 The local Gemma challenger output was rejected because it translated the UI field label itself and weakened guarded-install terminology. The accepted copy uses the repository contract: an advisory match stops a risky install until the operator gives a second, explicit confirmation.
 
@@ -30,7 +31,17 @@ node assets/readme/source/generate-localized-hero-svgs.mjs
 node assets/readme/source/generate-localized-hero-svgs.mjs --check
 ```
 
-Render each SVG in a standards-compliant browser at `1200 × 460`, then export its published WebP at the same dimensions. After rendering, verify exact copy, locale-to-README mapping, distinct assets, dimensions, and the 300 KB size budget:
+Run the same gate used by the build, PR checks, and `prepare-to-push.sh`:
+
+```bash
+npm run readme:heroes:check
+```
+
+That gate validates the manifest before use, checks every generated localized SVG, and verifies English plus all localized README mappings, exact SVG copy, accessibility text, distinct WebPs, `1200 × 460` dimensions, alpha data, and the 300 KB size budget.
+
+Render each SVG in a standards-compliant browser at `1200 × 460`, then export its published WebP at the same dimensions. The layouts use platform font fallbacks and the WebPs use lossy color encoding, so SVG-to-WebP pixel identity is intentionally not treated as deterministic across renderers. After every render, visually inspect desktop and mobile presentation, text fidelity, and actual transparent corner pixels before running the automated gate.
+
+The verifier can also be run directly:
 
 ```bash
 node assets/readme/source/verify-localized-heroes.mjs

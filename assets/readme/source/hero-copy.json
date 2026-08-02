@@ -1,11 +1,21 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source_locale": "en",
   "source_copy": {
     "eyebrow": "OPEN-SOURCE AGENT SECURITY",
     "title": "ClawSec",
     "tagline": "Verify before your agent trusts.",
     "supporting": "Signed advisories · integrity checks · guarded installs"
+  },
+  "source_banner": {
+    "readme": "README.md",
+    "svg": "assets/readme/source/hero-layout.svg",
+    "webp": "assets/readme/hero.webp",
+    "accessibility": {
+      "alt": "ClawSec security skills for AI agents, featuring the ClawSec robot and the Prompt Security from SentinelOne logo",
+      "title": "ClawSec security skills for AI agents",
+      "description": "ClawSec robot mascot beside a promise to verify before an agent trusts, with OpenClaw, NanoClaw, Hermes, and Picoclaw platform labels and the Prompt Security from SentinelOne logo."
+    }
   },
   "translation_assurance": {
     "label": "independently model-reviewed",

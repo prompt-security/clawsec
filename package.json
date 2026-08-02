@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "gen:wiki-llms": "node scripts/generate-wiki-llms.mjs",
+    "readme:heroes:check": "node --test assets/readme/source/hero-manifest.test.mjs && node assets/readme/source/generate-localized-hero-svgs.mjs --check && node assets/readme/source/verify-localized-heroes.mjs",
     "populate-local-wiki": "./scripts/populate-local-wiki.sh",
     "predev": "npm run gen:wiki-llms",
     "dev": "vite",
-    "prebuild": "npm run gen:wiki-llms",
+    "prebuild": "npm run gen:wiki-llms && npm run readme:heroes:check",
     "i18n:qa": "python scripts/i18n/qa_check.py",
     "i18n:bootstrap:ko": "python scripts/i18n/bootstrap_language_from_en.py --lang ko",
     "i18n:bootstrap:fr": "python scripts/i18n/bootstrap_language_from_en.py --lang fr",

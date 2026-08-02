@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { lstat, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadHeroManifest } from './hero-manifest.mjs';
 
 const sourceDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(sourceDir, '../../..');
-const manifest = JSON.parse(await readFile(path.join(sourceDir, 'hero-copy.json'), 'utf8'));
-const checkOnly = process.argv.includes('--check');
+const manifestPath = path.join(sourceDir, 'hero-copy.json');
 
 const escapeXml = (value) => value
   .replaceAll('&', '&amp;')
@@ -20,7 +20,7 @@ const renderLines = (lines, yPositions, attributes) => lines.map((line, index) =
   `    <text x="2" y="${yPositions[index]}" ${attributes}>${escapeXml(line)}</text>`
 )).join('\n');
 
-const renderSvg = (locale, entry) => {
+export const renderSvg = (locale, entry) => {
   const { accessibility, copy, layout } = entry;
   const isCjk = locale === 'ja' || locale === 'ko';
   const generalFont = locale === 'ja'
@@ -35,7 +35,7 @@ const renderSvg = (locale, entry) => {
   return `<svg xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink"
      width="1200" height="460" viewBox="0 0 1200 460"
-     lang="${locale}" role="img" aria-labelledby="title desc">
+     lang="${escapeXml(locale)}" role="img" aria-labelledby="title desc">
   <title id="title">${escapeXml(accessibility.title)}</title>
   <desc id="desc">${escapeXml(accessibility.description)}</desc>
 
@@ -105,24 +105,55 @@ ${renderLines(copy.supporting, layout.supporting_y, `data-copy="supporting" fill
 `;
 };
 
-const failures = [];
+const normalizeLineEndings = (value) => value?.replaceAll('\r\n', '\n');
 
-for (const [locale, entry] of Object.entries(manifest.locales)) {
-  const outputPath = path.join(repoRoot, entry.svg);
-  const expected = renderSvg(locale, entry);
+export const runGenerator = async ({ checkOnly = false } = {}) => {
+  const manifest = await loadHeroManifest(manifestPath);
+  const rendered = Object.entries(manifest.locales).map(([locale, entry]) => ({
+    outputPath: path.join(repoRoot, entry.svg),
+    relativePath: entry.svg,
+    expected: renderSvg(locale, entry)
+  }));
+  const destinations = await Promise.all(rendered.map(async (item) => {
+    const outputStats = await lstat(item.outputPath).catch((error) => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    if (outputStats?.isSymbolicLink()) {
+      throw new Error(`Refusing to use a localized hero through a symbolic link: ${item.relativePath}`);
+    }
+    if (outputStats && !outputStats.isFile()) {
+      throw new Error(`Refusing to use a non-file localized hero path: ${item.relativePath}`);
+    }
+    return item;
+  }));
 
   if (checkOnly) {
-    const actual = await readFile(outputPath, 'utf8').catch(() => null);
-    if (actual !== expected) failures.push(entry.svg);
-  } else {
-    await writeFile(outputPath, expected);
-    console.log(`generated ${entry.svg}`);
-  }
-}
+    const failures = [];
+    for (const { outputPath, relativePath, expected } of destinations) {
+      const actual = await readFile(outputPath, 'utf8').catch(() => null);
+      if (normalizeLineEndings(actual) !== expected) failures.push(relativePath);
+    }
 
-if (failures.length > 0) {
-  console.error(`Localized hero SVGs are stale or missing:\n${failures.map((file) => `- ${file}`).join('\n')}`);
-  process.exitCode = 1;
-} else if (checkOnly) {
-  console.log(`PASS: ${Object.keys(manifest.locales).length} localized hero SVGs match hero-copy.json`);
+    if (failures.length > 0) {
+      throw new Error(`Localized hero SVGs are stale or missing:\n${failures.map((file) => `- ${file}`).join('\n')}`);
+    }
+    console.log(`PASS: ${rendered.length} localized hero SVGs match hero-copy.json`);
+    return;
+  }
+
+  // The complete manifest is validated and every locale is rendered in memory before
+  // the first write, so a malformed later entry cannot leave a partial generation.
+  for (const { outputPath, relativePath, expected } of destinations) {
+    await writeFile(outputPath, expected);
+    console.log(`generated ${relativePath}`);
+  }
+};
+
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  await runGenerator({ checkOnly: process.argv.includes('--check') }).catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
 }
