@@ -1,434 +1,199 @@
-<!-- AUTO-GENERATED TRANSLATION SCAFFOLD (ja)
-Source: README.md
-Review status: draft
--->
+<p align="center">
+  <img src="./assets/readme/hero.webp" width="100%" alt="ClawSec ロボットと Prompt Security, from SentinelOne のロゴを配した、AI エージェント向け ClawSec セキュリティスキルの紹介画像">
+</p>
 
-# 日本語 Translation Scaffold
+<p align="center">
+  <a href="https://clawsec.prompt.security"><strong>ウェブサイト</strong></a>
+  ·
+  <a href="https://clawsec.prompt.security/skills"><strong>スキルカタログ</strong></a>
+  ·
+  <a href="https://clawsec.prompt.security/feed"><strong>セキュリティフィード</strong></a>
+  ·
+  <a href="./wiki/INDEX.md"><strong>ドキュメント</strong></a>
+  ·
+  <a href="https://github.com/prompt-security/clawsec/releases"><strong>リリース</strong></a>
+</p>
 
-This file is currently a draft scaffold. Use README.md as the canonical source.
+<p align="center">
+  <a href="https://github.com/prompt-security/clawsec/actions/workflows/ci.yml"><img src="https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg" alt="CI ステータス"></a>
+  <a href="https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml"><img src="https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg" alt="Pages デプロイステータス"></a>
+  <a href="https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml"><img src="https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg" alt="NVD ポーリングステータス"></a>
+</p>
 
-<h1 align="center">
-<img src="./img/prompt-icon.svg"alt="prompt-icon" 幅="40">
-ClawSec:AIエージェントのセキュリティスキルスイート
-<img src="./img/prompt-icon.svg"alt="prompt-icon" 幅="40">
-</h1>
+ClawSec は、AI エージェントランタイム向けのセキュリティスキルと署名済みアドバイザリーインテリジェンスをまとめた、AGPL ライセンスのコレクションです。**OpenClaw、NanoClaw、Hermes、Picoclaw** を対象に、スキルアーティファクトの検証、設定ドリフトの検出、エージェント環境の監査、リスクのあるインストールの承認制御を支援します。
 
-<div align="center">
+---
 
-## 完全なセキュリティスキルスイートでOpenClaw、NanoClaw、およびヘルメスエージェントをセキュアに
+## OpenClaw スイートをインストールする
 
-<h4>AIセキュリティプラットフォーム</h4>
+OpenClaw のエントリーポイントは `clawsec-suite` です。パッケージの追加と永続フックの有効化は、個別に確認できる別々の手順です。
 
-</div>
-
-<div align="center">
-
-お問い合わせ [Prompt Security Logo](./img/Black+Color.png)の特長
-<img src="./public/img/mascot.png"alt="clawsec mascot" 幅="200" />
-
-</div>
-<div align="center">
-
-ブーツ **ライブ時: [https://clawsec.prompt.security](https://clawsec.prompt.security) [https://prompt.security/clawsec](https://prompt.security/clawsec)**
-
-[![CI](https://github.com/prompt-security/clawsec/actions/workflows/ci.yml/badge.svg)(https://github.com/prompt-security/clawsec/actions/workflows/ci.yml)
-[![Deploy Pages](https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml/badge.svg)(https://github.com/prompt-security/clawsec/actions/workflows/deploy-pages.yml)
-[![Poll NVD CVEs](https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml/badge.svg)(https://github.com/prompt-security/clawsec/actions/workflows/poll-nvd-cves.yml)
-
-
-</div>
-
-お問い合わせ
-
-## 翻訳
-
-- Español: [README.es.md](README.es.md)
-- 한국어: [README.ko.md](README.ko.md)
-
-## 🦞 ClawSecとは?
-
-ClawSec は、AI エージェント プラットフォームの**完全なセキュリティ スキル スイートです。 エージェントの認知アーキテクチャを迅速注入、ドリフト、悪意のある指示に対して、統一されたセキュリティ監視、完全性検証、脅威インテリジェンス保護を提供します。
-
-## 対応プラットフォーム
-
-- **OpenClaw**(MoltBot、Clawdbot、およびクローン) - スキルインストーラ、ファイルの完全性保護、およびセキュリティ監査とフルスイート
-- **ナノクロー** - コンテナ化されたもの 諮問監視、署名検証、ファイルの整合性のためのMCPツールを使用したAppボットセキュリティ
--**Hermes** - 署名された諮問的フィード検証、アドバイザリーアウェアガード検証、決定的な検証生成、フェイルクローズド検証、ベースラインドリフト検出のためのヘルメスネイティブセキュリティスキル
--**Picoclaw** - 軽量AIゲートウェイセキュリティの姿勢は、アドバイザリーの意識、構成の漂流検出、リリースアーティファクト検証、およびオプションの別々のセルフペンテストパッケージでチェックします
-
-##スキル機能マトリックス
-
-お問い合わせ スキル名 | 対応プラットフォーム| 安全検証| 構成漂流 | エージェントセルフペンテスト| サプライチェーンインストール検証 |
-お問い合わせ
-| プレスリリース | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部
-| クローム・クローブ・チェッカー | OpenClaw + clawsec スイート・インテグレーション | ノー | ノー | ノー | ノー | ノー | ノー |
-| クロームフィード | OpenClaw | 有り | なし | なし | なし | 有り |
-| クローム・ナンクロー | ナノクロー | 可 | 可 | 有 | 有 | 有 | 有 | 有 | 有 | 有 |
-| クローム・スキャナ | オープンクロー | 有り | なし | 有り | 可 | 可 | 可 | 可 | 可 |
-| クロームスイート | オープンクローラ | 有り | 有り | なし | 有り | なし | 有り | なし | なし | なし | なし | なし | なし | なし | なし | なし | なし | なし |
-| プライバシーポリシー | 免責事項 | 免責事項 | 免責事項 | 免責事項 | 免責事項 | 免責事項 | 免責事項 |
-| ヘルメス・アテスタンス・ガーディアン | ヘルメス | はい(アドバイザリー・フィード・検証) | はい | なし | 限定(アドバイザリー・プレッションのみ・アーティファクト・シグネチャ・プロテナンス・インストール・検証なし) |
-| Openclaw-audit-watchdog | OpenClaw | ノー | ノー | ノー | ノー | ノー |
-| picoclaw-security-guardian | ピッコロー | 有り | なし | 有り | 有り |
-| picoclaw-self-pen-testing | ピッコロー | ノー | ノー | ノー | ノー |
-| 魂を守る人 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 | 営業部 |
-
-## コア機能
-
-- ** レース スイート インストーラ** - 完全性検証ですべてのセキュリティ スキルのワンコマンド インストール
-お問い合わせ ファイル整合性保護** - 重要なエージェントファイル(SOUL.md、IDENTITY.mdなど)のドリフト検出と自動復元
-- **セキュリティアドバイザリー** - 自動NVD CVEポーリングとコミュニティの脅威インテリジェンス
-- ** 絶縁 セキュリティ監査** - プロンプトインジェクションマーカーと脆弱性を検出するためにスクリプトをセルフチェック
-お問い合わせ チェックサム検証** - すべてのスキルアーティファクトのSHA256チェックサム
-- **健康チェック** - インストールされたすべてのスキルの自動更新と完全性検証
-
-お問い合わせ
-
-## ✔製品デモ
-
-下記のアニメーションプレビューはGIF(音声なし)です。 任意のプレビューをクリックして、オーディオでフルMP4を開きます。
-
-## デモをインストール (`clawsec-suite`)
-
-[![Install demo animated preview](public/video/install-demo-preview.gif)(パブリック/ビデオ/インストールデモ)
-
-直接リンク: [install-demo.mp4](public/video/install-demo.mp4)
-
-## ドリフト検出デモ(`soul-guardian`)
-
-[![Drift detection animated preview](public/video/soul-guardian-demo-preview.gif)(公共/ビデオ/ソウル-保護者-demo.mp4)
-
-直接リンク: [soul-guardian-demo.mp4](public/video/soul-guardian-demo.mp4)
-
-お問い合わせ
-
-## すぐにスタート
-
-##AIエージェントの###
+### 1. スイートを追加する
 
 ```bash
-# Install the ClawSec security suite
-npx clawhub@latest install clawsec-suite
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
 ```
 
-インストール後、スイートは次のことができます。
-1。 公開されたスキルカタログからインストール可能な保護を発見
-2。 署名されたチェックサムを使用してリリースの完全性を確認します
-3。 アドバイザリーモニタリングとホックベースの保護フローの設定
-4。 オプションのスケジュールチェックを追加
+このコマンドは、署名済みアドバイザリーのトラストセット、ハートビートワークフロー、ガード付きインストーラー、セットアップスクリプトを含むスイートをインストールします。オプションの保護機能は別パッケージのままで、スイートが公開カタログから検出します。
 
-手動/ソース優先オプション:
-
-ツイート 採用情報 https://github.com/prompt-security/clawsec/releases/latest/download/SKILL.md とインストール手順に従います。
-
-人間のための#####
-
-この指示をAIエージェントにコピーします。
-
-ツイート `npx clawhub@latest install clawsec-suite`でClawSecをインストールし、生成された指示からセットアップ手順を完了します。
-
-##シェルとOSノート
-
-ClawSec スクリプトは以下の間に分割されます。
-- クロスプラットフォーム Node/Python ツーリング (`npm run build`、hook/setup `.mjs`、`utils/*.py`)
-- POSIXシェルワークフロー(`*.sh`、ほとんどの手動インストールスニペット)
-
-Linux/macOS (`bash`/`zsh`) の場合:
-- 引用されていないか二重引用された家変数を使用して下さい:`export INSTALL_ROOT="$HOME/.openclaw/skills"`
-- 単一の引用符の拡張可能なvars (例えば、`'$HOME/.openclaw/skills'`を避けるため) を**しない**
-
-Windows用(PowerShell):
-- プレファーの明示的な道の建物:
-- `$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\\skills"`
-- `node "$env:INSTALL_ROOT\\clawsec-suite\\scripts\\setup_advisory_hook.mjs"`
-- POSIX `.sh`スクリプトはWSLまたはGit Bashが必要です。
-
-トラブルシューティング:`~/.openclaw/workspace/$HOME/...`などのディレクトリが表示された場合、ホーム変数は文字通り渡されました。 絶対パスまたは非引用のホーム式を使用して再実行します。
-
-お問い合わせ
-
-## 🧭プラットフォーム&スイートドキュメント
-
-詳細なプラットフォームとスイート docs は wiki モジュールで動作します。
-・ナノクロー:[wiki/modules/nanoclaw-integration.md](wiki/modules/nanoclaw-integration.md)
-- ヘルメス:[wiki/modules/hermes-attestation-guardian.md](wiki/modules/hermes-attestation-guardian.md)
-- ピコクロー:[wiki/modules/picoclaw-security-guardian.md](wiki/modules/picoclaw-security-guardian.md)
-- ピコクローセルフペンテスト: [wiki/modules/picoclaw-self-pen-testing.md](wiki/modules/picoclaw-self-pen-testing.md)の特長
-- ClawSec Suite (OpenClaw): [wiki/modules/clawsec-suite.md](wiki/modules/clawsec-suite.md)
-- CI/CDのパイプライン: [wiki/modules/automation-release.md](wiki/modules/automation-release.md)の特長
-
-クイックインストールリンク:
-- NanoClawは取付けます: [skills/clawsec-nanoclaw/INSTALL.md](skills/clawsec-nanoclaw/INSTALL.md)の特長
-- エルメススキルパッケージ:`skills/hermes-attestation-guardian/`
-- Picoclawの保護者のパッケージ:`skills/picoclaw-security-guardian/`
-- ピコクローセルフペンテストパッケージ:`skills/picoclaw-self-pen-testing/`
-- スイートパッケージ:`skills/clawsec-suite/`
-
-お問い合わせ
-
-## 安全保障アドバイザリーフィード
-
-ClawSecは、NISTのNational Vulnerability Database(NVD)から自動ポップアップし、継続的に更新されたセキュリティアドバイザリーフィードを維持します。
-
-## フィード URL
+### 2. アドバイザリーフックを確認して有効化する
 
 ```bash
-# Fetch latest advisories
-curl -s https://clawsec.prompt.security/advisories/feed.json | jq '.advisories[] | select(.severity == "critical" or .severity == "high")'
+SUITE_DIR="${INSTALL_ROOT:-$HOME/.openclaw/skills}/clawsec-suite"
+node "$SUITE_DIR/scripts/setup_advisory_hook.mjs"
 ```
 
-キヤノンのエンドポイント:`https://clawsec.prompt.security/advisories/feed.json`
-互換性ミラー(レガシー):`https://clawsec.prompt.security/releases/latest/download/feed.json`
+セットアップスクリプトは、OpenClaw の永続設定を変更する前にプリフライト内容を表示します。正常に完了したら OpenClaw ゲートウェイを再起動し、`/new` を一度実行して最初のアドバイザリースキャンを開始してください。
 
-### 監視されたキーワード
+現在利用できるオプション保護を確認するには、次を実行します。
 
-フィードの投票 CVE に関連する:
-- **OpenClawプラットフォーム**: `OpenClaw`、`clawdbot`、`Moltbot`
-- **ナノクロープラットフォーム**:`NanoClaw`、`WhatsApp-bot`、`baileys`
-- **Picoclaw Platform**:`Picoclaw`、`picoclaw`、軽量AIゲートウェイ、MCPゲートウェイ露出
-- プロンプト射出パターン
-- エージェントのセキュリティ脆弱性
-
-###exploitability コンテキスト
-
-ClawSec は、CVE のアドバイザリーを **exploitability context** で強化し、CVSS スコアを超えて、エージェントが現実的なリスクを評価するのを支援します。 新規に分析されたアドバイザリーには以下が含まれます。
-
--**Exploit Evidence**: 公共の悪用が野生に存在するかどうか
-- **武器の状態**: 悪用が一般的な攻撃フレームワークに統合されている場合
-- **攻撃要件**:成功した搾取(ネットワークアクセス、認証、ユーザーインタラクション)に必要な前提条件
--**リスクアセスメント**:技術的重大性を悪用性と組み合わせるコンテキストリスクレベル
-
-この機能は、エージェントが直面する脅威を理論的なリスクに優先し、よりスマートなセキュリティ決定を可能にします。
-
-##アドバイザリー・スキーマ
-
-**NVD CVE ** アドバイザリー:**
-```json
-{
-  "id": "CVE-2026-XXXXX",
-  "severity": "critical|high|medium|low",
-  "type": "vulnerable_skill",
-  "platforms": ["openclaw", "nanoclaw"],
-  "title": "Short description",
-  "description": "Full CVE description from NVD",
-  "published": "2026-02-01T00:00:00Z",
-  "cvss_score": 8.8,
-  "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-XXXXX",
-  "exploitability_score": "high|medium|low|unknown",
-  "exploitability_rationale": "Why this CVE is or is not likely exploitable in agent deployments",
-  "references": ["..."],
-  "action": "Recommended remediation"
-}
+```bash
+node "$SUITE_DIR/scripts/discover_skill_catalog.mjs"
 ```
 
-**コミュニティアドバイザリー:**
-```json
-{
-  "id": "CLAW-2026-0042",
-  "severity": "high",
-  "type": "prompt_injection|vulnerable_skill|tampering_attempt",
-  "platforms": ["nanoclaw"],
-  "title": "Short description",
-  "description": "Detailed description from issue",
-  "published": "2026-02-01T00:00:00Z",
-  "affected": ["skill-name@1.0.0"],
-  "source": "Community Report",
-  "github_issue_url": "https://github.com/.../issues/42",
-  "action": "Recommended remediation"
-}
+> **ほかの人の環境にインストールする場合：** その人のエージェントに、上記のコマンドで `clawsec-suite` をインストールしてフックのプリフライトを提示し、フックまたはオプションの cron ジョブを有効化する前に承認を待つよう依頼してください。
+
+<details>
+<summary><strong>シェルとパスに関する注意</strong></summary>
+
+`bash` と `zsh` では、ホーム変数を展開できる状態にしてください。
+
+```bash
+export INSTALL_ROOT="$HOME/.openclaw/skills"
 ```
 
-**プラットフォーム値:**
-- `"openclaw"` - OpenClaw/Clawdbot/Molt ボットのみ
-- `"nanoclaw"` - ナノクローのみ
-- `"hermes"` - ヘルメスのみ
-- `"picoclaw"` - ピコクローのみ
-- `["openclaw", "nanoclaw", "hermes", "picoclaw"]` - すべてのコアプラットフォーム
-- (empty/missing) - すべてのプラットフォーム(後方互換)
+`$HOME` を含むパスをシングルクォートで囲まないでください。PowerShell では、パスを明示的に組み立てます。
 
-お問い合わせ
+```powershell
+$env:INSTALL_ROOT = Join-Path $HOME ".openclaw\skills"
+node "$env:INSTALL_ROOT\clawsec-suite\scripts\setup_advisory_hook.mjs"
+```
 
-## は、CI/CD パイプライン
+Windows で POSIX `.sh` ワークフローを実行するには、WSL または Git Bash が必要です。
 
-CI/CD パイプラインの詳細は wiki モジュールページに移動しました。
-- [wiki/modules/automation-release.md](wiki/modules/automation-release.md)
+</details>
 
-関連操作 docs:
-- [wiki/security-signing-runbook.md](wiki/security-signing-runbook.md)
-- [wiki/migration-signed-feed.md](wiki/migration-signed-feed.md)
+---
 
-お問い合わせ
+## 動作を見る
 
-## ️️ オフラインツール
+### エージェントファイルのドリフトを検出して対処する
 
-ClawSecには ローカルスキル開発と検証のためのPythonユーティリティ。
+`soul-guardian` のデモでは、保護対象のエージェントファイルを変更し、不一致を検出して、対応手順を確認できます。
 
-##スキルバリデータ
+[![ClawSec soul-guardian ドリフト検出デモ](public/video/soul-guardian-demo-preview.gif)](public/video/soul-guardian-demo.mp4)
 
-必要なスキーマに対してスキルフォルダーを検証します。
+**[音声付き MP4 を見る →](public/video/soul-guardian-demo.mp4)**
+
+<details>
+<summary><strong>スイートのインストール手順を見る</strong></summary>
+
+<p align="center">
+  <a href="./public/video/install-demo.mp4"><img src="./public/video/install-demo-preview.gif" width="320" alt="ClawSec スイートのインストール手順"></a>
+</p>
+
+<p align="center"><a href="./public/video/install-demo.mp4"><strong>音声付き MP4 を開く →</strong></a></p>
+
+</details>
+
+---
+
+## ClawSec がエージェントを保護する仕組み
+
+| 保護レイヤー | 役割 |
+| --- | --- |
+| **署名済みインテリジェンス** | 公開済みのリスクをインストール済みスキルと照合する前に、アドバイザリーフィードとチェックサムマニフェストを検証します。 |
+| **ガード付きインストール** | アドバイザリーに一致すると停止し、リスクのあるインストールを続行する前に、明示的な確認をもう一度求めます。 |
+| **完全性とドリフト** | プラットフォーム別スキルに、重要ファイル、設定、アテステーション、リリースアーティファクトのベースラインを提供します。 |
+| **監査とレポート** | 各プラットフォームの仕様で対応する範囲に限り、監査、セキュリティ態勢、セルフテスト、コミュニティ報告に特化したパッケージを提供します。 |
+
+ClawSec はアクションを推奨し、承認ゲートを設けます。破壊的な削除とインストールのオーバーライドには、引き続き承認が必要です。
+
+### プラットフォーム別のエントリーポイント
+
+- **OpenClaw** — 署名済みアドバイザリーの監視とガード付きインストールには、まず [`clawsec-suite`](skills/clawsec-suite/) を使用し、その後、別パッケージとして提供されるドリフト保護と監査機能をカタログから確認します。
+- **NanoClaw** — NanoClaw 固有のアドバイザリー、完全性、検証、セキュリティツールのワークフローには [`clawsec-nanoclaw`](skills/clawsec-nanoclaw/) を使用します。
+- **Hermes** — 署名済みアドバイザリーチェック、ガード付き検証、決定論的アテステーション、ベースラインドリフト検出には [`hermes-attestation-guardian`](skills/hermes-attestation-guardian/) を使用します。
+- **Picoclaw** — セキュリティ態勢、アドバイザリー、ドリフト、リリースアーティファクトのチェックには [`picoclaw-security-guardian`](skills/picoclaw-security-guardian/) を使用します。[セルフペンテスト](skills/picoclaw-self-pen-testing/) は、別途有効化するオプションパッケージです。
+
+> `*-traffic-guardian` ディレクトリは、プラットフォーム実装者向けの仕様ベースラインです。現時点で実行時プロキシとして提供されているものではありません。
+
+すべてのパッケージは、**[公開スキルカタログ](https://clawsec.prompt.security/skills)** またはリポジトリの **[`skills/` ディレクトリ](skills/)** で確認できます。
+
+---
+
+## 署名済みアドバイザリーチャネルを照会する
+
+統合フィードには、関連する NVD CVE、承認済みコミュニティレポート、まだ CVE 識別子がない暫定 GitHub アドバイザリーが含まれる場合があります。
+
+```bash
+curl -fsSL https://clawsec.prompt.security/advisories/feed.json \
+  | jq '.advisories[] | select(.severity == "critical" or .severity == "high")'
+```
+
+トラスト情報はフィードと同じ場所にあります。
+
+- [アドバイザリーフィード](advisories/feed.json)
+- [分離フィード署名](advisories/feed.json.sig)
+- [固定済み Ed25519 公開鍵](advisories/feed-signing-public.pem)
+- [署名と検証のランブック](wiki/security-signing-runbook.md)
+
+従来の `/releases/latest/download/feed.json` エンドポイントは、互換性ミラーとして引き続き利用できます。新しい利用者は、正規の `/advisories/feed.json` エンドポイントを使用してください。
+
+---
+
+## ビルド、テスト、コントリビューション
+
+ウェブカタログをローカルで実行します。
+
+```bash
+npm install
+npm run dev
+```
+
+プッシュ前に、リポジトリのローカル品質ゲートを実行します。
+
+```bash
+./scripts/prepare-to-push.sh
+```
+
+スキルパッケージを直接検証します。
 
 ```bash
 python utils/validate_skill.py skills/clawsec-feed
 ```
 
-チェック:
-- `skill.json`が存在し、有効なJSON
-- 必須フィールド(名前、バージョン、説明、著者、ライセンス)
-- SBOMファイルが存在し、読みやすく
-- OpenClawメタデータを適切に構造化
+まず、次の資料を参照してください。
 
-##スキルチェックサムジェネレーター
+- [アーキテクチャ](wiki/architecture.md)
+- [プラットフォーム検証](wiki/platform-verification.md)
+- [テスト](wiki/testing.md)
+- [リリース自動化](wiki/modules/automation-release.md)
+- [コントリビューションガイド](CONTRIBUTING.md)
+- [セキュリティポリシー](SECURITY.md)
 
-`checksums.json` を SHA256 のハッシュで生成します。
+プロジェクトドキュメントの信頼できる情報源は [`wiki/`](wiki/) です。GitHub Wiki ページと LLM 向けエクスポートは、これらのファイルから生成されます。
 
-```bash
-python utils/package_skill.py skills/clawsec-feed ./dist
-```
+---
 
-出力:
-- `checksums.json` - SHA256ハッシュの検証
+## 翻訳
 
-お問い合わせ
+[English](README.md)
+· [Deutsch](README.de.md)
+· [Español](README.es.md)
+· [Français](README.fr.md)
+· **日本語**
+· [한국어](README.ko.md)
 
-## ローカル開発
+各言語の wiki インデックス：[DE](wiki/de/INDEX.md) · [ES](wiki/es/INDEX.md) · [FR](wiki/fr/INDEX.md) · [JA](wiki/ja/INDEX.md) · [KO](wiki/ko/INDEX.md) · [EN](wiki/INDEX.md)
 
-### 前提条件
-
-- Node.js 20 +
-- Python 3.10+(オフラインツール用)
-- 午後
-
-### セットアップ
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-################################################################################################################################################################################################################################################################ ローカルデータを出力
-
-```bash
-# Populate skills catalog from local skills/ directory
-./scripts/populate-local-skills.sh
-
-# Populate advisory feed with real NVD CVE data
-./scripts/populate-local-feed.sh --days 120
-
-# Generate wiki llms exports from wiki/ (for local preview)
-./scripts/populate-local-wiki.sh
-
-# Direct generator entrypoint (used by predev/prebuild)
-npm run gen:wiki-llms
-```
-
-注意:
-- `npm run dev` と `npm run build` は自動的に wiki `llms.txt` のエクスポート (`predev`/`prebuild` のホック) を再生成します。
-- `public/wiki/`は出力(ローカル+CI)を生成し、意図的に無視されます。
-
-## ビルド
-
-```bash
-npm run build
-```
-
-お問い合わせ
-
-## 📁 プロジェクト構造
-
-```
-├── advisories/
-│   ├── feed.json                    # Main advisory feed
-│   ├── feed.json.sig                # Detached signature for feed.json
-│   └── feed-signing-public.pem      # Public key for feed verification
-├── components/                      # React components
-├── pages/                           # Route/page components
-├── wiki/                            # Source-of-truth docs (synced to GitHub Wiki)
-├── scripts/
-│   ├── generate-wiki-llms.mjs       # wiki/*.md -> public/wiki/**/llms.txt
-│   ├── populate-local-feed.sh       # Local CVE feed populator
-│   ├── populate-local-skills.sh     # Local skills catalog populator
-│   ├── populate-local-wiki.sh       # Local wiki llms export populator
-│   ├── prepare-to-push.sh           # Local CI-style quality gate
-│   ├── validate-release-links.sh    # Release link checks
-│   └── release-skill.sh             # Manual skill release helper
-├── skills/
-│   ├── claw-release/                # 🚀 Release automation workflow skill
-│   ├── clawsec-suite/               # 📦 Suite installer (skill-of-skills)
-│   ├── clawsec-feed/                # 📡 Advisory feed skill
-│   ├── clawsec-scanner/             # 🔍 Vulnerability scanner (deps + SAST + OpenClaw DAST)
-│   ├── clawsec-nanoclaw/            # 📱 NanoClaw platform security suite
-│   ├── clawsec-clawhub-checker/     # 🧪 ClawHub reputation checks
-│   ├── clawtributor/                # 🤝 Community reporting skill
-│   ├── hermes-attestation-guardian/ # 🛡️ Hermes attestation + drift verification
-│   ├── openclaw-audit-watchdog/     # 🔭 Automated audit skill
-│   ├── picoclaw-security-guardian/  # 🦐 Picoclaw posture/advisory/drift/supply-chain checks
-│   ├── picoclaw-self-pen-testing/   # 🧪 Picoclaw self-pen-testing checks (separate package)
-│   └── soul-guardian/               # 👻 File integrity skill
-├── utils/
-│   ├── package_skill.py             # Skill packager utility
-│   └── validate_skill.py            # Skill validator utility
-├── .github/workflows/
-│   ├── ci.yml                       # Cross-platform lint/type/build + tests
-│   ├── pages-verify.yml             # PR-only pages build/signing verification
-│   ├── poll-nvd-cves.yml            # CVE polling pipeline
-│   ├── community-advisory.yml       # Approved issue -> advisory PR
-│   ├── skill-release.yml            # Skill release/signing pipeline
-│   ├── deploy-pages.yml             # GitHub Pages deployment
-│   ├── wiki-sync.yml                # Sync repo wiki/ to GitHub Wiki
-│   ├── codeql.yml                   # CodeQL security analysis
-│   └── scorecard.yml                # OpenSSF Scorecard checks
-└── public/                          # Static assets + generated wiki exports
-```
-
-お問い合わせ
-
-## 社会貢献
-
-寄付を歓迎します! ガイドラインの[CONTRIBUTING.md](CONTRIBUTING.md)をご覧ください。
-
-### 提出セキュリティアドバイザリー
-
-迅速な注射ベクトル、悪意のあるスキル、またはセキュリティ脆弱性を発見しましたか? GitHub の問題で報告する:
-
-1。 **セキュリティインシデントレポート**テンプレートを使用して新しい問題を開きます
-2。 必須項目を記入(重度、種類、説明、影響を受けたスキル)
-3。 メンテナーが`advisory-approved`ラベルを見直し、追加します
-4。 アドバイザリーが`CLAW-{YEAR}-{ISSUE#}`としてフィードに自動的に公開されます
-
-詳細は[CONTRIBUTING.md](CONTRIBUTING.md#submitting-security-advisories)をご覧ください。
-
-##新規スキルの追加
-
-1。 `skills/`でスキルフォルダを作成する
-2。 必要なメタデータとSBOMで`skill.json`を追加
-3。 エージェント読み取り可能な指示で`SKILL.md`を追加
-4. `python utils/validate_skill.py skills/your-skill`と検証
-5。 レビューのPRを提出する
-
-## ドキュメント 真実のソース
-
-すべてのwikiコンテンツについては、このリポジトリの`wiki/`でファイルを編集します。 GitHub Wiki (`<repo>.wiki.git`) は、`main` が `.github/workflows/wiki-sync.yml` から `wiki/**` が `main` で変更されたときに、`.github/workflows/wiki-sync.yml` から同期されます。
-
-LLM エクスポートは `wiki/` から `public/wiki/` に生成されます。
-- `/wiki/llms.txt` は `wiki/INDEX.md` の LLM-ready エクスポート (または `INDEX.md` が見つからない場合は生成されたフォールバックインデックス) です。
-- `/wiki/<page>/llms.txt`は、その単一のwikiページのためのLM-readyエクスポートです。
-
-お問い合わせ
+---
 
 ## ライセンス
 
-- ソースコード:GNU AGPL v3.0以降 - 詳細は[LICENSE](LICENSE)を参照してください。
-- `font/`のフォント: ライセンス別 - [`font/README.md`](font/README.md) をご覧ください。
+ClawSec のソースコードは **GNU AGPL-3.0-or-later** の下でライセンスされています。詳細は [LICENSE](LICENSE) を参照してください。[`font/`](font/) 配下のファイルには別のライセンス条件が適用され、README のアートワークでは使用していません。
 
-お問い合わせ
-
-<div align="center">
-
-**ClawSec**・Prompt Security、SentinelOne **
-
-    エージェントのワークフローを強化し、一度に1つのスキル。
-
-</div>
+<p align="center">
+  <strong>ClawSec</strong> · Prompt Security, from SentinelOne<br>
+  エージェントが信頼する前に検証を。
+</p>
