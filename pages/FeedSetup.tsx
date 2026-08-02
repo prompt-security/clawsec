@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Rss, RefreshCw, Loader2, AlertTriangle, ChevronLeft, ChevronRight, Download, Users, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
 import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter } from '../types';

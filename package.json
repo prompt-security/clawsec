@@ -20,10 +20,10 @@
   },
   "dependencies": {
     "lucide-react": "^0.575.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.16.0",
+    "react-router": "^8.3.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
@@ -42,9 +42,10 @@
   "overrides": {
     "ajv": "6.14.0",
     "balanced-match": "4.0.3",
-    "brace-expansion": "5.0.7",
+    "brace-expansion": "5.0.9",
     "js-yaml": "4.3.0",
     "minimatch": "10.2.5",
-    "picomatch": "4.0.4"
+    "picomatch": "4.0.4",
+    "postcss": "8.5.25"
   }
 }
