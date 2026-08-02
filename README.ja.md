@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://clawsec.prompt.security"><strong>ウェブサイト</strong></a>
   ·
-  <a href="https://clawsec.prompt.security/skills"><strong>スキルカタログ</strong></a>
+  <a href="https://clawsec.prompt.security/#/skills"><strong>スキルカタログ</strong></a>
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>セキュリティフィード</strong></a>
   ·
@@ -31,7 +31,7 @@ OpenClaw のエントリーポイントは `clawsec-suite` です。パッケー
 ### 1. スイートを追加する
 
 ```bash
-npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw --global -y
 ```
 
 このコマンドは、署名済みアドバイザリーのトラストセット、ハートビートワークフロー、ガード付きインストーラー、セットアップスクリプトを含むスイートをインストールします。オプションの保護機能は別パッケージのままで、スイートが公開カタログから検出します。
@@ -118,7 +118,7 @@ ClawSec はアクションを推奨し、承認ゲートを設けます。破壊
 
 > `*-traffic-guardian` ディレクトリは、プラットフォーム実装者向けの仕様ベースラインです。現時点で実行時プロキシとして提供されているものではありません。
 
-すべてのパッケージは、**[公開スキルカタログ](https://clawsec.prompt.security/skills)** またはリポジトリの **[`skills/` ディレクトリ](skills/)** で確認できます。
+すべてのパッケージは、**[公開スキルカタログ](https://clawsec.prompt.security/#/skills)** またはリポジトリの **[`skills/` ディレクトリ](skills/)** で確認できます。
 
 ---
 

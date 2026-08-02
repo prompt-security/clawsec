@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://clawsec.prompt.security"><strong>Website</strong></a>
   ·
-  <a href="https://clawsec.prompt.security/skills"><strong>Skill-Katalog</strong></a>
+  <a href="https://clawsec.prompt.security/#/skills"><strong>Skill-Katalog</strong></a>
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>Sicherheitsfeed</strong></a>
   ·
@@ -31,7 +31,7 @@ Der Einstiegspunkt für OpenClaw ist `clawsec-suite`. Das Hinzufügen des Pakets
 ### 1. Suite hinzufügen
 
 ```bash
-npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw --global -y
 ```
 
 Damit wird die Suite mit ihrem Vertrauenssatz für signierte Sicherheitshinweise, dem Heartbeat-Workflow, dem abgesicherten Installer und den Einrichtungsskripten installiert. Optionale Schutzmechanismen bleiben separate Pakete, die die Suite im veröffentlichten Katalog findet.
@@ -118,7 +118,7 @@ ClawSec empfiehlt und kontrolliert Aktionen; destruktives Entfernen und das Übe
 
 > Die `*-traffic-guardian`-Verzeichnisse sind Spezifikations-Baselines für Plattformentwickler. Sie enthalten heute keine ausgelieferten Runtime-Proxys.
 
-Alle Pakete finden Sie im **[Live-Skill-Katalog](https://clawsec.prompt.security/skills)** oder im **[`skills/`-Verzeichnis](skills/)** des Repositorys.
+Alle Pakete finden Sie im **[Live-Skill-Katalog](https://clawsec.prompt.security/#/skills)** oder im **[`skills/`-Verzeichnis](skills/)** des Repositorys.
 
 ---
 

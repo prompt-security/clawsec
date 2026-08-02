@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://clawsec.prompt.security"><strong>Website</strong></a>
   ·
-  <a href="https://clawsec.prompt.security/skills"><strong>Skill catalog</strong></a>
+  <a href="https://clawsec.prompt.security/#/skills"><strong>Skill catalog</strong></a>
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>Security feed</strong></a>
   ·
@@ -31,7 +31,7 @@ The OpenClaw entry point is `clawsec-suite`. Adding the package and activating i
 ### 1. Add the suite
 
 ```bash
-npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw --global -y
 ```
 
 This installs the suite with its signed advisory trust set, heartbeat workflow, guarded installer, and setup scripts. Optional protections remain separate packages that the suite discovers from the published catalog.
@@ -118,7 +118,7 @@ ClawSec recommends and gates actions; destructive removal and install overrides 
 
 > The `*-traffic-guardian` directories are specification baselines for platform builders. They are not shipped runtime proxies today.
 
-Browse every package in the **[live skill catalog](https://clawsec.prompt.security/skills)** or the repository’s **[`skills/` directory](skills/)**.
+Browse every package in the **[live skill catalog](https://clawsec.prompt.security/#/skills)** or the repository’s **[`skills/` directory](skills/)**.
 
 ---
 

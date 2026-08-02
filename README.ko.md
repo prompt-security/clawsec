@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://clawsec.prompt.security"><strong>웹사이트</strong></a>
   ·
-  <a href="https://clawsec.prompt.security/skills"><strong>스킬 카탈로그</strong></a>
+  <a href="https://clawsec.prompt.security/#/skills"><strong>스킬 카탈로그</strong></a>
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>보안 피드</strong></a>
   ·
@@ -31,7 +31,7 @@ OpenClaw의 진입점은 `clawsec-suite`입니다. 패키지를 추가하는 단
 ### 1. 스위트 추가
 
 ```bash
-npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y
+npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw --global -y
 ```
 
 이 명령은 서명된 보안 권고 신뢰 세트, heartbeat 워크플로, 보호형 설치 도구, 설정 스크립트와 함께 스위트를 설치합니다. 선택적 보호 기능은 별도 패키지로 유지되며, 스위트가 공개 카탈로그에서 이를 탐색합니다.
@@ -118,7 +118,7 @@ ClawSec은 조치를 권고하고 실행을 제어합니다. 파괴적 제거와
 
 > `*-traffic-guardian` 디렉터리는 플랫폼 빌더를 위한 기준 사양입니다. 현재 실행 가능한 런타임 프록시로 제공되지 않습니다.
 
-모든 패키지는 **[라이브 스킬 카탈로그](https://clawsec.prompt.security/skills)** 또는 저장소의 **[`skills/` 디렉터리](skills/)**에서 확인할 수 있습니다.
+모든 패키지는 **[라이브 스킬 카탈로그](https://clawsec.prompt.security/#/skills)** 또는 저장소의 **[`skills/` 디렉터리](skills/)**에서 확인할 수 있습니다.
 
 ---
 
