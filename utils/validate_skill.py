@@ -131,6 +131,14 @@ def main():
         sys.exit(1)
 
     skill_path = sys.argv[1]
+
+    # Guard against path traversal: resolved path must stay within skills/
+    base_dir = (Path(__file__).parent.parent / "skills").resolve()
+    resolved = Path(skill_path).resolve()
+    if not resolved.is_relative_to(base_dir):
+        print(f"Error: skill path must be within the 'skills' directory ({base_dir})")
+        sys.exit(1)
+
     print(f"Validating skill: {skill_path}")
     print()
 
