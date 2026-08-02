@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/readme/hero.webp" width="100%" alt="ClawSec ロボットと Prompt Security, from SentinelOne のロゴを配した、AI エージェント向け ClawSec セキュリティスキルの紹介画像">
+  <img src="./assets/readme/hero-ja.webp" width="100%" alt="ClawSecロボットとPrompt Security from SentinelOneのロゴを配した、AIエージェント向けClawSecセキュリティスキル">
 </p>
 
 <p align="center">

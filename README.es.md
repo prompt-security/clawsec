@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/readme/hero.webp" width="100%" alt="Habilidades de seguridad ClawSec para agentes de IA, con el robot de ClawSec y el logotipo de Prompt Security de SentinelOne">
+  <img src="./assets/readme/hero-es.webp" width="100%" alt="Habilidades de seguridad ClawSec para agentes de IA, con el robot ClawSec y el logotipo de Prompt Security from SentinelOne">
 </p>
 
 <p align="center">
