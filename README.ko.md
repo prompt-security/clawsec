@@ -9,7 +9,7 @@
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>보안 피드</strong></a>
   ·
-  <a href="./wiki/INDEX.md"><strong>문서</strong></a>
+  <a href="./wiki/ko/INDEX.md"><strong>문서</strong></a>
   ·
   <a href="https://github.com/prompt-security/clawsec/releases"><strong>릴리스</strong></a>
 </p>
@@ -119,6 +119,12 @@ ClawSec은 조치를 권고하고 실행을 제어합니다. 파괴적 제거와
 > `*-traffic-guardian` 디렉터리는 플랫폼 빌더를 위한 기준 사양입니다. 현재 실행 가능한 런타임 프록시로 제공되지 않습니다.
 
 모든 패키지는 **[라이브 스킬 카탈로그](https://clawsec.prompt.security/#/skills)** 또는 저장소의 **[`skills/` 디렉터리](skills/)**에서 확인할 수 있습니다.
+
+### 스킬 기능 매트릭스
+
+제공됨, 제한적, 사양 전용 범위를 포함한 전체 패키지 비교는 위키에 보존됩니다.
+
+**[기능 매트릭스에서 모든 스킬 비교 →](wiki/ko/skill-feature-matrix.md)**
 
 ---
 

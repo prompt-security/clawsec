@@ -9,7 +9,7 @@
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>Flux de sécurité</strong></a>
   ·
-  <a href="./wiki/INDEX.md"><strong>Documentation</strong></a>
+  <a href="./wiki/fr/INDEX.md"><strong>Documentation</strong></a>
   ·
   <a href="https://github.com/prompt-security/clawsec/releases"><strong>Versions</strong></a>
 </p>
@@ -119,6 +119,12 @@ ClawSec recommande et encadre les actions ; les suppressions destructrices et le
 > Les répertoires `*-traffic-guardian` sont des spécifications de référence destinées aux développeurs de plateformes. Ce ne sont pas des proxys d’exécution livrés à ce jour.
 
 Parcourez tous les packages dans le **[catalogue de skills en ligne](https://clawsec.prompt.security/#/skills)** ou dans le **[répertoire `skills/`](skills/)** du dépôt.
+
+### Matrice des fonctionnalités par skill
+
+La comparaison complète des packages est conservée dans le wiki, y compris les fonctionnalités livrées, limitées et uniquement spécifiées.
+
+**[Comparer tous les skills dans la matrice des fonctionnalités →](wiki/fr/skill-feature-matrix.md)**
 
 ---
 

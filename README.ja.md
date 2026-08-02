@@ -9,7 +9,7 @@
   ·
   <a href="https://clawsec.prompt.security/feed"><strong>セキュリティフィード</strong></a>
   ·
-  <a href="./wiki/INDEX.md"><strong>ドキュメント</strong></a>
+  <a href="./wiki/ja/INDEX.md"><strong>ドキュメント</strong></a>
   ·
   <a href="https://github.com/prompt-security/clawsec/releases"><strong>リリース</strong></a>
 </p>
@@ -119,6 +119,12 @@ ClawSec はアクションを推奨し、承認ゲートを設けます。破壊
 > `*-traffic-guardian` ディレクトリは、プラットフォーム実装者向けの仕様ベースラインです。現時点で実行時プロキシとして提供されているものではありません。
 
 すべてのパッケージは、**[公開スキルカタログ](https://clawsec.prompt.security/#/skills)** またはリポジトリの **[`skills/` ディレクトリ](skills/)** で確認できます。
+
+### スキル機能マトリックス
+
+提供済み、限定的、仕様のみの対応を含むパッケージ別の完全な比較は、Wiki に保持されています。
+
+**[機能マトリックスですべてのスキルを比較 →](wiki/ja/skill-feature-matrix.md)**
 
 ---
 

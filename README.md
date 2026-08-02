@@ -120,6 +120,12 @@ ClawSec recommends and gates actions; destructive removal and install overrides 
 
 Browse every package in the **[live skill catalog](https://clawsec.prompt.security/#/skills)** or the repository’s **[`skills/` directory](skills/)**.
 
+### Skill feature matrix
+
+The full package comparison is preserved in the wiki, including shipped, limited, and specification-only coverage.
+
+**[Compare every skill in the feature matrix →](wiki/skill-feature-matrix.md)**
+
 ---
 
 ## Query the signed advisory channel

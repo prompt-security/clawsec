@@ -36,6 +36,27 @@ class QaCheckTests(unittest.TestCase):
             self.assertIn("non-translatable term missing: ClawSec", errors)
             self.assertTrue(any("partial translation detected" in warning for warning in warnings))
 
+    def test_feature_matrix_parser_preserves_identifiers_and_column_count(self) -> None:
+        markdown = """# Matrix
+
+<!-- skill-feature-matrix:start -->
+| Skill | Platform | A | B | C | D | E | F | G |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `alpha-skill` | OpenClaw | Yes | No | No | Yes | No | No | No |
+| `beta-skill` | NanoClaw | Yes | Yes | No | Yes | No | Yes | No |
+<!-- skill-feature-matrix:end -->
+"""
+
+        header, rows = self.module._extract_feature_matrix_table(markdown)
+
+        self.assertEqual(9, len(header))
+        self.assertEqual(["alpha-skill", "beta-skill"], [self.module._matrix_identifier(row[0]) for row in rows])
+        self.assertTrue(all(len(row) == 9 for row in rows))
+
+    def test_feature_matrix_parser_rejects_missing_markers(self) -> None:
+        with self.assertRaisesRegex(ValueError, "marker pair"):
+            self.module._extract_feature_matrix_table("| Skill | Platform |\n| --- | --- |\n")
+
 
 if __name__ == "__main__":
     unittest.main()

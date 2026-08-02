@@ -9,6 +9,7 @@
 
 ## Start Here
 - [Overview](overview.md)
+- [Skill Feature Matrix](skill-feature-matrix.md)
 - [Architecture](architecture.md)
 
 ## Translations

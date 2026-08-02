@@ -2,14 +2,29 @@
 
 Track translation coverage and freshness versus English source docs.
 
-_Last updated: 2026-06-14_
+_Last updated: 2026-08-02_
 
 ## README Coverage
 
-| Source | Spanish | Status | Notes |
+| Language | Target | Status | Notes |
 | --- | --- | --- | --- |
-| `README.md` | `README.es.md` | partial | Covers onboarding + operations + local dev. Advanced schema/CI details stay in EN for now. |
-| `README.md` | `README.ko.md` | partial | Korean scaffold with quickstart and core navigation; advanced details remain in EN. |
+| German | `README.de.md` | current | Localized homepage, hero, and feature-matrix entry point; native review pending. |
+| Spanish | `README.es.md` | current | Localized homepage, hero, and feature-matrix entry point; native review pending. |
+| French | `README.fr.md` | current | Localized homepage, hero, and feature-matrix entry point; native review pending. |
+| Japanese | `README.ja.md` | current | Localized homepage, hero, and feature-matrix entry point; native review pending. |
+| Korean | `README.ko.md` | current | Localized homepage, hero, and feature-matrix entry point; native review pending. |
+
+## Skill Feature Matrix Coverage
+
+The English matrix at `wiki/skill-feature-matrix.md` is canonical. Localized matrices are Codex-assisted translations checked for terminology and structural parity; independent native-speaker review remains pending.
+
+| Language | Localized page | Structure | Native review |
+| --- | --- | --- | --- |
+| German | `wiki/de/skill-feature-matrix.md` | 16 rows × 9 columns | pending |
+| Spanish | `wiki/es/skill-feature-matrix.md` | 16 rows × 9 columns | pending |
+| French | `wiki/fr/skill-feature-matrix.md` | 16 rows × 9 columns | pending |
+| Japanese | `wiki/ja/skill-feature-matrix.md` | 16 rows × 9 columns | pending |
+| Korean | `wiki/ko/skill-feature-matrix.md` | 16 rows × 9 columns | pending |
 
 ## Wiki Coverage (ES)
 
@@ -17,6 +32,7 @@ _Last updated: 2026-06-14_
 | --- | --- | --- |
 | `wiki/INDEX.md` | `wiki/es/INDEX.md` | done |
 | `wiki/overview.md` | `wiki/es/overview.md` | done |
+| `wiki/skill-feature-matrix.md` | `wiki/es/skill-feature-matrix.md` | done |
 | `wiki/localization.md` | `wiki/es/localization.md` | done |
 | `wiki/architecture.md` | — | pending |
 | `wiki/security.md` | `wiki/es/security.md` | done |
@@ -36,6 +52,7 @@ _Last updated: 2026-06-14_
 | --- | --- | --- |
 | `wiki/INDEX.md` | `wiki/ko/INDEX.md` | done |
 | `wiki/overview.md` | `wiki/ko/overview.md` | partial |
+| `wiki/skill-feature-matrix.md` | `wiki/ko/skill-feature-matrix.md` | done |
 | `wiki/security.md` | `wiki/ko/security.md` | done |
 | `wiki/localization.md` | `wiki/ko/localization.md` | done |
 | `wiki/configuration.md` | `wiki/ko/configuration.md` | done |
@@ -44,9 +61,9 @@ _Last updated: 2026-06-14_
 
 | Language | Coverage status | Notes |
 | --- | --- | --- |
-| `fr` | scaffolded | Auto-generated draft scaffolds for all current wiki pages. |
-| `de` | scaffolded | Auto-generated draft scaffolds for all current wiki pages. |
-| `ja` | scaffolded | Auto-generated draft scaffolds for all current wiki pages. |
+| `fr` | partial | Feature matrix translated; remaining pages include auto-generated draft scaffolds. |
+| `de` | partial | Feature matrix translated; remaining pages include auto-generated draft scaffolds. |
+| `ja` | partial | Feature matrix translated; remaining pages include auto-generated draft scaffolds. |
 
 ## Phase Plan
 
