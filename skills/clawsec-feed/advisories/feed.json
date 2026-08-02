@@ -1,8 +1,253 @@
 {
   "version": "0.0.3",
-  "updated": "2026-07-22T06:50:25Z",
+  "updated": "2026-08-02T10:56:59Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-66421",
+      "severity": "critical",
+      "type": "cross_site_scripting",
+      "nvd_category_id": "CWE-79",
+      "title": "OpenClaw Dashboard contains a stored cross-site scripting vulnerability that allows unauthenticated ...",
+      "description": "OpenClaw Dashboard contains a stored cross-site scripting vulnerability that allows unauthenticated remote attackers to execute arbitrary JavaScript in the administrator's browser session by injecting HTML markup into agent transcript messages processed through the sessions API. Attackers can craft a message containing inline event handler payloads such as an img tag with an onerror attribute within the 60-character rendering budget, which is stored in the session transcript and interpolated unsanitized into innerHTML on the default landing page, allowing theft of session tokens and unauthorized calls to authenticated administrative endpoints including agent instruction file modification.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-30T23:16:53.687",
+      "references": [
+        "https://github.com/theopaid/Stored-Cross-Site-Scripting-Via-Agent-Messages-Leading-To-Session-Token-Theft-openclaw-dashboard-",
+        "https://github.com/tugcantopaloglu/openclaw-dashboard",
+        "https://www.vulncheck.com/advisories/openclaw-dashboard-stored-xss-via-lastmessage-session-field"
+      ],
+      "cvss_score": 9.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-66421",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.3); network accessible; XSS has limited impact in headless agents",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-66418",
+      "severity": "critical",
+      "type": "cross_site_scripting",
+      "nvd_category_id": "CWE-79",
+      "title": "OpenClaw Dashboard v3.0.0 contains a stored cross-site scripting vulnerability that allows unauthent...",
+      "description": "OpenClaw Dashboard v3.0.0 contains a stored cross-site scripting vulnerability that allows unauthenticated remote attackers to inject arbitrary HTML and script payloads by submitting a crafted username in a failed login POST request, which is recorded verbatim in the audit log. When an administrator opens the notification panel, the unescaped log entry is rendered via innerHTML with a permissive Content-Security-Policy allowing inline event handlers, enabling the attacker-supplied payload to execute in the administrator's session and interact with authenticated endpoints including agent instruction file editing and configuration changes.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-30T21:18:12.490",
+      "references": [
+        "https://github.com/theopaid/Unauthenticated-Stored-Cross-Site-Scripting-Leading-To-Administrator-Account-Takeover",
+        "https://github.com/tugcantopaloglu/openclaw-dashboard",
+        "https://www.vulncheck.com/advisories/openclaw-dashboard-stored-xss-via-failed-login-username-field"
+      ],
+      "cvss_score": 9.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-66418",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.3); network accessible; XSS has limited impact in headless agents",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-17458",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "A vulnerability was found in mf-yang openclaw-cn up to 0.2.1. This affects the function clickViaPlay...",
+      "description": "A vulnerability was found in mf-yang openclaw-cn up to 0.2.1. This affects the function clickViaPlaywright of the file src/browser/routes/agent.act.ts of the component Browser Control HTTP API. Performing a manipulation results in server-side request forgery. It is possible to initiate the attack remotely. The exploit has been made public and could be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-26T11:16:58.470",
+      "references": [
+        "https://github.com/mf-yang/openclaw-cn/",
+        "https://github.com/mf-yang/openclaw-cn/issues/562",
+        "https://vuldb.com/cve/CVE-2026-17458"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-17458",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-17457",
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "A vulnerability has been found in mf-yang openclaw-cn up to 0.2.1. Affected by this issue is the fun...",
+      "description": "A vulnerability has been found in mf-yang openclaw-cn up to 0.2.1. Affected by this issue is the function assertBrowserNavigationAllowed of the file src/browser/navigation-guard.ts of the component Scheme Handler. Such manipulation of the argument url leads to information disclosure. The attack may be performed from remote. The exploit has been disclosed to the public and may be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-26T10:16:25.163",
+      "references": [
+        "https://github.com/mf-yang/openclaw-cn/",
+        "https://github.com/mf-yang/openclaw-cn/issues/561",
+        "https://vuldb.com/cve/CVE-2026-17457"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-17457",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-17434",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A flaw has been found in nanocoai NanoClaw up to 2.0.64. Affected is the function handleAddMcpServer...",
+      "description": "A flaw has been found in nanocoai NanoClaw up to 2.0.64. Affected is the function handleAddMcpServer of the file src/modules/self-mod/request.ts of the component add_mcp_server. Executing a manipulation can lead to improper authorization. The attack may be launched remotely. The exploit has been published and may be used. This patch is called e5b928783d5c485637565eb07d2967922dfbf8d8. A patch should be applied to remediate this issue.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-26T04:16:46.573",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/",
+        "https://github.com/nanocoai/nanoclaw/commit/e5b928783d5c485637565eb07d2967922dfbf8d8",
+        "https://github.com/nanocoai/nanoclaw/issues/2762"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-17434",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-17433",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A vulnerability was detected in nanocoai NanoClaw up to 2.0.64. This impacts the function createChat...",
+      "description": "A vulnerability was detected in nanocoai NanoClaw up to 2.0.64. This impacts the function createChatSdkBridge.setup of the file src/channels/chat-sdk-bridge.ts of the component MCP Server Approval. Performing a manipulation results in improper authorization. The attack needs to be approached locally. The exploit is now public and may be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-26T03:16:32.490",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/",
+        "https://github.com/nanocoai/nanoclaw/issues/2761",
+        "https://vuldb.com/cve/CVE-2026-17433"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-17433",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-17432",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A vulnerability was detected in NousResearch hermes-agent 2026.6.5. Affected by this vulnerability i...",
+      "description": "A vulnerability was detected in NousResearch hermes-agent 2026.6.5. Affected by this vulnerability is an unknown functionality of the file hermes-agent/plugins/platforms/simplex/adapter.py of the component SimpleX Gateway Authorization. The manipulation of the argument contactId results in improper access controls. The attack may be launched remotely. A high complexity level is associated with this attack. The exploitation appears to be difficult. The exploit is now public and may be used. The patch is identified as 490c486ff65b766d9de0fe0e6f26e1778aaa8fb3. Applying a patch is advised to resolve this issue.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-07-26T01:16:25.783",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/",
+        "https://github.com/NousResearch/hermes-agent/commit/490c486ff65b766d9de0fe0e6f26e1778aaa8fb3",
+        "https://github.com/NousResearch/hermes-agent/issues/44729"
+      ],
+      "cvss_score": 5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-17432",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.0); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-16198",
       "severity": "medium",
@@ -326,6 +571,7 @@
       "title": "OpenClaw before 2026.5.18 contain an authorization bypass vulnerability in exec allowlist glob match...",
       "description": "OpenClaw before 2026.5.18 contain an authorization bypass vulnerability in exec allowlist glob matching that allows lower-trust callers to execute actions beyond intended authorization. Attackers can craft input paths that traverse the allowlist glob patterns to execute or persist unauthorized actions when the affected feature is enabled.",
       "affected": [
+        "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
       ],
       "platforms": [
