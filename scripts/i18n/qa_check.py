@@ -33,6 +33,11 @@ NON_TRANSLATABLE_TERMS = (
     "clawsec-suite",
 )
 
+FEATURE_MATRIX_START = "<!-- skill-feature-matrix:start -->"
+FEATURE_MATRIX_END = "<!-- skill-feature-matrix:end -->"
+FEATURE_MATRIX_COLUMNS = 9
+FEATURE_MATRIX_LANGUAGES = ("de", "es", "fr", "ja", "ko")
+
 
 def _extract_fenced_blocks(text: str) -> list[str]:
     return re.findall(r"```[^\n]*\n.*?```", text, flags=re.DOTALL)
@@ -44,6 +49,85 @@ def _extract_inline_code(text: str) -> list[str]:
 
 def _extract_absolute_urls(text: str) -> set[str]:
     return set(re.findall(r"https?://[^\s)>'\"]+", text))
+
+
+def _extract_feature_matrix_table(text: str) -> tuple[list[str], list[list[str]]]:
+    if text.count(FEATURE_MATRIX_START) != 1 or text.count(FEATURE_MATRIX_END) != 1:
+        raise ValueError("expected exactly one feature-matrix marker pair")
+
+    start = text.index(FEATURE_MATRIX_START) + len(FEATURE_MATRIX_START)
+    end = text.index(FEATURE_MATRIX_END, start)
+    table_lines = [line.strip() for line in text[start:end].splitlines() if line.strip().startswith("|")]
+    if len(table_lines) < 3:
+        raise ValueError("feature matrix must contain a header, separator, and data rows")
+
+    rows = [[cell.strip() for cell in line.strip("|").split("|")] for line in table_lines]
+    if any(not re.fullmatch(r":?-{3,}:?", cell.replace(" ", "")) for cell in rows[1]):
+        raise ValueError("feature matrix separator row is invalid")
+
+    return rows[0], rows[2:]
+
+
+def _matrix_identifier(value: str) -> str:
+    return value.strip().strip("`")
+
+
+def _check_feature_matrix_integrity(repo_root: Path) -> list[str]:
+    errors: list[str] = []
+    wiki_root = repo_root / "wiki"
+    matrix_pages = [("en", wiki_root / "skill-feature-matrix.md")]
+    matrix_pages.extend((lang, wiki_root / lang / "skill-feature-matrix.md") for lang in FEATURE_MATRIX_LANGUAGES)
+
+    canonical_ids: list[str] | None = None
+    for lang, matrix_path in matrix_pages:
+        relative_path = matrix_path.relative_to(repo_root)
+        if not matrix_path.is_file():
+            errors.append(f"missing matrix page: {relative_path}")
+            continue
+
+        try:
+            header, rows = _extract_feature_matrix_table(matrix_path.read_text(encoding="utf-8"))
+        except ValueError as error:
+            errors.append(f"{relative_path}: {error}")
+            continue
+
+        if len(header) != FEATURE_MATRIX_COLUMNS:
+            errors.append(f"{relative_path}: expected {FEATURE_MATRIX_COLUMNS} header columns, found {len(header)}")
+
+        malformed_rows = [index for index, row in enumerate(rows, start=1) if len(row) != FEATURE_MATRIX_COLUMNS]
+        if malformed_rows:
+            errors.append(
+                f"{relative_path}: rows with invalid column counts: {', '.join(str(index) for index in malformed_rows)}"
+            )
+
+        identifiers = [_matrix_identifier(row[0]) for row in rows if row]
+        if len(identifiers) != len(set(identifiers)):
+            errors.append(f"{relative_path}: duplicate skill identifiers")
+
+        if lang == "en":
+            canonical_ids = identifiers
+            skills_root = repo_root / "skills"
+            skill_directories = sorted(path.name for path in skills_root.iterdir() if path.is_dir())
+            if canonical_ids != skill_directories:
+                errors.append(
+                    f"{relative_path}: identifiers must exactly match the sorted skills/ directories "
+                    f"(matrix={canonical_ids}, skills={skill_directories})"
+                )
+        elif canonical_ids is not None and identifiers != canonical_ids:
+            errors.append(f"{relative_path}: localized skill identifiers or order differ from the English matrix")
+
+        index_path = wiki_root / ("INDEX.md" if lang == "en" else f"{lang}/INDEX.md")
+        if not index_path.is_file() or "(skill-feature-matrix.md)" not in index_path.read_text(encoding="utf-8"):
+            errors.append(f"{index_path.relative_to(repo_root)}: missing feature-matrix navigation link")
+
+        readme_path = repo_root / ("README.md" if lang == "en" else f"README.{lang}.md")
+        expected_link = (
+            "(wiki/skill-feature-matrix.md)" if lang == "en" else f"(wiki/{lang}/skill-feature-matrix.md)"
+        )
+        if not readme_path.is_file() or expected_link not in readme_path.read_text(encoding="utf-8"):
+            errors.append(f"{readme_path.relative_to(repo_root)}: missing localized feature-matrix link")
+
+    return errors
 
 
 def _is_technical_inline_token(token: str) -> bool:
@@ -195,6 +279,15 @@ def main() -> int:
                 print(f"  - {err}")
         else:
             print(f"PASS {rel_source} -> {rel_target}")
+
+    matrix_errors = _check_feature_matrix_integrity(repo_root)
+    if matrix_errors:
+        total_errors += len(matrix_errors)
+        print("\nFAIL localized skill feature matrices")
+        for error in matrix_errors:
+            print(f"  - {error}")
+    else:
+        print("PASS localized skill feature matrices (6 pages, exact skill and column parity)")
 
     if total_errors:
         print(f"\n[i18n-qa] FAILED with {total_errors} issue(s) and {total_warnings} warning(s).")

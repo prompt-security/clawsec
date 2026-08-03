@@ -9,6 +9,7 @@
 
 ## Empieza aquí
 - [Overview (ES)](overview.md)
+- [Matriz de funciones por skill](skill-feature-matrix.md)
 - [Architecture (EN)](../architecture.md)
 
 ## Guías

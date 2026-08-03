@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Bot, Copy, Check, Lock } from 'lucide-react';
+import { Link } from 'react-router';
 import { Footer } from '../components/Footer';
 
 const FILE_NAMES = ['SOUL.md', 'AGENTS.md', 'USER.md', 'TOOLS.md', 'IDENTITY.md', 'HEARTBEAT.md', 'MEMORY.md'];
@@ -287,14 +288,12 @@ export const Home: React.FC = () => {
             )}
             <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
               * For harnesses other than OpenClaw, consult the{' '}
-              <a
-                href="https://github.com/prompt-security/clawsec#skill-feature-matrix"
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to="/wiki/skill-feature-matrix"
                 className="text-clawd-accent hover:text-clawd-accent/80 underline underline-offset-2"
               >
-                README Skill Feature Matrix
-              </a>
+                Skill Feature Matrix
+              </Link>
               .
             </p>
           </div>

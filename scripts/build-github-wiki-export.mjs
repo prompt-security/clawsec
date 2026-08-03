@@ -20,6 +20,7 @@ const ROOT_SIDEBAR_SECTIONS = [
 const LANGUAGE_PAGE_ORDER = [
   'INDEX.md',
   'overview.md',
+  'skill-feature-matrix.md',
   'architecture.md',
   'localization.md',
   'dependencies.md',

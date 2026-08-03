@@ -6,6 +6,7 @@
 
 ## 시작하기
 - [Overview (KO)](overview.md)
+- [스킬 기능 매트릭스](skill-feature-matrix.md)
 - [Overview (EN)](../overview.md)
 - [Architecture (EN)](../architecture.md)
 

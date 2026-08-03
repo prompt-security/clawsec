@@ -13,7 +13,7 @@ These packages are intentionally specification scaffolds. They reserve the skill
 
 ## Capability Gap
 
-The existing ClawSec matrix covers advisory verification, config drift, self-pen-testing/posture review, and supply-chain verification. It does not currently provide live runtime traffic monitoring:
+The [ClawSec Skill Feature Matrix](../skill-feature-matrix.md) covers advisory verification, config drift, self-pen-testing/posture review, and supply-chain verification. It does not currently provide live runtime traffic monitoring:
 
 - HTTP request/response inspection
 - optional HTTPS inspection with explicit CA trust

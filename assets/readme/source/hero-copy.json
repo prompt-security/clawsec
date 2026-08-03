@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "source_locale": "en",
+  "source_copy": {
+    "eyebrow": "OPEN-SOURCE AGENT SECURITY",
+    "title": "ClawSec",
+    "tagline": "Verify before your agent trusts.",
+    "supporting": "Signed advisories · integrity checks · guarded installs"
+  },
+  "source_banner": {
+    "readme": "README.md",
+    "svg": "assets/readme/source/hero-layout.svg",
+    "webp": "assets/readme/hero.webp",
+    "accessibility": {
+      "alt": "ClawSec security skills for AI agents, featuring the ClawSec robot and the Prompt Security from SentinelOne logo",
+      "title": "ClawSec security skills for AI agents",
+      "description": "ClawSec robot mascot beside a promise to verify before an agent trusts, with OpenClaw, NanoClaw, Hermes, and Picoclaw platform labels and the Prompt Security from SentinelOne logo."
+    }
+  },
+  "translation_assurance": {
+    "label": "independently model-reviewed",
+    "accepted_process": [
+      "Codex translation from the English source copy",
+      "independent Codex review for idiom, spelling, punctuation, and security meaning",
+      "literal English back-translation recorded beside every accepted locale",
+      "automated source-to-README and source-to-artifact mapping checks"
+    ],
+    "human_native_certified": false,
+    "local_model_challenger": {
+      "model": "Gemma 3 12B IT Q4",
+      "status": "rejected",
+      "reason": "The local candidate translated the UI field label itself and weakened guarded-install terminology, so none of its copy was accepted as verification evidence."
+    },
+    "semantic_basis": "In README.md, guarded installs stop on advisory matches and require a second, explicit confirmation before a risky install can continue."
+  },
+  "locales": {
+    "de": {
+      "language": "Deutsch",
+      "readme": "README.de.md",
+      "svg": "assets/readme/source/hero-layout-de.svg",
+      "webp": "assets/readme/hero-de.webp",
+      "accessibility": {
+        "alt": "ClawSec-Sicherheits-Skills für KI-Agenten mit dem ClawSec-Roboter und dem Logo von Prompt Security from SentinelOne",
+        "title": "ClawSec-Sicherheits-Skills für KI-Agenten",
+        "description": "Der ClawSec-Roboter steht neben dem Leitsatz, vor dem Vertrauen eines Agenten zu prüfen, den unterstützten Plattformen und dem Logo von Prompt Security from SentinelOne."
+      },
+      "copy": {
+        "eyebrow": ["OPEN-SOURCE-SICHERHEIT FÜR KI-AGENTEN"],
+        "title": ["ClawSec"],
+        "tagline": ["Prüfen, bevor Ihr Agent vertraut."],
+        "supporting": [
+          "Signierte Sicherheitshinweise · Integritätsprüfungen",
+          "Explizite Freigabe riskanter Installationen"
+        ]
+      },
+      "back_translation": {
+        "eyebrow": "Open-source security for AI agents.",
+        "tagline": "Check before your agent trusts.",
+        "supporting": "Signed security advisories · integrity checks · explicit approval of risky installations."
+      },
+      "layout": {
+        "title_block_y": 150,
+        "eyebrow_font_size": 17,
+        "eyebrow_letter_spacing": 1.4,
+        "project_title_y": 80,
+        "project_title_font_size": 88,
+        "tagline_font_size": 35,
+        "tagline_y": [130],
+        "underline_y": 154,
+        "supporting_font_size": 21,
+        "supporting_y": [195, 223]
+      }
+    },
+    "es": {
+      "language": "Español",
+      "readme": "README.es.md",
+      "svg": "assets/readme/source/hero-layout-es.svg",
+      "webp": "assets/readme/hero-es.webp",
+      "accessibility": {
+        "alt": "Habilidades de seguridad ClawSec para agentes de IA, con el robot ClawSec y el logotipo de Prompt Security from SentinelOne",
+        "title": "Habilidades de seguridad ClawSec para agentes de IA",
+        "description": "El robot ClawSec aparece junto al mensaje de verificar antes de que un agente confíe, las plataformas compatibles y el logotipo de Prompt Security from SentinelOne."
+      },
+      "copy": {
+        "eyebrow": ["SEGURIDAD DE CÓDIGO ABIERTO PARA AGENTES DE IA"],
+        "title": ["ClawSec"],
+        "tagline": ["Verifica antes de que tu agente confíe."],
+        "supporting": [
+          "Avisos de seguridad firmados · controles de integridad",
+          "Aprobación explícita para instalaciones de riesgo"
+        ]
+      },
+      "back_translation": {
+        "eyebrow": "Open-source security for AI agents.",
+        "tagline": "Verify before your agent trusts.",
+        "supporting": "Signed security advisories · integrity checks · explicit approval for risky installations."
+      },
+      "layout": {
+        "title_block_y": 150,
+        "eyebrow_font_size": 17,
+        "eyebrow_letter_spacing": 1.1,
+        "project_title_y": 80,
+        "project_title_font_size": 88,
+        "tagline_font_size": 34,
+        "tagline_y": [130],
+        "underline_y": 154,
+        "supporting_font_size": 20,
+        "supporting_y": [195, 223]
+      }
+    },
+    "fr": {
+      "language": "Français",
+      "readme": "README.fr.md",
+      "svg": "assets/readme/source/hero-layout-fr.svg",
+      "webp": "assets/readme/hero-fr.webp",
+      "accessibility": {
+        "alt": "Compétences de sécurité ClawSec pour les agents d’IA, avec le robot ClawSec et le logo Prompt Security from SentinelOne",
+        "title": "Compétences de sécurité ClawSec pour les agents d’IA",
+        "description": "Le robot ClawSec accompagne le message de vérifier avant qu’un agent n’accorde sa confiance, les plateformes prises en charge et le logo Prompt Security from SentinelOne."
+      },
+      "copy": {
+        "eyebrow": ["SÉCURITÉ OPEN SOURCE POUR LES AGENTS D’IA"],
+        "title": ["ClawSec"],
+        "tagline": [
+          "Vérifiez avant que votre agent",
+          "n’accorde sa confiance."
+        ],
+        "supporting": [
+          "Avis de sécurité signés · contrôles d’intégrité",
+          "Approbation explicite requise pour les installations à risque"
+        ]
+      },
+      "back_translation": {
+        "eyebrow": "Open-source security for AI agents.",
+        "tagline": "Verify before your agent grants its trust.",
+        "supporting": "Signed security advisories · integrity checks · explicit approval required for risky installations."
+      },
+      "layout": {
+        "title_block_y": 140,
+        "eyebrow_y": 18,
+        "eyebrow_font_size": 17,
+        "eyebrow_letter_spacing": 1.4,
+        "project_title_y": 76,
+        "project_title_font_size": 86,
+        "tagline_font_size": 37,
+        "tagline_y": [122, 162],
+        "underline_y": 180,
+        "supporting_font_size": 20,
+        "supporting_y": [212, 240]
+      }
+    },
+    "ja": {
+      "language": "日本語",
+      "readme": "README.ja.md",
+      "svg": "assets/readme/source/hero-layout-ja.svg",
+      "webp": "assets/readme/hero-ja.webp",
+      "accessibility": {
+        "alt": "ClawSecロボットとPrompt Security from SentinelOneのロゴを配した、AIエージェント向けClawSecセキュリティスキル",
+        "title": "AIエージェント向けClawSecセキュリティスキル",
+        "description": "ClawSecロボットの横に、エージェントが信頼する前の検証、対応プラットフォーム、Prompt Security from SentinelOneのロゴを示しています。"
+      },
+      "copy": {
+        "eyebrow": ["AIエージェント向けオープンソースセキュリティ"],
+        "title": ["ClawSec"],
+        "tagline": ["エージェントが信頼する前に検証を。"],
+        "supporting": [
+          "署名済みセキュリティアドバイザリー・完全性検証",
+          "リスクのあるインストールには明示的な承認が必須"
+        ]
+      },
+      "back_translation": {
+        "eyebrow": "Open-source security for AI agents.",
+        "tagline": "Before the agent trusts, verify.",
+        "supporting": "Signed security advisories · integrity verification · explicit approval is required for risky installations."
+      },
+      "layout": {
+        "title_block_y": 150,
+        "eyebrow_y": 12,
+        "eyebrow_font_size": 24,
+        "eyebrow_letter_spacing": 0.2,
+        "project_title_y": 80,
+        "project_title_font_size": 88,
+        "tagline_font_size": 36,
+        "tagline_y": [132],
+        "underline_y": 156,
+        "supporting_font_size": 23,
+        "supporting_y": [197, 226]
+      }
+    },
+    "ko": {
+      "language": "한국어",
+      "readme": "README.ko.md",
+      "svg": "assets/readme/source/hero-layout-ko.svg",
+      "webp": "assets/readme/hero-ko.webp",
+      "accessibility": {
+        "alt": "ClawSec 로봇과 Prompt Security from SentinelOne 로고가 포함된 AI 에이전트용 ClawSec 보안 스킬",
+        "title": "AI 에이전트용 ClawSec 보안 스킬",
+        "description": "ClawSec 로봇 옆에 에이전트가 신뢰하기 전의 검증, 지원 플랫폼, Prompt Security from SentinelOne 로고를 표시합니다."
+      },
+      "copy": {
+        "eyebrow": ["AI 에이전트를 위한 오픈소스 보안"],
+        "title": ["ClawSec"],
+        "tagline": ["에이전트가 신뢰하기 전에 검증하세요."],
+        "supporting": [
+          "서명된 보안 권고 · 무결성 검사",
+          "위험한 설치에는 명시적 승인"
+        ]
+      },
+      "back_translation": {
+        "eyebrow": "Open-source security for AI agents.",
+        "tagline": "Verify before the agent trusts.",
+        "supporting": "Signed security advisories · integrity checks · explicit approval for risky installations."
+      },
+      "layout": {
+        "title_block_y": 150,
+        "eyebrow_y": 12,
+        "eyebrow_font_size": 24,
+        "eyebrow_letter_spacing": 0.2,
+        "project_title_y": 80,
+        "project_title_font_size": 88,
+        "tagline_font_size": 36,
+        "tagline_y": [132],
+        "underline_y": 156,
+        "supporting_font_size": 24,
+        "supporting_y": [197, 226]
+      }
+    }
+  }
+}

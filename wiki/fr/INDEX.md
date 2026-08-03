@@ -14,6 +14,7 @@ Review status: draft
 
 ## Start Here
 - [Overview](overview.md)
+- [Matrice des fonctionnalités par skill](skill-feature-matrix.md)
 - [Architecture](architecture.md)
 
 ## Translations

@@ -164,16 +164,32 @@ test('buildGithubWikiExport exports the repository wiki without duplicate GitHub
     'GitHub Wiki export must not include duplicate markdown basenames',
   );
 
+  for (const matrixPage of [
+    'skill-feature-matrix.md',
+    'de-skill-feature-matrix.md',
+    'es-skill-feature-matrix.md',
+    'fr-skill-feature-matrix.md',
+    'ja-skill-feature-matrix.md',
+    'ko-skill-feature-matrix.md',
+  ]) {
+    assert.ok(files.includes(matrixPage), `GitHub Wiki export must include ${matrixPage}`);
+  }
+
   const sidebar = await readFile(path.join(outputDir, '_Sidebar.md'), 'utf8');
   assert.match(
     sidebar,
-    /^- \*\*\[de\]\(de-Home\)\*\*[\s\S]*^\s{2}- \[architecture\]\(de-architecture\)$/m,
-    'GitHub Wiki sidebar must group translated pages below their language code',
+    /^- \[Skill Feature Matrix\]\(skill-feature-matrix\)$/m,
+    'GitHub Wiki sidebar must expose the canonical skill feature matrix under Start Here',
   );
   assert.match(
     sidebar,
-    /^- \*\*\[ja\]\(ja-Home\)\*\*[\s\S]*^\s{2}- \[configuration\]\(ja-configuration\)$/m,
-    'GitHub Wiki sidebar must keep every language as a parent section',
+    /^- \*\*\[de\]\(de-Home\)\*\*[\s\S]*^\s{2}- \[skill feature matrix\]\(de-skill-feature-matrix\)$/m,
+    'GitHub Wiki sidebar must group the German feature matrix below its language code',
+  );
+  assert.match(
+    sidebar,
+    /^- \*\*\[ja\]\(ja-Home\)\*\*[\s\S]*^\s{2}- \[skill feature matrix\]\(ja-skill-feature-matrix\)$/m,
+    'GitHub Wiki sidebar must group the Japanese feature matrix below its language code',
   );
 });
 
