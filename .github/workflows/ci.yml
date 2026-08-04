@@ -46,6 +46,17 @@ jobs:
       - name: Bandit (security)
         run: pipx run --spec "bandit==1.7.9" bandit -r utils/ -ll
 
+  python-utils-tests:
+    name: Python Utils Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+      - name: Path traversal tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
   lint-shell:
     name: Lint Shell Scripts
     runs-on: ubuntu-latest
