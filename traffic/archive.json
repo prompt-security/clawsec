@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-08-05T04:23:35.124Z",
+  "updated_at": "2026-08-06T04:24:15.711Z",
   "daily": {
     "views": [
       {
@@ -354,6 +354,11 @@
         "timestamp": "2026-08-03T00:00:00Z",
         "count": 61,
         "uniques": 30
+      },
+      {
+        "timestamp": "2026-08-04T00:00:00Z",
+        "count": 27,
+        "uniques": 21
       }
     ],
     "clones": [
@@ -706,6 +711,11 @@
         "timestamp": "2026-08-03T00:00:00Z",
         "count": 127,
         "uniques": 44
+      },
+      {
+        "timestamp": "2026-08-04T00:00:00Z",
+        "count": 96,
+        "uniques": 48
       }
     ]
   },
@@ -3814,6 +3824,62 @@
             "referrer": "linkedin.com",
             "count": 4,
             "uniques": 2
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 4,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "reddit.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "lobehub.com",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-08-06T04:24:15.711Z",
+        "date": "2026-08-06",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 203,
+            "uniques": 121
+          },
+          {
+            "referrer": "Google",
+            "count": 85,
+            "uniques": 55
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 9,
+            "uniques": 4
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 5,
+            "uniques": 3
           },
           {
             "referrer": "youtube.com",
@@ -7544,6 +7610,72 @@
             "uniques": 2
           }
         ]
+      },
+      {
+        "captured_at": "2026-08-06T04:24:15.711Z",
+        "date": "2026-08-06",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 370,
+            "uniques": 271
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 21,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 16,
+            "uniques": 16
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 11,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 9,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 6,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/modules/hermes-attestation-guardian.md",
+            "title": "/blob/main/wiki/modules/hermes-attestation-guardian.md",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills/clawsec-suite",
+            "title": "/tree/main/skills/clawsec-suite",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/AGENTS.md",
+            "title": "/blob/main/AGENTS.md",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/README.de.md",
+            "title": "/blob/main/README.de.md",
+            "count": 3,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -8218,6 +8350,18 @@
       "clones_window": {
         "count": 3317,
         "uniques": 631
+      }
+    },
+    {
+      "captured_at": "2026-08-06T04:24:15.711Z",
+      "date": "2026-08-06",
+      "views_window": {
+        "count": 569,
+        "uniques": 323
+      },
+      "clones_window": {
+        "count": 3266,
+        "uniques": 621
       }
     }
   ]
