@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "~9.39.4",
-    "@types/node": "^25.8.0",
+    "@types/node": "^26.2.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.65.0",
     "@vitejs/plugin-react": "^6.0.2",
