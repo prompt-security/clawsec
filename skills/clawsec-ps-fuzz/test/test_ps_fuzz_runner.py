@@ -545,6 +545,47 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
             self.assertNotIn("SYSTEM SECRET", capture.getvalue())
 
+    def test_temperature_is_finite_unit_interval_and_slash_model_ids_are_safe(self) -> None:
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        capabilities = runner.load_capabilities()
+        inspection = runner.preflight(
+            manifest,
+            source="wheel",
+            python_executable="python3",
+            python_version=(3, 12),
+            command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+            capabilities=capabilities,
+            target_provider="open_ai",
+            target_model="meta-llama/Meta-Llama-3.1-8B-Instruct",
+            attack_provider="open_ai",
+            attack_model="openai/gpt-oss-20b",
+            tests=["system_prompt_stealer"],
+            attack_temperature=0.6,
+        )
+        self.assertEqual(inspection["target"]["model"], "meta-llama/Meta-Llama-3.1-8B-Instruct")
+        for value in (2, -0.1, float("nan"), float("inf")):
+            with self.assertRaisesRegex(runner.ProvisionError, "attack-temperature"):
+                runner.preflight(
+                    manifest,
+                    source="wheel",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                    capabilities=capabilities,
+                    target_provider="open_ai",
+                    target_model="target-model",
+                    attack_provider="open_ai",
+                    attack_model="attack-model",
+                    tests=["system_prompt_stealer"],
+                    attack_temperature=value,
+                )
+        with tempfile.TemporaryDirectory() as td:
+            kwargs = self._run_kwargs(Path(td))
+            kwargs["attack_temperature"] = float("nan")
+            with self.assertRaisesRegex(runner.ProvisionError, "attack-temperature"):
+                runner.run(manifest, capabilities, **kwargs)
+
     def test_run_rejects_confirmation_before_reading_prompt_or_creating_output(self) -> None:
         runner = load_runner()
         with tempfile.TemporaryDirectory() as td:

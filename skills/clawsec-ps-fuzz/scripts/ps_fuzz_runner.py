@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -155,9 +156,21 @@ def _provider(capabilities: Mapping[str, object], provider_name: str, *, embeddi
 
 def _validate_model(value: str, label: str) -> str:
     cleaned = value.strip()
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", cleaned):
+    if (
+        not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*(?:/[A-Za-z0-9][A-Za-z0-9._:-]*)*", cleaned)
+        or len(cleaned) > 128
+        or cleaned.lower().startswith(("sk-", "sk_", "api_", "bearer"))
+    ):
         raise ProvisionError(f"--{label} must be a nonempty safe model identifier")
     return cleaned
+
+
+def _validate_attack_temperature(value: float | int | None) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        raise ProvisionError("--attack-temperature must be a finite number from 0.0 through 1.0")
+    return float(value)
 
 
 def _credential_availability(
@@ -226,6 +239,7 @@ def preflight(
     embedding_provider: str | None = None,
     embedding_model: str | None = None,
     embedding_base_url: str | None = None,
+    attack_temperature: float | int | None = None,
 ) -> dict[str, object]:
     """Inspect local prerequisites without authorization, network access, or state writes."""
     if source not in {"wheel", "source"}:
@@ -259,6 +273,7 @@ def preflight(
     supported_attacks = capabilities.get("attacks", [])
     if any(test not in supported_attacks for test in selected_tests):
         raise ProvisionError("unsupported attack selected in --tests")
+    safe_attack_temperature = _validate_attack_temperature(attack_temperature)
     endpoints: Mapping[str, object] = {}
     if target_provider and attack_provider:
         endpoints = _validate_endpoint_configuration(
@@ -291,6 +306,7 @@ def preflight(
             else None
         ),
         "credential_environment_present": credential_presence,
+        "attack_temperature": safe_attack_temperature,
     }
 
 
@@ -793,8 +809,7 @@ def run(
         raise ProvisionError("--tests must be a nonempty list of supported attacks")
     if not isinstance(attempts, int) or attempts <= 0 or not isinstance(threads, int) or threads <= 0:
         raise ProvisionError("--attempts and --threads must be positive integers")
-    if attack_temperature is not None and (not isinstance(attack_temperature, (int, float)) or attack_temperature < 0):
-        raise ProvisionError("--attack-temperature must be zero or greater")
+    attack_temperature = _validate_attack_temperature(attack_temperature)
 
     selected_tests = list(tests)
     endpoints = _validate_endpoint_configuration(
@@ -967,6 +982,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 embedding_provider=args.embedding_provider,
                 embedding_model=args.embedding_model,
                 embedding_base_url=args.embedding_base_url,
+                attack_temperature=args.attack_temperature,
             )
             print(json.dumps(inspection, sort_keys=True))
             print("preflight passed; no state was written")
