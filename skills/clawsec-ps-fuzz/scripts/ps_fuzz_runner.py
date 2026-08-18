@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Provision a reviewed ps-fuzz release into an explicit external state root.
+"""Provision and run reviewed ps-fuzz in an explicit external state root.
 
-The runner deliberately has no project-root default.  All mutable state belongs
-to the caller-provided ``--state-root``.  Task 2 adds authorized active runs.
+The runner deliberately has no project-root default. All mutable state belongs
+to the caller-provided ``--state-root``.
 """
 
 from __future__ import annotations
@@ -920,7 +920,7 @@ def run(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("preflight", "provision", "run"))
-    parser.add_argument("--state-root", help="External ClawSec state root, required only for provision.")
+    parser.add_argument("--state-root", help="External ClawSec state root, required for provision and run.")
     parser.add_argument("--source", choices=("wheel", "source"), default="wheel")
     parser.add_argument("--confirm-authorized-provision", action="store_true")
     parser.add_argument("--confirm-authorized-test", action="store_true")

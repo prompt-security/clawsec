@@ -400,6 +400,12 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 class PsFuzzActiveRunTests(unittest.TestCase):
     """Offline tests for the actively-authorized, redacted execution boundary."""
 
+    def test_cli_help_describes_current_run_state_root_requirement(self) -> None:
+        runner = load_runner()
+        help_text = runner._parser().format_help()
+        self.assertIn("required for provision and run", " ".join(help_text.split()))
+        self.assertNotIn("Task 2", help_text)
+
     def _prepared_state(self, root: Path) -> tuple[Path, Path]:
         state_root = approved_state_root(root)
         executable = state_root / "venv" / "bin" / "prompt-security-fuzzer"
