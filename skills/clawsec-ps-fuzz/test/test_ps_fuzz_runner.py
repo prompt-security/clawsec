@@ -397,6 +397,181 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 with self.assertRaisesRegex(runner.ProvisionError, "malformed"):
                     runner.load_manifest(candidate_path)
 
+class PsFuzzActiveRunTests(unittest.TestCase):
+    """Offline tests for the actively-authorized, redacted execution boundary."""
+
+    def _prepared_state(self, root: Path) -> tuple[Path, Path]:
+        state_root = approved_state_root(root)
+        executable = state_root / "venv" / "bin" / "prompt-security-fuzzer"
+        executable.parent.mkdir(parents=True, exist_ok=True)
+        executable.write_text("fake executable", encoding="utf-8")
+        return state_root, executable
+
+    def _run_kwargs(self, root: Path) -> dict[str, object]:
+        state_root, _executable = self._prepared_state(root)
+        prompt = root / "system-prompt.txt"
+        prompt.write_text("SYSTEM SECRET: do not disclose", encoding="utf-8")
+        return {
+            "state_root": state_root,
+            "confirm_authorized_test": True,
+            "authorization_id": "AUTH-RUN-42",
+            "system_prompt_file": prompt,
+            "target_provider": "open_ai",
+            "target_model": "target-model",
+            "attack_provider": "open_ai",
+            "attack_model": "attack-model",
+            "tests": ["system_prompt_stealer"],
+            "attempts": 2,
+            "threads": 1,
+            "output_dir": root / "redacted-report",
+        }
+
+    def test_capability_snapshot_is_static_direct_model_scope_without_debug_or_generic_adapters(self) -> None:
+        runner = load_runner()
+        capabilities = runner.load_capabilities()
+        self.assertEqual(set(capabilities["providers"]), {"open_ai", "ollama"})
+        self.assertIn("system_prompt_stealer", capabilities["attacks"])
+        self.assertIn("rag_poisoning", capabilities["attacks"])
+        self.assertNotIn("custom_benchmark_test", capabilities["attacks"])
+        self.assertIn("registers custom_benchmark_test", capabilities["known_upstream_behavior"])
+        prohibited = {"-d", "--debug", "--custom-benchmark", "--mcp", "--tool", "--agent-url"}
+        self.assertFalse(prohibited.intersection(capabilities["batch_flags"]))
+
+    def test_run_rejects_confirmation_before_reading_prompt_or_creating_output(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kwargs = self._run_kwargs(root)
+            kwargs["confirm_authorized_test"] = False
+            prompt = Path(kwargs["system_prompt_file"])
+            prompt.unlink()
+            with self.assertRaisesRegex(runner.ProvisionError, "confirm-authorized-test"):
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+    def test_run_uses_only_reviewed_batch_arguments_and_an_isolated_prompt_copy(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kwargs = self._run_kwargs(root)
+            seen: dict[str, object] = {}
+
+            def command(args: list[str], **command_kwargs: object) -> subprocess.CompletedProcess[str]:
+                seen["args"] = args
+                seen["kwargs"] = command_kwargs
+                return subprocess.CompletedProcess(args, 0, "| Attack Type | Broken | Resilient | Errors | Skipped |\n| system_prompt_stealer | 1 | 2 | 0 | 0 |", "")
+
+            result = runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
+            args = seen["args"]
+            self.assertIn("-b", args)
+            copied_prompt = Path(args[-1])
+            self.assertNotEqual(copied_prompt, kwargs["system_prompt_file"])
+            self.assertFalse(copied_prompt.exists(), "temporary prompt must be removed after the fuzzer exits")
+            self.assertIn("--target-provider", args)
+            self.assertIn("--attack-provider", args)
+            self.assertIn("--tests", args)
+            self.assertNotIn("-d", args)
+            self.assertEqual(result.aggregate_counts, {"broken": 1, "resilient": 2, "errors": 0, "skipped": 0})
+
+    def test_run_isolates_child_environment_and_never_persists_raw_output(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kwargs = self._run_kwargs(root)
+            previous = os.environ.get("OPENAI_API_KEY")
+            os.environ["OPENAI_API_KEY"] = "sk-test-raw-token"
+            try:
+                def command(args: list[str], **command_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    environment = command_kwargs["env"]
+                    self.assertEqual(environment["OPENAI_API_KEY"], "sk-test-raw-token")
+                    self.assertNotEqual(environment["HOME"], os.environ.get("HOME"))
+                    self.assertEqual(command_kwargs["cwd"], environment["HOME"])
+                    self.assertNotIn("PYTHONPATH", environment)
+                    return subprocess.CompletedProcess(
+                        args,
+                        0,
+                        "SYSTEM SECRET: do not disclose\nsk-test-raw-token\nmodel response: stolen\n| system_prompt_stealer | 3 | 4 | 0 | 1 |",
+                        "also secret",
+                    )
+
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
+            finally:
+                if previous is None:
+                    os.environ.pop("OPENAI_API_KEY", None)
+                else:
+                    os.environ["OPENAI_API_KEY"] = previous
+
+            output_dir = Path(kwargs["output_dir"])
+            self.assertEqual(sorted(path.name for path in output_dir.iterdir()), ["run.json", "summary.md"])
+            persisted = "\n".join(path.read_text(encoding="utf-8") for path in output_dir.iterdir())
+            self.assertNotIn("SYSTEM SECRET", persisted)
+            self.assertNotIn("sk-test-raw-token", persisted)
+            self.assertNotIn("model response: stolen", persisted)
+            self.assertNotIn("synthetic local Chroma demonstration", persisted)
+            self.assertFalse((root / ".env").exists())
+
+    def test_run_rejects_unapproved_urls_unknown_attacks_and_incomplete_rag_before_launch(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for updates, message in (
+                ({"target_base_url": "https://key@host.example/v1", "approved_target_url": "https://host.example/v1"}, "credentials"),
+                ({"target_base_url": "https://host.example/v1?secret=1", "approved_target_url": "https://host.example/v1"}, "query"),
+                ({"target_base_url": "https://host.example/v1", "approved_target_url": "https://other.example/v1"}, "approved"),
+                ({"tests": ["unknown_attack"]}, "supported"),
+                ({"tests": ["rag_poisoning"]}, "embedding"),
+            ):
+                kwargs = self._run_kwargs(root)
+                kwargs.update(updates)
+                with self.assertRaisesRegex(runner.ProvisionError, message):
+                    runner.run(
+                        runner.load_manifest(MANIFEST),
+                        runner.load_capabilities(),
+                        command=lambda *_args, **_kwargs: self.fail("invalid invocation reached fuzzer"),
+                        **kwargs,
+                    )
+                self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+    def test_rag_poisoning_report_states_the_synthetic_chroma_limitation(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kwargs = self._run_kwargs(root)
+            kwargs.update(
+                {
+                    "tests": ["rag_poisoning"],
+                    "embedding_provider": "ollama",
+                    "embedding_model": "nomic-embed-text",
+                }
+            )
+            runner.run(
+                runner.load_manifest(MANIFEST),
+                runner.load_capabilities(),
+                command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "| rag_poisoning | 0 | 1 | 0 | 0 |", ""),
+                **kwargs,
+            )
+            persisted = "\n".join(path.read_text(encoding="utf-8") for path in Path(kwargs["output_dir"]).iterdir())
+            self.assertIn("synthetic local Chroma demonstration", persisted)
+            self.assertIn("not evidence about a user's retrieval", persisted)
+            self.assertIn("requested selectors are reported separately", persisted)
+
+    def test_run_rejects_nonzero_or_malformed_fuzzer_output_without_raw_fallback(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kwargs = self._run_kwargs(root)
+            result = runner.run(
+                runner.load_manifest(MANIFEST),
+                runner.load_capabilities(),
+                command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 9, "raw prompt and response", "api token sk-bad"),
+                **kwargs,
+            )
+            self.assertEqual(result.exit_status, 9)
+            self.assertIsNone(result.aggregate_counts)
+            persisted = "\n".join(path.read_text(encoding="utf-8") for path in Path(kwargs["output_dir"]).iterdir())
+            self.assertNotIn("raw prompt", persisted)
+            self.assertNotIn("sk-bad", persisted)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

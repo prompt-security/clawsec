@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "upstream_tag": "v2.1.0",
+  "providers": {
+    "open_ai": {
+      "credential_environment": ["OPENAI_API_KEY"],
+      "base_url_flag": "--openai-base-url"
+    },
+    "ollama": {
+      "credential_environment": [],
+      "base_url_flag": "--ollama-base-url"
+    }
+  },
+  "embedding_providers": {
+    "open_ai": {
+      "credential_environment": ["OPENAI_API_KEY"],
+      "base_url_flag": "--embedding-openai-base-url"
+    },
+    "ollama": {
+      "credential_environment": [],
+      "base_url_flag": "--embedding-ollama-base-url"
+    }
+  },
+  "attacks": [
+    "aim_jailbreak",
+    "amnesia",
+    "affirmative_suffix",
+    "authoritative_role_impersonation",
+    "base64_injection",
+    "complimentary_transition",
+    "contextual_redirection",
+    "do_anything_now_jailbreak",
+    "ethical_compliance",
+    "harmful_behavior",
+    "linguistic_evasion",
+    "rag_poisoning",
+    "self_refine",
+    "system_prompt_stealer",
+    "typoglycemia_attack",
+    "ucar"
+  ],
+  "excluded_upstream_attacks": {
+    "custom_benchmark_test": "Requires a custom benchmark and is intentionally unsupported by this portable wrapper."
+  },
+  "known_upstream_behavior": "v2.1.0 registers custom_benchmark_test even when this wrapper passes no custom benchmark; requested selectors are reported separately from upstream aggregate counts.",
+  "batch_flags": [
+    "-b",
+    "--target-provider",
+    "--target-model",
+    "--attack-provider",
+    "--attack-model",
+    "-n",
+    "-t",
+    "-a",
+    "--tests",
+    "--ollama-base-url",
+    "--openai-base-url",
+    "--embedding-provider",
+    "--embedding-model",
+    "--embedding-ollama-base-url",
+    "--embedding-openai-base-url"
+  ],
+  "rag_poisoning": {
+    "requires": ["embedding_provider", "embedding_model"],
+    "scope": "synthetic local Chroma demonstration only; it is not evidence about a user's retrieval, ingestion, filtering, vector store, agent tools, or persistence."
+  }
+}
