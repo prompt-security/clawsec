@@ -431,4 +431,6 @@ jobs:
           node scripts/ci/advisory_pages_artifacts.mjs verify-url \
             --base-url https://clawsec.prompt.security \
             --attempts 12 \
-            --retry-delay-ms 10000
+            --retry-delay-ms 10000 \
+            --retry-backoff-factor 1.5 \
+            --max-retry-delay-ms 60000

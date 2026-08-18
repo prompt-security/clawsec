@@ -231,8 +231,8 @@ async function stopServer(server) {
   await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
 }
 
-async function fetchArtifact(baseUrl, artifactPath) {
-  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${artifactPath}`);
+async function fetchArtifact(baseUrl, artifactPath, { fetchImpl = (url) => globalThis.fetch(url) } = {}) {
+  const response = await fetchImpl(`${baseUrl.replace(/\/+$/, "")}/${artifactPath}`);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for /${artifactPath}`);
   }
@@ -242,14 +242,21 @@ async function fetchArtifact(baseUrl, artifactPath) {
   };
 }
 
-async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror }) {
+function endpointMismatchMessage(label, rootPath, aliasPath) {
+  return [
+    `${label}: /${rootPath} and /${aliasPath} served different content`,
+    "this usually means GitHub Pages or CDN propagation is serving mixed deploy artifacts",
+  ].join("; ");
+}
+
+async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror, fetchImpl }) {
   const fetched = new Map();
   for (const artifactPath of ADVISORY_PUBLIC_CONTRACT) {
-    fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
+    fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath, { fetchImpl }));
   }
   if (includeGhsa) {
     for (const artifactPath of ["advisories/ghsa-without-cve.json", "advisories/ghsa-without-cve.json.sig"]) {
-      fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
+      fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath, { fetchImpl }));
     }
   }
 
@@ -290,17 +297,21 @@ async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMir
     );
   }
 
-  if (!checksums.equals(fetched.get(CHECKSUM_ALIAS).body)) throw new Error("HTTP checksum alias differs from root");
-  if (!checksumsSignature.equals(fetched.get(CHECKSUM_SIGNATURE_ALIAS).body)) {
-    throw new Error("HTTP checksum signature alias differs from root");
+  if (!checksums.equals(fetched.get(CHECKSUM_ALIAS).body)) {
+    throw new Error(endpointMismatchMessage("HTTP checksum alias mismatch", "checksums.json", CHECKSUM_ALIAS));
   }
-  if (!publicKey.equals(fetched.get(PUBLIC_KEY_ALIAS).body)) throw new Error("HTTP signing-key alias differs from root");
+  if (!checksumsSignature.equals(fetched.get(CHECKSUM_SIGNATURE_ALIAS).body)) {
+    throw new Error(endpointMismatchMessage("HTTP checksum signature alias mismatch", "checksums.sig", CHECKSUM_SIGNATURE_ALIAS));
+  }
+  if (!publicKey.equals(fetched.get(PUBLIC_KEY_ALIAS).body)) {
+    throw new Error(endpointMismatchMessage("HTTP signing-key alias mismatch", "signing-public.pem", PUBLIC_KEY_ALIAS));
+  }
 
   if (includeReleaseMirror) {
     for (const [source, destination] of releaseMappings(includeGhsa)) {
       const [sourceArtifact, mirroredArtifact] = await Promise.all([
-        fetchArtifact(baseUrl, source),
-        fetchArtifact(baseUrl, `releases/latest/download/${destination}`),
+        fetchArtifact(baseUrl, source, { fetchImpl }),
+        fetchArtifact(baseUrl, `releases/latest/download/${destination}`, { fetchImpl }),
       ]);
       if (!sourceArtifact.body.equals(mirroredArtifact.body)) {
         throw new Error(`HTTP release mirror differs: ${destination}`);
@@ -323,12 +334,15 @@ export async function smokeTestBuiltAdvisoryEndpoints({ distDir = "dist" } = {})
   }
 }
 
-async function probeReleaseMirror(baseUrl) {
+async function probeReleaseMirror(
+  baseUrl,
+  { fetchImpl = (url) => globalThis.fetch(url), writeStderr = (message) => process.stderr.write(message) } = {},
+) {
   const probePath = "releases/latest/download/checksums.json";
-  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${probePath}`);
+  const response = await fetchImpl(`${baseUrl.replace(/\/+$/, "")}/${probePath}`);
   if (response.ok) return true;
   if (response.status === 404) {
-    process.stderr.write(`Release compatibility mirror is absent at /${probePath}; skipping mirror verification\n`);
+    writeStderr(`Release compatibility mirror is absent at /${probePath}; skipping mirror verification\n`);
     return false;
   }
   throw new Error(`HTTP ${response.status} while probing /${probePath}`);
@@ -338,23 +352,43 @@ export async function verifyLiveAdvisoryEndpoints({
   baseUrl = "https://clawsec.prompt.security",
   attempts = 12,
   retryDelayMs = 10_000,
+  retryBackoffFactor = 1.5,
+  maxRetryDelayMs = 60_000,
   includeGhsa = true,
+  fetchImpl = (url) => globalThis.fetch(url),
+  sleep = (delayMs) => new Promise((resolve) => globalThis.setTimeout(resolve, delayMs)),
+  writeStderr = (message) => process.stderr.write(message),
 } = {}) {
   let lastError;
-  for (let attempt = 1; attempt <= Number(attempts); attempt += 1) {
+  const totalAttempts = Number(attempts);
+  const initialDelayMs = Number(retryDelayMs);
+  const backoffFactor = Number(retryBackoffFactor);
+  const maxDelayMs = Number(maxRetryDelayMs);
+  for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
     try {
-      const includeReleaseMirror = await probeReleaseMirror(baseUrl);
-      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror });
+      const includeReleaseMirror = await probeReleaseMirror(baseUrl, { fetchImpl, writeStderr });
+      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror, fetchImpl });
       return;
     } catch (error) {
       lastError = error;
-      if (attempt < Number(attempts)) {
-        process.stderr.write(`Production verification attempt ${attempt} failed: ${error.message}; retrying\n`);
-        await new Promise((resolve) => globalThis.setTimeout(resolve, Number(retryDelayMs)));
+      if (attempt < totalAttempts) {
+        const delayMs = Math.min(Math.round(initialDelayMs * (backoffFactor ** (attempt - 1))), maxDelayMs);
+        writeStderr(
+          `Production verification attempt ${attempt}/${totalAttempts} failed: ${error.message}; ` +
+            `waiting ${delayMs}ms before retry\n`,
+        );
+        await sleep(delayMs);
       }
     }
   }
-  throw lastError;
+  const detail = lastError?.message || String(lastError);
+  throw new Error(
+    `Production advisory endpoint verification failed after ${totalAttempts} attempts for ${baseUrl}. ` +
+      `Final observed error: ${detail}. ` +
+      "If this happened immediately after a successful Pages deploy, wait for GitHub Pages or CDN propagation " +
+      "to finish and rerun the job.",
+    { cause: lastError },
+  );
 }
 
 function parseOptions(args) {
@@ -372,6 +406,8 @@ function parseOptions(args) {
     else if (option === "--base-url") options.baseUrl = value;
     else if (option === "--attempts") options.attempts = Number(value);
     else if (option === "--retry-delay-ms") options.retryDelayMs = Number(value);
+    else if (option === "--retry-backoff-factor") options.retryBackoffFactor = Number(value);
+    else if (option === "--max-retry-delay-ms") options.maxRetryDelayMs = Number(value);
     else throw new Error(`unknown option: ${option}`);
     index += 1;
   }
