@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const CHECKSUM_ALIAS = "advisories/checksums.json";
 const CHECKSUM_SIGNATURE_ALIAS = "advisories/checksums.json.sig";
 const PUBLIC_KEY_ALIAS = "advisories/feed-signing-public.pem";
+const DEFAULT_LIVE_ADVISORY_BASE_URL = "https://clawsec.prompt.security";
 
 export const ADVISORY_PUBLIC_CONTRACT = Object.freeze([
   "checksums.json",
@@ -346,7 +347,7 @@ async function probeReleaseMirror(baseUrl) {
 }
 
 export async function retryLiveAdvisoryEndpointVerification({
-  baseUrl = "https://clawsec.prompt.security",
+  baseUrl = DEFAULT_LIVE_ADVISORY_BASE_URL,
   verifyAttempt,
   attempts = 12,
   retryDelayMs = 10_000,
@@ -390,23 +391,13 @@ export async function retryLiveAdvisoryEndpointVerification({
 }
 
 export async function verifyLiveAdvisoryEndpoints({
-  baseUrl = "https://clawsec.prompt.security",
-  attempts = 12,
-  retryDelayMs = 10_000,
-  retryBackoffFactor = 1.5,
-  maxRetryDelayMs = 60_000,
+  baseUrl = DEFAULT_LIVE_ADVISORY_BASE_URL,
   includeGhsa = true,
-  sleep,
-  writeStderr,
+  ...retryOptions
 } = {}) {
   await retryLiveAdvisoryEndpointVerification({
     baseUrl,
-    attempts,
-    retryDelayMs,
-    retryBackoffFactor,
-    maxRetryDelayMs,
-    sleep,
-    writeStderr,
+    ...retryOptions,
     verifyAttempt: async () => {
       const includeReleaseMirror = await probeReleaseMirror(baseUrl);
       await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror });
