@@ -44,8 +44,9 @@
     "ajv": "6.14.0",
     "balanced-match": "4.0.3",
     "brace-expansion": "5.0.9",
-    "js-yaml": "4.3.0",
+    "js-yaml": "4.3.1",
     "minimatch": "10.2.5",
+    "nanoid": "3.3.18",
     "picomatch": "4.0.4",
     "postcss": "8.5.25"
   }
