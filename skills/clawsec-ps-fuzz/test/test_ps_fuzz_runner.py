@@ -564,6 +564,21 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             attack_temperature=0.6,
         )
         self.assertEqual(inspection["target"]["model"], "meta-llama/Meta-Llama-3.1-8B-Instruct")
+        for model in ("openai/sk-proj-raw-token", "meta-llama/api_key_raw", "vendor/bearer-token"):
+            with self.assertRaisesRegex(runner.ProvisionError, "target-model"):
+                runner.preflight(
+                    manifest,
+                    source="wheel",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                    capabilities=capabilities,
+                    target_provider="open_ai",
+                    target_model=model,
+                    attack_provider="open_ai",
+                    attack_model="attack-model",
+                    tests=["system_prompt_stealer"],
+                )
         for value in (2, -0.1, float("nan"), float("inf")):
             with self.assertRaisesRegex(runner.ProvisionError, "attack-temperature"):
                 runner.preflight(

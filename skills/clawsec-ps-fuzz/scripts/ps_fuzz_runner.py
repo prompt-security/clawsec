@@ -156,10 +156,11 @@ def _provider(capabilities: Mapping[str, object], provider_name: str, *, embeddi
 
 def _validate_model(value: str, label: str) -> str:
     cleaned = value.strip()
+    secret_prefixes = ("sk-", "sk_", "api_", "api-key", "bearer")
     if (
         not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*(?:/[A-Za-z0-9][A-Za-z0-9._:-]*)*", cleaned)
         or len(cleaned) > 128
-        or cleaned.lower().startswith(("sk-", "sk_", "api_", "bearer"))
+        or any(segment.lower().startswith(secret_prefixes) for segment in cleaned.split("/"))
     ):
         raise ProvisionError(f"--{label} must be a nonempty safe model identifier")
     return cleaned
