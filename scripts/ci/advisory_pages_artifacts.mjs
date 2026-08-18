@@ -231,8 +231,8 @@ async function stopServer(server) {
   await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
 }
 
-async function fetchArtifact(baseUrl, artifactPath, { fetchImpl = (url) => globalThis.fetch(url) } = {}) {
-  const response = await fetchImpl(`${baseUrl.replace(/\/+$/, "")}/${artifactPath}`);
+async function fetchArtifact(baseUrl, artifactPath) {
+  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${artifactPath}`);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for /${artifactPath}`);
   }
@@ -249,14 +249,14 @@ function endpointMismatchMessage(label, rootPath, aliasPath) {
   ].join("; ");
 }
 
-async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror, fetchImpl }) {
+async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror }) {
   const fetched = new Map();
   for (const artifactPath of ADVISORY_PUBLIC_CONTRACT) {
-    fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath, { fetchImpl }));
+    fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
   }
   if (includeGhsa) {
     for (const artifactPath of ["advisories/ghsa-without-cve.json", "advisories/ghsa-without-cve.json.sig"]) {
-      fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath, { fetchImpl }));
+      fetched.set(artifactPath, await fetchArtifact(baseUrl, artifactPath));
     }
   }
 
@@ -310,8 +310,8 @@ async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMir
   if (includeReleaseMirror) {
     for (const [source, destination] of releaseMappings(includeGhsa)) {
       const [sourceArtifact, mirroredArtifact] = await Promise.all([
-        fetchArtifact(baseUrl, source, { fetchImpl }),
-        fetchArtifact(baseUrl, `releases/latest/download/${destination}`, { fetchImpl }),
+        fetchArtifact(baseUrl, source),
+        fetchArtifact(baseUrl, `releases/latest/download/${destination}`),
       ]);
       if (!sourceArtifact.body.equals(mirroredArtifact.body)) {
         throw new Error(`HTTP release mirror differs: ${destination}`);
@@ -334,31 +334,30 @@ export async function smokeTestBuiltAdvisoryEndpoints({ distDir = "dist" } = {})
   }
 }
 
-async function probeReleaseMirror(
-  baseUrl,
-  { fetchImpl = (url) => globalThis.fetch(url), writeStderr = (message) => process.stderr.write(message) } = {},
-) {
+async function probeReleaseMirror(baseUrl) {
   const probePath = "releases/latest/download/checksums.json";
-  const response = await fetchImpl(`${baseUrl.replace(/\/+$/, "")}/${probePath}`);
+  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${probePath}`);
   if (response.ok) return true;
   if (response.status === 404) {
-    writeStderr(`Release compatibility mirror is absent at /${probePath}; skipping mirror verification\n`);
+    process.stderr.write(`Release compatibility mirror is absent at /${probePath}; skipping mirror verification\n`);
     return false;
   }
   throw new Error(`HTTP ${response.status} while probing /${probePath}`);
 }
 
-export async function verifyLiveAdvisoryEndpoints({
+export async function retryLiveAdvisoryEndpointVerification({
   baseUrl = "https://clawsec.prompt.security",
+  verifyAttempt,
   attempts = 12,
   retryDelayMs = 10_000,
   retryBackoffFactor = 1.5,
   maxRetryDelayMs = 60_000,
-  includeGhsa = true,
-  fetchImpl = (url) => globalThis.fetch(url),
   sleep = (delayMs) => new Promise((resolve) => globalThis.setTimeout(resolve, delayMs)),
   writeStderr = (message) => process.stderr.write(message),
 } = {}) {
+  if (typeof verifyAttempt !== "function") {
+    throw new Error("verifyAttempt is required");
+  }
   let lastError;
   const totalAttempts = Number(attempts);
   const initialDelayMs = Number(retryDelayMs);
@@ -366,8 +365,7 @@ export async function verifyLiveAdvisoryEndpoints({
   const maxDelayMs = Number(maxRetryDelayMs);
   for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
     try {
-      const includeReleaseMirror = await probeReleaseMirror(baseUrl, { fetchImpl, writeStderr });
-      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror, fetchImpl });
+      await verifyAttempt();
       return;
     } catch (error) {
       lastError = error;
@@ -389,6 +387,31 @@ export async function verifyLiveAdvisoryEndpoints({
       "to finish and rerun the job.",
     { cause: lastError },
   );
+}
+
+export async function verifyLiveAdvisoryEndpoints({
+  baseUrl = "https://clawsec.prompt.security",
+  attempts = 12,
+  retryDelayMs = 10_000,
+  retryBackoffFactor = 1.5,
+  maxRetryDelayMs = 60_000,
+  includeGhsa = true,
+  sleep,
+  writeStderr,
+} = {}) {
+  await retryLiveAdvisoryEndpointVerification({
+    baseUrl,
+    attempts,
+    retryDelayMs,
+    retryBackoffFactor,
+    maxRetryDelayMs,
+    sleep,
+    writeStderr,
+    verifyAttempt: async () => {
+      const includeReleaseMirror = await probeReleaseMirror(baseUrl);
+      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror });
+    },
+  });
 }
 
 function parseOptions(args) {

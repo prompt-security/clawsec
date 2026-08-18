@@ -11,9 +11,9 @@ import {
   generateAdvisoryChecksums,
   publishAdvisoryAliases,
   publishReleaseCompatibilityMirror,
+  retryLiveAdvisoryEndpointVerification,
   smokeTestBuiltAdvisoryEndpoints,
   verifyBuiltAdvisoryArtifacts,
-  verifyLiveAdvisoryEndpoints,
 } from "./ci/advisory_pages_artifacts.mjs";
 
 const workflow = await fs.readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8");
@@ -176,107 +176,30 @@ assert.deepEqual(
   "release compatibility mirror must preserve the documented root and nested artifacts",
 );
 
-function sha256(content) {
-  return crypto.createHash("sha256").update(content).digest("hex");
-}
-
-function httpResponse(content, contentType = "text/plain", status = 200) {
-  const body = Buffer.from(content);
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    headers: {
-      get(name) {
-        return name.toLowerCase() === "content-type" ? contentType : "";
-      },
-    },
-    async arrayBuffer() {
-      return body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
-    },
-  };
-}
-
-function buildEndpointBodies({ aliasMismatch }) {
-  const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
-  const sign = (content) => `${crypto.sign(null, Buffer.from(content), privateKey).toString("base64")}\n`;
-  const feedRaw = "{\"advisories\":[]}\n";
-  const feedSig = sign(feedRaw);
-  const manifestRaw = `${JSON.stringify(
-    {
-      schema_version: "1",
-      algorithm: "sha256",
-      version: "1.1.0",
-      generated_at: "2026-08-18T00:00:00Z",
-      repository: "prompt-security/clawsec-test",
-      files: {
-        "advisories/feed.json": {
-          sha256: sha256(feedRaw),
-          size: Buffer.byteLength(feedRaw),
-          path: "advisories/feed.json",
-          url: "https://clawsec.prompt.security/advisories/feed.json",
-        },
-        "advisories/feed.json.sig": {
-          sha256: sha256(feedSig),
-          size: Buffer.byteLength(feedSig),
-          path: "advisories/feed.json.sig",
-          url: "https://clawsec.prompt.security/advisories/feed.json.sig",
-        },
-      },
-    },
-    null,
-    2,
-  )}\n`;
-  const checksumsSig = sign(manifestRaw);
-  const publicKeyPem = publicKey.export({ type: "spki", format: "pem" });
-  return new Map([
-    ["checksums.json", manifestRaw],
-    ["checksums.sig", checksumsSig],
-    ["signing-public.pem", publicKeyPem],
-    ["advisories/feed.json", feedRaw],
-    ["advisories/feed.json.sig", feedSig],
-    ["advisories/checksums.json", aliasMismatch ? "stale checksum manifest\n" : manifestRaw],
-    ["advisories/checksums.json.sig", checksumsSig],
-    ["advisories/feed-signing-public.pem", publicKeyPem],
-  ]);
-}
-
-function createEndpointFetch({ mismatchedAttempts }) {
-  let verificationAttempt = 0;
-  const mismatchedBodies = buildEndpointBodies({ aliasMismatch: true });
-  const convergedBodies = buildEndpointBodies({ aliasMismatch: false });
+function createVerificationAttempt({ failuresBeforeSuccess, error = new Error("temporary endpoint mismatch") }) {
+  let attempts = 0;
   return {
     attempts() {
-      return verificationAttempt;
+      return attempts;
     },
-    async fetchImpl(url) {
-      const artifactPath = new URL(url).pathname.replace(/^\/+/, "");
-      if (artifactPath === "releases/latest/download/checksums.json") {
-        return httpResponse("missing\n", "text/plain", 404);
-      }
-      if (artifactPath === "checksums.json") {
-        verificationAttempt += 1;
-      }
-      const bodies = verificationAttempt <= mismatchedAttempts ? mismatchedBodies : convergedBodies;
-      const content = bodies.get(artifactPath);
-      if (content === undefined) return httpResponse("missing\n", "text/plain", 404);
-      const contentType = artifactPath.endsWith(".json") ? "application/json" : "text/plain";
-      return httpResponse(content, contentType);
+    async verifyAttempt() {
+      attempts += 1;
+      if (attempts <= failuresBeforeSuccess) throw error;
     },
   };
 }
 
 {
-  const endpoint = createEndpointFetch({ mismatchedAttempts: 2 });
+  const verification = createVerificationAttempt({ failuresBeforeSuccess: 2 });
   const delays = [];
   const logs = [];
-  await verifyLiveAdvisoryEndpoints({
+  await retryLiveAdvisoryEndpointVerification({
     baseUrl: "https://example.test",
+    verifyAttempt: verification.verifyAttempt,
     attempts: 3,
     retryDelayMs: 1000,
     retryBackoffFactor: 2,
     maxRetryDelayMs: 5000,
-    includeGhsa: false,
-    fetchImpl: endpoint.fetchImpl,
     sleep: async (delayMs) => {
       delays.push(delayMs);
     },
@@ -284,24 +207,27 @@ function createEndpointFetch({ mismatchedAttempts }) {
       logs.push(message);
     },
   });
-  assert.equal(endpoint.attempts(), 3, "temporary checksum alias drift must be retried until endpoints converge");
+  assert.equal(verification.attempts(), 3, "temporary production verification failures must be retried");
   assert.deepEqual(delays, [1000, 2000], "post-deploy retries must use exponential backoff");
   assert.match(logs.join(""), /waiting 1000ms before retry/, "retry logs must include the first backoff wait");
   assert.match(logs.join(""), /waiting 2000ms before retry/, "retry logs must include the second backoff wait");
 }
 
 {
-  const endpoint = createEndpointFetch({ mismatchedAttempts: 3 });
+  const mismatchError = new Error(
+    "HTTP checksum alias mismatch: /checksums.json and /advisories/checksums.json served different content; " +
+      "this usually means GitHub Pages or CDN propagation is serving mixed deploy artifacts",
+  );
+  const verification = createVerificationAttempt({ failuresBeforeSuccess: 3, error: mismatchError });
   const delays = [];
   await assert.rejects(
-    verifyLiveAdvisoryEndpoints({
+    retryLiveAdvisoryEndpointVerification({
       baseUrl: "https://example.test",
+      verifyAttempt: verification.verifyAttempt,
       attempts: 3,
       retryDelayMs: 1000,
       retryBackoffFactor: 2,
       maxRetryDelayMs: 5000,
-      includeGhsa: false,
-      fetchImpl: endpoint.fetchImpl,
       sleep: async (delayMs) => {
         delays.push(delayMs);
       },
@@ -312,10 +238,12 @@ function createEndpointFetch({ mismatchedAttempts }) {
       assert.match(error.message, /\/checksums\.json/);
       assert.match(error.message, /\/advisories\/checksums\.json/);
       assert.match(error.message, /GitHub Pages or CDN propagation/);
+      assert.equal(error.cause, mismatchError);
       return true;
     },
-    "persistent alias drift must fail with an actionable production propagation message",
+    "persistent production verification failures must keep the actionable propagation message",
   );
+  assert.equal(verification.attempts(), 3, "persistent production verification failures must use all attempts");
   assert.deepEqual(delays, [1000, 2000], "failed post-deploy retries must preserve exponential backoff");
 }
 
