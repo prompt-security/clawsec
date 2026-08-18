@@ -626,6 +626,7 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             for updates, message in (
                 ({"target_base_url": "https://key@host.example/v1", "approved_target_url": "https://host.example/v1"}, "credentials"),
                 ({"target_base_url": "https://host.example/v1?secret=1", "approved_target_url": "https://host.example/v1"}, "query"),
+                ({"target_base_url": "https://host.example:bad/v1", "approved_target_url": "https://host.example:bad/v1"}, "invalid port"),
                 ({"target_base_url": "https://host.example/v1", "approved_target_url": "https://other.example/v1"}, "approved"),
                 ({"tests": ["unknown_attack"]}, "supported"),
                 ({"tests": ["rag_poisoning"]}, "embedding"),

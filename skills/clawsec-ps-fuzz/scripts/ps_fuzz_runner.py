@@ -519,8 +519,12 @@ def _normalized_base_url(value: str, label: str) -> tuple[str, str]:
         raise ProvisionError(f"--{label} must not contain a query")
     if parsed.fragment:
         raise ProvisionError(f"--{label} must not contain a fragment")
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ProvisionError(f"--{label} has an invalid port") from exc
     host = parsed.hostname.lower()
-    netloc = host if parsed.port is None else f"{host}:{parsed.port}"
+    netloc = host if port is None else f"{host}:{port}"
     path = parsed.path.rstrip("/")
     normalized = urlunparse((parsed.scheme.lower(), netloc, path, "", "", ""))
     return normalized, f"{parsed.scheme.lower()}://{netloc}"
