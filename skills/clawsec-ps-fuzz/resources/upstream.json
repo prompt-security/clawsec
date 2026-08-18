@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "package": {
+    "name": "prompt-security-fuzzer",
+    "version": "0.0.1"
+  },
+  "python": {
+    "minimum": "3.9"
+  },
+  "upstream": {
+    "repository": "https://github.com/prompt-security/ps-fuzz",
+    "clone_url": "https://github.com/prompt-security/ps-fuzz.git",
+    "tag": "v2.1.0",
+    "commit": "a04982f58fe6c99b08df12a69e967368c96ef9f4"
+  },
+  "artifacts": {
+    "release_wheel": {
+      "filename": "prompt_security_fuzzer-0.0.1-py3-none-any.whl",
+      "url": "https://github.com/prompt-security/ps-fuzz/releases/download/v2.1.0/prompt_security_fuzzer-0.0.1-py3-none-any.whl",
+      "sha256": "953d6d87605335e03f7701204abc2702247dc3627cdb3e48ca7ed52c2c66e3e8"
+    }
+  },
+  "dependency_lock": {
+    "path": "requirements.lock",
+    "source": "https://pypi.org/simple",
+    "scope": "upstream runtime and source-build dependencies; the release wheel is separately pinned above"
+  }
+}
