@@ -308,6 +308,167 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 with self.assertRaisesRegex(runner.ProvisionError, "dedicated"):
                     runner.external_state_root(candidate)
 
+    def test_provision_rejects_root_and_direct_mutable_child_symlinks_before_mutation(self) -> None:
+        """Following any mutable state child symlink into the checkout must fail this test."""
+        runner = load_runner()
+        project_root = SKILL_ROOT.parents[1].resolve()
+        mutable_children = ("venv", "downloads", "source", "built-wheels", "home", "pip-cache", "xdg-cache", "tmp")
+
+        with tempfile.TemporaryDirectory() as td:
+            temp_root = Path(td)
+            linked_root = approved_state_root(temp_root / "linked-base")
+            linked_target = approved_state_root(temp_root / "target-base")
+            linked_target.mkdir(parents=True)
+            linked_root.parent.mkdir(parents=True)
+            linked_root.symlink_to(linked_target, target_is_directory=True)
+            with self.assertRaisesRegex(runner.ProvisionError, "symlink"):
+                runner.provision(
+                    runner.load_manifest(MANIFEST),
+                    state_root=linked_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda _args, **_kwargs: self.fail("root symlink reached a command"),
+                    downloader=lambda _url, _destination: self.fail("root symlink reached downloader"),
+                )
+
+            for child in mutable_children:
+                state_root = approved_state_root(temp_root / child)
+                state_root.mkdir(parents=True)
+                (state_root / child).symlink_to(project_root, target_is_directory=True)
+                calls: list[list[str]] = []
+
+                def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    calls.append(args)
+                    return subprocess.CompletedProcess(args, 0, "", "")
+
+                with self.assertRaisesRegex(runner.ProvisionError, "symlink|escapes"):
+                    runner.provision(
+                        runner.load_manifest(MANIFEST),
+                        state_root=state_root,
+                        source="wheel",
+                        confirm_authorized_provision=True,
+                        authorization_id="AUTH-42",
+                        python_executable="python3",
+                        python_version=(3, 12),
+                        command=command,
+                        downloader=lambda _url, _destination: self.fail("child symlink reached downloader"),
+                    )
+                self.assertEqual(calls, [], "a rejected state child must block before any command")
+
+    def test_source_clone_target_symlink_is_rejected_before_git_or_build(self) -> None:
+        """A preexisting source/ps-fuzz symlink must not become Git's clone target."""
+        runner = load_runner()
+        project_root = SKILL_ROOT.parents[1].resolve()
+        with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
+            source_root = state_root / "source"
+            source_root.mkdir(parents=True)
+            (source_root / "ps-fuzz").symlink_to(project_root, target_is_directory=True)
+            calls: list[list[str]] = []
+
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                calls.append(args)
+                return subprocess.CompletedProcess(args, 0, "", "")
+
+            with self.assertRaisesRegex(runner.ProvisionError, "symlink|escapes"):
+                runner.provision(
+                    runner.load_manifest(MANIFEST),
+                    state_root=state_root,
+                    source="source",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=command,
+                )
+            self.assertEqual(calls, [], "a rejected source target must block before any command")
+
+    def test_provision_rejects_release_artifact_symlink_before_any_command(self) -> None:
+        """The pinned wheel leaf must not redirect downloader or virtualenv work through a symlink."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        filename = manifest["artifacts"]["release_wheel"]["filename"]
+        self.assertIsInstance(filename, str)
+        project_root = SKILL_ROOT.parents[1].resolve()
+        with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
+            downloads = state_root / "downloads"
+            downloads.mkdir(parents=True)
+            (downloads / filename).symlink_to(project_root, target_is_directory=True)
+            with self.assertRaisesRegex(runner.ProvisionError, "symlink|escapes"):
+                runner.provision(
+                    manifest,
+                    state_root=state_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda _args, **_kwargs: self.fail("artifact symlink reached a command"),
+                    downloader=lambda _url, _destination: self.fail("artifact symlink reached downloader"),
+                )
+
+    def test_isolated_environment_rejects_symlinked_home_and_cache_children(self) -> None:
+        """Pip/Git environment directories must not resolve through a child symlink."""
+        runner = load_runner()
+        project_root = SKILL_ROOT.parents[1].resolve()
+        for child in ("home", "pip-cache", "xdg-cache", "tmp"):
+            with tempfile.TemporaryDirectory() as td:
+                state_root = approved_state_root(Path(td))
+                state_root.mkdir(parents=True)
+                (state_root / child).symlink_to(project_root, target_is_directory=True)
+                with self.assertRaisesRegex(runner.ProvisionError, "symlink|escapes"):
+                    runner.isolated_environment(state_root)
+
+    def test_provision_uses_precreated_state_tmp_instead_of_hostile_ambient_temp(self) -> None:
+        """Ambient TMPDIR/TEMP/TMP must never enter the pip, Git, or build environment."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        wheel_bytes = b"safe temp fixture"
+        manifest["artifacts"]["release_wheel"]["sha256"] = hashlib.sha256(wheel_bytes).hexdigest()
+        hostile_temp = str(SKILL_ROOT.parents[1].resolve())
+        previous = {key: os.environ.get(key) for key in ("TMPDIR", "TEMP", "TMP")}
+        captured_environments: list[dict[str, str]] = []
+        with tempfile.TemporaryDirectory() as td:
+            try:
+                os.environ.update({"TMPDIR": hostile_temp, "TEMP": hostile_temp, "TMP": hostile_temp})
+                state_root = approved_state_root(Path(td))
+
+                def command(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+                    environment = kwargs.get("env")
+                    if isinstance(environment, dict):
+                        captured_environments.append(environment)
+                    return subprocess.CompletedProcess(args, 0, "", "")
+
+                runner.provision(
+                    manifest,
+                    state_root=state_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=command,
+                    downloader=lambda _url, destination: destination.write_bytes(wheel_bytes),
+                )
+                expected_tmp = str((state_root / "tmp").resolve())
+                self.assertTrue((state_root / "tmp").is_dir())
+                self.assertTrue(captured_environments)
+                for environment in captured_environments:
+                    self.assertEqual(environment["TMPDIR"], expected_tmp)
+                    self.assertEqual(environment["TEMP"], expected_tmp)
+                    self.assertEqual(environment["TMP"], expected_tmp)
+                    self.assertNotEqual(environment["TMPDIR"], hostile_temp)
+            finally:
+                for key, value in previous.items():
+                    if value is None:
+                        os.environ.pop(key, None)
+                    else:
+                        os.environ[key] = value
+
     def test_wheel_download_path_cannot_escape_the_state_downloads_directory(self) -> None:
         """Allowing a wheel filename to leave state_root/downloads must fail this test."""
         runner = load_runner()
@@ -332,7 +493,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         """Inheriting ambient package, import, or Git configuration must fail this test."""
         runner = load_runner()
         with tempfile.TemporaryDirectory() as td:
-            state_root = Path(td) / "caller-state"
+            state_root = approved_state_root(Path(td))
             previous = {
                 "PIP_CONFIG_FILE": os.environ.get("PIP_CONFIG_FILE"),
                 "PIP_INDEX_URL": os.environ.get("PIP_INDEX_URL"),
@@ -358,7 +519,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     else:
                         os.environ[key] = value
 
-        self.assertEqual(environment["HOME"], str(state_root / "home"))
+        self.assertEqual(environment["HOME"], str((state_root / "home").resolve()))
         self.assertEqual(environment["PIP_CONFIG_FILE"], os.devnull)
         self.assertEqual(environment["GIT_CONFIG_GLOBAL"], os.devnull)
         self.assertEqual(environment["HTTPS_PROXY"], "http://proxy.example:8080")
@@ -683,6 +844,52 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             self.assertNotIn("synthetic local Chroma demonstration", persisted)
             self.assertFalse((root / ".env").exists())
             self.assertEqual(Path(kwargs["system_prompt_file"]).read_text(encoding="utf-8"), "SYSTEM SECRET: do not disclose")
+
+    def test_run_uses_validated_state_tmp_when_ambient_temp_points_at_checkout(self) -> None:
+        """Active-run temp cwd, HOME, prompt copy, and logs must not follow ambient TMPDIR."""
+        runner = load_runner()
+        original_temporary_directory = runner.tempfile.TemporaryDirectory
+        project_root = SKILL_ROOT.parents[1].resolve()
+        previous = {key: os.environ.get(key) for key in ("TMPDIR", "TEMP", "TMP")}
+        seen: dict[str, object] = {}
+
+        def checked_temporary_directory(*args: object, **kwargs: object):
+            directory = kwargs.get("dir")
+            if directory is None:
+                raise AssertionError("run attempted to use an ambient temporary directory")
+            seen["temporary_dir"] = Path(str(directory)).resolve()
+            return original_temporary_directory(*args, **kwargs)
+
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                os.environ.update({"TMPDIR": str(project_root), "TEMP": str(project_root), "TMP": str(project_root)})
+                runner.tempfile.TemporaryDirectory = checked_temporary_directory
+                root = Path(td)
+                kwargs = self._run_kwargs(root)
+
+                def command(args: list[str], **command_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    seen["arguments"] = args
+                    seen["environment"] = command_kwargs["env"]
+                    seen["cwd"] = Path(str(command_kwargs["cwd"])).resolve()
+                    return subprocess.CompletedProcess(args, 0, "| Total (# tests): | 1 | 2 | 0 | 0 | [====] |", "")
+
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
+                state_tmp = (Path(kwargs["state_root"]) / "tmp").resolve()
+                self.assertEqual(seen["temporary_dir"], state_tmp)
+                self.assertTrue(state_tmp.is_dir())
+                self.assertTrue(seen["cwd"].is_relative_to(state_tmp))
+                environment = seen["environment"]
+                self.assertTrue(Path(environment["HOME"]).resolve().is_relative_to(state_tmp))
+                self.assertTrue(Path(environment["TMPDIR"]).resolve().is_relative_to(state_tmp))
+                self.assertTrue(Path(seen["arguments"][-1]).resolve().is_relative_to(state_tmp))
+                self.assertFalse(seen["cwd"].is_relative_to(project_root))
+        finally:
+            runner.tempfile.TemporaryDirectory = original_temporary_directory
+            for key, value in previous.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     def test_run_rejects_unapproved_urls_unknown_attacks_and_incomplete_rag_before_launch(self) -> None:
         runner = load_runner()

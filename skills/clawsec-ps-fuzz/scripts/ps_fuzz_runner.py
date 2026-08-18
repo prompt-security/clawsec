@@ -28,6 +28,17 @@ RESOURCES_ROOT = SKILL_ROOT / "resources"
 DEFAULT_MANIFEST_PATH = RESOURCES_ROOT / "upstream.json"
 DEFAULT_CAPABILITIES_PATH = RESOURCES_ROOT / "capabilities-v2.1.0.json"
 STATE_DIRECTORY_NAME = "clawsec-ps-fuzz"
+STATE_DIRECTORIES = (
+    "venv",
+    "downloads",
+    "source",
+    "built-wheels",
+    "home",
+    "pip-cache",
+    "xdg-cache",
+    "tmp",
+)
+ENVIRONMENT_STATE_DIRECTORIES = ("home", "pip-cache", "xdg-cache", "tmp")
 
 Command = Callable[..., subprocess.CompletedProcess[str]]
 Downloader = Callable[[str, Path], None]
@@ -320,12 +331,21 @@ def _sha256(path: Path) -> str:
 
 
 def _venv_python(state_root: Path) -> Path:
-    return state_root / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    venv_root = _safe_state_directory(state_root, "venv")
+    return venv_root / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
 def external_state_root(value: Path) -> Path:
     """Require a caller-selected external base with the dedicated ps-fuzz leaf."""
-    state_root = Path(value).expanduser().resolve()
+    requested_root = Path(value).expanduser()
+    if requested_root.name != STATE_DIRECTORY_NAME or requested_root.parent == requested_root:
+        raise ProvisionError(
+            f"--state-root must be a caller-selected base followed by dedicated leaf {STATE_DIRECTORY_NAME}"
+        )
+    if requested_root.is_symlink():
+        raise ProvisionError("--state-root must not be a symlink")
+
+    state_root = requested_root.resolve()
     try:
         state_root.relative_to(PROJECT_ROOT)
     except ValueError:
@@ -333,11 +353,65 @@ def external_state_root(value: Path) -> Path:
     else:
         raise ProvisionError(f"--state-root must be outside the project checkout: {PROJECT_ROOT}")
 
-    if state_root.name != STATE_DIRECTORY_NAME or state_root.parent == state_root:
-        raise ProvisionError(
-            f"--state-root must be a caller-selected base followed by dedicated leaf {STATE_DIRECTORY_NAME}"
-        )
+    if state_root.exists() and not state_root.is_dir():
+        raise ProvisionError("--state-root must be a directory when it already exists")
     return state_root
+
+
+def _safe_state_directory(state_root: Path, *components: str) -> Path:
+    """Return a state-root-local directory path without traversing symlinks."""
+    root = external_state_root(state_root)
+    root_resolved = root.resolve()
+    candidate = root
+    if not components:
+        return root_resolved
+
+    for component in components:
+        if not isinstance(component, str) or not component or component in {".", ".."} or Path(component).name != component:
+            raise ProvisionError("internal state directory component is unsafe")
+        candidate = candidate / component
+        if candidate.is_symlink():
+            raise ProvisionError(f"state path must not be a symlink: {candidate}")
+        if candidate.exists() and not candidate.is_dir():
+            raise ProvisionError(f"state path must be a directory when it already exists: {candidate}")
+        resolved_candidate = candidate.resolve()
+        try:
+            resolved_candidate.relative_to(root_resolved)
+        except ValueError as exc:
+            raise ProvisionError(f"state path escapes --state-root: {candidate}") from exc
+    return resolved_candidate
+
+
+def _safe_state_file(state_root: Path, directory_components: Sequence[str], filename: str) -> Path:
+    """Return a safely-contained mutable artifact path without following a symlink."""
+    if not isinstance(filename, str) or not filename or Path(filename).name != filename:
+        raise ProvisionError("state artifact filename must be a safe basename")
+    parent = _safe_state_directory(state_root, *directory_components)
+    candidate = parent / filename
+    if candidate.is_symlink():
+        raise ProvisionError(f"state artifact must not be a symlink: {candidate}")
+    if candidate.exists() and not candidate.is_file():
+        raise ProvisionError(f"state artifact must be a regular file when it already exists: {candidate}")
+    resolved_candidate = candidate.resolve()
+    try:
+        resolved_candidate.relative_to(parent)
+    except ValueError as exc:
+        raise ProvisionError(f"state artifact escapes its state directory: {candidate}") from exc
+    return resolved_candidate
+
+
+def _provision_state_layout(state_root: Path) -> dict[str, Path]:
+    """Validate every mutable provisioning location before creating or using one."""
+    layout = {name: _safe_state_directory(state_root, name) for name in STATE_DIRECTORIES}
+    layout["source_checkout"] = _safe_state_directory(state_root, "source", "ps-fuzz")
+    return layout
+
+
+def _ensure_state_directory(state_root: Path, *components: str) -> Path:
+    """Create an already-validated state directory and validate it again afterward."""
+    candidate = _safe_state_directory(state_root, *components)
+    candidate.mkdir(mode=0o700, parents=True, exist_ok=True)
+    return _safe_state_directory(state_root, *components)
 
 
 def isolated_environment(state_root: Path) -> dict[str, str]:
@@ -347,9 +421,6 @@ def isolated_environment(state_root: Path) -> dict[str, str]:
         "SYSTEMROOT",
         "SystemRoot",
         "WINDIR",
-        "TMPDIR",
-        "TEMP",
-        "TMP",
         "HTTP_PROXY",
         "HTTPS_PROXY",
         "NO_PROXY",
@@ -360,12 +431,19 @@ def isolated_environment(state_root: Path) -> dict[str, str]:
         "SSL_CERT_DIR",
         "REQUESTS_CA_BUNDLE",
     )
+    state_root = external_state_root(state_root)
+    state_paths = {
+        name: _ensure_state_directory(state_root, name) for name in ENVIRONMENT_STATE_DIRECTORIES
+    }
     environment = {key: os.environ[key] for key in allowed if key in os.environ}
     environment.update(
         {
-            "HOME": str(state_root / "home"),
-            "PIP_CACHE_DIR": str(state_root / "pip-cache"),
-            "XDG_CACHE_HOME": str(state_root / "xdg-cache"),
+            "HOME": str(state_paths["home"]),
+            "PIP_CACHE_DIR": str(state_paths["pip-cache"]),
+            "XDG_CACHE_HOME": str(state_paths["xdg-cache"]),
+            "TMPDIR": str(state_paths["tmp"]),
+            "TEMP": str(state_paths["tmp"]),
+            "TMP": str(state_paths["tmp"]),
             "PIP_CONFIG_FILE": os.devnull,
             "PIP_DISABLE_PIP_VERSION_CHECK": "1",
             "PYTHONNOUSERSITE": "1",
@@ -401,6 +479,15 @@ def provision(
 ) -> ProvisionResult:
     """Provision the pinned wheel or pinned source revision into ``state_root``."""
     _validate_authorization(confirm_authorized_provision, authorization_id)
+    state_root = external_state_root(state_root)
+    _provision_state_layout(state_root)
+    if source == "wheel":
+        artifacts = _manifest_section(manifest, "artifacts")
+        release_wheel = _manifest_section(artifacts, "release_wheel")
+        filename = str(release_wheel["filename"])
+        if not re.fullmatch(r"prompt_security_fuzzer-[A-Za-z0-9][A-Za-z0-9_.-]*\.whl", filename):
+            raise ProvisionError("release wheel filename is malformed")
+        _safe_state_file(state_root, ("downloads",), filename)
     preflight(
         manifest,
         source=source,
@@ -409,17 +496,18 @@ def provision(
         command=command,
     )
 
-    state_root = external_state_root(state_root)
     dependency_lock = _manifest_section(manifest, "dependency_lock")
     lock_path = _safe_resource_path(dependency_lock.get("path", ""))
     if not lock_path.is_file():
         raise ProvisionError(f"reviewed dependency lock is missing: {lock_path}")
 
-    state_root.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    state_root = external_state_root(state_root)
+    layout = _provision_state_layout(state_root)
     venv_python = _venv_python(state_root)
     _require_success(
         command(
-            [python_executable, "-m", "venv", str(state_root / "venv")],
+            [python_executable, "-m", "venv", str(layout["venv"])],
             env=isolated_environment(state_root),
         ),
         "isolated virtual environment creation",
@@ -431,15 +519,18 @@ def provision(
         filename = str(release_wheel["filename"])
         if not re.fullmatch(r"prompt_security_fuzzer-[A-Za-z0-9][A-Za-z0-9_.-]*\.whl", filename):
             raise ProvisionError("release wheel filename is malformed")
-        downloads_root = state_root / "downloads"
-        downloads_root.mkdir(parents=True, exist_ok=True)
-        resolved_downloads_root = downloads_root.resolve()
-        wheel_path = (resolved_downloads_root / filename).resolve()
-        try:
-            wheel_path.relative_to(resolved_downloads_root)
-        except ValueError as exc:
-            raise ProvisionError("release wheel path escapes state_root/downloads") from exc
-        downloader(str(release_wheel["url"]), wheel_path)
+        _ensure_state_directory(state_root, "downloads")
+        wheel_path = _safe_state_file(state_root, ("downloads",), filename)
+        if wheel_path.exists():
+            existing_sha256 = _sha256(wheel_path)
+            expected_sha256 = str(release_wheel["sha256"])
+            if existing_sha256 != expected_sha256:
+                raise ProvisionError(
+                    f"existing release wheel SHA-256 mismatch: expected {expected_sha256}, got {existing_sha256}"
+                )
+        else:
+            downloader(str(release_wheel["url"]), wheel_path)
+        wheel_path = _safe_state_file(state_root, ("downloads",), filename)
         actual_sha256 = _sha256(wheel_path)
         expected_sha256 = str(release_wheel["sha256"])
         if actual_sha256 != expected_sha256:
@@ -457,8 +548,8 @@ def provision(
         return ProvisionResult("wheel", venv_python, wheel_path)
 
     upstream = _manifest_section(manifest, "upstream")
-    source_dir = state_root / "source" / "ps-fuzz"
-    source_dir.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_state_directory(state_root, "source")
+    source_dir = _safe_state_directory(state_root, "source", "ps-fuzz")
     _require_success(
         command(
             ["git", "clone", "--no-checkout", str(upstream["clone_url"]), str(source_dir)],
@@ -482,8 +573,7 @@ def provision(
         )
 
     _install_locked_dependencies(venv_python, lock_path, state_root, command)
-    wheel_dir = state_root / "built-wheels"
-    wheel_dir.mkdir(parents=True, exist_ok=True)
+    wheel_dir = _ensure_state_directory(state_root, "built-wheels")
     _require_success(
         command(
             [
@@ -504,7 +594,7 @@ def provision(
     built_wheels = sorted(wheel_dir.glob("prompt_security_fuzzer-*.whl"))
     if len(built_wheels) != 1:
         raise ProvisionError("pinned source build did not produce exactly one prompt-security-fuzzer wheel")
-    built_wheel = built_wheels[0]
+    built_wheel = _safe_state_file(state_root, ("built-wheels",), built_wheels[0].name)
     _require_success(
         command(
             [str(venv_python), "-m", "pip", "install", "--no-deps", str(built_wheel)],
@@ -800,7 +890,8 @@ def run(
     """Run only the reviewed batch interface after an explicit, per-run authorization."""
     _validate_test_authorization(confirm_authorized_test, authorization_id)
     state_root = external_state_root(state_root)
-    executable = state_root / "venv" / ("Scripts/prompt-security-fuzzer.exe" if os.name == "nt" else "bin/prompt-security-fuzzer")
+    venv_root = _safe_state_directory(state_root, "venv")
+    executable = venv_root / ("Scripts/prompt-security-fuzzer.exe" if os.name == "nt" else "bin/prompt-security-fuzzer")
     if not executable.is_file():
         raise ProvisionError("no provisioned ps-fuzz executable exists in --state-root")
     prompt_path = _require_regular_nonempty_file(system_prompt_file, "system-prompt-file")
@@ -857,7 +948,8 @@ def run(
             f"RAG scope: embedding={embedding_provider}/{embedding_model}, origin={endpoints['embedding_origin']}; "
             "synthetic local Chroma demonstration only, not evidence about real retrieval, ingestion, filtering, vector stores, agent tools, or persistence."
         )
-    with tempfile.TemporaryDirectory(prefix="clawsec-ps-fuzz-run-") as temporary_name:
+    state_tmp = _ensure_state_directory(state_root, "tmp")
+    with tempfile.TemporaryDirectory(prefix="clawsec-ps-fuzz-run-", dir=str(state_tmp)) as temporary_name:
         temporary_root = Path(temporary_name)
         home = temporary_root / "home"
         for directory in (home, temporary_root / "tmp", temporary_root / "xdg-config", temporary_root / "xdg-cache", temporary_root / "xdg-data"):
