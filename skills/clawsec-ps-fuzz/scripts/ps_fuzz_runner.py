@@ -155,7 +155,7 @@ def _provider(capabilities: Mapping[str, object], provider_name: str, *, embeddi
 
 def _validate_model(value: str, label: str) -> str:
     cleaned = value.strip()
-    if not cleaned or "\x00" in cleaned or len(cleaned) > 256:
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", cleaned):
         raise ProvisionError(f"--{label} must be a nonempty safe model identifier")
     return cleaned
 
@@ -219,6 +219,13 @@ def preflight(
     attack_provider: str | None = None,
     attack_model: str | None = None,
     tests: Sequence[str] | None = None,
+    target_base_url: str | None = None,
+    approved_target_url: str | None = None,
+    attack_base_url: str | None = None,
+    approved_attack_url: str | None = None,
+    embedding_provider: str | None = None,
+    embedding_model: str | None = None,
+    embedding_base_url: str | None = None,
 ) -> dict[str, object]:
     """Inspect local prerequisites without authorization, network access, or state writes."""
     if source not in {"wheel", "source"}:
@@ -252,12 +259,38 @@ def preflight(
     supported_attacks = capabilities.get("attacks", [])
     if any(test not in supported_attacks for test in selected_tests):
         raise ProvisionError("unsupported attack selected in --tests")
+    endpoints: Mapping[str, object] = {}
+    if target_provider and attack_provider:
+        endpoints = _validate_endpoint_configuration(
+            capabilities,
+            target_provider=target_provider,
+            attack_provider=attack_provider,
+            target_base_url=target_base_url,
+            approved_target_url=approved_target_url,
+            attack_base_url=attack_base_url,
+            approved_attack_url=approved_attack_url,
+            tests=selected_tests,
+            embedding_provider=embedding_provider,
+            embedding_model=embedding_model,
+            embedding_base_url=embedding_base_url,
+        )
+    elif target_base_url or approved_target_url or attack_base_url or approved_attack_url or embedding_provider or embedding_model or embedding_base_url:
+        raise ProvisionError("provider roles are required to inspect base URLs or embedding settings")
+    credential_presence = _credential_availability(capabilities, selected_providers)
+    if embedding_provider:
+        credential_presence.update(_credential_availability(capabilities, [embedding_provider], embedding=True))
     return {
         "source": source,
         "python": f"{python_version[0]}.{python_version[1]}",
-        "selected_providers": selected_providers,
+        "target": {"provider": target_provider, "model": target_model, "origin": endpoints.get("target_origin")},
+        "attack": {"provider": attack_provider, "model": attack_model, "origin": endpoints.get("attack_origin")},
         "selected_tests": selected_tests,
-        "credential_environment_present": _credential_availability(capabilities, selected_providers),
+        "embedding": (
+            {"provider": embedding_provider, "model": embedding_model, "origin": endpoints.get("embedding_origin")}
+            if embedding_provider
+            else None
+        ),
+        "credential_environment_present": credential_presence,
     }
 
 
@@ -468,8 +501,11 @@ def provision(
 def _validate_test_authorization(confirm_authorized_test: bool, authorization_id: str) -> None:
     if not confirm_authorized_test:
         raise ProvisionError("--confirm-authorized-test is required for every active run")
-    if not authorization_id.strip():
-        raise ProvisionError("--authorization-id must be nonempty")
+    if (
+        not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}", authorization_id)
+        or authorization_id.lower().startswith(("sk-", "sk_", "api_", "bearer"))
+    ):
+        raise ProvisionError("--authorization-id must be a short non-secret identifier")
 
 
 def _normalized_base_url(value: str, label: str) -> tuple[str, str]:
@@ -488,6 +524,87 @@ def _normalized_base_url(value: str, label: str) -> tuple[str, str]:
     path = parsed.path.rstrip("/")
     normalized = urlunparse((parsed.scheme.lower(), netloc, path, "", "", ""))
     return normalized, f"{parsed.scheme.lower()}://{netloc}"
+
+
+def _approved_role_url(
+    provider: str,
+    details: Mapping[str, object],
+    base_url: str | None,
+    approved_url: str | None,
+    role: str,
+) -> tuple[str | None, str]:
+    if base_url is None:
+        return None, f"provider:{provider}"
+    if not isinstance(details.get("base_url_flag"), str):
+        raise ProvisionError(f"{provider} does not support a custom {role} base URL")
+    if not approved_url:
+        raise ProvisionError(f"--approved-{role}-url is required with a custom {role} base URL")
+    normalized, origin = _normalized_base_url(base_url, f"{role}-base-url")
+    approved, _ = _normalized_base_url(approved_url, f"approved-{role}-url")
+    if normalized != approved:
+        raise ProvisionError(f"custom {role} base URL does not exactly match --approved-{role}-url")
+    return normalized, origin
+
+
+def _validate_endpoint_configuration(
+    capabilities: Mapping[str, object],
+    *,
+    target_provider: str,
+    attack_provider: str,
+    target_base_url: str | None = None,
+    approved_target_url: str | None = None,
+    attack_base_url: str | None = None,
+    approved_attack_url: str | None = None,
+    tests: Sequence[str] = (),
+    embedding_provider: str | None = None,
+    embedding_model: str | None = None,
+    embedding_base_url: str | None = None,
+) -> dict[str, object]:
+    target_details = _provider(capabilities, target_provider)
+    attack_details = _provider(capabilities, attack_provider)
+    target_url, target_origin = _approved_role_url(
+        target_provider, target_details, target_base_url, approved_target_url, "target"
+    )
+    attack_url, attack_origin = _approved_role_url(
+        attack_provider, attack_details, attack_base_url, approved_attack_url, "attack"
+    )
+    if target_provider == attack_provider and (target_url is not None or attack_url is not None):
+        if target_url is None or attack_url is None:
+            raise ProvisionError(
+                "the upstream provider-wide base URL requires explicit target and attack URLs and --approved-attack-url"
+            )
+        if target_url != attack_url:
+            raise ProvisionError("one upstream provider-wide base URL cannot represent different target and attack endpoints")
+        target_origin = attack_origin = _normalized_base_url(target_url, "target-base-url")[1]
+
+    embedding_details: Mapping[str, object] | None = None
+    embedding_url: str | None = None
+    embedding_origin: str | None = None
+    if "rag_poisoning" in tests:
+        if not embedding_provider or not embedding_model:
+            raise ProvisionError("rag_poisoning requires --embedding-provider and --embedding-model")
+        embedding_details = _provider(capabilities, embedding_provider, embedding=True)
+        _validate_model(embedding_model, "embedding-model")
+        if embedding_base_url is not None:
+            flag = embedding_details.get("base_url_flag")
+            if not isinstance(flag, str):
+                raise ProvisionError("embedding provider does not support a custom embedding base URL")
+            embedding_url, embedding_origin = _normalized_base_url(embedding_base_url, "embedding-base-url")
+        else:
+            embedding_origin = f"provider:{embedding_provider}"
+    elif embedding_provider or embedding_model or embedding_base_url:
+        raise ProvisionError("embedding settings are allowed only with rag_poisoning")
+    return {
+        "target_url": target_url,
+        "target_origin": target_origin,
+        "target_details": target_details,
+        "attack_url": attack_url,
+        "attack_origin": attack_origin,
+        "attack_details": attack_details,
+        "embedding_details": embedding_details,
+        "embedding_url": embedding_url,
+        "embedding_origin": embedding_origin,
+    }
 
 
 def _require_new_external_output_dir(output_dir: Path) -> Path:
@@ -512,20 +629,28 @@ def _require_regular_nonempty_file(path: Path, label: str) -> Path:
     return candidate
 
 
-def _reviewed_credential_keys(capabilities: Mapping[str, object]) -> set[str]:
+def _reviewed_credential_keys(
+    capabilities: Mapping[str, object], provider_names: Sequence[str], embedding_provider_names: Sequence[str]
+) -> set[str]:
     keys: set[str] = set()
-    for section_name in ("providers", "embedding_providers"):
-        for details in _capability_section(capabilities, section_name).values():
-            if isinstance(details, dict):
-                keys.update(str(key) for key in details.get("credential_environment", []))
+    for provider_name in set(provider_names):
+        keys.update(str(key) for key in _provider(capabilities, provider_name).get("credential_environment", []))
+    for provider_name in set(embedding_provider_names):
+        keys.update(str(key) for key in _provider(capabilities, provider_name, embedding=True).get("credential_environment", []))
     return keys
 
 
-def run_environment(temp_root: Path, capabilities: Mapping[str, object]) -> dict[str, str]:
+def run_environment(
+    temp_root: Path,
+    capabilities: Mapping[str, object],
+    *,
+    provider_names: Sequence[str],
+    embedding_provider_names: Sequence[str] = (),
+) -> dict[str, str]:
     """Create a minimal child environment without project config or ambient secrets."""
     platform_keys = ("PATH", "SYSTEMROOT", "SystemRoot", "WINDIR", "SSL_CERT_FILE", "SSL_CERT_DIR", "REQUESTS_CA_BUNDLE")
     environment = {key: os.environ[key] for key in platform_keys if key in os.environ}
-    for key in _reviewed_credential_keys(capabilities):
+    for key in _reviewed_credential_keys(capabilities, provider_names, embedding_provider_names):
         if key in os.environ:
             environment[key] = os.environ[key]
     temporary = temp_root / "tmp"
@@ -546,19 +671,25 @@ def run_environment(temp_root: Path, capabilities: Mapping[str, object]) -> dict
 
 
 def _aggregate_counts(raw_output: str) -> dict[str, int] | None:
-    """Extract only integer aggregate columns from ps-fuzz's PrettyTable output."""
-    totals = {"broken": 0, "resilient": 0, "errors": 0, "skipped": 0}
-    found = False
-    row_pattern = re.compile(r"^\s*\|\s*[^|]+\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|")
-    for line in raw_output.splitlines():
-        match = row_pattern.match(line)
-        if not match:
+    """Extract the sole ANSI-stripped `Total (# tests)` footer from SINGLE_BORDER output."""
+    clean = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", raw_output)
+    footer: dict[str, int] | None = None
+    for line in clean.splitlines():
+        if "Total (# tests):" not in line or "│" not in line:
             continue
-        values = [int(value) for value in match.groups()]
-        for key, value in zip(totals, values):
-            totals[key] += value
-        found = True
-    return totals if found else None
+        cells = [cell.strip() for cell in line.split("│")]
+        try:
+            label_index = next(index for index, cell in enumerate(cells) if cell.startswith("Total (# tests):"))
+            values = cells[label_index + 1 : label_index + 5]
+            strength = cells[label_index + 5]
+        except (StopIteration, IndexError):
+            return None
+        if len(values) != 4 or not strength or any(not re.fullmatch(r"\d+", value) for value in values):
+            return None
+        if footer is not None:
+            return None
+        footer = dict(zip(("broken", "resilient", "errors", "skipped"), (int(value) for value in values)))
+    return footer
 
 
 def _write_redacted_reports(
@@ -600,7 +731,10 @@ def _write_redacted_reports(
     )
     rag_summary = ""
     if "rag_poisoning" in configuration.get("tests", []):
-        rag_summary = f"\nRAG limitation: {rag['scope']}\n"
+        rag_summary = (
+            f"\nRAG embedding: {configuration['embedding_provider']} / {configuration['embedding_model']} "
+            f"at {configuration['embedding_origin']}\nRAG limitation: {rag['scope']}\n"
+        )
     summary = (
         "# Redacted ps-fuzz run summary\n\n"
         f"- Authorization ID: {authorization_id}\n"
@@ -608,6 +742,8 @@ def _write_redacted_reports(
         f"- Aggregate results: {counts_text}\n"
         f"- Target: {configuration['target_provider']} / {configuration['target_model']}\n"
         f"- Target origin: {configuration['target_origin']}\n\n"
+        f"- Attack: {configuration['attack_provider']} / {configuration['attack_model']}\n"
+        f"- Attack origin: {configuration['attack_origin']}\n\n"
         "No raw system prompt, provider credential, attack payload, model response, stdout, or stderr was saved.\n"
         f"{rag_summary}"
     )
@@ -632,6 +768,8 @@ def run(
     output_dir: Path,
     target_base_url: str | None = None,
     approved_target_url: str | None = None,
+    attack_base_url: str | None = None,
+    approved_attack_url: str | None = None,
     attack_temperature: float | None = None,
     embedding_provider: str | None = None,
     embedding_model: str | None = None,
@@ -645,8 +783,6 @@ def run(
     if not executable.is_file():
         raise ProvisionError("no provisioned ps-fuzz executable exists in --state-root")
     prompt_path = _require_regular_nonempty_file(system_prompt_file, "system-prompt-file")
-    target_details = _provider(capabilities, target_provider)
-    _provider(capabilities, attack_provider)
     target_model = _validate_model(target_model, "target-model")
     attack_model = _validate_model(attack_model, "attack-model")
     if not tests or any(not isinstance(test, str) or test not in capabilities.get("attacks", []) for test in tests):
@@ -656,35 +792,20 @@ def run(
     if attack_temperature is not None and (not isinstance(attack_temperature, (int, float)) or attack_temperature < 0):
         raise ProvisionError("--attack-temperature must be zero or greater")
 
-    normalized_target_url: str | None = None
-    target_origin = f"provider:{target_provider}"
-    if target_base_url is not None:
-        flag = target_details.get("base_url_flag")
-        if not isinstance(flag, str):
-            raise ProvisionError(f"{target_provider} does not support a custom target base URL")
-        if not approved_target_url:
-            raise ProvisionError("--approved-target-url is required with a custom target base URL")
-        normalized_target_url, target_origin = _normalized_base_url(target_base_url, "target-base-url")
-        approved_url, _approved_origin = _normalized_base_url(approved_target_url, "approved-target-url")
-        if normalized_target_url != approved_url:
-            raise ProvisionError("custom target base URL does not exactly match --approved-target-url")
-
     selected_tests = list(tests)
-    embedding_details: Mapping[str, object] | None = None
-    normalized_embedding_url: str | None = None
-    if "rag_poisoning" in selected_tests:
-        if not embedding_provider or not embedding_model:
-            raise ProvisionError("rag_poisoning requires --embedding-provider and --embedding-model")
-        embedding_details = _provider(capabilities, embedding_provider, embedding=True)
-        embedding_model = _validate_model(embedding_model, "embedding-model")
-    elif embedding_provider or embedding_model or embedding_base_url:
-        raise ProvisionError("embedding settings are allowed only with rag_poisoning")
-    if embedding_base_url is not None:
-        if embedding_details is None or not isinstance(embedding_details.get("base_url_flag"), str):
-            raise ProvisionError("embedding provider does not support a custom embedding base URL")
-        normalized_embedding_url, _embedding_origin = _normalized_base_url(embedding_base_url, "embedding-base-url")
-        if normalized_target_url and embedding_provider == target_provider and normalized_embedding_url != normalized_target_url:
-            raise ProvisionError("one upstream base URL cannot safely represent different target and embedding endpoints")
+    endpoints = _validate_endpoint_configuration(
+        capabilities,
+        target_provider=target_provider,
+        attack_provider=attack_provider,
+        target_base_url=target_base_url,
+        approved_target_url=approved_target_url,
+        attack_base_url=attack_base_url,
+        approved_attack_url=approved_attack_url,
+        tests=selected_tests,
+        embedding_provider=embedding_provider,
+        embedding_model=embedding_model,
+        embedding_base_url=embedding_base_url,
+    )
 
     safe_output_dir = _require_new_external_output_dir(output_dir)
     configuration: dict[str, object] = {
@@ -695,19 +816,27 @@ def run(
         "tests": selected_tests,
         "attempts": attempts,
         "threads": threads,
-        "target_origin": target_origin,
+        "target_origin": endpoints["target_origin"],
+        "attack_origin": endpoints["attack_origin"],
     }
     if attack_temperature is not None:
         configuration["attack_temperature"] = attack_temperature
     if embedding_provider:
         configuration["embedding_provider"] = embedding_provider
         configuration["embedding_model"] = embedding_model
+        configuration["embedding_origin"] = endpoints["embedding_origin"]
 
     print(
         "Authorized ps-fuzz preview: "
-        f"target={target_provider}/{target_model}, origin={target_origin}, tests={','.join(selected_tests)}, "
+        f"target={target_provider}/{target_model}, origin={endpoints['target_origin']}; "
+        f"attack={attack_provider}/{attack_model}, origin={endpoints['attack_origin']}; tests={','.join(selected_tests)}, "
         f"attempts={attempts}, threads={threads}. Provider calls can consume tokens and incur charges."
     )
+    if embedding_provider:
+        print(
+            f"RAG scope: embedding={embedding_provider}/{embedding_model}, origin={endpoints['embedding_origin']}; "
+            "synthetic local Chroma demonstration only, not evidence about real retrieval, ingestion, filtering, vector stores, agent tools, or persistence."
+        )
     with tempfile.TemporaryDirectory(prefix="clawsec-ps-fuzz-run-") as temporary_name:
         temporary_root = Path(temporary_name)
         home = temporary_root / "home"
@@ -735,14 +864,25 @@ def run(
         ]
         if attack_temperature is not None:
             arguments.extend(["-a", str(attack_temperature)])
-        if normalized_target_url is not None:
-            arguments.extend([str(target_details["base_url_flag"]), normalized_target_url])
-        if embedding_details is not None:
+        if endpoints["target_url"] is not None:
+            arguments.extend([str(endpoints["target_details"]["base_url_flag"]), str(endpoints["target_url"])])
+        if endpoints["attack_url"] is not None and attack_provider != target_provider:
+            arguments.extend([str(endpoints["attack_details"]["base_url_flag"]), str(endpoints["attack_url"])])
+        if endpoints["embedding_details"] is not None:
             arguments.extend(["--embedding-provider", str(embedding_provider), "--embedding-model", str(embedding_model)])
-        if normalized_embedding_url is not None and embedding_details is not None:
-            arguments.extend([str(embedding_details["base_url_flag"]), normalized_embedding_url])
+        if endpoints["embedding_url"] is not None and endpoints["embedding_details"] is not None:
+            arguments.extend([str(endpoints["embedding_details"]["base_url_flag"]), str(endpoints["embedding_url"])])
         arguments.append(str(prompt_copy))
-        result = command(arguments, cwd=str(home), env=run_environment(temporary_root, capabilities))
+        result = command(
+            arguments,
+            cwd=str(home),
+            env=run_environment(
+                temporary_root,
+                capabilities,
+                provider_names=[target_provider, attack_provider],
+                embedding_provider_names=[embedding_provider] if embedding_provider else [],
+            ),
+        )
         exit_status = result.returncode
         counts = _aggregate_counts(result.stdout) if exit_status == 0 else None
     _write_redacted_reports(
@@ -777,6 +917,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--attack-temperature", type=float)
     parser.add_argument("--target-base-url")
     parser.add_argument("--approved-target-url")
+    parser.add_argument("--attack-base-url")
+    parser.add_argument("--approved-attack-url")
     parser.add_argument("--embedding-provider")
     parser.add_argument("--embedding-model")
     parser.add_argument("--embedding-base-url")
@@ -814,6 +956,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 attack_provider=args.attack_provider,
                 attack_model=args.attack_model,
                 tests=selected_tests,
+                target_base_url=args.target_base_url,
+                approved_target_url=args.approved_target_url,
+                attack_base_url=args.attack_base_url,
+                approved_attack_url=args.approved_attack_url,
+                embedding_provider=args.embedding_provider,
+                embedding_model=args.embedding_model,
+                embedding_base_url=args.embedding_base_url,
             )
             print(json.dumps(inspection, sort_keys=True))
             print("preflight passed; no state was written")
@@ -851,6 +1000,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output_dir=Path(str(args.output_dir)),
                 target_base_url=args.target_base_url,
                 approved_target_url=args.approved_target_url,
+                attack_base_url=args.attack_base_url,
+                approved_attack_url=args.approved_attack_url,
                 attack_temperature=args.attack_temperature,
                 embedding_provider=args.embedding_provider,
                 embedding_model=args.embedding_model,

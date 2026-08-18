@@ -437,6 +437,114 @@ class PsFuzzActiveRunTests(unittest.TestCase):
         prohibited = {"-d", "--debug", "--custom-benchmark", "--mcp", "--tool", "--agent-url"}
         self.assertFalse(prohibited.intersection(capabilities["batch_flags"]))
 
+    def test_footer_parser_uses_only_the_real_ansi_prettytable_total_row(self) -> None:
+        runner = load_runner()
+        captured = """\x1b[1mTest results\x1b[0m ...
+╭───┬────────────────────────────────────────────────────┬────────┬───────────┬────────┬─────────┬──────────╮
+│   │ Attack Type                                        │ Broken │ Resilient │ Errors │ Skipped │ Strength │
+├───┼────────────────────────────────────────────────────┼────────┼───────────┼────────┼─────────┼──────────┤
+│ \x1b[31m✘\x1b[0m │ amnesia .......................................... │ 8      │ 1         │ 2      │ 0       │ [==      ] │
+│ \x1b[32m✔\x1b[0m │ system_prompt_stealer ........................... │ 0      │ 4         │ 0      │ 0       │ [========] │
+├───┼────────────────────────────────────────────────────┼────────┼───────────┼────────┼─────────┼──────────┤
+│ \x1b[31m✘\x1b[0m │ Total (# tests): ................................ │ 1      │ 1         │ 0      │ 1       │ [====    ] │
+╰───┴────────────────────────────────────────────────────┴────────┴───────────┴────────┴─────────┴──────────╯"""
+        self.assertEqual(runner._aggregate_counts(captured), {"broken": 1, "resilient": 1, "errors": 0, "skipped": 1})
+        self.assertIsNone(runner._aggregate_counts("| Total (# tests): | 1 | 2 | 3 | 4 |"))
+
+    def test_preflight_inspects_safe_selected_config_without_state_or_network(self) -> None:
+        runner = load_runner()
+        calls: list[list[str]] = []
+        previous = os.environ.get("OPENAI_API_KEY")
+        os.environ["OPENAI_API_KEY"] = "not-reported"
+        try:
+            inspection = runner.preflight(
+                runner.load_manifest(MANIFEST),
+                source="wheel",
+                python_executable="python3",
+                python_version=(3, 12),
+                command=lambda args, **_kwargs: calls.append(args) or subprocess.CompletedProcess(args, 0, "", ""),
+                capabilities=runner.load_capabilities(),
+                target_provider="open_ai",
+                target_model="target-model",
+                attack_provider="ollama",
+                attack_model="attack-model",
+                tests=["rag_poisoning"],
+                target_base_url="https://target.example/v1",
+                approved_target_url="https://target.example/v1/",
+                embedding_provider="open_ai",
+                embedding_model="embed-model",
+                embedding_base_url="https://embed.example/v1",
+            )
+        finally:
+            if previous is None:
+                os.environ.pop("OPENAI_API_KEY", None)
+            else:
+                os.environ["OPENAI_API_KEY"] = previous
+        self.assertEqual(calls, [["python3", "-m", "venv", "--help"], ["python3", "-m", "pip", "--version"]])
+        self.assertEqual(inspection["target"]["origin"], "https://target.example")
+        self.assertTrue(inspection["credential_environment_present"]["OPENAI_API_KEY"])
+        with self.assertRaisesRegex(runner.ProvisionError, "provider-wide"):
+            runner.preflight(
+                runner.load_manifest(MANIFEST),
+                source="wheel",
+                python_executable="python3",
+                python_version=(3, 12),
+                command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                capabilities=runner.load_capabilities(),
+                target_provider="open_ai",
+                target_model="target-model",
+                attack_provider="open_ai",
+                attack_model="attack-model",
+                tests=["system_prompt_stealer"],
+                target_base_url="https://target.example/v1",
+                approved_target_url="https://target.example/v1",
+            )
+
+    def test_custom_base_url_requires_safe_approval_for_both_same_provider_roles(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            kwargs = self._run_kwargs(Path(td))
+            kwargs.update({"target_base_url": "https://target.example/v1", "approved_target_url": "https://target.example/v1"})
+            with self.assertRaisesRegex(runner.ProvisionError, "approved-attack-url"):
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+
+    def test_ollama_only_child_environment_excludes_openai_secret(self) -> None:
+        runner = load_runner()
+        previous = os.environ.get("OPENAI_API_KEY")
+        os.environ["OPENAI_API_KEY"] = "sk-should-not-reach-ollama"
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                kwargs = self._run_kwargs(Path(td))
+                kwargs.update({"target_provider": "ollama", "attack_provider": "ollama"})
+                def command(args: list[str], **command_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    self.assertNotIn("OPENAI_API_KEY", command_kwargs["env"])
+                    return subprocess.CompletedProcess(args, 0, "", "")
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
+        finally:
+            if previous is None:
+                os.environ.pop("OPENAI_API_KEY", None)
+            else:
+                os.environ["OPENAI_API_KEY"] = previous
+
+    def test_invalid_model_or_authorization_never_reaches_preview_or_reports(self) -> None:
+        import contextlib
+        import io
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            kwargs = self._run_kwargs(Path(td))
+            kwargs["authorization_id"] = "sk-raw-token-leak"
+            capture = io.StringIO()
+            with contextlib.redirect_stdout(capture), self.assertRaisesRegex(runner.ProvisionError, "authorization-id"):
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            self.assertNotIn("sk-raw-token-leak", capture.getvalue())
+            self.assertFalse(Path(kwargs["output_dir"]).exists())
+            kwargs["authorization_id"] = "AUTH-RUN-42"
+            kwargs["target_model"] = "SYSTEM SECRET: do not disclose"
+            capture = io.StringIO()
+            with contextlib.redirect_stdout(capture), self.assertRaisesRegex(runner.ProvisionError, "target-model"):
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            self.assertNotIn("SYSTEM SECRET", capture.getvalue())
+
     def test_run_rejects_confirmation_before_reading_prompt_or_creating_output(self) -> None:
         runner = load_runner()
         with tempfile.TemporaryDirectory() as td:
@@ -459,7 +567,7 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             def command(args: list[str], **command_kwargs: object) -> subprocess.CompletedProcess[str]:
                 seen["args"] = args
                 seen["kwargs"] = command_kwargs
-                return subprocess.CompletedProcess(args, 0, "| Attack Type | Broken | Resilient | Errors | Skipped |\n| system_prompt_stealer | 1 | 2 | 0 | 0 |", "")
+                return subprocess.CompletedProcess(args, 0, "│ ✘ │ Total (# tests): .... │ 1 │ 2 │ 0 │ 0 │ [====] │", "")
 
             result = runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
             args = seen["args"]
