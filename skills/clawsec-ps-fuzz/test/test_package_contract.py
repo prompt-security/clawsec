@@ -65,6 +65,30 @@ class PackageContractTests(unittest.TestCase):
                 self.assertIn("custom benchmark", document)
                 self.assertIn("no real vector-store mutation", document)
 
+    def test_credential_guidance_uses_only_existing_secure_environment_injection(self) -> None:
+        for filename, document in self.docs.items():
+            with self.subTest(filename=filename):
+                self.assertIn(
+                    "Provider credentials are inherited only from the calling environment.",
+                    document,
+                )
+                self.assertIn("OPENAI_API_KEY", document)
+                self.assertIn("preflight reports its presence", document)
+                self.assertIn(
+                    "do not run until the harness/operator's existing secure environment-injection mechanism provides it",
+                    document,
+                )
+                self.assertIn(
+                    "Native ollama mode has no credential environment requirement.",
+                    document,
+                )
+                self.assertIn(
+                    "Never put a credential in argv, URL, `.env`, report, or authorization ID.",
+                    document,
+                )
+                self.assertIn("does not define or install a credential mechanism", document)
+                self.assertNotIn("export OPENAI_API_KEY=", document)
+
 
 if __name__ == "__main__":
     unittest.main()

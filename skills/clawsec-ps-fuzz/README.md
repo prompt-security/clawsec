@@ -30,6 +30,10 @@ npx clawhub@latest install clawsec-ps-fuzz
 - The wrapper copies the system prompt only into a temporary workspace. Upstream configuration and `.env` discovery are isolated from the project. It never creates, changes, prints, or persists `.env` files.
 - Reports contain redacted aggregate outcomes only. The wrapper exposes no debug mode and no custom benchmark option.
 
+## Credential boundary
+
+Provider credentials are inherited only from the calling environment. For any `open_ai` provider or embedding role, preflight reports its presence as `OPENAI_API_KEY`; if it reports false, do not run until the harness/operator's existing secure environment-injection mechanism provides it. Native ollama mode has no credential environment requirement. This skill does not define or install a credential mechanism. Never put a credential in argv, URL, `.env`, report, or authorization ID.
+
 ## Operator flow
 
 Run `python3 scripts/ps_fuzz_runner.py --help` from the installed skill directory. First inspect the local prerequisites without creating state:
@@ -41,7 +45,7 @@ python3 scripts/ps_fuzz_runner.py preflight --source wheel \
   --tests '["system_prompt_stealer"]' --attempts 1 --threads 1
 ```
 
-For an authorized provision, choose an external base and use the dedicated leaf exactly as shown. Wheel mode verifies the release hash before installation; source mode clones only the pinned commit and builds inside this state root.
+For an authorized provision, choose an external base and use the dedicated leaf exactly as shown. `--state-root` is required for provision and run, but not preflight. Wheel mode verifies the release hash before installation; source mode clones only the pinned commit and builds inside this state root.
 
 ```bash
 python3 scripts/ps_fuzz_runner.py provision \

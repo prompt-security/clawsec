@@ -39,9 +39,13 @@ npx clawhub@latest install clawsec-ps-fuzz
 
 The capability snapshot intentionally permits only static reviewed `open_ai` (including OpenAI-compatible endpoints) and `ollama` direct-model modes. There is no generic agent HTTP adapter, MCP execution, tool invocation, arbitrary agent API, real vector-store adapter, remediation, persistence, or scheduled scanning.
 
+### Credential boundary
+
+Provider credentials are inherited only from the calling environment. For any `open_ai` provider or embedding role, preflight reports its presence as `OPENAI_API_KEY`; if it reports false, do not run until the harness/operator's existing secure environment-injection mechanism provides it. Native ollama mode has no credential environment requirement. This skill does not define or install a credential mechanism. Never put a credential in argv, URL, `.env`, report, or authorization ID.
+
 ## Workflow
 
-Run from the installed skill directory. Never insert API keys in shell commands, files, URLs, reports, or authorization IDs.
+Run from the installed skill directory. The credential boundary above applies to every command.
 
 ### 1. Inspect without side effects
 
@@ -54,7 +58,7 @@ python3 scripts/ps_fuzz_runner.py preflight --source wheel \
 
 ### 2. Provision only after confirmation
 
-Choose a caller-owned external base. The state path must end in the dedicated `clawsec-ps-fuzz` leaf; it cannot be the checkout or a general temporary directory.
+Choose a caller-owned external base. `--state-root` is required for provision and run, but not preflight. The state path must end in the dedicated `clawsec-ps-fuzz` leaf; it cannot be the checkout or a general temporary directory.
 
 ```bash
 python3 scripts/ps_fuzz_runner.py provision \
