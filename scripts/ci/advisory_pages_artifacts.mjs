@@ -250,6 +250,24 @@ function endpointMismatchMessage(label, rootPath, aliasPath) {
   ].join("; ");
 }
 
+function normalizeBaseUrl(baseUrl) {
+  try {
+    const parsed = new URL(baseUrl);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("unsupported protocol");
+    return parsed.origin;
+  } catch {
+    throw new Error("baseUrl must be a valid HTTP(S) URL");
+  }
+}
+
+function baseUrlForDiagnostics(baseUrl) {
+  try {
+    return normalizeBaseUrl(baseUrl);
+  } catch {
+    return "<invalid URL>";
+  }
+}
+
 async function verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror }) {
   const fetched = new Map();
   for (const artifactPath of ADVISORY_PUBLIC_CONTRACT) {
@@ -381,8 +399,9 @@ export async function retryLiveAdvisoryEndpointVerification({
     }
   }
   const detail = lastError?.message || String(lastError);
+  const diagnosticBaseUrl = baseUrlForDiagnostics(baseUrl);
   throw new Error(
-    `Production advisory endpoint verification failed after ${totalAttempts} attempts for ${baseUrl}. ` +
+    `Production advisory endpoint verification failed after ${totalAttempts} attempts for ${diagnosticBaseUrl}. ` +
       `Final observed error: ${detail}. ` +
       "If this happened immediately after a successful Pages deploy, wait for GitHub Pages or CDN propagation " +
       "to finish and rerun the job.",
@@ -395,12 +414,13 @@ export async function verifyLiveAdvisoryEndpoints({
   includeGhsa = true,
   ...retryOptions
 } = {}) {
+  const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
   await retryLiveAdvisoryEndpointVerification({
-    baseUrl,
+    baseUrl: normalizedBaseUrl,
     ...retryOptions,
     verifyAttempt: async () => {
-      const includeReleaseMirror = await probeReleaseMirror(baseUrl);
-      await verifyAdvisoryEndpoints({ baseUrl, includeGhsa, includeReleaseMirror });
+      const includeReleaseMirror = await probeReleaseMirror(normalizedBaseUrl);
+      await verifyAdvisoryEndpoints({ baseUrl: normalizedBaseUrl, includeGhsa, includeReleaseMirror });
     },
   });
 }
@@ -448,7 +468,9 @@ async function main() {
     process.stdout.write("Smoke-tested built advisory endpoints over HTTP\n");
   } else if (command === "verify-url") {
     await verifyLiveAdvisoryEndpoints(options);
-    process.stdout.write(`Verified deployed advisory endpoints at ${options.baseUrl}\n`);
+    process.stdout.write(
+      `Verified deployed advisory endpoints at ${baseUrlForDiagnostics(options.baseUrl ?? DEFAULT_LIVE_ADVISORY_BASE_URL)}\n`,
+    );
   } else {
     throw new Error(
       "usage: advisory_pages_artifacts.mjs <generate|publish-aliases|publish-release-mirror|verify-built|smoke-http|verify-url> [options]",

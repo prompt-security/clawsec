@@ -14,6 +14,7 @@ import {
   retryLiveAdvisoryEndpointVerification,
   smokeTestBuiltAdvisoryEndpoints,
   verifyBuiltAdvisoryArtifacts,
+  verifyLiveAdvisoryEndpoints,
 } from "./ci/advisory_pages_artifacts.mjs";
 
 const workflow = await fs.readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8");
@@ -245,6 +246,43 @@ function createVerificationAttempt({ failuresBeforeSuccess, error = new Error("t
   );
   assert.equal(verification.attempts(), 3, "persistent production verification failures must use all attempts");
   assert.deepEqual(delays, [1000, 2000], "failed post-deploy retries must preserve exponential backoff");
+}
+
+{
+  const sensitiveBaseUrl = "https://ci-user:ci-password@example.test/private/path?token=secret#fragment";
+  await assert.rejects(
+    retryLiveAdvisoryEndpointVerification({
+      baseUrl: sensitiveBaseUrl,
+      verifyAttempt: async () => {
+        throw new Error("persistent endpoint mismatch");
+      },
+      attempts: 1,
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /for https:\/\/example\.test\./);
+      assert.doesNotMatch(error.message, /ci-user|ci-password|private\/path|token=secret|fragment/);
+      return true;
+    },
+    "production verification diagnostics must not expose URL credentials or request details",
+  );
+}
+
+{
+  const invalidBaseUrl = "not-a-url?token=secret#fragment";
+  await assert.rejects(
+    verifyLiveAdvisoryEndpoints({
+      baseUrl: invalidBaseUrl,
+      attempts: 1,
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /baseUrl must be a valid HTTP\(S\) URL/);
+      assert.doesNotMatch(error.message, /token=secret|fragment/);
+      return true;
+    },
+    "live verification must reject invalid base URLs without exposing their contents",
+  );
 }
 
 const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "clawsec-pages-checksums-"));
