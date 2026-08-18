@@ -22,7 +22,9 @@ from typing import Callable, Mapping, Sequence
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = SKILL_ROOT.parents[1].resolve()
-DEFAULT_MANIFEST_PATH = SKILL_ROOT / "resources" / "upstream.json"
+RESOURCES_ROOT = SKILL_ROOT / "resources"
+DEFAULT_MANIFEST_PATH = RESOURCES_ROOT / "upstream.json"
+STATE_DIRECTORY_NAME = "clawsec-ps-fuzz"
 
 Command = Callable[..., subprocess.CompletedProcess[str]]
 Downloader = Callable[[str, Path], None]
@@ -41,6 +43,19 @@ class ProvisionResult:
         self.artifact = artifact
 
 
+def _safe_resource_path(relative_path: object) -> Path:
+    """Resolve a resource basename while preventing escape from skill resources."""
+    if not isinstance(relative_path, str) or not relative_path or Path(relative_path).name != relative_path:
+        raise ProvisionError("resource path must be a safe basename")
+    resources_root = RESOURCES_ROOT.resolve()
+    candidate = (resources_root / relative_path).resolve()
+    try:
+        candidate.relative_to(resources_root)
+    except ValueError as exc:
+        raise ProvisionError("resource path escapes skill resources") from exc
+    return candidate
+
+
 def load_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> dict[str, object]:
     """Load the local provenance declaration without contacting the network."""
     try:
@@ -52,9 +67,11 @@ def load_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> dict[str, object]:
         upstream = manifest["upstream"]
         release_wheel = manifest["artifacts"]["release_wheel"]
         python = manifest["python"]
+        dependency_lock = manifest["dependency_lock"]
         assert isinstance(upstream, dict)
         assert isinstance(release_wheel, dict)
         assert isinstance(python, dict)
+        assert isinstance(dependency_lock, dict)
         for value in (
             upstream["clone_url"],
             upstream["commit"],
@@ -71,9 +88,13 @@ def load_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> dict[str, object]:
         assert re.fullmatch(r"v[0-9]+(?:\.[0-9]+)*", tag)
         assert re.fullmatch(r"[0-9a-f]{40}", commit)
         assert re.fullmatch(r"[0-9a-f]{64}", str(release_wheel["sha256"]))
+        assert re.fullmatch(r"prompt_security_fuzzer-[A-Za-z0-9][A-Za-z0-9_.-]*\.whl", filename)
+        assert Path(filename).name == filename
+        assert upstream["clone_url"] == "https://github.com/prompt-security/ps-fuzz.git"
         assert artifact_url.scheme == "https" and artifact_url.netloc == "github.com"
         assert artifact_url.path == f"/prompt-security/ps-fuzz/releases/download/{tag}/{filename}"
-    except (AssertionError, KeyError, TypeError) as exc:
+        _safe_resource_path(dependency_lock["path"])
+    except (AssertionError, KeyError, TypeError, ProvisionError) as exc:
         raise ProvisionError("upstream manifest is malformed") from exc
     return manifest
 
@@ -155,13 +176,20 @@ def _venv_python(state_root: Path) -> Path:
 
 
 def external_state_root(value: Path) -> Path:
-    """Resolve and reject any state root that would write into this checkout."""
+    """Require a caller-selected external base with the dedicated ps-fuzz leaf."""
     state_root = Path(value).expanduser().resolve()
     try:
         state_root.relative_to(PROJECT_ROOT)
     except ValueError:
-        return state_root
-    raise ProvisionError(f"--state-root must be outside the project checkout: {PROJECT_ROOT}")
+        pass
+    else:
+        raise ProvisionError(f"--state-root must be outside the project checkout: {PROJECT_ROOT}")
+
+    if state_root.name != STATE_DIRECTORY_NAME or state_root.parent == state_root:
+        raise ProvisionError(
+            f"--state-root must be a caller-selected base followed by dedicated leaf {STATE_DIRECTORY_NAME}"
+        )
+    return state_root
 
 
 def isolated_environment(state_root: Path) -> dict[str, str]:
@@ -235,7 +263,7 @@ def provision(
 
     state_root = external_state_root(state_root)
     dependency_lock = _manifest_section(manifest, "dependency_lock")
-    lock_path = SKILL_ROOT / "resources" / str(dependency_lock.get("path", ""))
+    lock_path = _safe_resource_path(dependency_lock.get("path", ""))
     if not lock_path.is_file():
         raise ProvisionError(f"reviewed dependency lock is missing: {lock_path}")
 
@@ -252,8 +280,17 @@ def provision(
     if source == "wheel":
         artifacts = _manifest_section(manifest, "artifacts")
         release_wheel = _manifest_section(artifacts, "release_wheel")
-        wheel_path = state_root / "downloads" / str(release_wheel["filename"])
-        wheel_path.parent.mkdir(parents=True, exist_ok=True)
+        filename = str(release_wheel["filename"])
+        if not re.fullmatch(r"prompt_security_fuzzer-[A-Za-z0-9][A-Za-z0-9_.-]*\.whl", filename):
+            raise ProvisionError("release wheel filename is malformed")
+        downloads_root = state_root / "downloads"
+        downloads_root.mkdir(parents=True, exist_ok=True)
+        resolved_downloads_root = downloads_root.resolve()
+        wheel_path = (resolved_downloads_root / filename).resolve()
+        try:
+            wheel_path.relative_to(resolved_downloads_root)
+        except ValueError as exc:
+            raise ProvisionError("release wheel path escapes state_root/downloads") from exc
         downloader(str(release_wheel["url"]), wheel_path)
         actual_sha256 = _sha256(wheel_path)
         expected_sha256 = str(release_wheel["sha256"])

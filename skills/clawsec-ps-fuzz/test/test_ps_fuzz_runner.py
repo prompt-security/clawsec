@@ -18,6 +18,10 @@ RUNNER = SKILL_ROOT / "scripts" / "ps_fuzz_runner.py"
 MANIFEST = SKILL_ROOT / "resources" / "upstream.json"
 
 
+def approved_state_root(temp_dir: Path) -> Path:
+    return temp_dir / ".clawsec" / "clawsec-ps-fuzz"
+
+
 def load_runner():
     spec = importlib.util.spec_from_file_location("ps_fuzz_runner", RUNNER)
     if spec is None or spec.loader is None:
@@ -58,10 +62,11 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             return subprocess.CompletedProcess(args, 0, "", "")
 
         with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
             with self.assertRaisesRegex(runner.ProvisionError, "confirm-authorized-provision"):
                 runner.provision(
                     runner.load_manifest(MANIFEST),
-                    state_root=Path(td) / "caller-state",
+                    state_root=state_root,
                     source="wheel",
                     confirm_authorized_provision=False,
                     authorization_id="AUTH-42",
@@ -72,7 +77,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             with self.assertRaisesRegex(runner.ProvisionError, "authorization-id"):
                 runner.provision(
                     runner.load_manifest(MANIFEST),
-                    state_root=Path(td) / "caller-state",
+                    state_root=state_root,
                     source="wheel",
                     confirm_authorized_provision=True,
                     authorization_id="  ",
@@ -139,7 +144,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         manifest["artifacts"]["release_wheel"]["sha256"] = hashlib.sha256(wheel_bytes).hexdigest()
 
         with tempfile.TemporaryDirectory() as td:
-            state_root = (Path(td) / "caller-state").resolve()
+            state_root = approved_state_root(Path(td)).resolve()
             calls: list[list[str]] = []
             downloads: list[tuple[str, Path]] = []
 
@@ -166,6 +171,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             self.assertEqual(result.mode, "wheel")
             self.assertTrue(result.venv_python.is_relative_to(state_root))
             self.assertTrue(result.artifact.is_relative_to(state_root))
+            self.assertTrue(result.artifact.is_relative_to(state_root / "downloads"))
             self.assertEqual(downloads[0][0], manifest["artifacts"]["release_wheel"]["url"])
             pip_calls = [args for args in calls if "install" in args]
             self.assertTrue(pip_calls, "expected an isolated pip install")
@@ -186,7 +192,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             with self.assertRaisesRegex(runner.ProvisionError, "SHA-256 mismatch"):
                 runner.provision(
                     manifest,
-                    state_root=Path(td) / "caller-state",
+                    state_root=approved_state_root(Path(td)),
                     source="wheel",
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
@@ -203,7 +209,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         manifest = runner.load_manifest(MANIFEST)
 
         with tempfile.TemporaryDirectory() as td:
-            state_root = (Path(td) / "caller-state").resolve()
+            state_root = approved_state_root(Path(td)).resolve()
             calls: list[list[str]] = []
 
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -249,7 +255,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             with self.assertRaisesRegex(runner.ProvisionError, "source commit mismatch"):
                 runner.provision(
                     manifest,
-                    state_root=Path(td) / "caller-state",
+                    state_root=approved_state_root(Path(td)),
                     source="source",
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
@@ -275,7 +281,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     calls.append(args)
                     return subprocess.CompletedProcess(args, 0, "", "")
 
-                with self.assertRaisesRegex(runner.ProvisionError, "outside the project"):
+                with self.assertRaisesRegex(runner.ProvisionError, "state-root"):
                     runner.provision(
                         runner.load_manifest(MANIFEST),
                         state_root=candidate,
@@ -288,6 +294,39 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                         downloader=lambda _url, _destination: self.fail("project state root reached downloader"),
                     )
                 self.assertFalse([args for args in calls if "venv" in args and "--help" not in args])
+
+    def test_external_state_root_allows_only_the_dedicated_child_of_a_caller_base(self) -> None:
+        """Accepting root, temporary, or arbitrary state paths must fail this test."""
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            expected = approved_state_root(Path(td))
+            self.assertEqual(
+                runner.external_state_root(expected),
+                expected.resolve(),
+            )
+            for candidate in (Path("/"), Path("/tmp"), Path(td) / "unrelated", Path(td) / "other-skill"):
+                with self.assertRaisesRegex(runner.ProvisionError, "dedicated"):
+                    runner.external_state_root(candidate)
+
+    def test_wheel_download_path_cannot_escape_the_state_downloads_directory(self) -> None:
+        """Allowing a wheel filename to leave state_root/downloads must fail this test."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        manifest["artifacts"]["release_wheel"]["filename"] = "../outside.whl"
+        with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
+            with self.assertRaisesRegex(runner.ProvisionError, "filename|downloads"):
+                runner.provision(
+                    manifest,
+                    state_root=state_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                    downloader=lambda _url, _destination: self.fail("escaped wheel path reached downloader"),
+                )
 
     def test_execution_environment_excludes_ambient_pip_python_and_git_configuration(self) -> None:
         """Inheriting ambient package, import, or Git configuration must fail this test."""
@@ -335,6 +374,9 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             ("commit", "main"),
             ("tag", "v2.1.0/unsafe"),
             ("url", "https://github.com/prompt-security/ps-fuzz/releases/download/v9.9.9/other.whl"),
+            ("filename", "../../outside.whl"),
+            ("clone_url", "https://evil.example/ps-fuzz.git"),
+            ("lock_path", "../requirements.lock"),
         )
 
         with tempfile.TemporaryDirectory() as td:
@@ -342,8 +384,12 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 candidate = json.loads(json.dumps(original))
                 if field == "sha256":
                     candidate["artifacts"]["release_wheel"][field] = value
-                elif field == "url":
+                elif field in {"url", "filename"}:
                     candidate["artifacts"]["release_wheel"][field] = value
+                elif field == "clone_url":
+                    candidate["upstream"][field] = value
+                elif field == "lock_path":
+                    candidate["dependency_lock"]["path"] = value
                 else:
                     candidate["upstream"][field] = value
                 candidate_path = Path(td) / f"invalid-{field}.json"
