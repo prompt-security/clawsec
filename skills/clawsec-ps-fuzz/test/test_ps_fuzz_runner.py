@@ -440,7 +440,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
         self.assertIn("rag_poisoning", capabilities["attacks"])
         self.assertNotIn("custom_benchmark_test", capabilities["attacks"])
         self.assertIn("registers custom_benchmark_test", capabilities["known_upstream_behavior"])
-        prohibited = {"-d", "--debug", "--custom-benchmark", "--mcp", "--tool", "--agent-url"}
+        self.assertIn("-d", capabilities["batch_flags"])
+        prohibited = {"--debug", "--debug-level", "--custom-benchmark", "--mcp", "--tool", "--agent-url"}
         self.assertFalse(prohibited.intersection(capabilities["batch_flags"]))
 
     def test_footer_parser_uses_only_the_real_ansi_prettytable_total_row(self) -> None:
@@ -640,7 +641,9 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             self.assertIn("--target-provider", args)
             self.assertIn("--attack-provider", args)
             self.assertIn("--tests", args)
-            self.assertNotIn("-d", args)
+            self.assertIn("-d", args)
+            self.assertEqual(args[args.index("-d") + 1], "0")
+            self.assertLess(args.index("-d"), len(args) - 1, "quiet logging must precede the prompt positional")
             self.assertEqual(result.aggregate_counts, {"broken": 1, "resilient": 2, "errors": 0, "skipped": 0})
 
     def test_run_isolates_child_environment_and_never_persists_raw_output(self) -> None:

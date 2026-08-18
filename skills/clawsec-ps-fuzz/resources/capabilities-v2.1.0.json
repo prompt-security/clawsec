@@ -52,6 +52,7 @@
     "-n",
     "-t",
     "-a",
+    "-d",
     "--tests",
     "--ollama-base-url",
     "--openai-base-url",

@@ -879,6 +879,8 @@ def run(
             str(attempts),
             "-t",
             str(threads),
+            "-d",
+            "0",
             "--tests",
             json.dumps(selected_tests),
         ]
