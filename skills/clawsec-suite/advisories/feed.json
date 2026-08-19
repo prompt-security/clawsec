@@ -1,8 +1,392 @@
 {
   "version": "0.0.3",
-  "updated": "2026-08-02T10:56:59Z",
+  "updated": "2026-08-19T06:07:49Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-19008",
+      "severity": "medium",
+      "type": "unknown_cwe_59",
+      "nvd_category_id": "CWE-59",
+      "title": "A vulnerability was identified in mf-yang openclaw-cn up to 0.2.1. This issue affects the function a...",
+      "description": "A vulnerability was identified in mf-yang openclaw-cn up to 0.2.1. This issue affects the function assertNoSymlinkEscape of the file src/agents/sandbox-paths.ts of the component apply_patch Tool. Such manipulation leads to link following. It is possible to launch the attack remotely. The exploit is publicly available and might be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T08:16:30.087",
+      "references": [
+        "https://github.com/mf-yang/openclaw-cn/",
+        "https://github.com/mf-yang/openclaw-cn/issues/565",
+        "https://github.com/mf-yang/openclaw-cn/issues/566"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19008",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-19007",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A vulnerability was determined in mf-yang openclaw-cn up to 0.2.1. This vulnerability affects the fu...",
+      "description": "A vulnerability was determined in mf-yang openclaw-cn up to 0.2.1. This vulnerability affects the function isApprovedElevatedSender of the file src/auto-reply/reply/reply-elevated.ts. This manipulation causes improper privilege management. It is possible to initiate the attack remotely. The exploit has been publicly disclosed and may be utilized. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T07:16:29.947",
+      "references": [
+        "https://github.com/mf-yang/openclaw-cn/",
+        "https://github.com/mf-yang/openclaw-cn/issues/564",
+        "https://vuldb.com/cve/CVE-2026-19007"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19007",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-19006",
+      "severity": "medium",
+      "type": "improper_authorization",
+      "nvd_category_id": "CWE-285",
+      "title": "A vulnerability was found in mf-yang openclaw-cn 2026.2.5. This affects an unknown part of the file ...",
+      "description": "A vulnerability was found in mf-yang openclaw-cn 2026.2.5. This affects an unknown part of the file src/agents/bash-tools.exec.ts of the component Ggateway Exec Approval Flow. The manipulation results in incorrect authorization. The attack may be performed from remote. The exploit has been made public and could be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T07:16:29.780",
+      "references": [
+        "https://github.com/mf-yang/openclaw-cn/",
+        "https://github.com/mf-yang/openclaw-cn/issues/563",
+        "https://vuldb.com/cve/CVE-2026-19006"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19006",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-19005",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A vulnerability was detected in nanocoai NanoClaw up to 2.0.64. Affected is the function handleCreat...",
+      "description": "A vulnerability was detected in nanocoai NanoClaw up to 2.0.64. Affected is the function handleCreateAgent of the file src/modules/agent-to-agent/create-agent.ts of the component Child-Agent Creation. Performing a manipulation results in improper privilege management. Remote exploitation of the attack is possible. The exploit is now public and may be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T07:16:29.583",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/",
+        "https://github.com/nanocoai/nanoclaw/issues/2807",
+        "https://vuldb.com/cve/CVE-2026-19005"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-19005",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-18993",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A vulnerability was detected in NousResearch hermes-agent up to 0.16.0. Affected by this issue is so...",
+      "description": "A vulnerability was detected in NousResearch hermes-agent up to 0.16.0. Affected by this issue is some unknown functionality of the file hermes-agent/model_tools.py of the component Memory Toolset. The manipulation results in improper access controls. The attack can be executed remotely. The exploit is now public and may be used.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T05:16:41.380",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/",
+        "https://github.com/NousResearch/hermes-agent/issues/46171",
+        "https://github.com/NousResearch/hermes-agent/issues/48181"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-18993",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-18991",
+      "severity": "high",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "A security vulnerability has been detected in nanocoai NanoClaw up to 2.0.64. This affects an unknow...",
+      "description": "A security vulnerability has been detected in nanocoai NanoClaw up to 2.0.64. This affects an unknown part of the file container/agent-runner/src/mcp-tools/core.ts of the component send_file. Such manipulation leads to path traversal. The attack can be executed remotely. The exploit has been disclosed publicly and may be used. The project was informed of the problem early through an issue report but has not responded yet.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T03:16:22.130",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/",
+        "https://github.com/nanocoai/nanoclaw/issues/2760",
+        "https://vuldb.com/cve/CVE-2026-18991"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-18991",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-18976",
+      "severity": "medium",
+      "type": "unknown_cwe_266",
+      "nvd_category_id": "CWE-266",
+      "title": "A vulnerability was determined in NousResearch hermes-agent up to 0.16.0. This impacts the function ...",
+      "description": "A vulnerability was determined in NousResearch hermes-agent up to 0.16.0. This impacts the function get_tool_definitions of the file agent/agent_init.py of the component disabled_toolsets Handler. This manipulation causes incorrect privilege assignment. The attack may be initiated remotely. The exploit has been publicly disclosed and may be utilized. The project was informed of the problem early through an issue report.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-06T02:16:41.430",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/",
+        "https://github.com/NousResearch/hermes-agent/issues/46171",
+        "https://github.com/NousResearch/hermes-agent/pull/46185"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-18976",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-18775",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "A vulnerability has been found in NousResearch hermes-agent up to 0.16.0. This vulnerability affects...",
+      "description": "A vulnerability has been found in NousResearch hermes-agent up to 0.16.0. This vulnerability affects the function browser_snapshot of the file tools/browser_tool.py of the component Browser Tooling. Such manipulation leads to server-side request forgery. The attack may be launched remotely. The exploit has been disclosed to the public and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-04T17:16:48.287",
+      "references": [
+        "https://gist.github.com/YLChen-007/2e5bf7fa58113967807425032234cc89",
+        "https://vuldb.com/cve/CVE-2026-18775",
+        "https://vuldb.com/submit/856877"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-18775",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-18774",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "A flaw has been found in NousResearch hermes-agent up to 0.16.0. This affects the function save_url_...",
+      "description": "A flaw has been found in NousResearch hermes-agent up to 0.16.0. This affects the function save_url_image of the file agent/image_gen_provider.py of the component xAI Image Generation Provider. This manipulation causes server-side request forgery. The attack may be initiated remotely. The exploit has been published and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-04T17:16:48.127",
+      "references": [
+        "https://gist.github.com/YLChen-007/7c71603a25d84f372f2275dd570e99d4",
+        "https://vuldb.com/cve/CVE-2026-18774",
+        "https://vuldb.com/submit/856875"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-18774",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-18773",
+      "severity": "medium",
+      "type": "improper_authorization",
+      "nvd_category_id": "CWE-285",
+      "title": "A vulnerability was detected in NousResearch hermes-agent up to 2026.6.5. Affected by this issue is ...",
+      "description": "A vulnerability was detected in NousResearch hermes-agent up to 2026.6.5. Affected by this issue is the function _check_slash_access of the file gateway/run.py of the component Quick Command Handler. The manipulation results in incorrect authorization. The attack can be launched remotely. The exploit is now public and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-04T16:16:22.470",
+      "references": [
+        "https://gist.github.com/YLChen-007/f0036aa1c410b70f5e41272947180645",
+        "https://vuldb.com/cve/CVE-2026-18773",
+        "https://vuldb.com/submit/856874"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-18773",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-48063",
+      "severity": "medium",
+      "type": "unknown_cwe_290",
+      "nvd_category_id": "CWE-290",
+      "title": "Baileys is a cocket-based TS/JavaScript API for WhatsApp Web. In versions prior to both 6.7.22 and 7...",
+      "description": "Baileys is a cocket-based TS/JavaScript API for WhatsApp Web. In versions prior to both 6.7.22 and 7.0.0-rc12, any Baileys session  can be sent a malicious payload via the placeholderResendMessage and trigger a fake messages.upsert event with a fake message key and payload. This allows anyone to spoof messages. The same exploit also allows an attacker to corrupt the app state sync system by sending fake key shares, and also allows for history sync spoofing which also serves the same problem, injecting fake previous context or \"on-demand\" sync. This issue has been fixed in versions 6.7.22 and 7.0.0-rc12.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-03T21:16:39.450",
+      "references": [
+        "https://github.com/WhiskeySockets/Baileys/commit/3beb08eecfcb4e65722e674034bd84fb11a9de35",
+        "https://github.com/WhiskeySockets/Baileys/security/advisories/GHSA-qvv5-jq5g-4cgg"
+      ],
+      "cvss_score": null,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-48063",
+      "exploitability_score": "unknown",
+      "exploitability_rationale": "No CVSS score available; requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "unknown"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-66421",
       "severity": "critical",
