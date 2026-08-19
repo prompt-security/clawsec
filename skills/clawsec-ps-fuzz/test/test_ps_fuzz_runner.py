@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -54,6 +55,60 @@ def selected_runtime(
     }
 
 
+def fake_runtime_probe(
+    args: list[str], runtime: dict[str, object] | None = None
+) -> subprocess.CompletedProcess[str] | None:
+    if "-c" in args and args[-1].startswith("import json, platform, sys;"):
+        return subprocess.CompletedProcess(args, 0, json.dumps(runtime or selected_runtime()) + "\n", "")
+    return None
+
+
+def create_fake_executable(root: Path, name: str) -> str:
+    executable = root / name
+    executable.write_bytes(b"fake executable")
+    executable.chmod(0o700)
+    return str(executable.resolve())
+
+
+def create_fake_entrypoint(state_root: Path, content: bytes = b"fake executable") -> Path:
+    executable = state_root / "venv" / (
+        "Scripts/prompt-security-fuzzer.exe" if os.name == "nt" else "bin/prompt-security-fuzzer"
+    )
+    executable.parent.mkdir(parents=True, exist_ok=True)
+    executable.write_bytes(content)
+    venv_python = state_root / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    venv_python.write_bytes(b"fake venv python")
+    if os.name != "nt":
+        executable.chmod(0o700)
+        venv_python.chmod(0o700)
+    for directory in (state_root, state_root / "venv", executable.parent):
+        directory.chmod(0o700)
+    return executable
+
+
+def write_fake_receipt(state_root: Path, executable: Path, *, source: str = "wheel") -> Path:
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    canonical_manifest = json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    receipt = {
+        "schema_version": 1,
+        "manifest_sha256": hashlib.sha256(canonical_manifest).hexdigest(),
+        "source": source,
+        "selected_interpreter": {
+            "path": str(Path(sys.executable).resolve()),
+            "runtime": selected_runtime(),
+        },
+        "entrypoint": {
+            "relative_path": executable.relative_to(state_root).as_posix(),
+            "sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
+        },
+    }
+    receipt_path = state_root / "provision-receipt.json"
+    receipt_path.write_text(json.dumps(receipt, sort_keys=True) + "\n", encoding="utf-8")
+    if os.name != "nt":
+        receipt_path.chmod(0o600)
+    return receipt_path
+
+
 class PsFuzzProvisioningTests(unittest.TestCase):
     """Prove that provisioning validates first and writes only the state root."""
 
@@ -74,7 +129,10 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             python_runtime=selected_runtime(),
             command=command,
         )
-        self.assertEqual(calls, [["python3", "-m", "venv", "--help"], ["python3", "-m", "pip", "--version"]])
+        self.assertEqual(len(calls), 2)
+        self.assertTrue(all(Path(args[0]).is_absolute() for args in calls))
+        self.assertEqual(calls[0][1:], ["-I", "-B", "-m", "venv", "--help"])
+        self.assertEqual(calls[1][1:], ["-I", "-B", "-m", "pip", "--version"])
 
     def test_provision_rejects_missing_authorization_before_runtime_checks(self) -> None:
         """Removing the provisioning authorization gate must make this test fail."""
@@ -181,15 +239,16 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         runner = load_runner()
         manifest = runner.load_manifest(MANIFEST)
         calls: list[list[str]] = []
-        selected_executable = "selected-python-312"
-
-        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
-            calls.append(args)
-            if args == [selected_executable, "-c", runner.PYTHON_VERSION_PROBE]:
-                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=12)) + "\n", "")
-            return subprocess.CompletedProcess(args, 0, "", "")
 
         with tempfile.TemporaryDirectory() as td:
+            selected_executable = create_fake_executable(Path(td), "selected-python-312")
+
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                calls.append(args)
+                if "-c" in args:
+                    return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=12)) + "\n", "")
+                return subprocess.CompletedProcess(args, 0, "", "")
+
             state_root = approved_state_root(Path(td))
             with self.assertRaisesRegex(runner.ProvisionError, "unsupported Python 3.12"):
                 runner.provision(
@@ -203,7 +262,41 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     command=command,
                     downloader=lambda _url, _destination: self.fail("unsupported interpreter reached download"),
                 )
-            self.assertEqual(calls, [[selected_executable, "-c", runner.PYTHON_VERSION_PROBE]])
+            self.assertEqual(
+                calls,
+                [[selected_executable, "-I", "-B", "-c", runner.PYTHON_VERSION_PROBE]],
+            )
+            self.assertFalse(state_root.exists())
+
+    def test_direct_provision_never_trusts_caller_supplied_runtime_identity(self) -> None:
+        """A supplied runtime mapping cannot bypass probing the authorized selected interpreter."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        calls: list[list[str]] = []
+
+        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(args)
+            if "-c" in args:
+                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=12)) + "\n", "")
+            self.fail("unsupported selected interpreter reached a capability or mutating command")
+
+        with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
+            with self.assertRaisesRegex(runner.ProvisionError, "unsupported Python 3.12"):
+                runner.provision(
+                    manifest,
+                    state_root=state_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable=sys.executable,
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
+                    command=command,
+                )
+            self.assertEqual(len(calls), 1)
+            self.assertIn("-I", calls[0])
+            self.assertIn("-B", calls[0])
             self.assertFalse(state_root.exists())
 
     def test_preflight_accepts_every_reviewed_cpython_native_wheel_matrix(self) -> None:
@@ -235,7 +328,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     inspection = runner.preflight(
                         manifest,
                         source="wheel",
-                        python_executable="selected-python",
+                        python_executable=sys.executable,
                         python_version=(3, minor),
                         python_runtime=selected_runtime(minor=minor, **runtime_overrides),
                         command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
@@ -288,16 +381,17 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             ),
         )
         with tempfile.TemporaryDirectory() as td:
-            for executable, runtime, expected_error in unsupported_runtimes:
+            for executable_name, runtime, expected_error in unsupported_runtimes:
                 calls: list[list[str]] = []
+                executable = create_fake_executable(Path(td), executable_name)
 
                 def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
                     calls.append(args)
-                    if args == [executable, "-c", runner.PYTHON_VERSION_PROBE]:
+                    if "-c" in args:
                         return subprocess.CompletedProcess(args, 0, json.dumps(runtime) + "\n", "")
                     self.fail("unsupported runtime reached a capability check")
 
-                state_root = approved_state_root(Path(td) / executable)
+                state_root = approved_state_root(Path(td) / f"case-{executable_name}")
                 stderr = io.StringIO()
                 with contextlib.redirect_stderr(stderr):
                     status = runner.main(
@@ -314,7 +408,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                         command=command,
                     )
                 self.assertEqual(status, 2)
-                self.assertEqual(calls, [[executable, "-c", runner.PYTHON_VERSION_PROBE]])
+                self.assertEqual(calls, [[executable, "-I", "-B", "-c", runner.PYTHON_VERSION_PROBE]])
                 self.assertIn(expected_error, stderr.getvalue())
                 self.assertFalse(state_root.exists())
 
@@ -325,19 +419,21 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         runner = load_runner()
         calls: list[list[str]] = []
         probe = runner.PYTHON_VERSION_PROBE
+        with tempfile.TemporaryDirectory() as td:
+            executable = create_fake_executable(Path(td), "selected-python-38")
 
-        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
-            calls.append(args)
-            if args == ["selected-python-38", "-c", probe]:
-                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=8)) + "\n", "")
-            self.fail("preflight invoked a selected Python capability command before its version gate")
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                calls.append(args)
+                if "-c" in args:
+                    return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=8)) + "\n", "")
+                self.fail("preflight invoked a selected Python capability command before its version gate")
 
-        stderr = io.StringIO()
-        with contextlib.redirect_stderr(stderr):
-            status = runner.main(["preflight", "--python", "selected-python-38"], command=command)
-        self.assertEqual(status, 2)
-        self.assertEqual(calls, [["selected-python-38", "-c", probe]])
-        self.assertIn("unsupported Python 3.8", stderr.getvalue())
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                status = runner.main(["preflight", "--python", executable], command=command)
+            self.assertEqual(status, 2)
+            self.assertEqual(calls, [[executable, "-I", "-B", "-c", probe]])
+            self.assertIn("unsupported Python 3.8", stderr.getvalue())
 
     def test_cli_uses_selected_python_311_when_wrapper_version_is_unsupported(self) -> None:
         import contextlib
@@ -347,29 +443,31 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         calls: list[list[str]] = []
         probe = runner.PYTHON_VERSION_PROBE
         original_version = runner.sys.version_info
+        with tempfile.TemporaryDirectory() as td:
+            executable = create_fake_executable(Path(td), "selected-python-311")
 
-        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
-            calls.append(args)
-            if args == ["selected-python-311", "-c", probe]:
-                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime()) + "\n", "")
-            return subprocess.CompletedProcess(args, 0, "", "")
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                calls.append(args)
+                if "-c" in args:
+                    return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime()) + "\n", "")
+                return subprocess.CompletedProcess(args, 0, "", "")
 
-        stdout = io.StringIO()
-        try:
-            runner.sys.version_info = (3, 8)
-            with contextlib.redirect_stdout(stdout):
-                status = runner.main(["preflight", "--python", "selected-python-311"], command=command)
-        finally:
-            runner.sys.version_info = original_version
-        self.assertEqual(status, 0)
-        self.assertEqual(
-            calls,
-            [
-                ["selected-python-311", "-c", probe],
-                ["selected-python-311", "-m", "venv", "--help"],
-                ["selected-python-311", "-m", "pip", "--version"],
-            ],
-        )
+            stdout = io.StringIO()
+            try:
+                runner.sys.version_info = (3, 8)
+                with contextlib.redirect_stdout(stdout):
+                    status = runner.main(["preflight", "--python", executable], command=command)
+            finally:
+                runner.sys.version_info = original_version
+            self.assertEqual(status, 0)
+            self.assertEqual(
+                calls,
+                [
+                    [executable, "-I", "-B", "-c", probe],
+                    [executable, "-I", "-B", "-m", "venv", "--help"],
+                    [executable, "-I", "-B", "-m", "pip", "--version"],
+                ],
+            )
         inspection = json.loads(stdout.getvalue().splitlines()[0])
         self.assertEqual(
             inspection["python_support"],
@@ -428,6 +526,11 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
                 calls.append(args)
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    create_fake_entrypoint(state_root)
                 return subprocess.CompletedProcess(args, 0, "", "")
 
             def downloader(url: str, destination: Path) -> None:
@@ -457,6 +560,24 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             self.assertTrue(all(args[0].startswith(str(state_root)) for args in pip_calls))
             locked_install = next(args for args in pip_calls if "--require-hashes" in args)
             self.assertIn("--only-binary=:all:", locked_install)
+            venv_create = next(args for args in calls if args[-1] == str(state_root / "venv"))
+            self.assertTrue(Path(venv_create[0]).is_absolute())
+            self.assertIn("--copies", venv_create)
+            receipt_path = state_root / "provision-receipt.json"
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            canonical_manifest = json.dumps(
+                manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            ).encode("utf-8")
+            self.assertEqual(receipt["schema_version"], 1)
+            self.assertEqual(receipt["manifest_sha256"], hashlib.sha256(canonical_manifest).hexdigest())
+            self.assertEqual(receipt["source"], "wheel")
+            self.assertTrue(Path(receipt["selected_interpreter"]["path"]).is_absolute())
+            self.assertEqual(receipt["selected_interpreter"]["runtime"], selected_runtime())
+            entrypoint = state_root / receipt["entrypoint"]["relative_path"]
+            self.assertEqual(receipt["entrypoint"]["sha256"], hashlib.sha256(entrypoint.read_bytes()).hexdigest())
+            if os.name != "nt":
+                self.assertEqual(receipt_path.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(state_root.stat().st_mode & 0o777, 0o700)
 
     def test_wheel_hash_mismatch_stops_before_pip_install(self) -> None:
         """Allowing a mismatched upstream artifact to reach pip must fail this test."""
@@ -468,6 +589,11 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
                 calls.append(args)
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    create_fake_entrypoint(approved_state_root(Path(td)))
                 return subprocess.CompletedProcess(args, 0, "", "")
 
             with self.assertRaisesRegex(runner.ProvisionError, "SHA-256 mismatch"):
@@ -496,6 +622,11 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
                 calls.append(args)
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    create_fake_entrypoint(state_root)
                 if args[-2:] == ["rev-parse", "HEAD"]:
                     return subprocess.CompletedProcess(args, 0, manifest["upstream"]["commit"] + "\n", "")
                 if "wheel" in args:
@@ -519,9 +650,12 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
             checkout_calls = [args for args in calls if "checkout" in args]
             self.assertEqual(checkout_calls[0][-1], manifest["upstream"]["commit"])
-            clone_calls = [args for args in calls if args[:2] == ["git", "clone"]]
+            clone_calls = [args for args in calls if len(args) > 1 and args[1] == "clone"]
             self.assertEqual(clone_calls[0][2:6], ["--depth", "1", "--branch", manifest["upstream"]["tag"]])
+            self.assertTrue(Path(clone_calls[0][0]).is_absolute())
             self.assertTrue(result.artifact.is_relative_to(state_root / "built-wheels"))
+            receipt = json.loads((state_root / "provision-receipt.json").read_text(encoding="utf-8"))
+            self.assertEqual(receipt["source"], "source")
 
     def test_command_failure_diagnostics_never_surface_child_output(self) -> None:
         runner = load_runner()
@@ -537,6 +671,11 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         token = "ghp_verySecretDownloadFailure"
         with tempfile.TemporaryDirectory() as td:
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    create_fake_entrypoint(approved_state_root(Path(td)))
                 return subprocess.CompletedProcess(args, 0, "", "")
 
             def downloader(_url: str, _destination: Path) -> None:
@@ -578,12 +717,36 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             runner._require_success(result, "launch capability check")
         self.assertNotIn(token, str(raised.exception))
 
+    def test_state_artifact_read_failure_is_static_without_oserror_detail(self) -> None:
+        runner = load_runner()
+        token = "ghp_verySecretArtifactReadFailure"
+        original_read = runner.os.read
+
+        def failing_read(_descriptor: int, _size: int) -> bytes:
+            raise OSError(token)
+
+        with tempfile.TemporaryDirectory() as td:
+            artifact = Path(td) / "artifact"
+            artifact.write_bytes(b"reviewed bytes")
+            try:
+                runner.os.read = failing_read
+                with self.assertRaisesRegex(runner.ProvisionError, "could not be read safely") as raised:
+                    runner._sha256(artifact)
+            finally:
+                runner.os.read = original_read
+        self.assertNotIn(token, str(raised.exception))
+
     def test_source_revision_mismatch_never_surfaces_git_stdout(self) -> None:
         runner = load_runner()
         manifest = runner.load_manifest(MANIFEST)
         token = "ghp_verySecretRevisionOutput"
         with tempfile.TemporaryDirectory() as td:
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    create_fake_entrypoint(approved_state_root(Path(td)))
                 if args[-2:] == ["rev-parse", "HEAD"]:
                     return subprocess.CompletedProcess(args, 0, token, "")
                 return subprocess.CompletedProcess(args, 0, "", "")
@@ -612,6 +775,11 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
             def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
                 calls.append(args)
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    create_fake_entrypoint(approved_state_root(Path(td)))
                 if args[-2:] == ["rev-parse", "HEAD"]:
                     return subprocess.CompletedProcess(args, 0, "d" * 40 + "\n", "")
                 return subprocess.CompletedProcess(args, 0, "", "")
@@ -781,6 +949,44 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     downloader=lambda _url, _destination: self.fail("artifact symlink reached downloader"),
                 )
 
+    def test_provision_rejects_symlinked_venv_python_before_pip_or_download(self) -> None:
+        """The state-local interpreter executed after venv creation must be a bound regular leaf."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            state_root = approved_state_root(root)
+            outside = root / "outside-python"
+            outside.write_bytes(b"outside")
+            outside.chmod(0o700)
+
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                probe_result = fake_runtime_probe(args)
+                if probe_result is not None:
+                    return probe_result
+                if "venv" in args and "--help" not in args:
+                    venv_python = state_root / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+                    venv_python.parent.mkdir(parents=True, exist_ok=True)
+                    venv_python.symlink_to(outside)
+                    return subprocess.CompletedProcess(args, 0, "", "")
+                if "--help" in args or "--version" in args:
+                    return subprocess.CompletedProcess(args, 0, "", "")
+                self.fail("symlinked venv Python reached a later command")
+
+            with self.assertRaisesRegex(runner.ProvisionError, "virtual environment Python|symlink"):
+                runner.provision(
+                    manifest,
+                    state_root=state_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable=sys.executable,
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
+                    command=command,
+                    downloader=lambda *_args: self.fail("symlinked venv Python reached download"),
+                )
+
     def test_isolated_environment_rejects_symlinked_home_and_cache_children(self) -> None:
         """Pip/Git environment directories must not resolve through a child symlink."""
         runner = load_runner()
@@ -809,8 +1015,13 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
                 def command(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
                     environment = kwargs.get("env")
-                    if isinstance(environment, dict):
+                    if isinstance(environment, dict) and "TMPDIR" in environment:
                         captured_environments.append(environment)
+                    probe_result = fake_runtime_probe(args)
+                    if probe_result is not None:
+                        return probe_result
+                    if "venv" in args and "--help" not in args:
+                        create_fake_entrypoint(state_root)
                     return subprocess.CompletedProcess(args, 0, "", "")
 
                 runner.provision(
@@ -898,6 +1109,213 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         self.assertNotIn("PIP_INDEX_URL", environment)
         self.assertNotIn("PYTHONPATH", environment)
 
+    def test_preflight_probes_use_trusted_tools_isolated_flags_environment_and_cwd(self) -> None:
+        """Hostile import/config/cwd state must not influence ungated local capability probes."""
+        runner = load_runner()
+        calls: list[tuple[list[str], dict[str, object]]] = []
+        hostile_keys = {
+            "PYTHONPATH": "/hostile/imports",
+            "PYTHONHOME": "/hostile/home",
+            "PYTHONSTARTUP": "/hostile/startup.py",
+            "PYTHONUSERBASE": "/hostile/userbase",
+            "PIP_CONFIG_FILE": "/hostile/pip.conf",
+            "PIP_NO_INDEX": "0",
+            "PIP_DISABLE_PIP_VERSION_CHECK": "0",
+            "GIT_CONFIG_GLOBAL": "/hostile/gitconfig",
+            "GIT_CONFIG_NOSYSTEM": "0",
+            "GIT_TERMINAL_PROMPT": "1",
+        }
+
+        def command(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append((args, kwargs))
+            if "-c" in args:
+                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime()) + "\n", "")
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        previous_environment = {key: os.environ.get(key) for key in hostile_keys}
+        previous_cwd = Path.cwd()
+        with tempfile.TemporaryDirectory() as td:
+            hostile_cwd = Path(td)
+            (hostile_cwd / "sitecustomize.py").write_text("raise RuntimeError('loaded')\n", encoding="utf-8")
+            (hostile_cwd / ".env").write_text("OPENAI_API_KEY=must-not-load\n", encoding="utf-8")
+            before = sorted(path.relative_to(hostile_cwd) for path in hostile_cwd.rglob("*"))
+            try:
+                os.environ.update(hostile_keys)
+                os.chdir(hostile_cwd)
+                runner.preflight(
+                    runner.load_manifest(MANIFEST),
+                    source="source",
+                    python_executable=sys.executable,
+                    python_version=(0, 0),
+                    python_runtime=None,
+                    command=command,
+                )
+            finally:
+                os.chdir(previous_cwd)
+                for key, value in previous_environment.items():
+                    if value is None:
+                        os.environ.pop(key, None)
+                    else:
+                        os.environ[key] = value
+            after = sorted(path.relative_to(hostile_cwd) for path in hostile_cwd.rglob("*"))
+
+        self.assertEqual(after, before)
+        self.assertGreaterEqual(len(calls), 4)
+        if os.name == "nt":
+            system_root = Path(os.environ.get("SystemRoot", os.environ.get("WINDIR", "C:\\"))).resolve()
+            expected_cwd = Path(system_root.anchor).resolve()
+        else:
+            expected_cwd = Path(os.path.abspath(os.sep)).resolve()
+        for args, kwargs in calls:
+            actual_cwd = Path(str(kwargs["cwd"])).resolve()
+            self.assertEqual(actual_cwd, expected_cwd)
+            self.assertFalse(actual_cwd.is_relative_to(runner.PROJECT_ROOT))
+            self.assertNotEqual(actual_cwd, hostile_cwd.resolve())
+            environment = kwargs["env"]
+            self.assertIsInstance(environment, dict)
+            for key in hostile_keys:
+                self.assertNotEqual(environment.get(key), hostile_keys[key])
+            self.assertEqual(environment["PYTHONDONTWRITEBYTECODE"], "1")
+            self.assertEqual(environment["PYTHONNOUSERSITE"], "1")
+            self.assertEqual(environment["PIP_CONFIG_FILE"], os.devnull)
+            self.assertEqual(environment["PIP_NO_INDEX"], "1")
+            self.assertEqual(environment["PIP_DISABLE_PIP_VERSION_CHECK"], "1")
+            self.assertEqual(environment["GIT_CONFIG_GLOBAL"], os.devnull)
+            self.assertEqual(environment["GIT_CONFIG_NOSYSTEM"], "1")
+            self.assertEqual(environment["GIT_TERMINAL_PROMPT"], "0")
+            if Path(args[0]).name.startswith("python"):
+                self.assertTrue(Path(args[0]).is_absolute())
+                self.assertEqual(args[1:3], ["-I", "-B"])
+            if Path(args[0]).name == "git":
+                self.assertTrue(Path(args[0]).is_absolute())
+
+    def test_provision_rejects_squatted_or_nonprivate_state_root_before_commands(self) -> None:
+        """Provisioning may initialize only an absent or empty private dedicated root."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            occupied_root = approved_state_root(base / "occupied")
+            occupied_root.mkdir(parents=True, mode=0o700)
+            marker = occupied_root / "untrusted-state"
+            marker.write_text("keep", encoding="utf-8")
+            with self.assertRaisesRegex(runner.ProvisionError, "empty|existing"):
+                runner.provision(
+                    manifest,
+                    state_root=occupied_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable=sys.executable,
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
+                    command=lambda *_args, **_kwargs: self.fail("occupied root reached a command"),
+                )
+            self.assertEqual(marker.read_text(encoding="utf-8"), "keep")
+
+            if os.name != "nt":
+                nonprivate_root = approved_state_root(base / "nonprivate")
+                nonprivate_root.mkdir(parents=True, mode=0o700)
+                nonprivate_root.chmod(0o777)
+                with self.assertRaisesRegex(runner.ProvisionError, "private|permission"):
+                    runner.provision(
+                        manifest,
+                        state_root=nonprivate_root,
+                        source="wheel",
+                        confirm_authorized_provision=True,
+                        authorization_id="AUTH-42",
+                        python_executable=sys.executable,
+                        python_version=(3, 11),
+                        python_runtime=selected_runtime(),
+                        command=lambda *_args, **_kwargs: self.fail("nonprivate root reached a command"),
+                    )
+
+    def test_security_validation_survives_python_optimized_mode(self) -> None:
+        """Security checks must not disappear when the wrapper runs with python -O."""
+        original_manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        invalid_manifest = json.loads(json.dumps(original_manifest))
+        invalid_manifest["upstream"]["clone_url"] = "https://untrusted.example/ps-fuzz.git"
+        capabilities_path = SKILL_ROOT / "resources" / "capabilities-v2.1.0.json"
+        invalid_capabilities = json.loads(capabilities_path.read_text(encoding="utf-8"))
+        invalid_capabilities["upstream_tag"] = "latest"
+        probe_script = r'''
+import importlib.util
+import json
+import subprocess
+import sys
+
+runner_path, invalid_manifest_path, invalid_capabilities_path, valid_manifest_path = sys.argv[1:]
+spec = importlib.util.spec_from_file_location("optimized_ps_fuzz_runner", runner_path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+for loader, path, code in (
+    (module.load_manifest, invalid_manifest_path, 10),
+    (module.load_capabilities, invalid_capabilities_path, 11),
+):
+    try:
+        loader(module.Path(path))
+    except module.ProvisionError:
+        pass
+    else:
+        raise SystemExit(code)
+
+invalid_runtime = {
+    "implementation": 7,
+    "major": True,
+    "minor": 11,
+    "system": "Linux",
+    "machine": "x86_64",
+    "libc": "glibc",
+    "libc_version": "2.28",
+    "macos_version": "",
+}
+def fake_probe(args, **kwargs):
+    return subprocess.CompletedProcess(args, 0, json.dumps(invalid_runtime), "")
+try:
+    module._selected_python_runtime(sys.executable, fake_probe)
+except module.ProvisionError:
+    pass
+else:
+    raise SystemExit(12)
+
+valid_manifest = module.load_manifest(module.Path(valid_manifest_path))
+valid_manifest["python"]["native_wheel_platforms"] = "linux-glibc-2.28+-x86_64"
+try:
+    module._runtime_support(valid_manifest, (3, 11), {
+        "implementation": "CPython", "major": 3, "minor": 11,
+        "system": "Linux", "machine": "x86_64", "libc": "glibc",
+        "libc_version": "2.28", "macos_version": "",
+    })
+except module.ProvisionError:
+    pass
+else:
+    raise SystemExit(13)
+'''
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            invalid_manifest_path = root / "invalid-manifest.json"
+            invalid_capabilities_path = root / "invalid-capabilities.json"
+            invalid_manifest_path.write_text(json.dumps(invalid_manifest), encoding="utf-8")
+            invalid_capabilities_path.write_text(json.dumps(invalid_capabilities), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-O",
+                    "-c",
+                    probe_script,
+                    str(RUNNER),
+                    str(invalid_manifest_path),
+                    str(invalid_capabilities_path),
+                    str(MANIFEST),
+                ],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_manifest_rejects_malformed_hash_commit_tag_and_release_url(self) -> None:
         """Relaxing pinned-artifact manifest validation must fail this test."""
         runner = load_runner()
@@ -907,6 +1325,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             ("commit", "main"),
             ("tag", "v2.1.0/unsafe"),
             ("url", "https://github.com/prompt-security/ps-fuzz/releases/download/v9.9.9/other.whl"),
+            ("url_query", original["artifacts"]["release_wheel"]["url"] + "?download=attacker"),
+            ("url_fragment", original["artifacts"]["release_wheel"]["url"] + "#fragment"),
             ("filename", "../../outside.whl"),
             ("clone_url", "https://evil.example/ps-fuzz.git"),
             ("lock_path", "../requirements.lock"),
@@ -921,8 +1341,9 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 candidate = json.loads(json.dumps(original))
                 if field == "sha256":
                     candidate["artifacts"]["release_wheel"][field] = value
-                elif field in {"url", "filename"}:
-                    candidate["artifacts"]["release_wheel"][field] = value
+                elif field in {"url", "url_query", "url_fragment", "filename"}:
+                    target_field = "url" if field.startswith("url") else field
+                    candidate["artifacts"]["release_wheel"][target_field] = value
                 elif field == "clone_url":
                     candidate["upstream"][field] = value
                 elif field == "lock_path":
@@ -953,9 +1374,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
 
     def _prepared_state(self, root: Path) -> tuple[Path, Path]:
         state_root = approved_state_root(root)
-        executable = state_root / "venv" / "bin" / "prompt-security-fuzzer"
-        executable.parent.mkdir(parents=True, exist_ok=True)
-        executable.write_text("fake executable", encoding="utf-8")
+        executable = create_fake_entrypoint(state_root)
+        write_fake_receipt(state_root, executable)
         return state_root, executable
 
     def _run_kwargs(self, root: Path) -> dict[str, object]:
@@ -1003,6 +1423,80 @@ class PsFuzzActiveRunTests(unittest.TestCase):
         self.assertEqual(runner._aggregate_counts(captured), {"broken": 1, "resilient": 1, "errors": 0, "skipped": 1})
         self.assertIsNone(runner._aggregate_counts("| Total (# tests): | 1 | 2 | 3 | 4 |"))
 
+    def test_zero_rc_requires_one_complete_nonempty_error_free_footer(self) -> None:
+        """A zero child status cannot become a successful assessment without complete aggregate evidence."""
+        runner = load_runner()
+        output_cases = (
+            ("empty", "", "invalid-output", None),
+            (
+                "malformed",
+                "│ ✘ │ Total (# tests): .... │ bad │ 1 │ 0 │ 0 │ [====] │",
+                "invalid-output",
+                None,
+            ),
+            (
+                "duplicate",
+                (
+                    "│ ✘ │ Total (# tests): .... │ 1 │ 1 │ 0 │ 0 │ [====] │\n"
+                    "│ ✘ │ Total (# tests): .... │ 1 │ 1 │ 0 │ 0 │ [====] │"
+                ),
+                "invalid-output",
+                None,
+            ),
+            (
+                "malformed-plus-valid",
+                (
+                    "Total (# tests): malformed\n"
+                    "│ ✘ │ Total (# tests): .... │ 1 │ 1 │ 0 │ 0 │ [====] │"
+                ),
+                "invalid-output",
+                None,
+            ),
+            (
+                "zero-total",
+                "│ ✘ │ Total (# tests): .... │ 0 │ 0 │ 0 │ 0 │ [====] │",
+                "invalid-output",
+                None,
+            ),
+            (
+                "errors",
+                "│ ✘ │ Total (# tests): .... │ 0 │ 1 │ 1 │ 0 │ [====] │",
+                "incomplete",
+                {"broken": 0, "resilient": 1, "errors": 1, "skipped": 0},
+            ),
+            (
+                "skipped",
+                "│ ✘ │ Total (# tests): .... │ 0 │ 1 │ 0 │ 1 │ [====] │",
+                "incomplete",
+                {"broken": 0, "resilient": 1, "errors": 0, "skipped": 1},
+            ),
+        )
+        with tempfile.TemporaryDirectory() as td:
+            for name, stdout, assessment_status, expected_counts in output_cases:
+                with self.subTest(name=name):
+                    root = Path(td) / name
+                    root.mkdir()
+                    kwargs = self._run_kwargs(root)
+                    result = runner.run(
+                        runner.load_manifest(MANIFEST),
+                        runner.load_capabilities(),
+                        command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, stdout, "raw error"),
+                        **kwargs,
+                    )
+                    self.assertNotEqual(result.exit_status, 0)
+                    self.assertEqual(result.upstream_exit_status, 0)
+                    self.assertEqual(result.assessment_status, assessment_status)
+                    self.assertEqual(result.aggregate_counts, expected_counts)
+                    report = json.loads((Path(kwargs["output_dir"]) / "run.json").read_text(encoding="utf-8"))
+                    self.assertEqual(report["assessment_status"], assessment_status)
+                    self.assertNotEqual(report["wrapper_exit_status"], 0)
+                    self.assertEqual(report["upstream_exit_status"], 0)
+                    self.assertEqual(report["aggregate_result_counts"], expected_counts)
+                    persisted = "\n".join(
+                        path.read_text(encoding="utf-8") for path in Path(kwargs["output_dir"]).iterdir()
+                    )
+                    self.assertNotIn("raw error", persisted)
+
     def test_preflight_inspects_safe_selected_config_without_state_or_network(self) -> None:
         runner = load_runner()
         calls: list[list[str]] = []
@@ -1034,7 +1528,10 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 os.environ.pop("OPENAI_API_KEY", None)
             else:
                 os.environ["OPENAI_API_KEY"] = previous
-        self.assertEqual(calls, [["python3", "-m", "venv", "--help"], ["python3", "-m", "pip", "--version"]])
+        self.assertEqual(len(calls), 2)
+        self.assertTrue(all(Path(args[0]).is_absolute() for args in calls))
+        self.assertEqual(calls[0][1:], ["-I", "-B", "-m", "venv", "--help"])
+        self.assertEqual(calls[1][1:], ["-I", "-B", "-m", "pip", "--version"])
         self.assertEqual(inspection["target"]["origin"], "https://target.example")
         self.assertTrue(inspection["credential_environment_present"]["OPENAI_API_KEY"])
         with self.assertRaisesRegex(runner.ProvisionError, "approved-embedding-url"):
@@ -1080,6 +1577,25 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             kwargs.update({"target_base_url": "https://target.example/v1", "approved_target_url": "https://target.example/v1"})
             with self.assertRaisesRegex(runner.ProvisionError, "approved-attack-url"):
                 runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+
+    def test_boolean_attempts_or_threads_fail_before_prompt_or_output_access(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            for field in ("attempts", "threads"):
+                with self.subTest(field=field):
+                    root = Path(td) / field
+                    root.mkdir()
+                    kwargs = self._run_kwargs(root)
+                    kwargs[field] = True
+                    Path(kwargs["system_prompt_file"]).unlink()
+                    with self.assertRaisesRegex(runner.ProvisionError, "positive integers"):
+                        runner.run(
+                            runner.load_manifest(MANIFEST),
+                            runner.load_capabilities(),
+                            command=lambda *_args, **_kwargs: self.fail("invalid invocation reached fuzzer"),
+                            **kwargs,
+                        )
+                    self.assertFalse(Path(kwargs["output_dir"]).exists())
 
     def test_ollama_only_child_environment_excludes_openai_secret(self) -> None:
         runner = load_runner()
@@ -1138,6 +1654,116 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             self.assertNotIn(token, output.getvalue())
             self.assertNotIn(token, str(raised.exception))
             self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+    def test_run_verifies_receipt_and_entrypoint_before_prompt_or_credentials(self) -> None:
+        """Missing, malformed, linked, or stale provision evidence must stop before sensitive inputs."""
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for name in (
+                "missing-receipt",
+                "bad-receipt",
+                "tampered-entrypoint",
+                "symlink-entrypoint",
+            ):
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    kwargs = self._run_kwargs(case_root)
+                    state_root = Path(kwargs["state_root"])
+                    receipt = state_root / "provision-receipt.json"
+                    executable = state_root / "venv" / "bin" / "prompt-security-fuzzer"
+                    if name == "missing-receipt":
+                        receipt.unlink()
+                    elif name == "bad-receipt":
+                        receipt.write_text("{}\n", encoding="utf-8")
+                    elif name == "tampered-entrypoint":
+                        executable.write_bytes(b"tampered")
+                    else:
+                        target = case_root / "outside-fuzzer"
+                        target.write_bytes(b"fake executable")
+                        target.chmod(0o700)
+                        executable.unlink()
+                        executable.symlink_to(target)
+                    Path(kwargs["system_prompt_file"]).unlink()
+                    with self.assertRaisesRegex(runner.ProvisionError, "receipt|entrypoint|executable|symlink") as raised:
+                        runner.run(
+                            runner.load_manifest(MANIFEST),
+                            runner.load_capabilities(),
+                            command=lambda *_args, **_kwargs: self.fail("invalid provision reached fuzzer"),
+                            **kwargs,
+                        )
+                    self.assertNotIn("system-prompt-file", str(raised.exception))
+                    self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+            case_root = root / "credentials-order"
+            case_root.mkdir()
+            kwargs = self._run_kwargs(case_root)
+            (Path(kwargs["state_root"]) / "provision-receipt.json").unlink()
+            original_reviewed_keys = runner._reviewed_credential_keys
+            try:
+                runner._reviewed_credential_keys = lambda *_args, **_kwargs: self.fail(
+                    "receipt failure reached credential selection"
+                )
+                with self.assertRaisesRegex(runner.ProvisionError, "receipt"):
+                    runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            finally:
+                runner._reviewed_credential_keys = original_reviewed_keys
+
+    @unittest.skipIf(os.name == "nt", "POSIX ownership and mode checks")
+    def test_run_rejects_nonprivate_state_root_and_children(self) -> None:
+        """Group/world-accessible state must not be trusted for receipts, executables, or prompts."""
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for name, relative in (("root", Path()), ("child", Path("venv"))):
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    kwargs = self._run_kwargs(case_root)
+                    state_root = Path(kwargs["state_root"])
+                    target = state_root / relative
+                    target.chmod(0o777)
+                    Path(kwargs["system_prompt_file"]).unlink()
+                    with self.assertRaisesRegex(runner.ProvisionError, "private|permission") as raised:
+                        runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+                    self.assertNotIn("system-prompt-file", str(raised.exception))
+
+            case_root = root / "wrong-owner"
+            case_root.mkdir()
+            kwargs = self._run_kwargs(case_root)
+            Path(kwargs["system_prompt_file"]).unlink()
+            real_getuid = runner.os.getuid
+            try:
+                runner.os.getuid = lambda: real_getuid() + 1
+                with self.assertRaisesRegex(runner.ProvisionError, "owned|owner") as raised:
+                    runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            finally:
+                runner.os.getuid = real_getuid
+            self.assertNotIn("system-prompt-file", str(raised.exception))
+
+    @unittest.skipUnless(sys.platform == "darwin", "Darwin ACL validation")
+    def test_run_rejects_allow_acl_before_prompt_or_credentials(self) -> None:
+        """Mode 0700 state with an extended allow ACL is not a private trust root."""
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            kwargs = self._run_kwargs(Path(td))
+            Path(kwargs["system_prompt_file"]).unlink()
+            original_run = runner.subprocess.run
+
+            def fake_run(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                if args[:2] == ["/bin/ls", "-lde"]:
+                    acl_output = "drwx------  4 owner  staff  128 Aug 19 00:00 state\n 0: group:everyone allow write\n"
+                    return subprocess.CompletedProcess(args, 0, acl_output, "")
+                return original_run(args, **_kwargs)
+
+            try:
+                runner.subprocess.run = fake_run
+                with self.assertRaisesRegex(runner.ProvisionError, "ACL") as raised:
+                    runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            finally:
+                runner.subprocess.run = original_run
+            self.assertNotIn("system-prompt-file", str(raised.exception))
 
     def test_secret_shaped_identifiers_and_provider_names_never_reach_preview(self) -> None:
         import contextlib
@@ -1309,6 +1935,33 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
             self.assertFalse(Path(kwargs["output_dir"]).exists())
 
+    def test_prompt_ingestion_rejects_symlinks_and_files_over_one_mib_before_launch(self) -> None:
+        """Prompt validation must bind one small regular file, not follow links or read unbounded data."""
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for name in ("symlink", "oversize"):
+                with self.subTest(name=name):
+                    case_root = root / name
+                    case_root.mkdir()
+                    kwargs = self._run_kwargs(case_root)
+                    prompt = Path(kwargs["system_prompt_file"])
+                    if name == "symlink":
+                        target = case_root / "real-prompt.txt"
+                        target.write_text("real prompt", encoding="utf-8")
+                        prompt.unlink()
+                        prompt.symlink_to(target)
+                    else:
+                        prompt.write_bytes(b"x" * (1024 * 1024 + 1))
+                    with self.assertRaisesRegex(runner.ProvisionError, "system-prompt-file"):
+                        runner.run(
+                            runner.load_manifest(MANIFEST),
+                            runner.load_capabilities(),
+                            command=lambda *_args, **_kwargs: self.fail("invalid prompt reached fuzzer"),
+                            **kwargs,
+                        )
+                    self.assertFalse(Path(kwargs["output_dir"]).exists())
+
     def test_run_uses_only_reviewed_batch_arguments_and_an_isolated_prompt_copy(self) -> None:
         runner = load_runner()
         with tempfile.TemporaryDirectory() as td:
@@ -1334,6 +1987,13 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             self.assertEqual(args[args.index("-d") + 1], "0")
             self.assertLess(args.index("-d"), len(args) - 1, "quiet logging must precede the prompt positional")
             self.assertEqual(result.aggregate_counts, {"broken": 1, "resilient": 2, "errors": 0, "skipped": 0})
+            self.assertEqual(result.exit_status, 0)
+            self.assertEqual(result.upstream_exit_status, 0)
+            self.assertEqual(result.assessment_status, "complete")
+            report = json.loads((Path(kwargs["output_dir"]) / "run.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["wrapper_exit_status"], 0)
+            self.assertEqual(report["upstream_exit_status"], 0)
+            self.assertEqual(report["assessment_status"], "complete")
 
     def test_run_isolates_child_environment_and_never_persists_raw_output(self) -> None:
         runner = load_runner()
@@ -1366,6 +2026,10 @@ class PsFuzzActiveRunTests(unittest.TestCase):
 
             output_dir = Path(kwargs["output_dir"])
             self.assertEqual(sorted(path.name for path in output_dir.iterdir()), ["run.json", "summary.md"])
+            if os.name != "nt":
+                self.assertEqual(output_dir.stat().st_mode & 0o777, 0o700)
+                for report_path in output_dir.iterdir():
+                    self.assertEqual(report_path.stat().st_mode & 0o777, 0o600)
             persisted = "\n".join(path.read_text(encoding="utf-8") for path in output_dir.iterdir())
             self.assertNotIn("SYSTEM SECRET", persisted)
             self.assertNotIn("sk-test-raw-token", persisted)
@@ -1428,6 +2092,7 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 ({"target_base_url": "https://key@host.example/v1", "approved_target_url": "https://host.example/v1"}, "credentials"),
                 ({"target_base_url": "https://host.example/v1?secret=1", "approved_target_url": "https://host.example/v1"}, "query"),
                 ({"target_base_url": "https://host.example:bad/v1", "approved_target_url": "https://host.example:bad/v1"}, "invalid port"),
+                ({"target_base_url": 7, "approved_target_url": "https://host.example/v1"}, "absolute"),
                 ({"target_base_url": "https://host.example/v1", "approved_target_url": "https://other.example/v1"}, "approved"),
                 ({"tests": ["unknown_attack"]}, "supported"),
                 ({"tests": ["rag_poisoning"]}, "embedding"),
@@ -1478,7 +2143,13 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 **kwargs,
             )
             self.assertEqual(result.exit_status, 9)
+            self.assertEqual(result.upstream_exit_status, 9)
+            self.assertEqual(result.assessment_status, "upstream-failed")
             self.assertIsNone(result.aggregate_counts)
+            report = json.loads((Path(kwargs["output_dir"]) / "run.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["wrapper_exit_status"], 9)
+            self.assertEqual(report["upstream_exit_status"], 9)
+            self.assertEqual(report["assessment_status"], "upstream-failed")
             persisted = "\n".join(path.read_text(encoding="utf-8") for path in Path(kwargs["output_dir"]).iterdir())
             self.assertNotIn("raw prompt", persisted)
             self.assertNotIn("sk-bad", persisted)
