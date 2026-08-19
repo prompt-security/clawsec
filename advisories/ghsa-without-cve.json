@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated": "2026-07-19T06:50:00Z",
+  "updated": "2026-08-19T06:07:49Z",
   "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
   "stale_after_days": 60,
   "semantics": {
@@ -918,7 +918,7 @@
       "type": "server_side_request_forgery",
       "nvd_category_id": "CWE-918",
       "title": "QQBot media upload could reach untrusted remote URLs",
-      "description": "Summary QQBot media upload could reach untrusted remote URLs. In affected versions, a lower-trust caller or configured input path could reach network destinations that should have been blocked by OpenClaw policy. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could reach network destinations that should have been blocked by OpenClaw policy. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.5.28. Mitigations Upgrade to a patched OpenClaw release when one is listed. Before upgrading, restrict the affected feature to trusted operators or disable it when it is not needed. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
+      "description": "Summary QQBot media upload could reach untrusted remote URLs. In affected versions, a lower-trust caller or configured input path could reach network destinations that should have been blocked by OpenClaw policy. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When the affected feature is enabled and reachable, this could reach network destinations that should have been blocked by OpenClaw policy. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path.",
       "affected": [
         "openclaw@> 2026.4.20, < 2026.5.28"
       ],
@@ -930,7 +930,7 @@
       ],
       "action": "Track CVE-2026-62216 in the canonical CVE advisory feed and verify affected components.",
       "published": "2026-06-30T00:40:04Z",
-      "updated": "2026-06-30T00:40:04Z",
+      "updated": "2026-08-13T17:27:46Z",
       "references": [
         "https://github.com/openclaw/openclaw/security/advisories/GHSA-fwgr-fpv9-vf5x",
         "https://nvd.nist.gov/vuln/detail/CVE-2026-62216"
@@ -944,7 +944,9 @@
       "cwe_ids": [
         "CWE-918"
       ],
-      "credits": [],
+      "credits": [
+        "oduoke567"
+      ],
       "aliases": [
         "GHSA-fwgr-fpv9-vf5x",
         "CVE-2026-62216"
