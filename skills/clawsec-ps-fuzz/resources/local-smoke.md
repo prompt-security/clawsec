@@ -17,7 +17,7 @@ Show the operator all of these values and obtain an explicit confirmation **befo
 - Immutable URL: `https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf`
 - License: Apache-2.0
 
-After confirmation, download only that immutable URL to a `.partial` file. Verify both the exact size and SHA-256 before publishing it. Never follow `main` or `latest`. The same-directory hard-link step below is an atomic no-replace publication: unlike a plain `mv`, it fails if a final file raced into place. Removing the verified partial name completes the publication without overwriting an existing final path.
+After confirmation, download only that immutable URL to a `.partial` file in a fresh, current-user-owned mode-0700 staging directory. The containing model directory must also be current-user-owned and mode 0700; this rejects shared-directory and symlink setups before download. Verify both the exact size and SHA-256 before publishing it. Never follow `main` or `latest`. The same-directory hard-link step below is an atomic no-replace publication: unlike a plain `mv`, it fails if a final file raced into place. The EXIT trap removes only the staging directory created by this block; it never deletes a final model path.
 
 ```bash
 # local-smoke-download
@@ -26,20 +26,48 @@ umask 077
 
 MODEL_DIR=/secure/models/gemma-4-E2B-it
 MODEL_FILE="$MODEL_DIR/gemma-4-E2B-it-Q4_0.gguf"
-MODEL_PARTIAL="$MODEL_FILE.partial"
+MODEL_STAGE=
 
 fail() {
   printf 'local smoke download blocked: %s\n' "$1" >&2
   exit 1
 }
 
+directory_owner() {
+  stat -f '%u' "$1" 2>/dev/null || stat -c '%u' "$1"
+}
+
+directory_mode() {
+  stat -f '%Lp' "$1" 2>/dev/null || stat -c '%a' "$1"
+}
+
+require_private_directory() {
+  local candidate="$1"
+  [[ -d "$candidate" && ! -L "$candidate" ]] || fail 'model directory is not a regular directory'
+  [[ "$(directory_owner "$candidate")" == "$(id -u)" ]] || fail 'model directory is not owned by the current user'
+  [[ "$(directory_mode "$candidate")" == '700' ]] || fail 'model directory must be current-user-owned and mode 0700'
+}
+
+cleanup_stage() {
+  local stage="${MODEL_STAGE:-}"
+  if [[ -n "$stage" && "$stage" == "$MODEL_DIR"/.clawsec-ps-fuzz-download.* && -d "$stage" && ! -L "$stage" ]]; then
+    rm -rf -- "$stage"
+  fi
+}
+trap cleanup_stage EXIT
+
 [[ ! -L "$MODEL_DIR" ]] || fail 'model directory is a symlink'
 mkdir -p "$MODEL_DIR"
-[[ -d "$MODEL_DIR" && ! -L "$MODEL_DIR" ]] || fail 'model directory is not a regular directory'
+require_private_directory "$MODEL_DIR"
 [[ ! -e "$MODEL_FILE" && ! -L "$MODEL_FILE" ]] || fail 'final model path already exists'
-[[ ! -e "$MODEL_PARTIAL" && ! -L "$MODEL_PARTIAL" ]] || fail 'partial model path already exists'
+MODEL_STAGE="$(mktemp -d "$MODEL_DIR/.clawsec-ps-fuzz-download.XXXXXXXX")" || fail 'could not create download staging directory'
+[[ "$MODEL_STAGE" == "$MODEL_DIR"/.clawsec-ps-fuzz-download.* && -d "$MODEL_STAGE" && ! -L "$MODEL_STAGE" ]] \
+  || fail 'download staging directory is unsafe'
+chmod 700 "$MODEL_STAGE"
+require_private_directory "$MODEL_STAGE"
+MODEL_PARTIAL="$MODEL_STAGE/gemma-4-E2B-it-Q4_0.gguf.partial"
 
-curl --fail --location --proto '=https' --tlsv1.2 \
+curl --disable --fail --location --proto '=https' --tlsv1.2 --max-filesize 2841481184 \
   --output "$MODEL_PARTIAL" \
   'https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf'
 
@@ -57,11 +85,13 @@ ln "$MODEL_PARTIAL" "$MODEL_FILE"
 [[ "$MODEL_PARTIAL" -ef "$MODEL_FILE" ]] || fail 'no-replace publication was not the verified file'
 unlink "$MODEL_PARTIAL"
 [[ ! -e "$MODEL_PARTIAL" && ! -L "$MODEL_PARTIAL" ]] || fail 'partial name remains after publication'
+rmdir "$MODEL_STAGE" || fail 'download staging directory could not be safely removed'
+MODEL_STAGE=
 verify_model_file "$MODEL_FILE"
 printf 'local smoke model published and re-verified\n'
 ```
 
-If any step fails, the shell exits immediately. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation.
+If any step fails, the shell exits immediately and removes only its fresh staging directory. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation. The POSIX `stat` fallback supports macOS/BSD and GNU/Linux; filesystems that cannot safely hard-link, preserve mode 0700, or provide reliable ownership metadata are unsupported by this workflow.
 
 ## 2. Run an operator-controlled loopback server
 
@@ -125,13 +155,23 @@ Require `GET http://127.0.0.1:8081/health` to return HTTP 200 with exactly `{"st
 ```bash
 python3 - <<'PY'
 import json
+import urllib.error
 import urllib.request
 
 MAX_JSON_BYTES = 65536
+HEALTH_URL = "http://127.0.0.1:8081/health"
+MODELS_URL = "http://127.0.0.1:8081/v1/models"
+
+class RejectRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        raise urllib.error.HTTPError(request.full_url, code, "local redirects are disabled", headers, response)
+
+OPENER = urllib.request.build_opener(RejectRedirects())
 
 def get_json(url):
-    with urllib.request.urlopen(url, timeout=10) as response:
-        if response.status != 200:
+    request = urllib.request.Request(url, method="GET")
+    with OPENER.open(request, timeout=10) as response:
+        if response.status != 200 or response.geturl() != url:
             raise SystemExit("local smoke readiness failed")
         raw = response.read(MAX_JSON_BYTES + 1)
     if len(raw) > MAX_JSON_BYTES:
@@ -144,9 +184,9 @@ def get_json(url):
         raise SystemExit("local smoke readiness response is not an object")
     return value
 
-if get_json("http://127.0.0.1:8081/health") != {"status": "ok"}:
+if get_json(HEALTH_URL) != {"status": "ok"}:
     raise SystemExit("local smoke health response is invalid")
-models = get_json("http://127.0.0.1:8081/v1/models").get("data")
+models = get_json(MODELS_URL).get("data")
 if (
     not isinstance(models, list)
     or len(models) != 1
@@ -163,12 +203,20 @@ Only after a separate explicit approval, send at most one harmless chat completi
 ```bash
 python3 - <<'PY'
 import json
+import urllib.error
 import urllib.request
 
 MAX_JSON_BYTES = 1048576
+COMPLETION_URL = "http://127.0.0.1:8081/v1/chat/completions"
+
+class RejectRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        raise urllib.error.HTTPError(request.full_url, code, "local redirects are disabled", headers, response)
+
+OPENER = urllib.request.build_opener(RejectRedirects())
 
 request = urllib.request.Request(
-    "http://127.0.0.1:8081/v1/chat/completions",
+    COMPLETION_URL,
     data=json.dumps({
         "model": "psfuzz-local",
         "messages": [{"role": "user", "content": "Reply with a short greeting."}],
@@ -177,8 +225,8 @@ request = urllib.request.Request(
     }).encode(),
     headers={"Content-Type": "application/json"},
 )
-with urllib.request.urlopen(request, timeout=60) as response:
-    if response.status != 200:
+with OPENER.open(request, timeout=60) as response:
+    if response.status != 200 or response.geturl() != COMPLETION_URL:
         raise SystemExit("local completion failed")
     raw = response.read(MAX_JSON_BYTES + 1)
 if len(raw) > MAX_JSON_BYTES:
