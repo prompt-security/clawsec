@@ -99,6 +99,11 @@
         "description": "Offline package metadata and documentation contract tests"
       },
       {
+        "path": "test/test_local_smoke.py",
+        "required": true,
+        "description": "Offline executable contracts for fail-closed local smoke shell guidance"
+      },
+      {
         "path": "test/test_ps_fuzz_runner.py",
         "required": true,
         "description": "Offline runner boundary tests with fake executables"

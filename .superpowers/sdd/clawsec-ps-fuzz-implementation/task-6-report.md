@@ -209,3 +209,216 @@ checks before at most one approved completion, uses the exact wrapper shape,
 and refuses to interpret this smoke as a security assessment.
 
 No other concerns.
+
+## Fix round 1: fail-closed executable local-smoke flows
+
+Independent review found that the original download and pre-launch examples
+used guard commands without strict shell failure semantics. A failed guard,
+size check, or hash pipeline could therefore continue to `mv` or launch, and
+plain `mv` could overwrite a final path raced into place. Review also required
+one combined help/verification/launch block, a quoted Bash array for the
+optional reasoning flags, executable offline behavior tests, and removal of
+run-only controls from the preflight preview.
+
+This section supersedes the initial self-review statement that the old `mv`
+flow safely renamed the artifact.
+
+### RED
+
+I first added `test/test_local_smoke.py` and added that intended path to the
+package-closure expectation. No guide or SBOM implementation changed before
+these runs.
+
+Commands:
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_local_smoke.py
+python3 skills/clawsec-ps-fuzz/test/test_package_contract.py
+```
+
+Relevant complete result:
+
+```text
+test_download_failures_never_publish_or_overwrite ... FAIL
+test_download_publishes_no_replace_and_reverifies_final ... FAIL
+test_failed_prelaunch_checks_never_start_server ... FAIL
+test_preflight_example_omits_run_only_attempt_controls ... FAIL
+test_server_launch_uses_safe_flags_and_optional_reasoning_array ... FAIL
+
+FAIL: test_download_failures_never_publish_or_overwrite
+AssertionError: expected one # local-smoke-download shell block, found 0
+
+FAIL: test_download_publishes_no_replace_and_reverifies_final
+AssertionError: expected one # local-smoke-download shell block, found 0
+
+FAIL: test_failed_prelaunch_checks_never_start_server
+AssertionError: expected one # local-smoke-server shell block, found 0
+
+FAIL: test_preflight_example_omits_run_only_attempt_controls
+AssertionError: '--attempts' unexpectedly found in the preflight block
+
+FAIL: test_server_launch_uses_safe_flags_and_optional_reasoning_array
+AssertionError: expected one # local-smoke-server shell block, found 0
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.011s
+
+FAILED (failures=6)
+
+.....F.
+======================================================================
+FAIL: test_sbom_is_a_complete_package_closure
+AssertionError: Items in the second set but not the first:
+'test/test_local_smoke.py'
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.006s
+
+FAILED (failures=1)
+```
+
+These were the intended failures: the guide lacked executable marked strict
+blocks, the preflight example still included run-only controls, and the SBOM
+did not authenticate the new offline test.
+
+### GREEN iteration and Bash 3.2 correction
+
+The first implementation added strict blocks and the SBOM entry. Four behavior
+tests passed, but the success case caught a real macOS Bash 3.2 issue rather
+than being weakened:
+
+```text
+test_download_failures_never_publish_or_overwrite ... ok
+test_download_publishes_no_replace_and_reverifies_final ... ok
+test_failed_prelaunch_checks_never_start_server ... ok
+test_preflight_example_omits_run_only_attempt_controls ... ok
+test_server_launch_uses_safe_flags_and_optional_reasoning_array ... FAIL
+
+FAIL: test_server_launch_uses_safe_flags_and_optional_reasoning_array (reasoning=False)
+AssertionError: 1 != 0 : /bin/bash: line 29: LLAMA_REASONING_FLAGS[@]: unbound variable
+
+----------------------------------------------------------------------
+Ran 5 tests in 3.136s
+
+FAILED (failures=1)
+```
+
+With `set -u`, Bash 3.2 can reject a quoted expansion of an empty array. I kept
+the test unchanged and replaced the empty optional array with one nonempty
+`LLAMA_COMMAND` array. The optional `--reasoning-budget 0` pair is appended only
+when the exact help probe supports it, and the entire command is executed with
+`exec "${LLAMA_COMMAND[@]}"`.
+
+Final focused GREEN:
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_local_smoke.py
+
+test_download_failures_never_publish_or_overwrite ... ok
+test_download_publishes_no_replace_and_reverifies_final ... ok
+test_failed_prelaunch_checks_never_start_server ... ok
+test_preflight_example_omits_run_only_attempt_controls ... ok
+test_server_launch_uses_safe_flags_and_optional_reasoning_array ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.428s
+
+OK
+```
+
+### Fix-round verification
+
+All behavior tests use temporary files and fake `curl`, `shasum`, and
+`llama-server` executables. They make no network call, do not download a model,
+and never start a real server or provider request.
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_local_smoke.py
+Ran 5 tests in 3.716s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_package_contract.py
+Ran 7 tests in 0.018s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_ps_fuzz_runner.py
+Ran 45 tests in 0.741s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_verified_install.py
+Ran 26 tests in 2.062s
+OK
+
+python3 -m py_compile skills/clawsec-ps-fuzz/test/test_local_smoke.py skills/clawsec-ps-fuzz/test/test_package_contract.py skills/clawsec-ps-fuzz/scripts/ps_fuzz_runner.py skills/clawsec-ps-fuzz/scripts/verified_install.py
+(no output; exit 0)
+
+python3 utils/validate_skill.py skills/clawsec-ps-fuzz
+Validation PASSED - all checks passed
+[OK] Skill is valid
+
+node scripts/ci/validate_skill_install_docs.mjs --skills skills/clawsec-ps-fuzz --agent-types-file scripts/test-skill-install-docs.mjs
+npx skills install docs OK for clawsec-ps-fuzz: -a openclaw
+
+node scripts/test-skill-install-docs.mjs
+(no output; exit 0)
+
+node scripts/test-skill-release-workflow.mjs
+(no output; exit 0)
+
+node scripts/test-skill-tag-release-simulation.mjs
+(no output; exit 0)
+
+python3 -c 'import pathlib,re; text=pathlib.Path("skills/clawsec-ps-fuzz/resources/local-smoke.md").read_text(); snippets=re.findall(r"python3 - <<.PY.\n(.*?)\nPY", text, re.S); assert len(snippets)==2, len(snippets); [compile(s, "local-smoke.md", "exec") for s in snippets]; print("local smoke Python snippets compile: 2")'
+local smoke Python snippets compile: 2
+
+python3 -c 'import pathlib,re,subprocess; text=pathlib.Path("skills/clawsec-ps-fuzz/resources/local-smoke.md").read_text(); snippets=re.findall(r"```bash\n(.*?)\n```", text, re.S); assert len(snippets)==6, len(snippets); [subprocess.run(["bash", "-n"], input=s, text=True, check=True) for s in snippets]; print("local smoke shell snippets parse: 6")'
+local smoke shell snippets parse: 6
+
+python3 -c 'import pathlib,re,subprocess; text=pathlib.Path("skills/clawsec-ps-fuzz/resources/local-smoke.md").read_text(); blocks=re.findall(r"```bash\n(.*?)\n```", text, re.S); results=[subprocess.run(["shellcheck","-s","bash","-"],input=block,text=True,capture_output=True) for block in blocks]; assert all(result.returncode == 0 for result in results), [(result.stdout,result.stderr) for result in results if result.returncode]; print(f"shellcheck blocks passed: {len(blocks)}")'
+shellcheck blocks passed: 6
+
+git diff --check
+(no output; exit 0)
+```
+
+The focused total is now 83 passing Python tests (5 executable local smoke, 7
+package contract, 45 runner, and 26 signed installer), plus all documentation,
+release, syntax, and static-shell validation gates.
+
+### Fix-round self-review
+
+- Both executable flows begin with `set -euo pipefail` and use explicit guards.
+- Download guard, wrong-size, and first-hash failures never create the final
+  path. A fake race creates a final path after verification; atomic same-dir
+  hard-link publication fails without overwriting it and retains the partial.
+- Successful publication proves the final and partial names referenced the same
+  inode, unlinks the partial name, proves it is gone, and rechecks final type,
+  size, and hash before printing the only success confirmation.
+- The guide warns that a remaining partial or final is not usable unless the
+  complete publication confirmation printed.
+- Help probing, final model verification, array construction, and foreground
+  launch are one block. Failed flag, size, or hash checks may run `--help` but
+  never execute the fake launch path.
+- The nonempty command array prevents Bash 3.2 empty-array/unbound behavior,
+  quotes every expansion, and ignores hostile ambient `MODEL_FILE` and optional
+  flag variables. `--no-slots` and `--no-cache-prompt` remain mandatory.
+- Preflight retains both exact `open_ai`/`psfuzz-local` roles, selectors, and all
+  four base/approval URLs while omitting attempts, threads, and temperature.
+  The active run retains attempts 1, threads 1, and temperature 0.2 exactly.
+- Readiness and optional-completion parsing now cap response bytes, decode UTF-8
+  and JSON explicitly, and require top-level objects; model entry type is
+  checked before reading the exact alias.
+- `test/test_local_smoke.py` is authenticated through the package SBOM and is
+  handled by the existing release test-file exclusion policy in simulation.
+
+Changed fix-round files:
+
+- `.superpowers/sdd/clawsec-ps-fuzz-implementation/task-6-report.md`
+- `skills/clawsec-ps-fuzz/resources/local-smoke.md`
+- `skills/clawsec-ps-fuzz/skill.json`
+- `skills/clawsec-ps-fuzz/test/test_local_smoke.py`
+- `skills/clawsec-ps-fuzz/test/test_package_contract.py`
+
+Concern remains only the controller-owned context-free fresh-agent forward
+test, which the task explicitly schedules after this fix. No model/server or
+provider smoke was performed, by design.

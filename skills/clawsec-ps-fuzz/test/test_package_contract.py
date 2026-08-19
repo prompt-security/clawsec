@@ -27,6 +27,7 @@ EXPECTED_ARTIFACTS = {
     "scripts/ps_fuzz_runner.py",
     "scripts/verified_install.py",
     "test/test_package_contract.py",
+    "test/test_local_smoke.py",
     "test/test_ps_fuzz_runner.py",
     "test/test_verified_install.py",
 }

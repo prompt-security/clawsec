@@ -17,68 +17,99 @@ Show the operator all of these values and obtain an explicit confirmation **befo
 - Immutable URL: `https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf`
 - License: Apache-2.0
 
-After confirmation, download only that immutable URL to a `.partial` file. Verify both the exact size and SHA-256 before renaming it. Never follow `main` or `latest`.
+After confirmation, download only that immutable URL to a `.partial` file. Verify both the exact size and SHA-256 before publishing it. Never follow `main` or `latest`. The same-directory hard-link step below is an atomic no-replace publication: unlike a plain `mv`, it fails if a final file raced into place. Removing the verified partial name completes the publication without overwriting an existing final path.
 
 ```bash
+# local-smoke-download
+set -euo pipefail
+umask 077
+
 MODEL_DIR=/secure/models/gemma-4-E2B-it
 MODEL_FILE="$MODEL_DIR/gemma-4-E2B-it-Q4_0.gguf"
 MODEL_PARTIAL="$MODEL_FILE.partial"
-test ! -L "$MODEL_DIR"
+
+fail() {
+  printf 'local smoke download blocked: %s\n' "$1" >&2
+  exit 1
+}
+
+[[ ! -L "$MODEL_DIR" ]] || fail 'model directory is a symlink'
 mkdir -p "$MODEL_DIR"
-test ! -e "$MODEL_FILE" && test ! -L "$MODEL_FILE"
-test ! -e "$MODEL_PARTIAL" && test ! -L "$MODEL_PARTIAL"
+[[ -d "$MODEL_DIR" && ! -L "$MODEL_DIR" ]] || fail 'model directory is not a regular directory'
+[[ ! -e "$MODEL_FILE" && ! -L "$MODEL_FILE" ]] || fail 'final model path already exists'
+[[ ! -e "$MODEL_PARTIAL" && ! -L "$MODEL_PARTIAL" ]] || fail 'partial model path already exists'
+
 curl --fail --location --proto '=https' --tlsv1.2 \
   --output "$MODEL_PARTIAL" \
   'https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf'
-test "$(wc -c < "$MODEL_PARTIAL" | tr -d ' ')" = '2841481184'
-printf '%s  %s\n' \
-  '8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52' \
-  "$MODEL_PARTIAL" | shasum -a 256 -c -
-mv "$MODEL_PARTIAL" "$MODEL_FILE"
+
+verify_model_file() {
+  local candidate="$1"
+  [[ -f "$candidate" && ! -L "$candidate" ]] || fail 'model is not a regular non-symlink file'
+  [[ "$(wc -c < "$candidate" | tr -d ' ')" == '2841481184' ]] || fail 'model size mismatch'
+  printf '%s  %s\n' \
+    '8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52' \
+    "$candidate" | shasum -a 256 -c -
+}
+
+verify_model_file "$MODEL_PARTIAL"
+ln "$MODEL_PARTIAL" "$MODEL_FILE"
+[[ "$MODEL_PARTIAL" -ef "$MODEL_FILE" ]] || fail 'no-replace publication was not the verified file'
+unlink "$MODEL_PARTIAL"
+[[ ! -e "$MODEL_PARTIAL" && ! -L "$MODEL_PARTIAL" ]] || fail 'partial name remains after publication'
+verify_model_file "$MODEL_FILE"
+printf 'local smoke model published and re-verified\n'
 ```
 
-If any step fails, leave the `.partial` file untrusted and do not rename or load it.
+If any step fails, the shell exits immediately. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation.
 
 ## 2. Run an operator-controlled loopback server
 
-Install and manage `llama-server` yourself. This skill does not download, install, update, daemonize, background, or stop it, and it does not pin a llama.cpp version. Probe the installed executable and fail if any required flag is missing. `--reasoning-budget` is optional: include `--reasoning-budget 0` only when this same help output lists it.
+Install and manage `llama-server` yourself. This skill does not download, install, update, daemonize, background, or stop it, and it does not pin a llama.cpp version. The single block below probes the installed executable, verifies the final model again, and starts the foreground server only if every preceding check succeeds. `--reasoning-budget` is optional: the Bash array includes `--reasoning-budget 0` only when this same help output lists it.
 
 ```bash
-LLAMA_HELP="$(llama-server --help)" || exit 1
+# local-smoke-server
+set -euo pipefail
+
+MODEL_FILE=/secure/models/gemma-4-E2B-it/gemma-4-E2B-it-Q4_0.gguf
+
+fail() {
+  printf 'local smoke server blocked: %s\n' "$1" >&2
+  exit 1
+}
+
+LLAMA_HELP="$(llama-server --help)"
 has_llama_flag() {
   printf '%s\n' "$LLAMA_HELP" | grep -Eq -- "(^|[[:space:],])${1}([=[:space:],]|$)"
 }
 for FLAG in --model --alias --host --port --ctx-size --parallel --no-mmproj --no-webui --log-disable --offline --no-slots --no-cache-prompt; do
-  has_llama_flag "$FLAG" || { printf 'required llama-server flag missing: %s\n' "$FLAG" >&2; exit 1; }
+  has_llama_flag "$FLAG" || fail "required llama-server flag is missing: $FLAG"
 done
-has_llama_flag --reasoning-budget \
-  && LLAMA_REASONING_FLAGS='--reasoning-budget 0' \
-  || LLAMA_REASONING_FLAGS=''
-```
-
-Immediately before launch, refuse a missing, non-regular, or symlinked final file and recheck its exact size and hash. Then run the server in the foreground with that verified local model path:
-
-```bash
-MODEL_FILE=/secure/models/gemma-4-E2B-it/gemma-4-E2B-it-Q4_0.gguf
-test -f "$MODEL_FILE" && test ! -L "$MODEL_FILE"
-test "$(wc -c < "$MODEL_FILE" | tr -d ' ')" = '2841481184'
+[[ -f "$MODEL_FILE" && ! -L "$MODEL_FILE" ]] || fail 'model is not a regular non-symlink file'
+[[ "$(wc -c < "$MODEL_FILE" | tr -d ' ')" == '2841481184' ]] || fail 'model size mismatch'
 printf '%s  %s\n' \
   '8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52' \
   "$MODEL_FILE" | shasum -a 256 -c -
-llama-server \
-  --model "$MODEL_FILE" \
-  --alias psfuzz-local \
-  --host 127.0.0.1 \
-  --port 8081 \
-  --ctx-size 8192 \
-  --parallel 1 \
-  --no-mmproj \
-  --no-webui \
-  --log-disable \
-  --offline \
-  --no-slots \
-  --no-cache-prompt \
-  $LLAMA_REASONING_FLAGS
+
+LLAMA_COMMAND=(
+  llama-server
+  --model "$MODEL_FILE"
+  --alias psfuzz-local
+  --host 127.0.0.1
+  --port 8081
+  --ctx-size 8192
+  --parallel 1
+  --no-mmproj
+  --no-webui
+  --log-disable
+  --offline
+  --no-slots
+  --no-cache-prompt
+)
+if has_llama_flag --reasoning-budget; then
+  LLAMA_COMMAND+=(--reasoning-budget 0)
+fi
+exec "${LLAMA_COMMAND[@]}"
 ```
 
 Do not enable tools, agent mode, MCP servers or proxies, slot persistence, model URL/repository download flags, TLS credential files, prompt logs, `tee`, or a `0.0.0.0` bind.
@@ -96,16 +127,32 @@ python3 - <<'PY'
 import json
 import urllib.request
 
+MAX_JSON_BYTES = 65536
+
 def get_json(url):
     with urllib.request.urlopen(url, timeout=10) as response:
         if response.status != 200:
             raise SystemExit("local smoke readiness failed")
-        return json.load(response)
+        raw = response.read(MAX_JSON_BYTES + 1)
+    if len(raw) > MAX_JSON_BYTES:
+        raise SystemExit("local smoke readiness response is too large")
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise SystemExit("local smoke readiness response is invalid") from None
+    if not isinstance(value, dict):
+        raise SystemExit("local smoke readiness response is not an object")
+    return value
 
 if get_json("http://127.0.0.1:8081/health") != {"status": "ok"}:
     raise SystemExit("local smoke health response is invalid")
 models = get_json("http://127.0.0.1:8081/v1/models").get("data")
-if not isinstance(models, list) or len(models) != 1 or models[0].get("id") != "psfuzz-local":
+if (
+    not isinstance(models, list)
+    or len(models) != 1
+    or not isinstance(models[0], dict)
+    or models[0].get("id") != "psfuzz-local"
+):
     raise SystemExit("local smoke model alias is invalid")
 print("local smoke readiness passed")
 PY
@@ -117,6 +164,8 @@ Only after a separate explicit approval, send at most one harmless chat completi
 python3 - <<'PY'
 import json
 import urllib.request
+
+MAX_JSON_BYTES = 1048576
 
 request = urllib.request.Request(
     "http://127.0.0.1:8081/v1/chat/completions",
@@ -131,7 +180,15 @@ request = urllib.request.Request(
 with urllib.request.urlopen(request, timeout=60) as response:
     if response.status != 200:
         raise SystemExit("local completion failed")
-    body = json.load(response)
+    raw = response.read(MAX_JSON_BYTES + 1)
+if len(raw) > MAX_JSON_BYTES:
+    raise SystemExit("local completion response is too large")
+try:
+    body = json.loads(raw.decode("utf-8"))
+except (UnicodeDecodeError, json.JSONDecodeError):
+    raise SystemExit("local completion response is invalid") from None
+if not isinstance(body, dict):
+    raise SystemExit("local completion response is not an object")
 choices = body.get("choices")
 valid_shape = (
     isinstance(choices, list)
@@ -162,11 +219,10 @@ OPENAI_API_KEY=local-loopback-no-auth python3 scripts/ps_fuzz_runner.py prefligh
   --approved-target-url http://127.0.0.1:8081/v1 \
   --attack-base-url http://127.0.0.1:8081/v1 \
   --approved-attack-url http://127.0.0.1:8081/v1 \
-  --tests '["system_prompt_stealer"]' \
-  --attempts 1 --threads 1 --attack-temperature 0.2
+  --tests '["system_prompt_stealer"]'
 ```
 
-Preflight is an offline configuration preview; it does not call the server or replace the readiness checks above. The active run remains separately confirmation-gated.
+Preflight is an offline configuration preview; it does not call the server or replace the readiness checks above. Attempts, threads, and attack temperature are run-only controls and are intentionally omitted from this preview. The active run remains separately confirmation-gated.
 
 After checking that preview and obtaining a fresh authorization, run one attempt against the packaged synthetic prompt and a new output directory:
 
