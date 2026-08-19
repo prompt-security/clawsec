@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-08-18T03:31:55.243Z",
+  "updated_at": "2026-08-19T03:32:44.093Z",
   "daily": {
     "views": [
       {
@@ -414,6 +414,16 @@
         "timestamp": "2026-08-15T00:00:00Z",
         "count": 20,
         "uniques": 13
+      },
+      {
+        "timestamp": "2026-08-16T00:00:00Z",
+        "count": 25,
+        "uniques": 14
+      },
+      {
+        "timestamp": "2026-08-17T00:00:00Z",
+        "count": 30,
+        "uniques": 19
       }
     ],
     "clones": [
@@ -826,6 +836,16 @@
         "timestamp": "2026-08-15T00:00:00Z",
         "count": 242,
         "uniques": 46
+      },
+      {
+        "timestamp": "2026-08-16T00:00:00Z",
+        "count": 357,
+        "uniques": 38
+      },
+      {
+        "timestamp": "2026-08-17T00:00:00Z",
+        "count": 93,
+        "uniques": 44
       }
     ]
   },
@@ -4691,6 +4711,62 @@
           {
             "referrer": "statics.teams.cdn.office.net",
             "count": 2,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-08-19T03:32:44.093Z",
+        "date": "2026-08-19",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 139,
+            "uniques": 81
+          },
+          {
+            "referrer": "Google",
+            "count": 58,
+            "uniques": 46
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 38,
+            "uniques": 23
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 8,
+            "uniques": 4
+          },
+          {
+            "referrer": "Bing",
+            "count": 7,
+            "uniques": 5
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 4,
+            "uniques": 1
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "statics.teams.cdn.office.net",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "Baidu",
+            "count": 1,
             "uniques": 1
           }
         ]
@@ -9250,6 +9326,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-08-19T03:32:44.093Z",
+        "date": "2026-08-19",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 279,
+            "uniques": 207
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 20,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 17,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 8,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 8,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 6,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/hermes-attestation-guardian",
+            "title": "/blob/main/skills/hermes-attestation-guardian",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills/soul-guardian",
+            "title": "/tree/main/skills/soul-guardian",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/README.md",
+            "title": "/blob/main/README.md",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/wiki",
+            "title": "/tree/main/wiki",
+            "count": 2,
+            "uniques": 2
+          }
+        ]
       }
     ]
   },
@@ -10080,6 +10222,18 @@
       "clones_window": {
         "count": 2527,
         "uniques": 627
+      }
+    },
+    {
+      "captured_at": "2026-08-19T03:32:44.093Z",
+      "date": "2026-08-19",
+      "views_window": {
+        "count": 393,
+        "uniques": 237
+      },
+      "clones_window": {
+        "count": 2179,
+        "uniques": 583
       }
     }
   ]
