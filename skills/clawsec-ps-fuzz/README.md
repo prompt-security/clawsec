@@ -43,7 +43,7 @@ npx clawhub@latest install clawsec-ps-fuzz
 
 ## Safe scope
 
-- Python 3.9+, `venv`, and `pip` are needed. Source provisioning also needs `git`.
+- The reviewed runtime is CPython 3.9 through 3.11 with `venv` and `pip`: Windows AMD64; glibc 2.28+ Linux x86_64/aarch64; or macOS 14+ arm64. Source provisioning also needs `git`.
 - The reviewed provider scope is static: `open_ai` (including OpenAI-compatible base URLs) and `ollama`. There is no generic agent HTTP adapter, MCP execution, tool invocation, or arbitrary endpoint adapter.
 - Preflight is ungated and makes no writes or network calls. Provision and run each require a fresh authorization ID and their own confirmation flag.
 - The wrapper copies the system prompt only into a temporary workspace. Upstream configuration and `.env` discovery are isolated from the project. It never creates, changes, prints, or persists `.env` files.
@@ -86,6 +86,10 @@ python3 scripts/ps_fuzz_runner.py run \
 ```
 
 Use `--source source` only where `git` is available. The manifest, source commit, wheel hash, dependency lock, capability snapshot, and tests are one reviewed unit: a future ps-fuzz update must change and review all of them together.
+
+### Optional local-first smoke
+
+Before authorizing a real endpoint, use the [pinned local Gemma smoke guide](resources/local-smoke.md) with its [harmless synthetic prompt](resources/local-smoke-system-prompt.txt). It keeps `llama-server` user-installed and user-controlled, pins the model artifact by immutable revision, size, and SHA-256, and exercises one small redacted wrapper run over loopback. This is a connectivity/isolation check, not a security evaluation.
 
 ## Endpoint and RAG boundaries
 

@@ -53,7 +53,7 @@ npx clawhub@latest install clawsec-ps-fuzz
 
 - Require an explicit user authorization ID for provisioning and a fresh authorization ID for every active run.
 - `preflight` is deliberately ungated: it only checks local Python/`venv`/`pip`, selected reviewed capabilities, and credential presence. It makes no writes and no network calls.
-- Python 3.9+, `venv`, and `pip` are required. `--source source` additionally requires `git`.
+- The reviewed runtime is CPython 3.9 through 3.11 with `venv` and `pip`: Windows AMD64; glibc 2.28+ Linux x86_64/aarch64; or macOS 14+ arm64. `--source source` additionally requires `git`.
 - Do not use this skill where the harness cannot run approved local commands; provide the preflight guidance instead.
 
 The capability snapshot intentionally permits only static reviewed `open_ai` (including OpenAI-compatible endpoints) and `ollama` direct-model modes. There is no generic agent HTTP adapter, MCP execution, tool invocation, arbitrary agent API, real vector-store adapter, remediation, persistence, or scheduled scanning.
@@ -103,6 +103,10 @@ python3 scripts/ps_fuzz_runner.py run \
 ```
 
 The wrapper writes only redacted `run.json` and a Markdown summary to the selected output directory. It copies the system prompt into a temporary workspace, uses temporary `HOME`/XDG paths, and prevents upstream persistent configuration and `.env` discovery from touching the user project. It does not create, edit, print, or persist `.env`; do not enable debug logging or a custom benchmark.
+
+### Optional local-first smoke
+
+Before authorizing any real endpoint, follow the [local smoke guide](resources/local-smoke.md) with the packaged [synthetic system prompt](resources/local-smoke-system-prompt.txt). The guide pins an instruction-tuned Gemma Q4_0 artifact by immutable revision, exact size, and SHA-256; keeps `llama-server` user-installed and user-controlled; and limits the wrapper to one loopback `system_prompt_stealer` attempt. It validates plumbing and redaction only, not model security.
 
 ## Custom URLs and RAG disclosure
 

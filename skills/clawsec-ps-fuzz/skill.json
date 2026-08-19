@@ -54,6 +54,21 @@
         "description": "Reviewed ps-fuzz v2.1.0 capability snapshot"
       },
       {
+        "path": "resources/local-smoke-model.json",
+        "required": true,
+        "description": "Pinned local Gemma smoke-model identity, artifact hash, size, and loopback alias"
+      },
+      {
+        "path": "resources/local-smoke-system-prompt.txt",
+        "required": true,
+        "description": "Harmless synthetic system prompt for the optional local smoke"
+      },
+      {
+        "path": "resources/local-smoke.md",
+        "required": true,
+        "description": "Operator-controlled local model download, server, readiness, and wrapper smoke guide"
+      },
+      {
         "path": "resources/requirements.in",
         "required": true,
         "description": "Reviewed direct dependency inputs"
