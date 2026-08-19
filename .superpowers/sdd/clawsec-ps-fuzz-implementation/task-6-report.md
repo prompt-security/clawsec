@@ -218,7 +218,8 @@ size check, or hash pipeline could therefore continue to `mv` or launch, and
 plain `mv` could overwrite a final path raced into place. Review also required
 one combined help/verification/launch block, a quoted Bash array for the
 optional reasoning flags, executable offline behavior tests, and removal of
-run-only controls from the preflight preview.
+attempts and threads from the preflight preview. The round-one implementation
+also removed attack temperature; fix round 2 below corrects that regression.
 
 This section supersedes the initial self-review statement that the old `mv`
 flow safely renamed the artifact.
@@ -277,9 +278,10 @@ Ran 7 tests in 0.006s
 FAILED (failures=1)
 ```
 
-These were the intended failures: the guide lacked executable marked strict
-blocks, the preflight example still included run-only controls, and the SBOM
-did not authenticate the new offline test.
+These were the intended failures under the round-one test: the guide lacked
+executable marked strict blocks, the preflight example still included attempts
+and threads, and the SBOM did not authenticate the new offline test. That test
+also misclassified attack temperature as run-only; fix round 2 corrects it.
 
 ### GREEN iteration and Bash 3.2 correction
 
@@ -402,9 +404,9 @@ release, syntax, and static-shell validation gates.
 - The nonempty command array prevents Bash 3.2 empty-array/unbound behavior,
   quotes every expansion, and ignores hostile ambient `MODEL_FILE` and optional
   flag variables. `--no-slots` and `--no-cache-prompt` remain mandatory.
-- Preflight retains both exact `open_ai`/`psfuzz-local` roles, selectors, and all
-  four base/approval URLs while omitting attempts, threads, and temperature.
-  The active run retains attempts 1, threads 1, and temperature 0.2 exactly.
+- Preflight retains both exact `open_ai`/`psfuzz-local` roles, selectors, all
+  four base/approval URLs, and temperature 0.2 while omitting only attempts and
+  threads. The active run retains attempts 1, threads 1, and temperature 0.2.
 - Readiness and optional-completion parsing now cap response bytes, decode UTF-8
   and JSON explicitly, and require top-level objects; model entry type is
   checked before reading the exact alias.
@@ -422,3 +424,83 @@ Changed fix-round files:
 Concern remains only the controller-owned context-free fresh-agent forward
 test, which the task explicitly schedules after this fix. No model/server or
 provider smoke was performed, by design.
+
+## Fix round 2: restore preflight attack-temperature validation
+
+Review confirmed the round-one shell fixes and identified one narrow
+documentation/test regression: `preflight` accepts, validates, and reports
+`attack_temperature`; only attempts and threads are run-only.
+
+### RED
+
+I first changed only the focused contract to require exactly one
+`--attack-temperature 0.2` in the preflight block while continuing to reject
+`--attempts` and `--threads` there.
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_local_smoke.py LocalSmokeShellTests.test_preflight_example_validates_temperature_but_omits_run_only_attempt_controls
+
+test_preflight_example_validates_temperature_but_omits_run_only_attempt_controls ... FAIL
+
+======================================================================
+FAIL: test_preflight_example_validates_temperature_but_omits_run_only_attempt_controls
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "skills/clawsec-ps-fuzz/test/test_local_smoke.py", line 258, in test_preflight_example_validates_temperature_but_omits_run_only_attempt_controls
+    self.assertEqual(re.findall(r"--attack-temperature\s+(\S+)", block), ["0.2"])
+AssertionError: Lists differ: [] != ['0.2']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.003s
+
+FAILED (failures=1)
+```
+
+### GREEN implementation
+
+The guide now restores exact `--attack-temperature 0.2` in preflight. Its prose
+states that preflight validates/reports that value and that only attempts and
+threads are run-only. The active-run command remains unchanged.
+
+The focused test name and assertion now describe the real runner contract:
+temperature must occur once with literal value `0.2`; attempts and threads must
+not occur in the preflight fence.
+
+### Fix-round 2 verification
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_local_smoke.py LocalSmokeShellTests.test_preflight_example_validates_temperature_but_omits_run_only_attempt_controls
+Ran 1 test in 0.002s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_local_smoke.py
+Ran 5 tests in 2.551s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_package_contract.py
+Ran 7 tests in 0.008s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_ps_fuzz_runner.py
+Ran 45 tests in 0.425s
+OK
+
+python3 -m py_compile skills/clawsec-ps-fuzz/test/test_local_smoke.py
+(no output; exit 0)
+
+python3 -c 'import pathlib,re; text=pathlib.Path("skills/clawsec-ps-fuzz/resources/local-smoke.md").read_text(); snippets=re.findall(r"python3 - <<.PY.\n(.*?)\nPY", text, re.S); assert len(snippets)==2, len(snippets); [compile(s, "local-smoke.md", "exec") for s in snippets]; print("local smoke Python snippets compile: 2")'
+local smoke Python snippets compile: 2
+
+python3 -c 'import pathlib,re,subprocess; text=pathlib.Path("skills/clawsec-ps-fuzz/resources/local-smoke.md").read_text(); snippets=re.findall(r"```bash\n(.*?)\n```", text, re.S); assert len(snippets)==6, len(snippets); [subprocess.run(["bash", "-n"], input=s, text=True, check=True) for s in snippets]; print("local smoke shell snippets parse: 6")'
+local smoke shell snippets parse: 6
+
+python3 -c 'import pathlib,re,subprocess; text=pathlib.Path("skills/clawsec-ps-fuzz/resources/local-smoke.md").read_text(); blocks=re.findall(r"```bash\n(.*?)\n```", text, re.S); results=[subprocess.run(["shellcheck","-s","bash","-"],input=block,text=True,capture_output=True) for block in blocks]; assert all(result.returncode == 0 for result in results), [(result.stdout,result.stderr) for result in results if result.returncode]; print(f"shellcheck blocks passed: {len(blocks)}")'
+shellcheck blocks passed: 6
+
+git diff --check
+(no output; exit 0)
+```
+
+Fix round 2 changes only the guide, its focused offline test, and this report.
+The shell flows, active-run arguments, SBOM, and all other Task 6 resources are
+unchanged. The controller-owned fresh-agent forward test remains pending.

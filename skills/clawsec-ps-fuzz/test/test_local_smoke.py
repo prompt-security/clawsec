@@ -246,8 +246,8 @@ class LocalSmokeShellTests(unittest.TestCase):
                 self.assertNotIn("0.0.0.0", launch)
                 self.assertEqual("--reasoning-budget 0" in launch, expected_reasoning)
 
-    def test_preflight_example_omits_run_only_attempt_controls(self) -> None:
-        """The offline preflight preview must not imply it validates run-only attempt controls."""
+    def test_preflight_example_validates_temperature_but_omits_run_only_attempt_controls(self) -> None:
+        """Preflight must validate exact temperature while leaving attempts/threads to the active run."""
         block = next(
             value
             for value in re.findall(r"```bash\n(.*?)\n```", guide(), flags=re.DOTALL)
@@ -255,7 +255,7 @@ class LocalSmokeShellTests(unittest.TestCase):
         )
         self.assertNotIn("--attempts", block)
         self.assertNotIn("--threads", block)
-        self.assertNotIn("--attack-temperature", block)
+        self.assertEqual(re.findall(r"--attack-temperature\s+(\S+)", block), ["0.2"])
 
 
 if __name__ == "__main__":

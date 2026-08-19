@@ -219,10 +219,11 @@ OPENAI_API_KEY=local-loopback-no-auth python3 scripts/ps_fuzz_runner.py prefligh
   --approved-target-url http://127.0.0.1:8081/v1 \
   --attack-base-url http://127.0.0.1:8081/v1 \
   --approved-attack-url http://127.0.0.1:8081/v1 \
-  --tests '["system_prompt_stealer"]'
+  --tests '["system_prompt_stealer"]' \
+  --attack-temperature 0.2
 ```
 
-Preflight is an offline configuration preview; it does not call the server or replace the readiness checks above. Attempts, threads, and attack temperature are run-only controls and are intentionally omitted from this preview. The active run remains separately confirmation-gated.
+Preflight is an offline configuration preview; it does not call the server or replace the readiness checks above. It validates and reports attack temperature 0.2. Attempts and threads are run-only controls and are intentionally omitted from this preview. The active run remains separately confirmation-gated.
 
 After checking that preview and obtaining a fresh authorization, run one attempt against the packaged synthetic prompt and a new output directory:
 
