@@ -504,3 +504,43 @@ git diff --check
 Fix round 2 changes only the guide, its focused offline test, and this report.
 The shell flows, active-run arguments, SBOM, and all other Task 6 resources are
 unchanged. The controller-owned fresh-agent forward test remains pending.
+
+## Controller fresh-agent documentation forward test
+
+After commit `2ee2fc8`, the controller gave a fresh agent only the completed
+skill, its directly linked local-smoke guide, manifest, and synthetic prompt.
+It was asked to replace the supplied public-bind Qwen3-VL script with a safe
+local-first ps-fuzz smoke, without using parent context, repository history, the
+internet, or executing any model/download/server/provider action.
+
+The agent reproduced all material operator boundaries from the finished guide:
+
+- exact instruction-tuned model, GGUF repository, immutable revision,
+  filename, 2,841,481,184-byte size, SHA-256, URL, license, and explicit
+  pre-download approval;
+- `.partial` download, exact size/hash verification, hard-link no-replace
+  publication, partial unlink, and final re-verification;
+- operator-owned `llama-server`, exact help-probed flags, foreground loopback
+  launch, one slot, 8192 context, no projector/web UI/logs/online model access,
+  no slots endpoint/prompt cache, and conditional zero reasoning budget;
+- exact health response and single `psfuzz-local` model-ID readiness checks,
+  followed by at most one separately approved harmless completion whose body
+  is discarded;
+- inline `local-loopback-no-auth`, both roles as `open_ai/psfuzz-local`, all
+  four exact loopback base/approval URLs, synthetic prompt, fresh run
+  authorization, one attempt/thread, temperature 0.2, external dedicated state
+  root, and new output directory;
+- why the old `0.0.0.0`/`tee`/F16 vision/projector/32K/two-slot Qwen shape is
+  not the default;
+- the same-model plumbing-only interpretation, fresh authorization before a
+  real endpoint, and separate synthetic-only RAG boundary.
+
+It identified one nonblocking operational caveat rather than inventing a
+guarantee: the guide does not perform a disk-capacity check before the 2.84 GB
+download. The exact size is presented before approval, and a capacity failure
+leaves the partial untrusted and cannot publish it, so this does not weaken the
+integrity or authorization contract.
+
+Result: forward test passed. A context-free agent produced the intended safe
+local workflow and did not add model/server lifecycle automation, a real
+endpoint, RAG, persistent credentials, logging, or broader exposure.
