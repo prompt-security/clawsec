@@ -220,52 +220,28 @@ async function startArtifactFixtureServer(rootDir) {
   };
 }
 
-for (const { label, options, expectedMessage } of [
-  {
-    label: "NaN attempts",
-    options: { attempts: Number.NaN },
-    expectedMessage: /attempts must be a finite positive integer/,
-  },
-  {
-    label: "fractional attempts",
-    options: { attempts: 1.5 },
-    expectedMessage: /attempts must be a finite positive integer/,
-  },
-  {
-    label: "zero attempts",
-    options: { attempts: 0 },
-    expectedMessage: /attempts must be a finite positive integer/,
-  },
-  {
-    label: "negative retry delay",
-    options: { retryDelayMs: -1 },
-    expectedMessage: /retryDelayMs must be a finite non-negative number/,
-  },
-  {
-    label: "infinite retry delay",
-    options: { retryDelayMs: Number.POSITIVE_INFINITY },
-    expectedMessage: /retryDelayMs must be a finite non-negative number/,
-  },
-  {
-    label: "shrinking retry factor",
-    options: { retryBackoffFactor: 0.5 },
-    expectedMessage: /retryBackoffFactor must be a finite number greater than or equal to 1/,
-  },
-  {
-    label: "infinite retry factor",
-    options: { retryBackoffFactor: Number.POSITIVE_INFINITY },
-    expectedMessage: /retryBackoffFactor must be a finite number greater than or equal to 1/,
-  },
-  {
-    label: "negative retry cap",
-    options: { maxRetryDelayMs: -1 },
-    expectedMessage: /maxRetryDelayMs must be a finite non-negative number/,
-  },
-  {
-    label: "NaN retry cap",
-    options: { maxRetryDelayMs: Number.NaN },
-    expectedMessage: /maxRetryDelayMs must be a finite non-negative number/,
-  },
+for (const [label, options, expectedMessage] of [
+  ["NaN attempts", { attempts: Number.NaN }, /attempts must be a finite positive integer/],
+  ["fractional attempts", { attempts: 1.5 }, /attempts must be a finite positive integer/],
+  ["zero attempts", { attempts: 0 }, /attempts must be a finite positive integer/],
+  ["negative retry delay", { retryDelayMs: -1 }, /retryDelayMs must be a finite non-negative number/],
+  [
+    "infinite retry delay",
+    { retryDelayMs: Number.POSITIVE_INFINITY },
+    /retryDelayMs must be a finite non-negative number/,
+  ],
+  [
+    "shrinking retry factor",
+    { retryBackoffFactor: 0.5 },
+    /retryBackoffFactor must be a finite number greater than or equal to 1/,
+  ],
+  [
+    "infinite retry factor",
+    { retryBackoffFactor: Number.POSITIVE_INFINITY },
+    /retryBackoffFactor must be a finite number greater than or equal to 1/,
+  ],
+  ["negative retry cap", { maxRetryDelayMs: -1 }, /maxRetryDelayMs must be a finite non-negative number/],
+  ["NaN retry cap", { maxRetryDelayMs: Number.NaN }, /maxRetryDelayMs must be a finite non-negative number/],
 ]) {
   let verificationAttempts = 0;
   let sleepCalls = 0;
