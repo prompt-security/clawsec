@@ -263,6 +263,36 @@ class LocalSmokeShellTests(unittest.TestCase):
         self.assertEqual(self.log_lines(), [])
         self.assertEqual(self.staging_dirs(), [])
 
+    def test_download_uses_gnu_stat_on_linux_instead_of_a_successful_bsd_stat_probe(self) -> None:
+        """GNU stat -f must not be mistaken for the BSD owner/mode interface on Linux."""
+        write_executable(
+            self.bin / "uname",
+            r"""
+            #!/usr/bin/env bash
+            printf 'Linux\n'
+            """,
+        )
+        write_executable(
+            self.bin / "stat",
+            r"""
+            #!/usr/bin/env bash
+            set -euo pipefail
+            if [[ "$1" == '-f' ]]; then
+              printf 'not-a-user-id\n'
+              exit 0
+            fi
+            [[ "$1" == '-c' ]]
+            if [[ "$2" == '%u' ]]; then
+              id -u
+            else
+              printf '700\n'
+            fi
+            """,
+        )
+        result = self.run_script("# local-smoke-download")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.log_lines(), ["curl", "hash-1", "hash-2"])
+
     def test_download_uses_a_private_staging_directory_and_bounded_hardened_curl(self) -> None:
         """The download is isolated in a fresh private stage and cannot exceed the reviewed artifact size."""
         result = self.run_script("# local-smoke-download")

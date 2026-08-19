@@ -34,11 +34,19 @@ fail() {
 }
 
 directory_owner() {
-  stat -f '%u' "$1" 2>/dev/null || stat -c '%u' "$1"
+  case "$(uname -s)" in
+    Darwin|FreeBSD|NetBSD|OpenBSD) stat -f '%u' "$1" ;;
+    Linux) stat -c '%u' "$1" ;;
+    *) fail 'unsupported POSIX stat implementation' ;;
+  esac
 }
 
 directory_mode() {
-  stat -f '%Lp' "$1" 2>/dev/null || stat -c '%a' "$1"
+  case "$(uname -s)" in
+    Darwin|FreeBSD|NetBSD|OpenBSD) stat -f '%Lp' "$1" ;;
+    Linux) stat -c '%a' "$1" ;;
+    *) fail 'unsupported POSIX stat implementation' ;;
+  esac
 }
 
 require_private_directory() {
@@ -91,7 +99,7 @@ verify_model_file "$MODEL_FILE"
 printf 'local smoke model published and re-verified\n'
 ```
 
-If any step fails, the shell exits immediately and removes only its fresh staging directory. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation. The POSIX `stat` fallback supports macOS/BSD and GNU/Linux; filesystems that cannot safely hard-link, preserve mode 0700, or provide reliable ownership metadata are unsupported by this workflow.
+If any step fails, the shell exits immediately and removes only its fresh staging directory. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation. The OS-specific `stat` handling supports macOS/BSD and GNU/Linux; filesystems that cannot safely hard-link, preserve mode 0700, or provide reliable ownership metadata are unsupported by this workflow.
 
 ## 2. Run an operator-controlled loopback server
 
