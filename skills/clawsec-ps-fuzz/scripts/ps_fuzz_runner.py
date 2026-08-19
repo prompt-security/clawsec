@@ -13,7 +13,6 @@ import json
 import math
 import os
 from pathlib import Path
-import platform
 import re
 import subprocess
 import sys
@@ -311,22 +310,6 @@ def _selected_python_version(python_executable: str, command: Command = _run_com
     return int(runtime["major"]), int(runtime["minor"])
 
 
-def _default_python_runtime(python_version: tuple[int, int]) -> dict[str, object]:
-    """Supply host identity only for direct, offline unit calls; public CLI probes --python."""
-    libc = platform.libc_ver()
-    macos = platform.mac_ver()
-    return {
-        "implementation": platform.python_implementation(),
-        "major": python_version[0],
-        "minor": python_version[1],
-        "system": platform.system(),
-        "machine": platform.machine(),
-        "libc": libc[0],
-        "libc_version": libc[1],
-        "macos_version": macos[0],
-    }
-
-
 def _native_version_at_least(value: str, minimum: tuple[int, int]) -> bool:
     """Require a simple native-platform major.minor version without echoing it."""
     match = re.fullmatch(r"([0-9]+)\.([0-9]+)(?:\.[0-9]+)?", value)
@@ -334,7 +317,7 @@ def _native_version_at_least(value: str, minimum: tuple[int, int]) -> bool:
 
 
 def _runtime_support(
-    manifest: Mapping[str, object], python_version: tuple[int, int], python_runtime: Mapping[str, object] | None
+    manifest: Mapping[str, object], python_version: tuple[int, int], python_runtime: Mapping[str, object]
 ) -> dict[str, object]:
     """Validate one selected runtime against the pinned binary-wheel support envelope."""
     python = _manifest_section(manifest, "python")
@@ -352,7 +335,7 @@ def _runtime_support(
     except (AssertionError, KeyError, TypeError, ValueError) as exc:
         raise ProvisionError("upstream manifest has an invalid Python support boundary") from exc
 
-    runtime = python_runtime if python_runtime is not None else _default_python_runtime(python_version)
+    runtime = python_runtime
     try:
         runtime_implementation = runtime["implementation"]
         runtime_major = runtime["major"]
@@ -451,6 +434,9 @@ def preflight(
     if source not in {"wheel", "source"}:
         raise ProvisionError("--source must be either wheel or source")
 
+    if python_runtime is None:
+        python_runtime = _selected_python_runtime(python_executable, command)
+        python_version = (int(python_runtime["major"]), int(python_runtime["minor"]))
     python_support = _runtime_support(manifest, python_version, python_runtime)
 
     _require_success(command([python_executable, "-m", "venv", "--help"]), "Python venv capability check")

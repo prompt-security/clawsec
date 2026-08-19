@@ -124,6 +124,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 source="wheel",
                 python_executable="python3",
                 python_version=(3, 8),
+                python_runtime=selected_runtime(minor=8),
                 command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
             )
 
@@ -133,6 +134,7 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 source="wheel",
                 python_executable="python3",
                 python_version=(3, 12),
+                python_runtime=selected_runtime(minor=12),
                 command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
             )
 
@@ -173,6 +175,74 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 python_runtime=selected_runtime(),
                 command=missing_pip,
             )
+
+    def test_direct_provision_probes_omitted_runtime_before_state_write(self) -> None:
+        """A direct caller cannot substitute wrapper identity for --python's runtime."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        calls: list[list[str]] = []
+        selected_executable = "selected-python-312"
+
+        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(args)
+            if args == [selected_executable, "-c", runner.PYTHON_VERSION_PROBE]:
+                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=12)) + "\n", "")
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
+            with self.assertRaisesRegex(runner.ProvisionError, "unsupported Python 3.12"):
+                runner.provision(
+                    manifest,
+                    state_root=state_root,
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable=selected_executable,
+                    python_version=(3, 11),
+                    command=command,
+                    downloader=lambda _url, _destination: self.fail("unsupported interpreter reached download"),
+                )
+            self.assertEqual(calls, [[selected_executable, "-c", runner.PYTHON_VERSION_PROBE]])
+            self.assertFalse(state_root.exists())
+
+    def test_preflight_accepts_every_reviewed_cpython_native_wheel_matrix(self) -> None:
+        """Every recorded CPython/native-wheel support cell remains usable."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        platform_cases = (
+            (
+                "windows-amd64",
+                {"system": "Windows", "machine": "AMD64", "libc": "", "libc_version": "", "macos_version": ""},
+            ),
+            (
+                "linux-glibc-2.28+-x86_64",
+                {"system": "Linux", "machine": "x86_64", "libc": "glibc", "libc_version": "2.28"},
+            ),
+            (
+                "linux-glibc-2.28+-aarch64",
+                {"system": "Linux", "machine": "aarch64", "libc": "glibc", "libc_version": "2.28"},
+            ),
+            (
+                "macos-14+-arm64",
+                {"system": "Darwin", "machine": "arm64", "libc": "", "libc_version": "", "macos_version": "14.0"},
+            ),
+        )
+
+        for minor in (9, 10, 11):
+            for expected_platform, runtime_overrides in platform_cases:
+                with self.subTest(python=f"3.{minor}", platform=expected_platform):
+                    inspection = runner.preflight(
+                        manifest,
+                        source="wheel",
+                        python_executable="selected-python",
+                        python_version=(3, minor),
+                        python_runtime=selected_runtime(minor=minor, **runtime_overrides),
+                        command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                    )
+                    self.assertEqual(
+                        inspection["python_support"]["selected_native_wheel_platform"], expected_platform
+                    )
 
     def test_cli_rejects_non_cpython_and_unsupported_native_wheels_before_state_write(self) -> None:
         """The selected interpreter must match the reviewed wheel support envelope."""
