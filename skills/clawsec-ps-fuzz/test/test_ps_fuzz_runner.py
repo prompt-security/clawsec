@@ -55,6 +55,16 @@ def selected_runtime(
     }
 
 
+class OsNameView:
+    """Expose one test platform name without mutating pathlib's process-wide os module."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(os, name)
+
+
 def fake_runtime_probe(
     args: list[str], runtime: dict[str, object] | None = None
 ) -> subprocess.CompletedProcess[str] | None:
@@ -305,10 +315,6 @@ class PsFuzzProvisioningTests(unittest.TestCase):
         manifest = runner.load_manifest(MANIFEST)
         platform_cases = (
             (
-                "windows-amd64",
-                {"system": "Windows", "machine": "AMD64", "libc": "", "libc_version": "", "macos_version": ""},
-            ),
-            (
                 "linux-glibc-2.28+-x86_64",
                 {"system": "Linux", "machine": "x86_64", "libc": "glibc", "libc_version": "2.28"},
             ),
@@ -336,6 +342,64 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     self.assertEqual(
                         inspection["python_support"]["selected_native_wheel_platform"], expected_platform
                     )
+
+    def test_preflight_reports_windows_runtime_unsupported_without_capability_probes(self) -> None:
+        """Windows remains inspection-only and reports that its unverified ACL boundary is unsupported."""
+        runner = load_runner()
+        calls: list[list[str]] = []
+
+        with self.assertRaisesRegex(runner.ProvisionError, "unsupported native-wheel platform"):
+            runner.preflight(
+                runner.load_manifest(MANIFEST),
+                source="wheel",
+                python_executable=sys.executable,
+                python_version=(3, 11),
+                python_runtime=selected_runtime(
+                    system="Windows",
+                    machine="AMD64",
+                    libc="",
+                    libc_version="",
+                    macos_version="",
+                ),
+                command=lambda args, **_kwargs: calls.append(args)
+                or subprocess.CompletedProcess(args, 0, "", ""),
+            )
+        self.assertEqual(calls, [])
+
+    def test_provision_fails_closed_on_windows_after_authorization_and_before_state_write(self) -> None:
+        """A mutating provision cannot rely on unverified Windows state-root ACL privacy."""
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        original_os = runner.os
+        with tempfile.TemporaryDirectory() as td:
+            state_root = approved_state_root(Path(td))
+            runner.os = OsNameView("nt")
+            try:
+                with self.assertRaisesRegex(runner.ProvisionError, "confirm-authorized-provision"):
+                    runner.provision(
+                        manifest,
+                        state_root=state_root,
+                        source="wheel",
+                        confirm_authorized_provision=False,
+                        authorization_id="AUTH-42",
+                        python_executable=sys.executable,
+                        python_version=(3, 11),
+                        command=lambda *_args, **_kwargs: self.fail("unauthorized provision reached a command"),
+                    )
+                with self.assertRaisesRegex(runner.ProvisionError, "Windows.*ACL privacy"):
+                    runner.provision(
+                        manifest,
+                        state_root=state_root,
+                        source="wheel",
+                        confirm_authorized_provision=True,
+                        authorization_id="AUTH-42",
+                        python_executable=sys.executable,
+                        python_version=(3, 11),
+                        command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 1, "", ""),
+                    )
+            finally:
+                runner.os = original_os
+            self.assertFalse(state_root.exists())
 
     def test_cli_rejects_non_cpython_and_unsupported_native_wheels_before_state_write(self) -> None:
         """The selected interpreter must match the reviewed wheel support envelope."""
@@ -475,7 +539,6 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 "implementation": "CPython",
                 "supported_versions": ["3.9", "3.10", "3.11"],
                 "native_wheel_platforms": [
-                    "windows-amd64",
                     "linux-glibc-2.28+-x86_64",
                     "linux-glibc-2.28+-aarch64",
                     "macos-14+-arm64",
@@ -1577,6 +1640,44 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             kwargs.update({"target_base_url": "https://target.example/v1", "approved_target_url": "https://target.example/v1"})
             with self.assertRaisesRegex(runner.ProvisionError, "approved-attack-url"):
                 runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+
+    def test_orphan_target_or_attack_approval_is_rejected_before_prompt_or_output_access(self) -> None:
+        runner = load_runner()
+        with tempfile.TemporaryDirectory() as td:
+            for role in ("target", "attack"):
+                with self.subTest(role=role):
+                    root = Path(td) / role
+                    root.mkdir()
+                    kwargs = self._run_kwargs(root)
+                    kwargs[f"approved_{role}_url"] = f"https://{role}.example/v1"
+                    Path(kwargs["system_prompt_file"]).unlink()
+                    with self.assertRaisesRegex(runner.ProvisionError, f"approved-{role}-url.*only with"):
+                        runner.run(
+                            runner.load_manifest(MANIFEST),
+                            runner.load_capabilities(),
+                            command=lambda *_args, **_kwargs: self.fail("orphan approval reached the fuzzer"),
+                            **kwargs,
+                        )
+                    self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+    def test_run_fails_closed_on_windows_after_authorization_and_before_prompt_access(self) -> None:
+        runner = load_runner()
+        original_os = runner.os
+        with tempfile.TemporaryDirectory() as td:
+            kwargs = self._run_kwargs(Path(td))
+            Path(kwargs["system_prompt_file"]).unlink()
+            runner.os = OsNameView("nt")
+            try:
+                kwargs["confirm_authorized_test"] = False
+                with self.assertRaisesRegex(runner.ProvisionError, "confirm-authorized-test"):
+                    runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+                kwargs["confirm_authorized_test"] = True
+                with self.assertRaisesRegex(runner.ProvisionError, "Windows.*ACL privacy") as raised:
+                    runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
+            finally:
+                runner.os = original_os
+            self.assertNotIn("system-prompt-file", str(raised.exception))
+            self.assertFalse(Path(kwargs["output_dir"]).exists())
 
     def test_boolean_attempts_or_threads_fail_before_prompt_or_output_access(self) -> None:
         runner = load_runner()

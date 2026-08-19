@@ -159,7 +159,6 @@ def load_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> dict[str, object]:
         filename = str(release_wheel["filename"])
         artifact_url = urlparse(str(release_wheel["url"]))
         expected_platforms = [
-            "windows-amd64",
             "linux-glibc-2.28+-x86_64",
             "linux-glibc-2.28+-aarch64",
             "macos-14+-arm64",
@@ -499,9 +498,7 @@ def _runtime_support(
     system = runtime_system.lower()
     machine = runtime_machine.lower()
     libc = runtime_libc.lower()
-    if system == "windows" and machine == "amd64":
-        native_wheel_platform = "windows-amd64"
-    elif (
+    if (
         system == "linux"
         and libc == "glibc"
         and _native_version_at_least(runtime_libc_version, (2, 28))
@@ -535,6 +532,12 @@ def _validate_authorization(confirm_authorized_provision: bool, authorization_id
         raise ProvisionError("--confirm-authorized-provision is required")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}", authorization_id) or _looks_secret_shaped(authorization_id):
         raise ProvisionError("--authorization-id must be a short non-secret identifier")
+
+
+def _require_verified_state_privacy() -> None:
+    """Block mutation or active use where this wrapper cannot verify state ACL privacy."""
+    if os.name == "nt":
+        raise ProvisionError("provision and run are unsupported on Windows because state-root ACL privacy cannot be verified")
 
 
 def preflight(
@@ -715,7 +718,7 @@ def _validate_owned_mode(metadata: os.stat_result, label: str, *, private_root: 
 def _validate_state_acl_boundary(state_root: Path) -> None:
     """On Darwin, reject extended ACL entries that can override private mode bits.
 
-    Windows state privacy remains a caller-managed ACL prerequisite because the
+    Provision and run reject Windows before reaching this boundary because the
     standard library does not expose a reliable access-check API here.
     """
     if sys.platform != "darwin":
@@ -1183,6 +1186,7 @@ def provision(
 ) -> ProvisionResult:
     """Provision the pinned wheel or pinned source revision into ``state_root``."""
     _validate_authorization(confirm_authorized_provision, authorization_id)
+    _require_verified_state_privacy()
     state_root = external_state_root(state_root)
     _provision_state_layout(state_root)
     if source not in {"wheel", "source"}:
@@ -1406,6 +1410,8 @@ def _approved_role_url(
     role: str,
 ) -> tuple[str | None, str]:
     if base_url is None:
+        if approved_url is not None:
+            raise ProvisionError(f"--approved-{role}-url is allowed only with --{role}-base-url")
         return None, f"provider:{provider}"
     if not isinstance(details.get("base_url_flag"), str):
         raise ProvisionError(f"{provider} does not support a custom {role} base URL")
@@ -1673,6 +1679,7 @@ def run(
 ) -> RunResult:
     """Run only the reviewed batch interface after an explicit, per-run authorization."""
     _validate_test_authorization(confirm_authorized_test, authorization_id)
+    _require_verified_state_privacy()
     state_root = external_state_root(state_root)
     executable = _verify_provision_receipt(state_root, manifest)
     target_model = _validate_model(target_model, "target-model")
