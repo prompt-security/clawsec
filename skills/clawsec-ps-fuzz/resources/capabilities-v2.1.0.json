@@ -4,21 +4,25 @@
   "providers": {
     "open_ai": {
       "credential_environment": ["OPENAI_API_KEY"],
-      "base_url_flag": "--openai-base-url"
+      "base_url_flag": "--openai-base-url",
+      "default_base_url": "https://api.openai.com/v1"
     },
     "ollama": {
       "credential_environment": [],
-      "base_url_flag": "--ollama-base-url"
+      "base_url_flag": "--ollama-base-url",
+      "default_base_url": "http://localhost:11434"
     }
   },
   "embedding_providers": {
     "open_ai": {
       "credential_environment": ["OPENAI_API_KEY"],
-      "base_url_flag": "--embedding-openai-base-url"
+      "base_url_flag": "--embedding-openai-base-url",
+      "default_base_url": "https://api.openai.com/v1"
     },
     "ollama": {
       "credential_environment": [],
-      "base_url_flag": "--embedding-ollama-base-url"
+      "base_url_flag": "--embedding-ollama-base-url",
+      "default_base_url": "http://localhost:11434"
     }
   },
   "attacks": [

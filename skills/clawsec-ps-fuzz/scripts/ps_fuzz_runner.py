@@ -212,7 +212,13 @@ def load_capabilities(path: Path = DEFAULT_CAPABILITIES_PATH) -> dict[str, objec
             raise ValueError
         if not isinstance(capabilities["known_upstream_behavior"], str):
             raise ValueError
+        reviewed_defaults = {
+            "open_ai": "https://api.openai.com/v1",
+            "ollama": "http://localhost:11434",
+        }
         for collection in (providers, embedding_providers):
+            if set(collection) != set(reviewed_defaults):
+                raise ValueError
             for name, details in collection.items():
                 if not isinstance(name, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", name):
                     raise ValueError
@@ -224,9 +230,11 @@ def load_capabilities(path: Path = DEFAULT_CAPABILITIES_PATH) -> dict[str, objec
                     for key in credential_environment
                 ):
                     raise ValueError
-                if "base_url_flag" in details:
-                    if details["base_url_flag"] not in batch_flags:
-                        raise ValueError
+                base_url_flag = details.get("base_url_flag")
+                if not isinstance(base_url_flag, str) or base_url_flag not in batch_flags:
+                    raise ValueError
+                if details.get("default_base_url") != reviewed_defaults[name]:
+                    raise ValueError
     except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         raise ProvisionError("capability snapshot is malformed") from exc
     return capabilities
@@ -1412,7 +1420,10 @@ def _approved_role_url(
     if base_url is None:
         if approved_url is not None:
             raise ProvisionError(f"--approved-{role}-url is allowed only with --{role}-base-url")
-        return None, f"provider:{provider}"
+        default_base_url = details.get("default_base_url")
+        if not isinstance(default_base_url, str):
+            raise ProvisionError("capability snapshot is missing a reviewed default base URL")
+        return _normalized_base_url(default_base_url, f"{role}-default-base-url")
     if not isinstance(details.get("base_url_flag"), str):
         raise ProvisionError(f"{provider} does not support a custom {role} base URL")
     if not approved_url:
@@ -1447,8 +1458,8 @@ def _validate_endpoint_configuration(
     attack_url, attack_origin = _approved_role_url(
         attack_provider, attack_details, attack_base_url, approved_attack_url, "attack"
     )
-    if target_provider == attack_provider and (target_url is not None or attack_url is not None):
-        if target_url is None or attack_url is None:
+    if target_provider == attack_provider and (target_base_url is not None or attack_base_url is not None):
+        if target_base_url is None or attack_base_url is None:
             raise ProvisionError(
                 "the upstream provider-wide base URL requires explicit target and attack URLs and --approved-attack-url"
             )
@@ -1464,18 +1475,13 @@ def _validate_endpoint_configuration(
             raise ProvisionError("rag_poisoning requires --embedding-provider and --embedding-model")
         embedding_details = _provider(capabilities, embedding_provider, embedding=True)
         _validate_model(embedding_model, "embedding-model")
-        if embedding_base_url is not None:
-            embedding_url, embedding_origin = _approved_role_url(
-                embedding_provider,
-                embedding_details,
-                embedding_base_url,
-                approved_embedding_url,
-                "embedding",
-            )
-        elif approved_embedding_url is not None:
-            raise ProvisionError("--approved-embedding-url is allowed only with --embedding-base-url")
-        else:
-            embedding_origin = f"provider:{embedding_provider}"
+        embedding_url, embedding_origin = _approved_role_url(
+            embedding_provider,
+            embedding_details,
+            embedding_base_url,
+            approved_embedding_url,
+            "embedding",
+        )
     elif embedding_provider or embedding_model or embedding_base_url or approved_embedding_url:
         raise ProvisionError("embedding settings are allowed only with rag_poisoning")
     return {

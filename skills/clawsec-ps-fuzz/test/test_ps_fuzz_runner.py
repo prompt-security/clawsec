@@ -1472,6 +1472,56 @@ class PsFuzzActiveRunTests(unittest.TestCase):
         prohibited = {"--debug", "--debug-level", "--custom-benchmark", "--mcp", "--tool", "--agent-url"}
         self.assertFalse(prohibited.intersection(capabilities["batch_flags"]))
 
+    def test_capability_snapshot_has_exact_reviewed_default_base_urls(self) -> None:
+        runner = load_runner()
+        capabilities = runner.load_capabilities()
+        actual = {
+            section: {
+                provider: details.get("default_base_url")
+                for provider, details in capabilities[section].items()
+            }
+            for section in ("providers", "embedding_providers")
+        }
+        expected = {
+            "providers": {
+                "open_ai": "https://api.openai.com/v1",
+                "ollama": "http://localhost:11434",
+            },
+            "embedding_providers": {
+                "open_ai": "https://api.openai.com/v1",
+                "ollama": "http://localhost:11434",
+            },
+        }
+        self.assertEqual(actual, expected)
+
+    def test_capability_snapshot_rejects_unreviewed_default_base_urls(self) -> None:
+        runner = load_runner()
+        original = json.loads((SKILL_ROOT / "resources" / "capabilities-v2.1.0.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            for section in ("providers", "embedding_providers"):
+                for provider in ("open_ai", "ollama"):
+                    with self.subTest(section=section, provider=provider):
+                        candidate = json.loads(json.dumps(original))
+                        candidate[section][provider]["default_base_url"] = "https://unreviewed.example/v1"
+                        path = Path(td) / f"{section}-{provider}.json"
+                        path.write_text(json.dumps(candidate), encoding="utf-8")
+                        with self.assertRaisesRegex(runner.ProvisionError, "capability snapshot is malformed"):
+                            runner.load_capabilities(path)
+
+    def test_capability_snapshot_requires_a_flag_for_each_default_base_url(self) -> None:
+        runner = load_runner()
+        original = json.loads((SKILL_ROOT / "resources" / "capabilities-v2.1.0.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            for section in ("providers", "embedding_providers"):
+                for provider in ("open_ai", "ollama"):
+                    with self.subTest(section=section, provider=provider):
+                        candidate = json.loads(json.dumps(original))
+                        candidate[section][provider].pop("base_url_flag")
+                        path = Path(td) / f"{section}-{provider}.json"
+                        path.write_text(json.dumps(candidate), encoding="utf-8")
+                        with self.assertRaisesRegex(runner.ProvisionError, "capability snapshot is malformed"):
+                            runner.load_capabilities(path)
+
     def test_footer_parser_uses_only_the_real_ansi_prettytable_total_row(self) -> None:
         runner = load_runner()
         captured = """\x1b[1mTest results\x1b[0m ...
@@ -2064,10 +2114,14 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     self.assertFalse(Path(kwargs["output_dir"]).exists())
 
     def test_run_uses_only_reviewed_batch_arguments_and_an_isolated_prompt_copy(self) -> None:
+        import contextlib
+        import io
+
         runner = load_runner()
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             kwargs = self._run_kwargs(root)
+            kwargs["attack_provider"] = "ollama"
             seen: dict[str, object] = {}
 
             def command(args: list[str], **command_kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -2075,7 +2129,9 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 seen["kwargs"] = command_kwargs
                 return subprocess.CompletedProcess(args, 0, "│ ✘ │ Total (# tests): .... │ 1 │ 2 │ 0 │ 0 │ [====] │", "")
 
-            result = runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
+            preview = io.StringIO()
+            with contextlib.redirect_stdout(preview):
+                result = runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
             args = seen["args"]
             self.assertIn("-b", args)
             copied_prompt = Path(args[-1])
@@ -2087,6 +2143,12 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             self.assertIn("-d", args)
             self.assertEqual(args[args.index("-d") + 1], "0")
             self.assertLess(args.index("-d"), len(args) - 1, "quiet logging must precede the prompt positional")
+            self.assertIn("--openai-base-url", args)
+            self.assertIn("--ollama-base-url", args)
+            self.assertEqual(args[args.index("--openai-base-url") + 1], "https://api.openai.com/v1")
+            self.assertEqual(args[args.index("--ollama-base-url") + 1], "http://localhost:11434")
+            self.assertIn("origin=https://api.openai.com", preview.getvalue())
+            self.assertIn("origin=http://localhost:11434", preview.getvalue())
             self.assertEqual(result.aggregate_counts, {"broken": 1, "resilient": 2, "errors": 0, "skipped": 0})
             self.assertEqual(result.exit_status, 0)
             self.assertEqual(result.upstream_exit_status, 0)
@@ -2095,6 +2157,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             self.assertEqual(report["wrapper_exit_status"], 0)
             self.assertEqual(report["upstream_exit_status"], 0)
             self.assertEqual(report["assessment_status"], "complete")
+            self.assertEqual(report["requested_configuration"]["target_origin"], "https://api.openai.com")
+            self.assertEqual(report["requested_configuration"]["attack_origin"], "http://localhost:11434")
 
     def test_run_isolates_child_environment_and_never_persists_raw_output(self) -> None:
         runner = load_runner()
@@ -2210,10 +2274,14 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 self.assertFalse(Path(kwargs["output_dir"]).exists())
 
     def test_rag_poisoning_report_states_the_synthetic_chroma_limitation(self) -> None:
+        import contextlib
+        import io
+
         runner = load_runner()
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             kwargs = self._run_kwargs(root)
+            seen: dict[str, object] = {}
             kwargs.update(
                 {
                     "tests": ["rag_poisoning"],
@@ -2221,16 +2289,30 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     "embedding_model": "nomic-embed-text",
                 }
             )
-            runner.run(
-                runner.load_manifest(MANIFEST),
-                runner.load_capabilities(),
-                command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "| rag_poisoning | 0 | 1 | 0 | 0 |", ""),
-                **kwargs,
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                seen["args"] = args
+                return subprocess.CompletedProcess(args, 0, "| rag_poisoning | 0 | 1 | 0 | 0 |", "")
+
+            preview = io.StringIO()
+            with contextlib.redirect_stdout(preview):
+                runner.run(
+                    runner.load_manifest(MANIFEST),
+                    runner.load_capabilities(),
+                    command=command,
+                    **kwargs,
+                )
+            args = seen["args"]
+            self.assertIn("--embedding-ollama-base-url", args)
+            self.assertEqual(
+                args[args.index("--embedding-ollama-base-url") + 1],
+                "http://localhost:11434",
             )
+            self.assertIn("embedding=ollama/nomic-embed-text, origin=http://localhost:11434", preview.getvalue())
             persisted = "\n".join(path.read_text(encoding="utf-8") for path in Path(kwargs["output_dir"]).iterdir())
             self.assertIn("synthetic local Chroma demonstration", persisted)
             self.assertIn("not evidence about a user's retrieval", persisted)
             self.assertIn("requested selectors are reported separately", persisted)
+            self.assertIn("http://localhost:11434", persisted)
 
     def test_run_rejects_nonzero_or_malformed_fuzzer_output_without_raw_fallback(self) -> None:
         runner = load_runner()
