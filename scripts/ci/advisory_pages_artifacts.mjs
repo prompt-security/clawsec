@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const CHECKSUM_ALIAS = "advisories/checksums.json";
 const CHECKSUM_SIGNATURE_ALIAS = "advisories/checksums.json.sig";
 const PUBLIC_KEY_ALIAS = "advisories/feed-signing-public.pem";
+const RELEASE_MIRROR_PROBE_PATH = "releases/latest/download/checksums.json";
 const DEFAULT_LIVE_ADVISORY_BASE_URL = "https://clawsec.prompt.security";
 
 export const ADVISORY_PUBLIC_CONTRACT = Object.freeze([
@@ -250,19 +251,27 @@ function endpointMismatchMessage(label, rootPath, aliasPath) {
   ].join("; ");
 }
 
-function normalizeBaseUrl(baseUrl) {
+function parseHttpBaseUrl(baseUrl) {
   try {
     const parsed = new URL(baseUrl);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("unsupported protocol");
-    return parsed.origin;
+    return parsed;
   } catch {
     throw new Error("baseUrl must be a valid HTTP(S) URL");
   }
 }
 
+function normalizeBaseUrl(baseUrl) {
+  const parsed = parseHttpBaseUrl(baseUrl);
+  if (parsed.pathname !== "/") {
+    throw new Error("baseUrl must not include a path");
+  }
+  return parsed.origin;
+}
+
 function baseUrlForDiagnostics(baseUrl) {
   try {
-    return normalizeBaseUrl(baseUrl);
+    return parseHttpBaseUrl(baseUrl).origin;
   } catch {
     return "<invalid URL>";
   }
@@ -354,14 +363,10 @@ export async function smokeTestBuiltAdvisoryEndpoints({ distDir = "dist" } = {})
 }
 
 async function probeReleaseMirror(baseUrl) {
-  const probePath = "releases/latest/download/checksums.json";
-  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${probePath}`);
+  const response = await globalThis.fetch(`${baseUrl.replace(/\/+$/, "")}/${RELEASE_MIRROR_PROBE_PATH}`);
   if (response.ok) return true;
-  if (response.status === 404) {
-    process.stderr.write(`Release compatibility mirror is absent at /${probePath}; skipping mirror verification\n`);
-    return false;
-  }
-  throw new Error(`HTTP ${response.status} while probing /${probePath}`);
+  if (response.status === 404) return false;
+  throw new Error(`HTTP ${response.status} while probing /${RELEASE_MIRROR_PROBE_PATH}`);
 }
 
 export async function retryLiveAdvisoryEndpointVerification({
@@ -382,6 +387,18 @@ export async function retryLiveAdvisoryEndpointVerification({
   const initialDelayMs = Number(retryDelayMs);
   const backoffFactor = Number(retryBackoffFactor);
   const maxDelayMs = Number(maxRetryDelayMs);
+  if (!Number.isInteger(totalAttempts) || totalAttempts < 1) {
+    throw new Error("attempts must be a finite positive integer");
+  }
+  if (!Number.isFinite(initialDelayMs) || initialDelayMs < 0) {
+    throw new Error("retryDelayMs must be a finite non-negative number");
+  }
+  if (!Number.isFinite(backoffFactor) || backoffFactor < 1) {
+    throw new Error("retryBackoffFactor must be a finite number greater than or equal to 1");
+  }
+  if (!Number.isFinite(maxDelayMs) || maxDelayMs < 0) {
+    throw new Error("maxRetryDelayMs must be a finite non-negative number");
+  }
   for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
     try {
       await verifyAttempt();
@@ -412,14 +429,26 @@ export async function retryLiveAdvisoryEndpointVerification({
 export async function verifyLiveAdvisoryEndpoints({
   baseUrl = DEFAULT_LIVE_ADVISORY_BASE_URL,
   includeGhsa = true,
+  writeStderr = (message) => process.stderr.write(message),
   ...retryOptions
 } = {}) {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+  let includeReleaseMirror = false;
   await retryLiveAdvisoryEndpointVerification({
     baseUrl: normalizedBaseUrl,
     ...retryOptions,
+    writeStderr,
     verifyAttempt: async () => {
-      const includeReleaseMirror = await probeReleaseMirror(normalizedBaseUrl);
+      const mirrorAvailable = await probeReleaseMirror(normalizedBaseUrl);
+      if (includeReleaseMirror && !mirrorAvailable) {
+        throw new Error("release compatibility mirror returned HTTP 404 after it was previously available");
+      }
+      if (!mirrorAvailable) {
+        writeStderr(
+          `Release compatibility mirror is absent at /${RELEASE_MIRROR_PROBE_PATH}; skipping mirror verification\n`,
+        );
+      }
+      includeReleaseMirror ||= mirrorAvailable;
       await verifyAdvisoryEndpoints({ baseUrl: normalizedBaseUrl, includeGhsa, includeReleaseMirror });
     },
   });

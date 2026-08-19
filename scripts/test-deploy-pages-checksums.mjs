@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -190,6 +191,103 @@ function createVerificationAttempt({ failuresBeforeSuccess, error = new Error("t
   };
 }
 
+async function startArtifactFixtureServer(rootDir) {
+  const root = path.resolve(rootDir);
+  const server = http.createServer((request, response) => {
+    void (async () => {
+      const pathname = decodeURIComponent(new URL(request.url || "/", "http://127.0.0.1").pathname);
+      const filePath = path.resolve(root, pathname.replace(/^\/+/, ""));
+      if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {
+        response.writeHead(400).end("invalid path");
+        return;
+      }
+      const content = await fs.readFile(filePath);
+      response
+        .writeHead(200, { "content-type": filePath.endsWith(".json") ? "application/json" : "text/plain" })
+        .end(content);
+    })().catch((error) => {
+      response.writeHead(error?.code === "ENOENT" ? 404 : 500).end(error?.message || String(error));
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("failed to start artifact fixture server");
+  return {
+    origin: `http://127.0.0.1:${address.port}`,
+    async stop() {
+      await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+    },
+  };
+}
+
+for (const { label, options, expectedMessage } of [
+  {
+    label: "NaN attempts",
+    options: { attempts: Number.NaN },
+    expectedMessage: /attempts must be a finite positive integer/,
+  },
+  {
+    label: "fractional attempts",
+    options: { attempts: 1.5 },
+    expectedMessage: /attempts must be a finite positive integer/,
+  },
+  {
+    label: "zero attempts",
+    options: { attempts: 0 },
+    expectedMessage: /attempts must be a finite positive integer/,
+  },
+  {
+    label: "negative retry delay",
+    options: { retryDelayMs: -1 },
+    expectedMessage: /retryDelayMs must be a finite non-negative number/,
+  },
+  {
+    label: "infinite retry delay",
+    options: { retryDelayMs: Number.POSITIVE_INFINITY },
+    expectedMessage: /retryDelayMs must be a finite non-negative number/,
+  },
+  {
+    label: "shrinking retry factor",
+    options: { retryBackoffFactor: 0.5 },
+    expectedMessage: /retryBackoffFactor must be a finite number greater than or equal to 1/,
+  },
+  {
+    label: "infinite retry factor",
+    options: { retryBackoffFactor: Number.POSITIVE_INFINITY },
+    expectedMessage: /retryBackoffFactor must be a finite number greater than or equal to 1/,
+  },
+  {
+    label: "negative retry cap",
+    options: { maxRetryDelayMs: -1 },
+    expectedMessage: /maxRetryDelayMs must be a finite non-negative number/,
+  },
+  {
+    label: "NaN retry cap",
+    options: { maxRetryDelayMs: Number.NaN },
+    expectedMessage: /maxRetryDelayMs must be a finite non-negative number/,
+  },
+]) {
+  let verificationAttempts = 0;
+  let sleepCalls = 0;
+  await assert.rejects(
+    retryLiveAdvisoryEndpointVerification({
+      baseUrl: "https://example.test",
+      verifyAttempt: async () => {
+        verificationAttempts += 1;
+      },
+      sleep: async () => {
+        sleepCalls += 1;
+      },
+      writeStderr: () => {},
+      ...options,
+    }),
+    expectedMessage,
+    `${label} must be rejected before verification starts`,
+  );
+  assert.equal(verificationAttempts, 0, `${label} must not run a verification attempt`);
+  assert.equal(sleepCalls, 0, `${label} must not schedule a retry timer`);
+}
+
 {
   const verification = createVerificationAttempt({ failuresBeforeSuccess: 2 });
   const delays = [];
@@ -285,6 +383,24 @@ function createVerificationAttempt({ failuresBeforeSuccess, error = new Error("t
   );
 }
 
+{
+  const pathPrefixedBaseUrl = "http://127.0.0.1:1/project-prefix?token=secret#fragment";
+  await assert.rejects(
+    verifyLiveAdvisoryEndpoints({
+      baseUrl: pathPrefixedBaseUrl,
+      attempts: 1,
+      retryDelayMs: 0,
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /baseUrl must not include a path/);
+      assert.doesNotMatch(error.message, /project-prefix|token=secret|fragment/);
+      return true;
+    },
+    "live verification must reject unsupported path-prefixed base URLs without exposing their contents",
+  );
+}
+
 const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "clawsec-pages-checksums-"));
 try {
   const publicDir = path.join(tempRoot, "public");
@@ -339,6 +455,87 @@ try {
   await fs.cp(publicDir, distDir, { recursive: true });
   await verifyBuiltAdvisoryArtifacts({ publicDir, distDir });
   await smokeTestBuiltAdvisoryEndpoints({ distDir });
+
+  const fixture = await startArtifactFixtureServer(distDir);
+  try {
+    const observedRequests = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+      observedRequests.push(new URL(String(input)));
+      return originalFetch(input, init);
+    };
+    try {
+      const sensitiveBaseUrl =
+        fixture.origin.replace("://", "://ci-user:ci-password@") + "/?token=secret#fragment";
+      await verifyLiveAdvisoryEndpoints({
+        baseUrl: sensitiveBaseUrl,
+        attempts: 1,
+        retryDelayMs: 0,
+        includeGhsa: true,
+        writeStderr: () => {},
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    const requestedPaths = observedRequests.map((requestUrl) => requestUrl.pathname);
+    assert.ok(
+      requestedPaths.includes("/releases/latest/download/checksums.json"),
+      "full live verification must probe the normalized release-mirror path",
+    );
+    assert.ok(requestedPaths.includes("/checksums.json"), "full live verification must request the root manifest");
+    assert.ok(
+      requestedPaths.includes("/advisories/checksums.json"),
+      "full live verification must request the checksum alias",
+    );
+    for (const requestUrl of observedRequests) {
+      assert.equal(requestUrl.origin, fixture.origin, "normalization must preserve the intended HTTP origin");
+      assert.equal(requestUrl.username, "", "normalized requests must not include a username");
+      assert.equal(requestUrl.password, "", "normalized requests must not include a password");
+      assert.equal(requestUrl.search, "", "normalized requests must not include a query string");
+      assert.equal(requestUrl.hash, "", "normalized requests must not include a fragment");
+    }
+
+    let mirrorChecksumRequests = 0;
+    let rootChecksumRequests = 0;
+    const retryLogs = [];
+    globalThis.fetch = async (input, init) => {
+      const requestUrl = new URL(String(input));
+      if (requestUrl.pathname === "/releases/latest/download/checksums.json") {
+        mirrorChecksumRequests += 1;
+        if (mirrorChecksumRequests === 2) return new Response("missing\n", { status: 404 });
+      }
+      if (requestUrl.pathname === "/checksums.json") {
+        rootChecksumRequests += 1;
+        if (rootChecksumRequests === 1) return new Response("temporarily unavailable\n", { status: 503 });
+      }
+      return originalFetch(input, init);
+    };
+    try {
+      await verifyLiveAdvisoryEndpoints({
+        baseUrl: fixture.origin,
+        attempts: 3,
+        retryDelayMs: 0,
+        retryBackoffFactor: 1,
+        maxRetryDelayMs: 0,
+        includeGhsa: true,
+        sleep: async () => {},
+        writeStderr: (message) => {
+          retryLogs.push(message);
+        },
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+    assert.equal(mirrorChecksumRequests, 4, "mirror verification must remain required after a transient 404");
+    assert.match(
+      retryLogs.join(""),
+      /release compatibility mirror returned HTTP 404 after it was previously available/,
+      "mirror propagation failures must explain why verification is still required",
+    );
+  } finally {
+    await fixture.stop();
+  }
 
   await fs.writeFile(path.join(distDir, "advisories/checksums.json"), "tampered\n");
   await assert.rejects(
