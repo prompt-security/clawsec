@@ -96,6 +96,7 @@ class LocalSmokeShellTests(unittest.TestCase):
         self.bin.mkdir()
         self.log = self.root / "calls.log"
         self.curl_args = self.root / "curl-args"
+        self.stage_created = self.root / "stage-created"
         self.hash_count = self.root / "hash-count"
         self.model_dir = self.root / "model"
         self.model_file = self.model_dir / "gemma-4-E2B-it-Q4_0.gguf"
@@ -128,7 +129,24 @@ class LocalSmokeShellTests(unittest.TestCase):
             template="${!#}"
             directory="${template//XXXXXXXX/TEST}"
             mkdir -m 700 "$directory"
+            if [[ -n "${STAGE_CREATED_FILE:-}" ]]; then
+              printf '%s\n' "$directory" > "$STAGE_CREATED_FILE"
+            fi
             printf '%s\n' "$directory"
+            """,
+        )
+        write_executable(
+            self.bin / "ls",
+            r"""
+            #!/usr/bin/env bash
+            set -euo pipefail
+            [[ "$1" == '-lde' ]]
+            printf '%s\n' 'drwx------  1 owner  staff  0 Jan 1 00:00 model'
+            if [[ "${FAKE_EXTENDED_ACL:-0}" == '1' || (
+              "${FAKE_STAGE_ACL:-0}" == '1' && "$2" == */.clawsec-ps-fuzz-download.*
+            ) ]]; then
+              printf '%s\n' ' 0: user:other allow list,search'
+            fi
             """,
         )
         write_executable(
@@ -174,6 +192,7 @@ class LocalSmokeShellTests(unittest.TestCase):
             "PATH": f"{self.bin}:/usr/bin:/bin",
             "CALL_LOG": os.fspath(self.log),
             "CURL_ARGS_FILE": os.fspath(self.curl_args),
+            "STAGE_CREATED_FILE": os.fspath(self.stage_created),
             "HASH_COUNT_FILE": os.fspath(self.hash_count),
             "FAKE_DOWNLOAD_CONTENT": FIXTURE,
             "FAKE_HASH_FAIL_ON_CALL": "0",
@@ -193,6 +212,7 @@ class LocalSmokeShellTests(unittest.TestCase):
             "MODEL_FILE=/secure/models/gemma-4-E2B-it/gemma-4-E2B-it-Q4_0.gguf",
             f"MODEL_FILE={shlex.quote(os.fspath(self.model_file))}",
         )
+        script = script.replace("/bin/ls", shlex.quote(os.fspath(self.bin / "ls")))
         return script.replace(MODEL_SIZE, str(len(FIXTURE))).replace(MODEL_HASH, "0" * 64)
 
     def run_script(self, marker: str, **environment: str) -> subprocess.CompletedProcess[str]:
@@ -292,6 +312,47 @@ class LocalSmokeShellTests(unittest.TestCase):
         result = self.run_script("# local-smoke-download")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.log_lines(), ["curl", "hash-1", "hash-2"])
+
+    def install_macos_acl_fakes(self) -> None:
+        write_executable(
+            self.bin / "uname",
+            r"""
+            #!/usr/bin/env bash
+            printf 'Darwin\n'
+            """,
+        )
+
+    def test_download_rejects_an_extended_macos_acl_before_staging_or_curl(self) -> None:
+        """A caller-owned model directory with an allow ACL must not host a partial download."""
+        self.model_dir.mkdir(mode=0o700)
+        self.model_dir.chmod(0o700)
+        self.install_macos_acl_fakes()
+        result = self.run_script("# local-smoke-download", FAKE_EXTENDED_ACL="1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("extended ACL", result.stderr)
+        self.assertEqual(self.log_lines(), [])
+        self.assertEqual(self.staging_dirs(), [])
+
+    def test_download_accepts_a_clean_macos_acl_stage(self) -> None:
+        """A clean caller directory and non-inherited stage ACL may proceed to the bounded download."""
+        self.install_macos_acl_fakes()
+        result = self.run_script("# local-smoke-download")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.log_lines(), ["curl", "hash-1", "hash-2"])
+        self.assertEqual(self.staging_dirs(), [])
+
+    def test_download_rejects_an_inherited_macos_acl_on_its_fresh_stage_before_curl(self) -> None:
+        """A fresh stage that inherits an allow ACL must be rejected before it receives the partial file."""
+        self.install_macos_acl_fakes()
+        result = self.run_script("# local-smoke-download", FAKE_STAGE_ACL="1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("extended ACL", result.stderr)
+        self.assertEqual(
+            self.stage_created.read_text(encoding="utf-8").strip(),
+            os.fspath(self.model_dir / ".clawsec-ps-fuzz-download.TEST"),
+        )
+        self.assertEqual(self.log_lines(), [])
+        self.assertEqual(self.staging_dirs(), [])
 
     def test_download_uses_a_private_staging_directory_and_bounded_hardened_curl(self) -> None:
         """The download is isolated in a fresh private stage and cannot exceed the reviewed artifact size."""

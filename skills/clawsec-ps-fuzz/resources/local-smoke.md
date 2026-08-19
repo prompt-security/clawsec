@@ -17,7 +17,7 @@ Show the operator all of these values and obtain an explicit confirmation **befo
 - Immutable URL: `https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf`
 - License: Apache-2.0
 
-After confirmation, download only that immutable URL to a `.partial` file in a fresh, current-user-owned mode-0700 staging directory. The containing model directory must also be current-user-owned and mode 0700; this rejects shared-directory and symlink setups before download. Verify both the exact size and SHA-256 before publishing it. Never follow `main` or `latest`. The same-directory hard-link step below is an atomic no-replace publication: unlike a plain `mv`, it fails if a final file raced into place. The EXIT trap removes only the staging directory created by this block; it never deletes a final model path.
+After confirmation, download only that immutable URL to a `.partial` file in a fresh, current-user-owned mode-0700 staging directory. The containing model directory must also be current-user-owned and mode 0700; on macOS it must have no extended ACL. The fresh stage is checked for inherited ACLs before the partial path is set. This rejects shared-directory and symlink setups before download. Verify both the exact size and SHA-256 before publishing it. Never follow `main` or `latest`. The same-directory hard-link step below is an atomic no-replace publication: unlike a plain `mv`, it fails if a final file raced into place. The EXIT trap removes only the staging directory created by this block; it never deletes a final model path.
 
 ```bash
 # local-smoke-download
@@ -51,9 +51,19 @@ directory_mode() {
 
 require_private_directory() {
   local candidate="$1"
+  local acl_listing
   [[ -d "$candidate" && ! -L "$candidate" ]] || fail 'model directory is not a regular directory'
   [[ "$(directory_owner "$candidate")" == "$(id -u)" ]] || fail 'model directory is not owned by the current user'
   [[ "$(directory_mode "$candidate")" == '700' ]] || fail 'model directory must be current-user-owned and mode 0700'
+  case "$(uname -s)" in
+    Darwin)
+      acl_listing="$(LC_ALL=C /bin/ls -lde "$candidate")" \
+        || fail 'could not inspect directory ACL'
+      [[ "$acl_listing" != *$'\n'* ]] || fail 'directory has an extended ACL'
+      ;;
+    Linux) ;;
+    *) fail 'unsupported operating system cannot verify directory ACL privacy' ;;
+  esac
 }
 
 cleanup_stage() {
@@ -99,7 +109,7 @@ verify_model_file "$MODEL_FILE"
 printf 'local smoke model published and re-verified\n'
 ```
 
-If any step fails, the shell exits immediately and removes only its fresh staging directory. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation. The OS-specific `stat` handling supports macOS/BSD and GNU/Linux; filesystems that cannot safely hard-link, preserve mode 0700, or provide reliable ownership metadata are unsupported by this workflow.
+If any step fails, the shell exits immediately and removes only its fresh staging directory. Do not load a remaining `.partial` or final file unless the complete block prints the publication confirmation. macOS ACL detection captures `LC_ALL=C /bin/ls -lde` output and rejects any internal newline; command substitution removes the normal final newline, so an extra line is an ACL entry (or hostile newline path). Linux relies on the exact current-user-owned mode-0700 requirement. FreeBSD and other operating systems fail closed because this guide has not established an equivalent ACL-privacy contract. The OS-specific `stat` handling supports macOS/BSD and GNU/Linux; filesystems that cannot safely hard-link, preserve mode 0700, or provide reliable ownership metadata are unsupported by this workflow.
 
 ## 2. Run an operator-controlled loopback server
 
