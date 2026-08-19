@@ -22,8 +22,10 @@ EXPECTED_ARTIFACTS = {
     "resources/requirements.lock",
     "resources/upstream.json",
     "scripts/ps_fuzz_runner.py",
+    "scripts/verified_install.py",
     "test/test_package_contract.py",
     "test/test_ps_fuzz_runner.py",
+    "test/test_verified_install.py",
 }
 
 
@@ -65,6 +67,27 @@ class PackageContractTests(unittest.TestCase):
                 self.assertIn("no debug", document)
                 self.assertIn("custom benchmark", document)
                 self.assertIn("no real vector-store mutation", document)
+
+    def test_first_install_trust_ordering_is_explicit(self) -> None:
+        required_phrases = (
+            "out-of-band trusted ClawSec",
+            "unverified candidate `SKILL.md`",
+            "cannot authenticate itself",
+            "Ed25519 public key",
+            "711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8",
+            "`checksums.json` is the signed release manifest",
+            "there is no `skills.json` trust manifest",
+            "`clawsec-suite` is optional",
+            "not sufficient for candidate attestation",
+            "convenience path",
+            "does not provide this local cryptographic attestation",
+            "python3 scripts/verified_install.py --version 0.1.0",
+            "--confirm-install",
+        )
+        for filename, document in self.docs.items():
+            with self.subTest(filename=filename):
+                for phrase in required_phrases:
+                    self.assertIn(phrase, document)
 
     def test_credential_guidance_uses_only_existing_secure_environment_injection(self) -> None:
         for filename, document in self.docs.items():

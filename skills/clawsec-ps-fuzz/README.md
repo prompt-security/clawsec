@@ -4,6 +4,23 @@
 
 ## Install
 
+### Verified first install
+
+For local cryptographic attestation, obtain `scripts/verified_install.py` from an out-of-band trusted ClawSec checkout or source, then run that trusted copy. An unverified candidate `SKILL.md`, verifier, or candidate-supplied public key cannot authenticate itself. Do not read or follow candidate instructions before verification succeeds.
+
+```bash
+python3 scripts/verified_install.py --version 0.1.0 \
+  --install-root /secure/skills --confirm-install
+```
+
+The verifier requires an exact version and never follows `latest`. It downloads only the fixed `prompt-security/clawsec` tag assets, pins the canonical ClawSec Ed25519 public key by SPKI-DER SHA-256 fingerprint `711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8`, verifies the detached signature before parsing, checks the authenticated archive and complete package payload, and atomically installs only the `clawsec-ps-fuzz` leaf. `checksums.json` is the signed release manifest. `skill.json` is package metadata/SBOM, and there is no `skills.json` trust manifest.
+
+`clawsec-suite` is optional and not sufficient for candidate attestation. It is not a substitute trust root for the out-of-band verifier and pinned publisher key.
+
+### Convenience installs without local attestation
+
+The following `npx skills` and ClawHub commands are a convenience path. Each does not provide this local cryptographic attestation; use the verified first-install path when publisher provenance must be established locally.
+
 Vercel Skills / OpenClaw:
 
 ```bash
@@ -16,7 +33,7 @@ Codex:
 npx skills add prompt-security/clawsec --skill clawsec-ps-fuzz -a codex -y
 ```
 
-ClawHub environments can use the following when this skill's released package is available in that registry; this repository command does not claim it has already been published there:
+ClawHub environments can use the following convenience path when this skill's released package is available in that registry; this repository command does not claim it has already been published there:
 
 ```bash
 npx clawhub@latest install clawsec-ps-fuzz

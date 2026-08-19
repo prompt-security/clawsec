@@ -74,6 +74,11 @@
         "description": "Portable provisioning and authorized-run wrapper"
       },
       {
+        "path": "scripts/verified_install.py",
+        "required": true,
+        "description": "Standalone signed-release verifier and atomic installer"
+      },
+      {
         "path": "test/test_package_contract.py",
         "required": true,
         "description": "Offline package metadata and documentation contract tests"
@@ -82,6 +87,11 @@
         "path": "test/test_ps_fuzz_runner.py",
         "required": true,
         "description": "Offline runner boundary tests with fake executables"
+      },
+      {
+        "path": "test/test_verified_install.py",
+        "required": true,
+        "description": "Offline signed-release verification and safe-install behavior tests"
       }
     ]
   },
