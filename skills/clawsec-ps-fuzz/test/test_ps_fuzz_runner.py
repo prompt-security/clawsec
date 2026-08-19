@@ -136,6 +136,87 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 command=missing_pip,
             )
 
+    def test_cli_selected_python_38_blocks_before_venv_probe_or_state_write(self) -> None:
+        import contextlib
+        import io
+
+        runner = load_runner()
+        calls: list[list[str]] = []
+        probe = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"
+
+        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(args)
+            if args == ["selected-python-38", "-c", probe]:
+                return subprocess.CompletedProcess(args, 0, "3.8\n", "")
+            self.fail("preflight invoked a selected Python capability command before its version gate")
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            status = runner.main(["preflight", "--python", "selected-python-38"], command=command)
+        self.assertEqual(status, 2)
+        self.assertEqual(calls, [["selected-python-38", "-c", probe]])
+        self.assertIn("unsupported Python 3.8", stderr.getvalue())
+
+    def test_cli_uses_selected_python_311_when_wrapper_version_is_unsupported(self) -> None:
+        import contextlib
+        import io
+
+        runner = load_runner()
+        calls: list[list[str]] = []
+        probe = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"
+        original_version = runner.sys.version_info
+
+        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(args)
+            if args == ["selected-python-311", "-c", probe]:
+                return subprocess.CompletedProcess(args, 0, "3.11\n", "")
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        stdout = io.StringIO()
+        try:
+            runner.sys.version_info = (3, 8)
+            with contextlib.redirect_stdout(stdout):
+                status = runner.main(["preflight", "--python", "selected-python-311"], command=command)
+        finally:
+            runner.sys.version_info = original_version
+        self.assertEqual(status, 0)
+        self.assertEqual(
+            calls,
+            [
+                ["selected-python-311", "-c", probe],
+                ["selected-python-311", "-m", "venv", "--help"],
+                ["selected-python-311", "-m", "pip", "--version"],
+            ],
+        )
+        self.assertIn("preflight passed", stdout.getvalue())
+
+    def test_cli_provision_authorization_precedes_selected_python_probe(self) -> None:
+        import contextlib
+        import io
+
+        runner = load_runner()
+        calls: list[list[str]] = []
+
+        def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            calls.append(args)
+            self.fail("an unauthorized provision reached the selected Python version probe")
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            status = runner.main(
+                [
+                    "provision",
+                    "--state-root",
+                    "/tmp/clawsec-test/clawsec-ps-fuzz",
+                    "--python",
+                    "selected-python",
+                ],
+                command=command,
+            )
+        self.assertEqual(status, 2)
+        self.assertEqual(calls, [])
+        self.assertIn("confirm-authorized-provision", stderr.getvalue())
+
     def test_wheel_provision_verifies_hash_before_pip_and_keeps_writes_in_state_root(self) -> None:
         """Skipping the wheel hash check or installing outside state_root must fail this test."""
         runner = load_runner()
@@ -176,6 +257,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             pip_calls = [args for args in calls if "install" in args]
             self.assertTrue(pip_calls, "expected an isolated pip install")
             self.assertTrue(all(args[0].startswith(str(state_root)) for args in pip_calls))
+            locked_install = next(args for args in pip_calls if "--require-hashes" in args)
+            self.assertIn("--only-binary=:all:", locked_install)
 
     def test_wheel_hash_mismatch_stops_before_pip_install(self) -> None:
         """Allowing a mismatched upstream artifact to reach pip must fail this test."""
@@ -236,7 +319,86 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
             checkout_calls = [args for args in calls if "checkout" in args]
             self.assertEqual(checkout_calls[0][-1], manifest["upstream"]["commit"])
+            clone_calls = [args for args in calls if args[:2] == ["git", "clone"]]
+            self.assertEqual(clone_calls[0][2:6], ["--depth", "1", "--branch", manifest["upstream"]["tag"]])
             self.assertTrue(result.artifact.is_relative_to(state_root / "built-wheels"))
+
+    def test_command_failure_diagnostics_never_surface_child_output(self) -> None:
+        runner = load_runner()
+        token = "ghp_verySecretDiagnosticToken"
+        failure = subprocess.CompletedProcess(["pip"], 17, "stdout " + token, "stderr " + token)
+        with self.assertRaisesRegex(runner.ProvisionError, "locked dependency installation failed with exit status 17") as raised:
+            runner._require_success(failure, "locked dependency installation")
+        self.assertNotIn(token, str(raised.exception))
+
+    def test_wheel_download_failure_never_surfaces_downloader_exception(self) -> None:
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        token = "ghp_verySecretDownloadFailure"
+        with tempfile.TemporaryDirectory() as td:
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                return subprocess.CompletedProcess(args, 0, "", "")
+
+            def downloader(_url: str, _destination: Path) -> None:
+                raise RuntimeError(token)
+
+            with self.assertRaisesRegex(runner.ProvisionError, "release wheel download failed") as raised:
+                runner.provision(
+                    manifest,
+                    state_root=approved_state_root(Path(td)),
+                    source="wheel",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=command,
+                    downloader=downloader,
+                )
+            self.assertNotIn(token, str(raised.exception))
+
+    def test_default_command_launch_failure_is_stable_without_oserror_detail(self) -> None:
+        runner = load_runner()
+        token = "ghp_verySecretLaunchFailure"
+        original_run = runner.subprocess.run
+
+        def failing_run(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            raise OSError(token)
+
+        try:
+            runner.subprocess.run = failing_run
+            result = runner._run_command(["unavailable-python"])
+        finally:
+            runner.subprocess.run = original_run
+
+        self.assertEqual(result.returncode, 127)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+        with self.assertRaisesRegex(runner.ProvisionError, "launch capability check failed with exit status 127") as raised:
+            runner._require_success(result, "launch capability check")
+        self.assertNotIn(token, str(raised.exception))
+
+    def test_source_revision_mismatch_never_surfaces_git_stdout(self) -> None:
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        token = "ghp_verySecretRevisionOutput"
+        with tempfile.TemporaryDirectory() as td:
+            def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                if args[-2:] == ["rev-parse", "HEAD"]:
+                    return subprocess.CompletedProcess(args, 0, token, "")
+                return subprocess.CompletedProcess(args, 0, "", "")
+
+            with self.assertRaisesRegex(runner.ProvisionError, "source commit mismatch") as raised:
+                runner.provision(
+                    manifest,
+                    state_root=approved_state_root(Path(td)),
+                    source="source",
+                    confirm_authorized_provision=True,
+                    authorization_id="AUTH-42",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=command,
+                )
+            self.assertNotIn(token, str(raised.exception))
 
     def test_source_commit_mismatch_stops_before_dependencies_or_build(self) -> None:
         """Accepting a ref that is not the reviewed commit must fail this test."""
@@ -642,6 +804,7 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 embedding_provider="open_ai",
                 embedding_model="embed-model",
                 embedding_base_url="https://embed.example/v1",
+                approved_embedding_url="https://embed.example/v1/",
             )
         finally:
             if previous is None:
@@ -651,6 +814,23 @@ class PsFuzzActiveRunTests(unittest.TestCase):
         self.assertEqual(calls, [["python3", "-m", "venv", "--help"], ["python3", "-m", "pip", "--version"]])
         self.assertEqual(inspection["target"]["origin"], "https://target.example")
         self.assertTrue(inspection["credential_environment_present"]["OPENAI_API_KEY"])
+        with self.assertRaisesRegex(runner.ProvisionError, "approved-embedding-url"):
+            runner.preflight(
+                runner.load_manifest(MANIFEST),
+                source="wheel",
+                python_executable="python3",
+                python_version=(3, 12),
+                command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                capabilities=runner.load_capabilities(),
+                target_provider="open_ai",
+                target_model="target-model",
+                attack_provider="ollama",
+                attack_model="attack-model",
+                tests=["rag_poisoning"],
+                embedding_provider="open_ai",
+                embedding_model="embed-model",
+                embedding_base_url="https://embed.example/v1",
+            )
         with self.assertRaisesRegex(runner.ProvisionError, "provider-wide"):
             runner.preflight(
                 runner.load_manifest(MANIFEST),
@@ -713,6 +893,109 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), **kwargs)
             self.assertNotIn("SYSTEM SECRET", capture.getvalue())
 
+    def test_active_launch_oserror_is_a_static_error_without_report_or_detail(self) -> None:
+        import contextlib
+        import io
+
+        runner = load_runner()
+        token = "ghp_verySecretActiveLaunchFailure"
+        with tempfile.TemporaryDirectory() as td:
+            kwargs = self._run_kwargs(Path(td))
+
+            def command(_args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                raise OSError(token)
+
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output), self.assertRaisesRegex(
+                runner.ProvisionError, "ps-fuzz invocation failed"
+            ) as raised:
+                runner.run(runner.load_manifest(MANIFEST), runner.load_capabilities(), command=command, **kwargs)
+            self.assertNotIn(token, output.getvalue())
+            self.assertNotIn(token, str(raised.exception))
+            self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+    def test_secret_shaped_identifiers_and_provider_names_never_reach_preview(self) -> None:
+        import contextlib
+        import io
+
+        runner = load_runner()
+        manifest = runner.load_manifest(MANIFEST)
+        capabilities = runner.load_capabilities()
+        secret_values = (
+            "ghp_abcdefghijklmnopqrstuvwxyz0123456789",
+            "vendor:sk-proj-raw-token",
+            "github_pat_abcdefghijklmnopqrstuvwxyz0123456789",
+            "AKIAABCDEFGHIJKLMNOP",
+            "xoxb-1234567890-secret",
+            "hf_abcdefghijklmnopqrstuvwxyz",
+            "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.signaturepayload",
+        )
+        with tempfile.TemporaryDirectory() as td:
+            for secret in secret_values:
+                kwargs = self._run_kwargs(Path(td))
+                kwargs["target_model"] = secret
+                capture = io.StringIO()
+                with contextlib.redirect_stdout(capture), self.assertRaisesRegex(runner.ProvisionError, "target-model"):
+                    runner.run(manifest, capabilities, **kwargs)
+                self.assertNotIn(secret, capture.getvalue())
+                self.assertFalse(Path(kwargs["output_dir"]).exists())
+
+                kwargs = self._run_kwargs(Path(td))
+                kwargs["attack_model"] = secret
+                with self.assertRaisesRegex(runner.ProvisionError, "attack-model"):
+                    runner.run(manifest, capabilities, **kwargs)
+
+                kwargs = self._run_kwargs(Path(td))
+                kwargs.update(
+                    {
+                        "tests": ["rag_poisoning"],
+                        "embedding_provider": "open_ai",
+                        "embedding_model": secret,
+                    }
+                )
+                with self.assertRaisesRegex(runner.ProvisionError, "embedding-model"):
+                    runner.run(manifest, capabilities, **kwargs)
+
+            kwargs = self._run_kwargs(Path(td))
+            kwargs["authorization_id"] = secret_values[0]
+            with self.assertRaisesRegex(runner.ProvisionError, "authorization-id"):
+                runner.run(manifest, capabilities, **kwargs)
+
+            kwargs = self._run_kwargs(Path(td))
+            kwargs["authorization_id"] = "AUTH-ghp_abcdefghijklmnopqrstuvwxyz0123456789"
+            with self.assertRaisesRegex(runner.ProvisionError, "authorization-id") as raised:
+                runner.run(manifest, capabilities, **kwargs)
+            self.assertNotIn(kwargs["authorization_id"], str(raised.exception))
+
+            with self.assertRaisesRegex(runner.ProvisionError, "unsupported provider") as raised:
+                runner.preflight(
+                    manifest,
+                    source="wheel",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                    capabilities=capabilities,
+                    target_provider=secret_values[0],
+                    target_model="target-model",
+                    attack_provider="open_ai",
+                    attack_model="attack-model",
+                    tests=["system_prompt_stealer"],
+                )
+            self.assertNotIn(secret_values[0], str(raised.exception))
+
+    def test_cli_parser_never_echoes_secret_shaped_argument_values(self) -> None:
+        import contextlib
+        import io
+
+        runner = load_runner()
+        token = "ghp_abcdefghijklmnopqrstuvwxyz0123456789"
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit) as exited:
+            runner.main(["run", "--attempts", token])
+        self.assertEqual(exited.exception.code, 2)
+        self.assertIn("invalid arguments", stderr.getvalue())
+        self.assertNotIn(token, stderr.getvalue())
+
     def test_temperature_is_finite_unit_interval_and_slash_model_ids_are_safe(self) -> None:
         runner = load_runner()
         manifest = runner.load_manifest(MANIFEST)
@@ -733,6 +1016,21 @@ class PsFuzzActiveRunTests(unittest.TestCase):
         )
         self.assertEqual(inspection["target"]["model"], "meta-llama/Meta-Llama-3.1-8B-Instruct")
         for model in ("openai/sk-proj-raw-token", "meta-llama/api_key_raw", "vendor/bearer-token"):
+            with self.assertRaisesRegex(runner.ProvisionError, "target-model"):
+                runner.preflight(
+                    manifest,
+                    source="wheel",
+                    python_executable="python3",
+                    python_version=(3, 12),
+                    command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+                    capabilities=capabilities,
+                    target_provider="open_ai",
+                    target_model=model,
+                    attack_provider="open_ai",
+                    attack_model="attack-model",
+                    tests=["system_prompt_stealer"],
+                )
+        for model in (" target-model", "target-model ", "target-model\n"):
             with self.assertRaisesRegex(runner.ProvisionError, "target-model"):
                 runner.preflight(
                     manifest,
@@ -821,6 +1119,7 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     self.assertNotEqual(environment["HOME"], os.environ.get("HOME"))
                     self.assertEqual(command_kwargs["cwd"], environment["HOME"])
                     self.assertNotIn("PYTHONPATH", environment)
+                    self.assertEqual(environment["ANONYMIZED_TELEMETRY"], "false")
                     return subprocess.CompletedProcess(
                         args,
                         0,

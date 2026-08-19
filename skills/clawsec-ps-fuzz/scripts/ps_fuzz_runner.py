@@ -39,6 +39,7 @@ STATE_DIRECTORIES = (
     "tmp",
 )
 ENVIRONMENT_STATE_DIRECTORIES = ("home", "pip-cache", "xdg-cache", "tmp")
+PYTHON_VERSION_PROBE = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"
 
 Command = Callable[..., subprocess.CompletedProcess[str]]
 Downloader = Callable[[str, Path], None]
@@ -46,6 +47,14 @@ Downloader = Callable[[str, Path], None]
 
 class ProvisionError(RuntimeError):
     """An authorization, preflight, integrity, or provisioning failure."""
+
+
+class _SafeArgumentParser(argparse.ArgumentParser):
+    """Avoid echoing untrusted argument values in argparse conversion failures."""
+
+    def error(self, _message: str) -> None:
+        self.print_usage(sys.stderr)
+        self.exit(2, f"{self.prog}: invalid arguments\n")
 
 
 class ProvisionResult:
@@ -63,6 +72,20 @@ class RunResult:
     def __init__(self, exit_status: int, aggregate_counts: dict[str, int] | None) -> None:
         self.exit_status = exit_status
         self.aggregate_counts = aggregate_counts
+
+
+_SECRET_PREFIX = re.compile(
+    r"(?i)(?:^|[^A-Za-z0-9])(?:sk[-_]|api[-_]|api-key|bearer|ghp_|github_pat_|hf_|xox[baprs]-)"
+)
+_AWS_ACCESS_KEY = re.compile(r"(?<![A-Za-z0-9])AKIA[0-9A-Z]{16}(?![A-Za-z0-9])")
+_JWT_LIKE = re.compile(
+    r"(?<![A-Za-z0-9])[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}(?![A-Za-z0-9])"
+)
+
+
+def _looks_secret_shaped(value: str) -> bool:
+    """Detect token-shaped identifiers before they can reach output or a child process."""
+    return bool(_SECRET_PREFIX.search(value) or _AWS_ACCESS_KEY.search(value) or _JWT_LIKE.search(value))
 
 
 def _safe_resource_path(relative_path: object) -> Path:
@@ -158,20 +181,21 @@ def _capability_section(capabilities: Mapping[str, object], name: str) -> Mappin
 
 def _provider(capabilities: Mapping[str, object], provider_name: str, *, embedding: bool = False) -> Mapping[str, object]:
     collection = _capability_section(capabilities, "embedding_providers" if embedding else "providers")
-    details = collection.get(provider_name)
+    details = collection.get(provider_name) if isinstance(provider_name, str) else None
     if not isinstance(details, dict):
         kind = "embedding provider" if embedding else "provider"
-        raise ProvisionError(f"unsupported {kind}: {provider_name}")
+        raise ProvisionError(f"unsupported {kind}")
     return details
 
 
 def _validate_model(value: str, label: str) -> str:
-    cleaned = value.strip()
-    secret_prefixes = ("sk-", "sk_", "api_", "api-key", "bearer")
+    cleaned = value.strip() if isinstance(value, str) else ""
     if (
-        not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*(?:/[A-Za-z0-9][A-Za-z0-9._:-]*)*", cleaned)
+        not isinstance(value, str)
+        or value != cleaned
+        or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]*(?:/[A-Za-z0-9][A-Za-z0-9._:-]*)*", cleaned)
         or len(cleaned) > 128
-        or any(segment.lower().startswith(secret_prefixes) for segment in cleaned.split("/"))
+        or _looks_secret_shaped(cleaned)
     ):
         raise ProvisionError(f"--{label} must be a nonempty safe model identifier")
     return cleaned
@@ -197,7 +221,12 @@ def _credential_availability(
 
 
 def _run_command(args: Sequence[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(list(args), check=False, text=True, capture_output=True, **kwargs)
+    try:
+        return subprocess.run(list(args), check=False, text=True, capture_output=True, **kwargs)
+    except OSError:
+        result = subprocess.CompletedProcess(list(args), 127, "", "")
+        result._clawsec_launch_failed = True  # type: ignore[attr-defined]
+        return result
 
 
 def _download(url: str, destination: Path) -> None:
@@ -208,13 +237,27 @@ def _download(url: str, destination: Path) -> None:
 
 def _require_success(result: subprocess.CompletedProcess[str], label: str) -> None:
     if result.returncode != 0:
-        detail = result.stderr.strip() or result.stdout.strip() or f"exit status {result.returncode}"
-        raise ProvisionError(f"{label} failed: {detail}")
+        raise ProvisionError(f"{label} failed with exit status {result.returncode}")
 
 
 def _version_from_text(raw: str) -> tuple[int, int]:
     major, minor = raw.split(".", 1)
     return int(major), int(minor)
+
+
+def _selected_python_version(python_executable: str, command: Command = _run_command) -> tuple[int, int]:
+    """Probe the requested interpreter with static code and never expose its output."""
+    try:
+        result = command([python_executable, "-c", PYTHON_VERSION_PROBE])
+    except OSError:
+        raise ProvisionError("selected Python version probe failed") from None
+    if getattr(result, "_clawsec_launch_failed", False) or result.returncode != 0:
+        raise ProvisionError("selected Python version probe failed")
+    output = result.stdout if isinstance(result.stdout, str) else ""
+    match = re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\n?", output)
+    if match is None:
+        raise ProvisionError("selected Python version probe returned an invalid version")
+    return int(match.group(1)), int(match.group(2))
 
 
 def _manifest_section(manifest: Mapping[str, object], name: str) -> Mapping[str, object]:
@@ -227,8 +270,8 @@ def _manifest_section(manifest: Mapping[str, object], name: str) -> Mapping[str,
 def _validate_authorization(confirm_authorized_provision: bool, authorization_id: str) -> None:
     if not confirm_authorized_provision:
         raise ProvisionError("--confirm-authorized-provision is required")
-    if not authorization_id.strip():
-        raise ProvisionError("--authorization-id must be nonempty")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}", authorization_id) or _looks_secret_shaped(authorization_id):
+        raise ProvisionError("--authorization-id must be a short non-secret identifier")
 
 
 def preflight(
@@ -251,6 +294,7 @@ def preflight(
     embedding_provider: str | None = None,
     embedding_model: str | None = None,
     embedding_base_url: str | None = None,
+    approved_embedding_url: str | None = None,
     attack_temperature: float | int | None = None,
 ) -> dict[str, object]:
     """Inspect local prerequisites without authorization, network access, or state writes."""
@@ -300,8 +344,18 @@ def preflight(
             embedding_provider=embedding_provider,
             embedding_model=embedding_model,
             embedding_base_url=embedding_base_url,
+            approved_embedding_url=approved_embedding_url,
         )
-    elif target_base_url or approved_target_url or attack_base_url or approved_attack_url or embedding_provider or embedding_model or embedding_base_url:
+    elif (
+        target_base_url
+        or approved_target_url
+        or attack_base_url
+        or approved_attack_url
+        or embedding_provider
+        or embedding_model
+        or embedding_base_url
+        or approved_embedding_url
+    ):
         raise ProvisionError("provider roles are required to inspect base URLs or embedding settings")
     credential_presence = _credential_availability(capabilities, selected_providers)
     if embedding_provider:
@@ -458,7 +512,16 @@ def isolated_environment(state_root: Path) -> dict[str, str]:
 def _install_locked_dependencies(venv_python: Path, lock_path: Path, state_root: Path, command: Command) -> None:
     _require_success(
         command(
-            [str(venv_python), "-m", "pip", "install", "--require-hashes", "-r", str(lock_path)],
+            [
+                str(venv_python),
+                "-m",
+                "pip",
+                "install",
+                "--require-hashes",
+                "--only-binary=:all:",
+                "-r",
+                str(lock_path),
+            ],
             env=isolated_environment(state_root),
         ),
         "locked dependency installation",
@@ -529,7 +592,10 @@ def provision(
                     f"existing release wheel SHA-256 mismatch: expected {expected_sha256}, got {existing_sha256}"
                 )
         else:
-            downloader(str(release_wheel["url"]), wheel_path)
+            try:
+                downloader(str(release_wheel["url"]), wheel_path)
+            except Exception:
+                raise ProvisionError("release wheel download failed") from None
         wheel_path = _safe_state_file(state_root, ("downloads",), filename)
         actual_sha256 = _sha256(wheel_path)
         expected_sha256 = str(release_wheel["sha256"])
@@ -552,7 +618,17 @@ def provision(
     source_dir = _safe_state_directory(state_root, "source", "ps-fuzz")
     _require_success(
         command(
-            ["git", "clone", "--no-checkout", str(upstream["clone_url"]), str(source_dir)],
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                str(upstream["tag"]),
+                "--no-checkout",
+                str(upstream["clone_url"]),
+                str(source_dir),
+            ],
             env=isolated_environment(state_root),
         ),
         "pinned source clone",
@@ -568,9 +644,7 @@ def provision(
     revision = command(["git", "-C", str(source_dir), "rev-parse", "HEAD"], env=isolated_environment(state_root))
     _require_success(revision, "pinned source revision verification")
     if revision.stdout.strip() != commit:
-        raise ProvisionError(
-            f"source commit mismatch: expected {commit}, got {revision.stdout.strip() or 'no revision'}"
-        )
+        raise ProvisionError("source commit mismatch")
 
     _install_locked_dependencies(venv_python, lock_path, state_root, command)
     wheel_dir = _ensure_state_directory(state_root, "built-wheels")
@@ -610,7 +684,7 @@ def _validate_test_authorization(confirm_authorized_test: bool, authorization_id
         raise ProvisionError("--confirm-authorized-test is required for every active run")
     if (
         not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}", authorization_id)
-        or authorization_id.lower().startswith(("sk-", "sk_", "api_", "bearer"))
+        or _looks_secret_shaped(authorization_id)
     ):
         raise ProvisionError("--authorization-id must be a short non-secret identifier")
 
@@ -670,6 +744,7 @@ def _validate_endpoint_configuration(
     embedding_provider: str | None = None,
     embedding_model: str | None = None,
     embedding_base_url: str | None = None,
+    approved_embedding_url: str | None = None,
 ) -> dict[str, object]:
     target_details = _provider(capabilities, target_provider)
     attack_details = _provider(capabilities, attack_provider)
@@ -697,13 +772,18 @@ def _validate_endpoint_configuration(
         embedding_details = _provider(capabilities, embedding_provider, embedding=True)
         _validate_model(embedding_model, "embedding-model")
         if embedding_base_url is not None:
-            flag = embedding_details.get("base_url_flag")
-            if not isinstance(flag, str):
-                raise ProvisionError("embedding provider does not support a custom embedding base URL")
-            embedding_url, embedding_origin = _normalized_base_url(embedding_base_url, "embedding-base-url")
+            embedding_url, embedding_origin = _approved_role_url(
+                embedding_provider,
+                embedding_details,
+                embedding_base_url,
+                approved_embedding_url,
+                "embedding",
+            )
+        elif approved_embedding_url is not None:
+            raise ProvisionError("--approved-embedding-url is allowed only with --embedding-base-url")
         else:
             embedding_origin = f"provider:{embedding_provider}"
-    elif embedding_provider or embedding_model or embedding_base_url:
+    elif embedding_provider or embedding_model or embedding_base_url or approved_embedding_url:
         raise ProvisionError("embedding settings are allowed only with rag_poisoning")
     return {
         "target_url": target_url,
@@ -776,6 +856,7 @@ def run_environment(
             "TMP": str(temporary),
             "TEMP": str(temporary),
             "PYTHONNOUSERSITE": "1",
+            "ANONYMIZED_TELEMETRY": "false",
         }
     )
     return environment
@@ -885,6 +966,7 @@ def run(
     embedding_provider: str | None = None,
     embedding_model: str | None = None,
     embedding_base_url: str | None = None,
+    approved_embedding_url: str | None = None,
     command: Command = _run_command,
 ) -> RunResult:
     """Run only the reviewed batch interface after an explicit, per-run authorization."""
@@ -916,6 +998,7 @@ def run(
         embedding_provider=embedding_provider,
         embedding_model=embedding_model,
         embedding_base_url=embedding_base_url,
+        approved_embedding_url=approved_embedding_url,
     )
 
     safe_output_dir = _require_new_external_output_dir(output_dir)
@@ -987,16 +1070,21 @@ def run(
         if endpoints["embedding_url"] is not None and endpoints["embedding_details"] is not None:
             arguments.extend([str(endpoints["embedding_details"]["base_url_flag"]), str(endpoints["embedding_url"])])
         arguments.append(str(prompt_copy))
-        result = command(
-            arguments,
-            cwd=str(home),
-            env=run_environment(
-                temporary_root,
-                capabilities,
-                provider_names=[target_provider, attack_provider],
-                embedding_provider_names=[embedding_provider] if embedding_provider else [],
-            ),
-        )
+        try:
+            result = command(
+                arguments,
+                cwd=str(home),
+                env=run_environment(
+                    temporary_root,
+                    capabilities,
+                    provider_names=[target_provider, attack_provider],
+                    embedding_provider_names=[embedding_provider] if embedding_provider else [],
+                ),
+            )
+        except OSError:
+            raise ProvisionError("ps-fuzz invocation failed") from None
+        if getattr(result, "_clawsec_launch_failed", False):
+            raise ProvisionError("ps-fuzz invocation failed")
         exit_status = result.returncode
         counts = _aggregate_counts(result.stdout) if exit_status == 0 else None
     _write_redacted_reports(
@@ -1012,7 +1100,7 @@ def run(
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = _SafeArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("preflight", "provision", "run"))
     parser.add_argument("--state-root", help="External ClawSec state root, required for provision and run.")
     parser.add_argument("--source", choices=("wheel", "source"), default="wheel")
@@ -1036,6 +1124,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--embedding-provider")
     parser.add_argument("--embedding-model")
     parser.add_argument("--embedding-base-url")
+    parser.add_argument("--approved-embedding-url")
     parser.add_argument("--output-dir")
     return parser
 
@@ -1052,18 +1141,26 @@ def _parse_tests_argument(value: str | None) -> list[str]:
     return parsed
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None, *, command: Command = _run_command) -> int:
     args = _parser().parse_args(argv)
     manifest = load_manifest()
     try:
         capabilities = load_capabilities()
         selected_tests = _parse_tests_argument(args.tests)
+        if args.command != "preflight" and not args.state_root:
+            raise ProvisionError("--state-root is required for provision or run")
+        if args.command == "provision":
+            _validate_authorization(args.confirm_authorized_provision, args.authorization_id)
+        selected_python_version: tuple[int, int] | None = None
+        if args.command in {"preflight", "provision"}:
+            selected_python_version = _selected_python_version(args.python_executable, command)
         if args.command == "preflight":
             inspection = preflight(
                 manifest,
                 source=args.source,
                 python_executable=args.python_executable,
-                python_version=sys.version_info[:2],
+                python_version=selected_python_version,
+                command=command,
                 capabilities=capabilities,
                 target_provider=args.target_provider,
                 target_model=args.target_model,
@@ -1077,13 +1174,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 embedding_provider=args.embedding_provider,
                 embedding_model=args.embedding_model,
                 embedding_base_url=args.embedding_base_url,
+                approved_embedding_url=args.approved_embedding_url,
                 attack_temperature=args.attack_temperature,
             )
             print(json.dumps(inspection, sort_keys=True))
             print("preflight passed; no state was written")
             return 0
-        if not args.state_root:
-            raise ProvisionError("--state-root is required for provision or run")
         if args.command == "run":
             required = {
                 "--system-prompt-file": args.system_prompt_file,
@@ -1121,6 +1217,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 embedding_provider=args.embedding_provider,
                 embedding_model=args.embedding_model,
                 embedding_base_url=args.embedding_base_url,
+                approved_embedding_url=args.approved_embedding_url,
             )
             print(f"ps-fuzz run finished with exit status {result.exit_status}; redacted reports were written")
             return result.exit_status
@@ -1131,7 +1228,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             confirm_authorized_provision=args.confirm_authorized_provision,
             authorization_id=args.authorization_id,
             python_executable=args.python_executable,
-            python_version=sys.version_info[:2],
+            python_version=selected_python_version,
+            command=command,
         )
     except ProvisionError as exc:
         print(f"ps-fuzz provisioning blocked: {exc}", file=sys.stderr)
