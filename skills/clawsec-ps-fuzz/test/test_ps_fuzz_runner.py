@@ -31,6 +31,29 @@ def load_runner():
     return module
 
 
+def selected_runtime(
+    *,
+    implementation: str = "CPython",
+    major: int = 3,
+    minor: int = 11,
+    system: str = "Linux",
+    machine: str = "x86_64",
+    libc: str = "glibc",
+    libc_version: str = "2.28",
+    macos_version: str = "",
+) -> dict[str, object]:
+    return {
+        "implementation": implementation,
+        "major": major,
+        "minor": minor,
+        "system": system,
+        "machine": machine,
+        "libc": libc,
+        "libc_version": libc_version,
+        "macos_version": macos_version,
+    }
+
+
 class PsFuzzProvisioningTests(unittest.TestCase):
     """Prove that provisioning validates first and writes only the state root."""
 
@@ -47,7 +70,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             runner.load_manifest(MANIFEST),
             source="wheel",
             python_executable="python3",
-            python_version=(3, 12),
+            python_version=(3, 11),
+            python_runtime=selected_runtime(),
             command=command,
         )
         self.assertEqual(calls, [["python3", "-m", "venv", "--help"], ["python3", "-m", "pip", "--version"]])
@@ -71,7 +95,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=False,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                 )
             with self.assertRaisesRegex(runner.ProvisionError, "authorization-id"):
@@ -82,7 +107,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="  ",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                 )
         self.assertEqual(calls, [], "authorization rejection must precede runtime checks")
@@ -101,12 +127,22 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
             )
 
+        with self.assertRaisesRegex(runner.ProvisionError, "unsupported Python 3.12"):
+            runner.preflight(
+                manifest,
+                source="wheel",
+                python_executable="python3",
+                python_version=(3, 12),
+                command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
+            )
+
         with self.assertRaisesRegex(runner.ProvisionError, "--source"):
             runner.preflight(
                 manifest,
                 source="branch:main",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
             )
 
@@ -118,7 +154,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 manifest,
                 source="wheel",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=missing_venv,
             )
 
@@ -132,9 +169,84 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 manifest,
                 source="wheel",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=missing_pip,
             )
+
+    def test_cli_rejects_non_cpython_and_unsupported_native_wheels_before_state_write(self) -> None:
+        """The selected interpreter must match the reviewed wheel support envelope."""
+        import contextlib
+        import io
+
+        runner = load_runner()
+        unsupported_runtimes = (
+            (
+                "selected-python-312",
+                selected_runtime(minor=12),
+                "unsupported Python 3.12",
+            ),
+            (
+                "selected-pypy",
+                selected_runtime(implementation="PyPy"),
+                "unsupported Python implementation",
+            ),
+            (
+                "selected-musl",
+                selected_runtime(libc="musl", libc_version="1.2.5"),
+                "unsupported native-wheel platform",
+            ),
+            (
+                "selected-old-glibc",
+                selected_runtime(libc_version="2.27"),
+                "unsupported native-wheel platform",
+            ),
+            (
+                "selected-windows-arm",
+                selected_runtime(system="Windows", machine="ARM64", libc="", libc_version=""),
+                "unsupported native-wheel platform",
+            ),
+            (
+                "selected-macos-x86",
+                selected_runtime(system="Darwin", machine="x86_64", libc="", libc_version="", macos_version="14.0"),
+                "unsupported native-wheel platform",
+            ),
+            (
+                "selected-old-macos-arm",
+                selected_runtime(system="Darwin", machine="arm64", libc="", libc_version="", macos_version="13.7"),
+                "unsupported native-wheel platform",
+            ),
+        )
+        with tempfile.TemporaryDirectory() as td:
+            for executable, runtime, expected_error in unsupported_runtimes:
+                calls: list[list[str]] = []
+
+                def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    calls.append(args)
+                    if args == [executable, "-c", runner.PYTHON_VERSION_PROBE]:
+                        return subprocess.CompletedProcess(args, 0, json.dumps(runtime) + "\n", "")
+                    self.fail("unsupported runtime reached a capability check")
+
+                state_root = approved_state_root(Path(td) / executable)
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    status = runner.main(
+                        [
+                            "provision",
+                            "--confirm-authorized-provision",
+                            "--authorization-id",
+                            "AUTH-42",
+                            "--state-root",
+                            str(state_root),
+                            "--python",
+                            executable,
+                        ],
+                        command=command,
+                    )
+                self.assertEqual(status, 2)
+                self.assertEqual(calls, [[executable, "-c", runner.PYTHON_VERSION_PROBE]])
+                self.assertIn(expected_error, stderr.getvalue())
+                self.assertFalse(state_root.exists())
 
     def test_cli_selected_python_38_blocks_before_venv_probe_or_state_write(self) -> None:
         import contextlib
@@ -142,12 +254,12 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
         runner = load_runner()
         calls: list[list[str]] = []
-        probe = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"
+        probe = runner.PYTHON_VERSION_PROBE
 
         def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
             calls.append(args)
             if args == ["selected-python-38", "-c", probe]:
-                return subprocess.CompletedProcess(args, 0, "3.8\n", "")
+                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime(minor=8)) + "\n", "")
             self.fail("preflight invoked a selected Python capability command before its version gate")
 
         stderr = io.StringIO()
@@ -163,13 +275,13 @@ class PsFuzzProvisioningTests(unittest.TestCase):
 
         runner = load_runner()
         calls: list[list[str]] = []
-        probe = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"
+        probe = runner.PYTHON_VERSION_PROBE
         original_version = runner.sys.version_info
 
         def command(args: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
             calls.append(args)
             if args == ["selected-python-311", "-c", probe]:
-                return subprocess.CompletedProcess(args, 0, "3.11\n", "")
+                return subprocess.CompletedProcess(args, 0, json.dumps(selected_runtime()) + "\n", "")
             return subprocess.CompletedProcess(args, 0, "", "")
 
         stdout = io.StringIO()
@@ -187,6 +299,21 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 ["selected-python-311", "-m", "venv", "--help"],
                 ["selected-python-311", "-m", "pip", "--version"],
             ],
+        )
+        inspection = json.loads(stdout.getvalue().splitlines()[0])
+        self.assertEqual(
+            inspection["python_support"],
+            {
+                "implementation": "CPython",
+                "supported_versions": ["3.9", "3.10", "3.11"],
+                "native_wheel_platforms": [
+                    "windows-amd64",
+                    "linux-glibc-2.28+-x86_64",
+                    "linux-glibc-2.28+-aarch64",
+                    "macos-14+-arm64",
+                ],
+                "selected_native_wheel_platform": "linux-glibc-2.28+-x86_64",
+            },
         )
         self.assertIn("preflight passed", stdout.getvalue())
 
@@ -244,7 +371,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 confirm_authorized_provision=True,
                 authorization_id="AUTH-42",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=command,
                 downloader=downloader,
             )
@@ -280,7 +408,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                     downloader=lambda _url, destination: destination.write_bytes(b"tampered"),
                 )
@@ -312,7 +441,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                 confirm_authorized_provision=True,
                 authorization_id="AUTH-42",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=command,
                 downloader=lambda _url, _destination: self.fail("source provisioning must not download the release wheel"),
             )
@@ -350,7 +480,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                     downloader=downloader,
                 )
@@ -395,7 +526,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                 )
             self.assertNotIn(token, str(raised.exception))
@@ -422,7 +554,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                 )
             self.assertFalse([args for args in calls if "install" in args])
@@ -451,7 +584,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                         confirm_authorized_provision=True,
                         authorization_id="AUTH-42",
                         python_executable="python3",
-                        python_version=(3, 12),
+                        python_version=(3, 11),
+                        python_runtime=selected_runtime(),
                         command=command,
                         downloader=lambda _url, _destination: self.fail("project state root reached downloader"),
                     )
@@ -491,7 +625,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda _args, **_kwargs: self.fail("root symlink reached a command"),
                     downloader=lambda _url, _destination: self.fail("root symlink reached downloader"),
                 )
@@ -514,7 +649,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                         confirm_authorized_provision=True,
                         authorization_id="AUTH-42",
                         python_executable="python3",
-                        python_version=(3, 12),
+                        python_version=(3, 11),
+                        python_runtime=selected_runtime(),
                         command=command,
                         downloader=lambda _url, _destination: self.fail("child symlink reached downloader"),
                     )
@@ -543,7 +679,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                 )
             self.assertEqual(calls, [], "a rejected source target must block before any command")
@@ -568,7 +705,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda _args, **_kwargs: self.fail("artifact symlink reached a command"),
                     downloader=lambda _url, _destination: self.fail("artifact symlink reached downloader"),
                 )
@@ -612,7 +750,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=command,
                     downloader=lambda _url, destination: destination.write_bytes(wheel_bytes),
                 )
@@ -646,7 +785,8 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     confirm_authorized_provision=True,
                     authorization_id="AUTH-42",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                     downloader=lambda _url, _destination: self.fail("escaped wheel path reached downloader"),
                 )
@@ -700,6 +840,10 @@ class PsFuzzProvisioningTests(unittest.TestCase):
             ("filename", "../../outside.whl"),
             ("clone_url", "https://evil.example/ps-fuzz.git"),
             ("lock_path", "../requirements.lock"),
+            ("python_implementation", "PyPy"),
+            ("python_minimum", "3.8"),
+            ("python_maximum", "3.12"),
+            ("python_platforms", []),
         )
 
         with tempfile.TemporaryDirectory() as td:
@@ -713,6 +857,14 @@ class PsFuzzProvisioningTests(unittest.TestCase):
                     candidate["upstream"][field] = value
                 elif field == "lock_path":
                     candidate["dependency_lock"]["path"] = value
+                elif field == "python_implementation":
+                    candidate["python"]["implementation"] = value
+                elif field == "python_minimum":
+                    candidate["python"]["minimum"] = value
+                elif field == "python_maximum":
+                    candidate["python"]["maximum"] = value
+                elif field == "python_platforms":
+                    candidate["python"]["native_wheel_platforms"] = value
                 else:
                     candidate["upstream"][field] = value
                 candidate_path = Path(td) / f"invalid-{field}.json"
@@ -791,7 +943,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 runner.load_manifest(MANIFEST),
                 source="wheel",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=lambda args, **_kwargs: calls.append(args) or subprocess.CompletedProcess(args, 0, "", ""),
                 capabilities=runner.load_capabilities(),
                 target_provider="open_ai",
@@ -819,7 +972,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 runner.load_manifest(MANIFEST),
                 source="wheel",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                 capabilities=runner.load_capabilities(),
                 target_provider="open_ai",
@@ -836,7 +990,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                 runner.load_manifest(MANIFEST),
                 source="wheel",
                 python_executable="python3",
-                python_version=(3, 12),
+                python_version=(3, 11),
+                python_runtime=selected_runtime(),
                 command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                 capabilities=runner.load_capabilities(),
                 target_provider="open_ai",
@@ -972,7 +1127,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     manifest,
                     source="wheel",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                     capabilities=capabilities,
                     target_provider=secret_values[0],
@@ -1004,7 +1160,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
             manifest,
             source="wheel",
             python_executable="python3",
-            python_version=(3, 12),
+            python_version=(3, 11),
+            python_runtime=selected_runtime(),
             command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
             capabilities=capabilities,
             target_provider="open_ai",
@@ -1021,7 +1178,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     manifest,
                     source="wheel",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                     capabilities=capabilities,
                     target_provider="open_ai",
@@ -1036,7 +1194,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     manifest,
                     source="wheel",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                     capabilities=capabilities,
                     target_provider="open_ai",
@@ -1051,7 +1210,8 @@ class PsFuzzActiveRunTests(unittest.TestCase):
                     manifest,
                     source="wheel",
                     python_executable="python3",
-                    python_version=(3, 12),
+                    python_version=(3, 11),
+                    python_runtime=selected_runtime(),
                     command=lambda args, **_kwargs: subprocess.CompletedProcess(args, 0, "", ""),
                     capabilities=capabilities,
                     target_provider="open_ai",

@@ -13,6 +13,7 @@ import json
 import math
 import os
 from pathlib import Path
+import platform
 import re
 import subprocess
 import sys
@@ -39,7 +40,16 @@ STATE_DIRECTORIES = (
     "tmp",
 )
 ENVIRONMENT_STATE_DIRECTORIES = ("home", "pip-cache", "xdg-cache", "tmp")
-PYTHON_VERSION_PROBE = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}')"
+PYTHON_RUNTIME_PROBE = (
+    "import json, platform, sys; "
+    "libc = platform.libc_ver(); "
+    "macos = platform.mac_ver(); "
+    "print(json.dumps({'implementation': platform.python_implementation(), "
+    "'major': sys.version_info[0], 'minor': sys.version_info[1], "
+    "'system': platform.system(), 'machine': platform.machine(), "
+    "'libc': libc[0], 'libc_version': libc[1], 'macos_version': macos[0]}))"
+)
+PYTHON_VERSION_PROBE = PYTHON_RUNTIME_PROBE
 
 Command = Callable[..., subprocess.CompletedProcess[str]]
 Downloader = Callable[[str, Path], None]
@@ -124,6 +134,8 @@ def load_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> dict[str, object]:
             release_wheel["url"],
             release_wheel["sha256"],
             python["minimum"],
+            python["maximum"],
+            python["implementation"],
         ):
             assert isinstance(value, str) and value
         tag = str(upstream["tag"])
@@ -138,8 +150,17 @@ def load_manifest(path: Path = DEFAULT_MANIFEST_PATH) -> dict[str, object]:
         assert upstream["clone_url"] == "https://github.com/prompt-security/ps-fuzz.git"
         assert artifact_url.scheme == "https" and artifact_url.netloc == "github.com"
         assert artifact_url.path == f"/prompt-security/ps-fuzz/releases/download/{tag}/{filename}"
+        assert python["implementation"] == "CPython"
+        assert _version_from_text(str(python["minimum"])) == (3, 9)
+        assert _version_from_text(str(python["maximum"])) == (3, 11)
+        assert python["native_wheel_platforms"] == [
+            "windows-amd64",
+            "linux-glibc-2.28+-x86_64",
+            "linux-glibc-2.28+-aarch64",
+            "macos-14+-arm64",
+        ]
         _safe_resource_path(dependency_lock["path"])
-    except (AssertionError, KeyError, TypeError, ProvisionError) as exc:
+    except (AssertionError, KeyError, TypeError, ValueError, ProvisionError) as exc:
         raise ProvisionError("upstream manifest is malformed") from exc
     return manifest
 
@@ -245,7 +266,7 @@ def _version_from_text(raw: str) -> tuple[int, int]:
     return int(major), int(minor)
 
 
-def _selected_python_version(python_executable: str, command: Command = _run_command) -> tuple[int, int]:
+def _selected_python_runtime(python_executable: str, command: Command = _run_command) -> dict[str, object]:
     """Probe the requested interpreter with static code and never expose its output."""
     try:
         result = command([python_executable, "-c", PYTHON_VERSION_PROBE])
@@ -254,10 +275,138 @@ def _selected_python_version(python_executable: str, command: Command = _run_com
     if getattr(result, "_clawsec_launch_failed", False) or result.returncode != 0:
         raise ProvisionError("selected Python version probe failed")
     output = result.stdout if isinstance(result.stdout, str) else ""
-    match = re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\n?", output)
-    if match is None:
-        raise ProvisionError("selected Python version probe returned an invalid version")
-    return int(match.group(1)), int(match.group(2))
+    try:
+        runtime = json.loads(output)
+        assert isinstance(runtime, dict)
+        implementation = runtime["implementation"]
+        major = runtime["major"]
+        minor = runtime["minor"]
+        system = runtime["system"]
+        machine = runtime["machine"]
+        libc = runtime["libc"]
+        libc_version = runtime["libc_version"]
+        macos_version = runtime["macos_version"]
+        assert isinstance(implementation, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", implementation)
+        assert isinstance(major, int) and not isinstance(major, bool) and 0 <= major < 100
+        assert isinstance(minor, int) and not isinstance(minor, bool) and 0 <= minor < 100
+        for value in (system, machine, libc, libc_version, macos_version):
+            assert isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.-]{0,64}", value)
+    except (AssertionError, KeyError, TypeError, json.JSONDecodeError):
+        raise ProvisionError("selected Python runtime probe returned invalid data") from None
+    return {
+        "implementation": implementation,
+        "major": major,
+        "minor": minor,
+        "system": system,
+        "machine": machine,
+        "libc": libc,
+        "libc_version": libc_version,
+        "macos_version": macos_version,
+    }
+
+
+def _selected_python_version(python_executable: str, command: Command = _run_command) -> tuple[int, int]:
+    """Return the selected interpreter version through the reviewed runtime probe."""
+    runtime = _selected_python_runtime(python_executable, command)
+    return int(runtime["major"]), int(runtime["minor"])
+
+
+def _default_python_runtime(python_version: tuple[int, int]) -> dict[str, object]:
+    """Supply host identity only for direct, offline unit calls; public CLI probes --python."""
+    libc = platform.libc_ver()
+    macos = platform.mac_ver()
+    return {
+        "implementation": platform.python_implementation(),
+        "major": python_version[0],
+        "minor": python_version[1],
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "libc": libc[0],
+        "libc_version": libc[1],
+        "macos_version": macos[0],
+    }
+
+
+def _native_version_at_least(value: str, minimum: tuple[int, int]) -> bool:
+    """Require a simple native-platform major.minor version without echoing it."""
+    match = re.fullmatch(r"([0-9]+)\.([0-9]+)(?:\.[0-9]+)?", value)
+    return bool(match and (int(match.group(1)), int(match.group(2))) >= minimum)
+
+
+def _runtime_support(
+    manifest: Mapping[str, object], python_version: tuple[int, int], python_runtime: Mapping[str, object] | None
+) -> dict[str, object]:
+    """Validate one selected runtime against the pinned binary-wheel support envelope."""
+    python = _manifest_section(manifest, "python")
+    try:
+        minimum = _version_from_text(str(python["minimum"]))
+        maximum = _version_from_text(str(python["maximum"]))
+        implementation = python["implementation"]
+        native_wheel_platforms = python["native_wheel_platforms"]
+        assert implementation == "CPython"
+        assert minimum <= maximum
+        assert minimum[0] == maximum[0]
+        assert isinstance(native_wheel_platforms, list) and all(
+            isinstance(item, str) and item for item in native_wheel_platforms
+        )
+    except (AssertionError, KeyError, TypeError, ValueError) as exc:
+        raise ProvisionError("upstream manifest has an invalid Python support boundary") from exc
+
+    runtime = python_runtime if python_runtime is not None else _default_python_runtime(python_version)
+    try:
+        runtime_implementation = runtime["implementation"]
+        runtime_major = runtime["major"]
+        runtime_minor = runtime["minor"]
+        runtime_system = runtime["system"]
+        runtime_machine = runtime["machine"]
+        runtime_libc = runtime["libc"]
+        runtime_libc_version = runtime["libc_version"]
+        runtime_macos_version = runtime["macos_version"]
+        assert isinstance(runtime_implementation, str)
+        assert isinstance(runtime_major, int) and not isinstance(runtime_major, bool)
+        assert isinstance(runtime_minor, int) and not isinstance(runtime_minor, bool)
+        assert all(
+            isinstance(value, str)
+            for value in (runtime_system, runtime_machine, runtime_libc, runtime_libc_version, runtime_macos_version)
+        )
+    except (AssertionError, KeyError, TypeError) as exc:
+        raise ProvisionError("selected Python runtime probe returned invalid data") from exc
+    runtime_version = (runtime_major, runtime_minor)
+    if runtime_version != python_version:
+        raise ProvisionError("selected Python runtime probe returned inconsistent version data")
+    if runtime_implementation != implementation:
+        raise ProvisionError("unsupported Python implementation")
+    if python_version < minimum or python_version > maximum:
+        raise ProvisionError(
+            f"unsupported Python {python_version[0]}.{python_version[1]}; "
+            f"supported CPython versions are {minimum[0]}.{minimum[1]} through {maximum[0]}.{maximum[1]}"
+        )
+
+    system = runtime_system.lower()
+    machine = runtime_machine.lower()
+    libc = runtime_libc.lower()
+    if system == "windows" and machine == "amd64":
+        native_wheel_platform = "windows-amd64"
+    elif (
+        system == "linux"
+        and libc == "glibc"
+        and _native_version_at_least(runtime_libc_version, (2, 28))
+        and machine in {"x86_64", "aarch64"}
+    ):
+        native_wheel_platform = f"linux-glibc-2.28+-{machine}"
+    elif system == "darwin" and machine == "arm64" and _native_version_at_least(runtime_macos_version, (14, 0)):
+        native_wheel_platform = "macos-14+-arm64"
+    else:
+        raise ProvisionError("unsupported native-wheel platform")
+    if native_wheel_platform not in native_wheel_platforms:
+        raise ProvisionError("unsupported native-wheel platform")
+    supported_versions = [f"{minimum[0]}.{minor}" for minor in range(minimum[1], maximum[1] + 1)]
+    return {
+        "implementation": implementation,
+        "supported_versions": supported_versions,
+        "native_wheel_platforms": list(native_wheel_platforms),
+        "selected_native_wheel_platform": native_wheel_platform,
+    }
 
 
 def _manifest_section(manifest: Mapping[str, object], name: str) -> Mapping[str, object]:
@@ -280,6 +429,7 @@ def preflight(
     source: str,
     python_executable: str,
     python_version: tuple[int, int],
+    python_runtime: Mapping[str, object] | None = None,
     command: Command = _run_command,
     capabilities: Mapping[str, object] | None = None,
     target_provider: str | None = None,
@@ -301,16 +451,7 @@ def preflight(
     if source not in {"wheel", "source"}:
         raise ProvisionError("--source must be either wheel or source")
 
-    python = _manifest_section(manifest, "python")
-    try:
-        minimum = _version_from_text(str(python["minimum"]))
-    except (KeyError, ValueError) as exc:
-        raise ProvisionError("upstream manifest has an invalid Python support floor") from exc
-    if python_version < minimum:
-        raise ProvisionError(
-            f"unsupported Python {python_version[0]}.{python_version[1]}; "
-            f"upstream requires Python {minimum[0]}.{minimum[1]} or newer"
-        )
+    python_support = _runtime_support(manifest, python_version, python_runtime)
 
     _require_success(command([python_executable, "-m", "venv", "--help"]), "Python venv capability check")
     _require_success(command([python_executable, "-m", "pip", "--version"]), "Python pip capability check")
@@ -363,6 +504,7 @@ def preflight(
     return {
         "source": source,
         "python": f"{python_version[0]}.{python_version[1]}",
+        "python_support": python_support,
         "target": {"provider": target_provider, "model": target_model, "origin": endpoints.get("target_origin")},
         "attack": {"provider": attack_provider, "model": attack_model, "origin": endpoints.get("attack_origin")},
         "selected_tests": selected_tests,
@@ -537,6 +679,7 @@ def provision(
     authorization_id: str,
     python_executable: str,
     python_version: tuple[int, int],
+    python_runtime: Mapping[str, object] | None = None,
     command: Command = _run_command,
     downloader: Downloader = _download,
 ) -> ProvisionResult:
@@ -556,6 +699,7 @@ def provision(
         source=source,
         python_executable=python_executable,
         python_version=python_version,
+        python_runtime=python_runtime,
         command=command,
     )
 
@@ -1151,15 +1295,21 @@ def main(argv: Sequence[str] | None = None, *, command: Command = _run_command) 
             raise ProvisionError("--state-root is required for provision or run")
         if args.command == "provision":
             _validate_authorization(args.confirm_authorized_provision, args.authorization_id)
+        selected_python_runtime: dict[str, object] | None = None
         selected_python_version: tuple[int, int] | None = None
         if args.command in {"preflight", "provision"}:
-            selected_python_version = _selected_python_version(args.python_executable, command)
+            selected_python_runtime = _selected_python_runtime(args.python_executable, command)
+            selected_python_version = (
+                int(selected_python_runtime["major"]),
+                int(selected_python_runtime["minor"]),
+            )
         if args.command == "preflight":
             inspection = preflight(
                 manifest,
                 source=args.source,
                 python_executable=args.python_executable,
                 python_version=selected_python_version,
+                python_runtime=selected_python_runtime,
                 command=command,
                 capabilities=capabilities,
                 target_provider=args.target_provider,
@@ -1229,6 +1379,7 @@ def main(argv: Sequence[str] | None = None, *, command: Command = _run_command) 
             authorization_id=args.authorization_id,
             python_executable=args.python_executable,
             python_version=selected_python_version,
+            python_runtime=selected_python_runtime,
             command=command,
         )
     except ProvisionError as exc:

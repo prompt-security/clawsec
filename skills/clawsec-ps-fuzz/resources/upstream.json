@@ -5,7 +5,15 @@
     "version": "0.0.1"
   },
   "python": {
-    "minimum": "3.9"
+    "implementation": "CPython",
+    "minimum": "3.9",
+    "maximum": "3.11",
+    "native_wheel_platforms": [
+      "windows-amd64",
+      "linux-glibc-2.28+-x86_64",
+      "linux-glibc-2.28+-aarch64",
+      "macos-14+-arm64"
+    ]
   },
   "upstream": {
     "repository": "https://github.com/prompt-security/ps-fuzz",

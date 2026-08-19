@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 import unittest
 
 
@@ -88,6 +89,40 @@ class PackageContractTests(unittest.TestCase):
                 )
                 self.assertIn("does not define or install a credential mechanism", document)
                 self.assertNotIn("export OPENAI_API_KEY=", document)
+
+    def test_supported_python_native_wheel_boundary_and_chroma_numpy_lock_are_reviewed(self) -> None:
+        requirements_in = (SKILL_ROOT / "resources" / "requirements.in").read_text(encoding="utf-8")
+        lock = (SKILL_ROOT / "resources" / "requirements.lock").read_text(encoding="utf-8")
+        manifest = json.loads((SKILL_ROOT / "resources" / "upstream.json").read_text(encoding="utf-8"))
+
+        self.assertRegex(requirements_in, r"(?m)^chromadb==0\.5\.0\s*$")
+        self.assertRegex(requirements_in, r"(?m)^numpy<2\s*$")
+        self.assertIn("chromadb==0.5.0", lock)
+        self.assertIn("uv pip compile --python-version 3.9 --universal", lock.splitlines()[1])
+        self.assertEqual(
+            manifest["python"],
+            {
+                "implementation": "CPython",
+                "minimum": "3.9",
+                "maximum": "3.11",
+                "native_wheel_platforms": [
+                    "windows-amd64",
+                    "linux-glibc-2.28+-x86_64",
+                    "linux-glibc-2.28+-aarch64",
+                    "macos-14+-arm64",
+                ],
+            },
+        )
+
+        numpy_versions = [
+            match.group(1)
+            for line in lock.splitlines()
+            if (match := re.match(r"^numpy==([0-9]+(?:\.[0-9]+){1,2})(?:\s|;)", line))
+        ]
+        self.assertTrue(numpy_versions, "the universal lock must resolve NumPy")
+        for version in numpy_versions:
+            with self.subTest(version=version):
+                self.assertLess(int(version.split(".", 1)[0]), 2)
 
 
 if __name__ == "__main__":
