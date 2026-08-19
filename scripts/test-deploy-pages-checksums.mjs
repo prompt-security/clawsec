@@ -479,11 +479,13 @@ try {
       const requestUrl = new URL(String(input));
       if (requestUrl.pathname === "/releases/latest/download/checksums.json") {
         mirrorChecksumRequests += 1;
-        if (mirrorChecksumRequests === 2) return new Response("missing\n", { status: 404 });
+        if (mirrorChecksumRequests === 2) return new globalThis.Response("missing\n", { status: 404 });
       }
       if (requestUrl.pathname === "/checksums.json") {
         rootChecksumRequests += 1;
-        if (rootChecksumRequests === 1) return new Response("temporarily unavailable\n", { status: 503 });
+        if (rootChecksumRequests === 1) {
+          return new globalThis.Response("temporarily unavailable\n", { status: 503 });
+        }
       }
       return originalFetch(input, init);
     };
