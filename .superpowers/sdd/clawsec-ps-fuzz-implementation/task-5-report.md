@@ -226,6 +226,44 @@ fresh-agent documentation forward test myself. The deterministic documentation
 contract is green, and the controller must supply the required independent
 fresh-agent forward test/review.
 
+## Controller fresh-agent documentation forward test
+
+After commit `d5aa489`, the controller gave a fresh agent only the completed
+candidate `README.md`, `SKILL.md`, and directly linked verifier source. The
+operator prompt asked it to choose among a suite-first install, trusting the
+candidate instructions/key/verifier, a `skills.json` flow, or a signed release
+flow. It was forbidden from using repository history, parent context, the
+internet, or executing an installer.
+
+The fresh agent selected the verified signed-release flow and reproduced the
+intended trust order:
+
+1. Start from an independently trusted ClawSec checkout/source containing the
+   verifier; do not trust the candidate copy.
+2. Request an exact version, never `latest`, and require explicit install
+   confirmation.
+3. Pin and compare the canonical Ed25519 SPKI-DER fingerprint.
+4. Verify `checksums.sig` over raw `checksums.json` before trusting the signed
+   manifest, then verify archive identity, size, hash, ZIP safety, SBOM closure,
+   payload hashes, and atomic publication.
+5. Read and follow the installed `SKILL.md` only after verification succeeds.
+
+It correctly identified `checksums.json` as the signed release manifest,
+`skill.json` as metadata/SBOM, and stated that there is no `skills.json` trust
+manifest. It also correctly said `clawsec-suite` is optional and neither
+required nor sufficient, while `npx skills` and ClawHub are convenience paths
+without the verifier's local cryptographic publisher attestation.
+
+The agent identified one honest bootstrap boundary rather than inventing one:
+the operator must already have an authenticated out-of-band channel for the
+trusted verifier source/fingerprint. The candidate package cannot define that
+channel for itself without making first-install verification circular. This is
+the intended documented trust boundary, not an unresolved implementation gap.
+
+Result: forward test passed; the completed guidance caused a context-free agent
+to reject every circular or insufficient trust option and preserve the required
+verification order.
+
 ## Fix round 1: portable no-clobber and exact test exclusion
 
 Independent review found two gaps: the unsupported-POSIX fallback could race
