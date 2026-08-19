@@ -12,13 +12,27 @@
 ## Primary Workflow Map
 | Workflow | Trigger | Main Steps |
 | --- | --- | --- |
-| CI | PR/push to `main` | Lint, typecheck, build, Python checks, security scans, skill tests. |
+| CI | PRs to `main` + manual dispatch | Lint, typecheck, build, Python checks, security scans, skill tests. |
 | Pages Verify | PRs to `main` | Build Pages artifact and validate signing outputs (no publish). |
 | Poll NVD CVEs | Daily cron + manual dispatch | Fetch CVEs, transform/dedupe, update feed, sign artifacts, PR changes. |
 | Process Community Advisory | Issue label `advisory-approved` | Parse issue form, create advisory, sign feed, open PR, comment issue. |
 | Skill Release | Skill tags + metadata PR changes | PR: version-parity + dry-run checks; tags: package/sign/publish release assets. |
-| Deploy Pages | Successful CI/Release or manual dispatch | Discover releases, mirror assets, sign public advisories/checksums, deploy site. |
+| Deploy Pages | Push to `main` + successful non-PR Skill Release + manual dispatch | Discover releases, mirror assets, sign public advisories/checksums, deploy site. |
 | Sync Wiki | Pushes to `main` touching `wiki/**` + manual dispatch | Sync `wiki/` into `<repo>.wiki.git` and generate `Home.md` from `INDEX.md`. |
+
+## Pages Validation Layers
+
+Pages advisory validation runs at three different stages:
+
+| Layer | Trigger | Validation scope |
+| --- | --- | --- |
+| Deploy Pages Advisory Checksums Tests | Every CI run for a PR to `main`, or a manual CI dispatch | Runs `scripts/test-deploy-pages-checksums.mjs` against local fixtures and generated artifacts. It covers artifact contracts, workflow wiring, retry timing, backoff, and final error reporting without contacting production. |
+| Pages Verify | Every PR to `main` | Uses an ephemeral signing key to build the production-shaped Pages artifact, verifies copied files and aliases, and smoke-tests the built endpoints locally. It does not publish or contact the production site. |
+| Verify Production Advisory Endpoints | After every successful Pages deployment | Requests the real custom-domain endpoints and verifies that root files, advisory aliases, signatures, signing keys, and the available release mirror agree. |
+
+The production check runs after deployments triggered by a push to `main`, a successful non-PR Skill Release, or a manual dispatch. It is not limited by changed paths because every Pages deployment can temporarily expose mixed artifacts while GitHub Pages or its CDN propagates the new deployment.
+
+Production verification makes up to 12 attempts. The first attempt is immediate; the first retry waits 10 seconds, later waits use a 1.5 exponential backoff factor, and each wait is capped at 60 seconds. A persistent mismatch fails with the final observed endpoint error and guidance to rerun after Pages or CDN propagation completes.
 
 ## Local Operator Workflow
 | Step | Command | Outcome |

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,8 +12,10 @@ import {
   generateAdvisoryChecksums,
   publishAdvisoryAliases,
   publishReleaseCompatibilityMirror,
+  retryLiveAdvisoryEndpointVerification,
   smokeTestBuiltAdvisoryEndpoints,
   verifyBuiltAdvisoryArtifacts,
+  verifyLiveAdvisoryEndpoints,
 } from "./ci/advisory_pages_artifacts.mjs";
 
 const workflow = await fs.readFile(new URL("../.github/workflows/deploy-pages.yml", import.meta.url), "utf8");
@@ -116,6 +119,16 @@ assert.match(
   /--base-url https:\/\/clawsec\.prompt\.security/,
   "post-deploy verification must target the production custom domain",
 );
+assert.match(
+  stepBody(workflow, "Verify deployed advisory endpoints"),
+  /--retry-backoff-factor 1\.5/,
+  "post-deploy verification must use exponential backoff for GitHub Pages propagation",
+);
+assert.match(
+  stepBody(workflow, "Verify deployed advisory endpoints"),
+  /--max-retry-delay-ms 60000/,
+  "post-deploy verification must cap retry backoff waits",
+);
 
 async function collectContractSources(entryPath) {
   const stat = await fs.stat(entryPath);
@@ -164,6 +177,206 @@ assert.deepEqual(
   ],
   "release compatibility mirror must preserve the documented root and nested artifacts",
 );
+
+function createVerificationAttempt({ failuresBeforeSuccess, error = new Error("temporary endpoint mismatch") }) {
+  let attempts = 0;
+  return {
+    attempts() {
+      return attempts;
+    },
+    async verifyAttempt() {
+      attempts += 1;
+      if (attempts <= failuresBeforeSuccess) throw error;
+    },
+  };
+}
+
+async function startArtifactFixtureServer(rootDir) {
+  const root = path.resolve(rootDir);
+  const server = http.createServer((request, response) => {
+    void (async () => {
+      const pathname = decodeURIComponent(new URL(request.url || "/", "http://127.0.0.1").pathname);
+      const filePath = path.resolve(root, pathname.replace(/^\/+/, ""));
+      if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {
+        response.writeHead(400).end("invalid path");
+        return;
+      }
+      const content = await fs.readFile(filePath);
+      response
+        .writeHead(200, { "content-type": filePath.endsWith(".json") ? "application/json" : "text/plain" })
+        .end(content);
+    })().catch((error) => {
+      response.writeHead(error?.code === "ENOENT" ? 404 : 500).end(error?.message || String(error));
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("failed to start artifact fixture server");
+  return {
+    origin: `http://127.0.0.1:${address.port}`,
+    async stop() {
+      await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+    },
+  };
+}
+
+for (const [label, options, expectedMessage] of [
+  ["NaN attempts", { attempts: Number.NaN }, /attempts must be a finite positive integer/],
+  ["fractional attempts", { attempts: 1.5 }, /attempts must be a finite positive integer/],
+  ["zero attempts", { attempts: 0 }, /attempts must be a finite positive integer/],
+  ["negative retry delay", { retryDelayMs: -1 }, /retryDelayMs must be a finite non-negative number/],
+  [
+    "infinite retry delay",
+    { retryDelayMs: Number.POSITIVE_INFINITY },
+    /retryDelayMs must be a finite non-negative number/,
+  ],
+  [
+    "shrinking retry factor",
+    { retryBackoffFactor: 0.5 },
+    /retryBackoffFactor must be a finite number greater than or equal to 1/,
+  ],
+  [
+    "infinite retry factor",
+    { retryBackoffFactor: Number.POSITIVE_INFINITY },
+    /retryBackoffFactor must be a finite number greater than or equal to 1/,
+  ],
+  ["negative retry cap", { maxRetryDelayMs: -1 }, /maxRetryDelayMs must be a finite non-negative number/],
+  ["NaN retry cap", { maxRetryDelayMs: Number.NaN }, /maxRetryDelayMs must be a finite non-negative number/],
+]) {
+  let verificationAttempts = 0;
+  let sleepCalls = 0;
+  await assert.rejects(
+    retryLiveAdvisoryEndpointVerification({
+      baseUrl: "https://example.test",
+      verifyAttempt: async () => {
+        verificationAttempts += 1;
+      },
+      sleep: async () => {
+        sleepCalls += 1;
+      },
+      writeStderr: () => {},
+      ...options,
+    }),
+    expectedMessage,
+    `${label} must be rejected before verification starts`,
+  );
+  assert.equal(verificationAttempts, 0, `${label} must not run a verification attempt`);
+  assert.equal(sleepCalls, 0, `${label} must not schedule a retry timer`);
+}
+
+{
+  const verification = createVerificationAttempt({ failuresBeforeSuccess: 4 });
+  const delays = [];
+  const logs = [];
+  await retryLiveAdvisoryEndpointVerification({
+    baseUrl: "https://example.test",
+    verifyAttempt: verification.verifyAttempt,
+    attempts: 5,
+    retryDelayMs: 1000,
+    retryBackoffFactor: 2,
+    maxRetryDelayMs: 5000,
+    sleep: async (delayMs) => {
+      delays.push(delayMs);
+    },
+    writeStderr: (message) => {
+      logs.push(message);
+    },
+  });
+  assert.equal(verification.attempts(), 5, "temporary production verification failures must be retried");
+  assert.deepEqual(delays, [1000, 2000, 4000, 5000], "post-deploy retries must use capped exponential backoff");
+  assert.match(logs.join(""), /waiting 1000ms before retry/, "retry logs must include the first backoff wait");
+  assert.match(logs.join(""), /waiting 2000ms before retry/, "retry logs must include the second backoff wait");
+  assert.match(logs.join(""), /waiting 5000ms before retry/, "retry logs must include the capped backoff wait");
+}
+
+{
+  const mismatchError = new Error(
+    "HTTP checksum alias mismatch: /checksums.json and /advisories/checksums.json served different content; " +
+      "this usually means GitHub Pages or CDN propagation is serving mixed deploy artifacts",
+  );
+  const verification = createVerificationAttempt({ failuresBeforeSuccess: 3, error: mismatchError });
+  const delays = [];
+  await assert.rejects(
+    retryLiveAdvisoryEndpointVerification({
+      baseUrl: "https://example.test",
+      verifyAttempt: verification.verifyAttempt,
+      attempts: 3,
+      retryDelayMs: 1000,
+      retryBackoffFactor: 2,
+      maxRetryDelayMs: 5000,
+      sleep: async (delayMs) => {
+        delays.push(delayMs);
+      },
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /Production advisory endpoint verification failed after 3 attempts/);
+      assert.match(error.message, /\/checksums\.json/);
+      assert.match(error.message, /\/advisories\/checksums\.json/);
+      assert.match(error.message, /GitHub Pages or CDN propagation/);
+      assert.equal(error.cause, mismatchError);
+      return true;
+    },
+    "persistent production verification failures must keep the actionable propagation message",
+  );
+  assert.equal(verification.attempts(), 3, "persistent production verification failures must use all attempts");
+  assert.deepEqual(delays, [1000, 2000], "failed post-deploy retries must preserve exponential backoff");
+}
+
+{
+  const sensitiveBaseUrl = "https://ci-user:ci-password@example.test/private/path?token=secret#fragment";
+  await assert.rejects(
+    retryLiveAdvisoryEndpointVerification({
+      baseUrl: sensitiveBaseUrl,
+      verifyAttempt: async () => {
+        throw new Error("persistent endpoint mismatch");
+      },
+      attempts: 1,
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /for https:\/\/example\.test\./);
+      assert.doesNotMatch(error.message, /ci-user|ci-password|private\/path|token=secret|fragment/);
+      return true;
+    },
+    "production verification diagnostics must not expose URL credentials or request details",
+  );
+}
+
+{
+  const invalidBaseUrl = "not-a-url?token=secret#fragment";
+  await assert.rejects(
+    verifyLiveAdvisoryEndpoints({
+      baseUrl: invalidBaseUrl,
+      attempts: 1,
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /baseUrl must be a valid HTTP\(S\) URL/);
+      assert.doesNotMatch(error.message, /token=secret|fragment/);
+      return true;
+    },
+    "live verification must reject invalid base URLs without exposing their contents",
+  );
+}
+
+{
+  const pathPrefixedBaseUrl = "http://127.0.0.1:1/project-prefix?token=secret#fragment";
+  await assert.rejects(
+    verifyLiveAdvisoryEndpoints({
+      baseUrl: pathPrefixedBaseUrl,
+      attempts: 1,
+      retryDelayMs: 0,
+      writeStderr: () => {},
+    }),
+    (error) => {
+      assert.match(error.message, /baseUrl must not include a path/);
+      assert.doesNotMatch(error.message, /project-prefix|token=secret|fragment/);
+      return true;
+    },
+    "live verification must reject unsupported path-prefixed base URLs without exposing their contents",
+  );
+}
 
 const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "clawsec-pages-checksums-"));
 try {
@@ -219,6 +432,89 @@ try {
   await fs.cp(publicDir, distDir, { recursive: true });
   await verifyBuiltAdvisoryArtifacts({ publicDir, distDir });
   await smokeTestBuiltAdvisoryEndpoints({ distDir });
+
+  const fixture = await startArtifactFixtureServer(distDir);
+  try {
+    const observedRequests = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+      observedRequests.push(new URL(String(input)));
+      return originalFetch(input, init);
+    };
+    try {
+      const sensitiveBaseUrl =
+        fixture.origin.replace("://", "://ci-user:ci-password@") + "/?token=secret#fragment";
+      await verifyLiveAdvisoryEndpoints({
+        baseUrl: sensitiveBaseUrl,
+        attempts: 1,
+        retryDelayMs: 0,
+        includeGhsa: true,
+        writeStderr: () => {},
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    const requestedPaths = observedRequests.map((requestUrl) => requestUrl.pathname);
+    assert.ok(
+      requestedPaths.includes("/releases/latest/download/checksums.json"),
+      "full live verification must probe the normalized release-mirror path",
+    );
+    assert.ok(requestedPaths.includes("/checksums.json"), "full live verification must request the root manifest");
+    assert.ok(
+      requestedPaths.includes("/advisories/checksums.json"),
+      "full live verification must request the checksum alias",
+    );
+    for (const requestUrl of observedRequests) {
+      assert.equal(requestUrl.origin, fixture.origin, "normalization must preserve the intended HTTP origin");
+      assert.equal(requestUrl.username, "", "normalized requests must not include a username");
+      assert.equal(requestUrl.password, "", "normalized requests must not include a password");
+      assert.equal(requestUrl.search, "", "normalized requests must not include a query string");
+      assert.equal(requestUrl.hash, "", "normalized requests must not include a fragment");
+    }
+
+    let mirrorChecksumRequests = 0;
+    let rootChecksumRequests = 0;
+    const retryLogs = [];
+    globalThis.fetch = async (input, init) => {
+      const requestUrl = new URL(String(input));
+      if (requestUrl.pathname === "/releases/latest/download/checksums.json") {
+        mirrorChecksumRequests += 1;
+        if (mirrorChecksumRequests === 2) return new globalThis.Response("missing\n", { status: 404 });
+      }
+      if (requestUrl.pathname === "/checksums.json") {
+        rootChecksumRequests += 1;
+        if (rootChecksumRequests === 1) {
+          return new globalThis.Response("temporarily unavailable\n", { status: 503 });
+        }
+      }
+      return originalFetch(input, init);
+    };
+    try {
+      await verifyLiveAdvisoryEndpoints({
+        baseUrl: fixture.origin,
+        attempts: 3,
+        retryDelayMs: 0,
+        retryBackoffFactor: 1,
+        maxRetryDelayMs: 0,
+        includeGhsa: true,
+        sleep: async () => {},
+        writeStderr: (message) => {
+          retryLogs.push(message);
+        },
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+    assert.equal(mirrorChecksumRequests, 4, "mirror verification must remain required after a transient 404");
+    assert.match(
+      retryLogs.join(""),
+      /release compatibility mirror returned HTTP 404 after it was previously available/,
+      "mirror propagation failures must explain why verification is still required",
+    );
+  } finally {
+    await fixture.stop();
+  }
 
   await fs.writeFile(path.join(distDir, "advisories/checksums.json"), "tampered\n");
   await assert.rejects(

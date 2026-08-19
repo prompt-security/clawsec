@@ -2,7 +2,7 @@
 
 Track translation coverage and freshness versus English source docs.
 
-_Last updated: 2026-08-02_
+_Last updated: 2026-08-18_
 
 ## README Coverage
 
@@ -44,6 +44,7 @@ The English matrix at `wiki/skill-feature-matrix.md` is canonical. Localized mat
 
 | Date | Changed pages | Translation impact |
 | --- | --- | --- |
+| 2026-08-18 | `wiki/workflow.md` | Documented PR-local Pages validation and post-deploy production endpoint verification, including retry/backoff behavior and trigger scope. Translation refresh pending. |
 | 2026-06-14 | `wiki/workflow.md`, `wiki/modules/automation-release.md`, `wiki/security-signing-runbook.md`, `wiki/dependencies.md`, `wiki/glossary.md` | Added SkillSpector release-pipeline documentation, signed-report behavior, and PR comment behavior. Translation refresh pending. |
 
 ## Wiki Coverage (KO)
