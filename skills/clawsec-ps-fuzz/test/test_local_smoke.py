@@ -431,6 +431,13 @@ class LocalSmokeHttpSnippetTests(unittest.TestCase):
                 direct_urlopen.assert_not_called()
                 self.assertTrue(opener.requests)
                 redirect_handler = build_opener.call_args.args[0]
+                proxy_handlers = [
+                    handler
+                    for handler in build_opener.call_args.args
+                    if isinstance(handler, urllib.request.ProxyHandler)
+                ]
+                self.assertEqual(len(proxy_handlers), 1)
+                self.assertEqual(proxy_handlers[0].proxies, {})
                 for code in (301, 302, 303, 307, 308):
                     with self.subTest(code=code), self.assertRaises(urllib.error.HTTPError) as raised:
                         redirect_handler.redirect_request(

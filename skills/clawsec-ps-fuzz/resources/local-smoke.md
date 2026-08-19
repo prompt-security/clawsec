@@ -174,7 +174,7 @@ class RejectRedirects(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, response, code, message, headers, new_url):
         raise urllib.error.HTTPError(request.full_url, code, "local redirects are disabled", headers, response)
 
-OPENER = urllib.request.build_opener(RejectRedirects())
+OPENER = urllib.request.build_opener(RejectRedirects(), urllib.request.ProxyHandler({}))
 
 def get_json(url):
     request = urllib.request.Request(url, method="GET")
@@ -221,7 +221,7 @@ class RejectRedirects(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, request, response, code, message, headers, new_url):
         raise urllib.error.HTTPError(request.full_url, code, "local redirects are disabled", headers, response)
 
-OPENER = urllib.request.build_opener(RejectRedirects())
+OPENER = urllib.request.build_opener(RejectRedirects(), urllib.request.ProxyHandler({}))
 
 request = urllib.request.Request(
     COMPLETION_URL,
