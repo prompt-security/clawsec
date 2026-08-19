@@ -87,6 +87,8 @@ class PackageContractTests(unittest.TestCase):
             "does not provide this local cryptographic attestation",
             "python3 scripts/verified_install.py --version 0.1.0",
             "--confirm-install",
+            "trusted Python 3",
+            "system OpenSSL executable with Ed25519 support",
         )
         for filename, document in self.docs.items():
             with self.subTest(filename=filename):
@@ -116,6 +118,22 @@ class PackageContractTests(unittest.TestCase):
                 )
                 self.assertIn("does not define or install a credential mechanism", document)
                 self.assertNotIn("export OPENAI_API_KEY=", document)
+
+    def test_local_runtime_trust_and_incomplete_result_boundaries_are_explicit(self) -> None:
+        required_phrases = (
+            "trusted prerequisite executables",
+            "provision receipt",
+            "re-provision into a new empty state root",
+            "Windows ACL-private",
+            "same-user or root processes",
+            "`invalid-output`",
+            "`incomplete`",
+            "process memory, swap, core dumps",
+        )
+        for filename, document in self.docs.items():
+            with self.subTest(filename=filename):
+                for phrase in required_phrases:
+                    self.assertIn(phrase, document)
 
     def test_supported_python_native_wheel_boundary_and_chroma_numpy_lock_are_reviewed(self) -> None:
         requirements_in = (SKILL_ROOT / "resources" / "requirements.in").read_text(encoding="utf-8")
