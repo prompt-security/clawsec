@@ -265,13 +265,13 @@ for (const [label, options, expectedMessage] of [
 }
 
 {
-  const verification = createVerificationAttempt({ failuresBeforeSuccess: 2 });
+  const verification = createVerificationAttempt({ failuresBeforeSuccess: 4 });
   const delays = [];
   const logs = [];
   await retryLiveAdvisoryEndpointVerification({
     baseUrl: "https://example.test",
     verifyAttempt: verification.verifyAttempt,
-    attempts: 3,
+    attempts: 5,
     retryDelayMs: 1000,
     retryBackoffFactor: 2,
     maxRetryDelayMs: 5000,
@@ -282,10 +282,11 @@ for (const [label, options, expectedMessage] of [
       logs.push(message);
     },
   });
-  assert.equal(verification.attempts(), 3, "temporary production verification failures must be retried");
-  assert.deepEqual(delays, [1000, 2000], "post-deploy retries must use exponential backoff");
+  assert.equal(verification.attempts(), 5, "temporary production verification failures must be retried");
+  assert.deepEqual(delays, [1000, 2000, 4000, 5000], "post-deploy retries must use capped exponential backoff");
   assert.match(logs.join(""), /waiting 1000ms before retry/, "retry logs must include the first backoff wait");
   assert.match(logs.join(""), /waiting 2000ms before retry/, "retry logs must include the second backoff wait");
+  assert.match(logs.join(""), /waiting 5000ms before retry/, "retry logs must include the capped backoff wait");
 }
 
 {
