@@ -305,7 +305,7 @@ def _is_test_release_path(path: str) -> bool:
     parts = lower.split("/")
     name = parts[-1]
     return (
-        any(part in {"test", "tests", "__tests__"} for part in parts)
+        any(part in {"test", "tests", "__tests__"} for part in parts[:-1])
         or name.startswith(("test_", "test-", "spec_", "spec-"))
         or ".test." in name
         or ".spec." in name
@@ -360,6 +360,9 @@ def _inspect_archive(
     total = 0
     try:
         for info in entries:
+            original_name = getattr(info, "orig_filename", info.filename)
+            if "\x00" in original_name or original_name != info.filename:
+                raise VerifiedInstallError("release archive layout is unsafe")
             parts = _safe_zip_name(info.filename)
             collision = _collision_key(parts)
             is_directory = info.is_dir()
@@ -497,14 +500,23 @@ def _copy_verified_member(source, destination: Path, expected_size: int, expecte
 def _atomic_publish_no_replace(staging: Path, destination: Path) -> None:
     source_bytes = os.fsencode(staging)
     destination_bytes = os.fsencode(destination)
-    library = ctypes.CDLL(None, use_errno=True)
-    if sys.platform == "darwin" and hasattr(library, "renamex_np"):
+    if sys.platform == "darwin":
+        try:
+            library = ctypes.CDLL(None, use_errno=True)
+        except OSError:
+            raise VerifiedInstallError("atomic no-replace is unavailable") from None
+        if not hasattr(library, "renamex_np"):
+            raise VerifiedInstallError("atomic no-replace is unavailable")
         result = library.renamex_np(source_bytes, destination_bytes, 0x00000004)
-    elif sys.platform.startswith("linux") and hasattr(library, "renameat2"):
+    elif sys.platform.startswith("linux"):
+        try:
+            library = ctypes.CDLL(None, use_errno=True)
+        except OSError:
+            raise VerifiedInstallError("atomic no-replace is unavailable") from None
+        if not hasattr(library, "renameat2"):
+            raise VerifiedInstallError("atomic no-replace is unavailable")
         result = library.renameat2(-100, source_bytes, -100, destination_bytes, 1)
-    else:
-        if os.path.lexists(destination):
-            raise VerifiedInstallError("installation destination already exists")
+    elif sys.platform == "win32" or os.name == "nt":
         try:
             os.rename(staging, destination)
             return
@@ -512,6 +524,8 @@ def _atomic_publish_no_replace(staging: Path, destination: Path) -> None:
             raise VerifiedInstallError("installation destination already exists") from None
         except OSError:
             raise VerifiedInstallError("atomic installation failed") from None
+    else:
+        raise VerifiedInstallError("atomic no-replace is unavailable")
     if result == 0:
         return
     error = ctypes.get_errno()

@@ -216,14 +216,127 @@ external-only trust documents in `manifest.files` do not become required ZIP
 members. Safe directory entries are allowed, while archive regular files must
 match the authenticated package closure exactly.
 
-The no-replace atomic publish uses `renamex_np(RENAME_EXCL)` on macOS and
-`renameat2(RENAME_NOREPLACE)` on Linux. The portable fallback checks for an
-existing destination before `os.rename`; Python does not expose a universal
-cross-platform no-replace directory rename primitive, so unsupported POSIX
-platforms retain a narrow check/rename race. Windows `os.rename` is
-non-replacing. This is the only implementation portability concern identified.
+The no-replace atomic publish uses `renamex_np(RENAME_EXCL)` on macOS,
+`renameat2(RENAME_NOREPLACE)` on Linux, and documented non-replacing
+`os.rename` behavior on Windows. Other platforms now fail closed without
+attempting a rename; there is no check-then-rename publication fallback.
 
 Per the task instruction not to spawn subagents or reviewers, I did not run a
 fresh-agent documentation forward test myself. The deterministic documentation
 contract is green, and the controller must supply the required independent
 fresh-agent forward test/review.
+
+## Fix round 1: portable no-clobber and exact test exclusion
+
+Independent review found two gaps: the unsupported-POSIX fallback could race
+between `lexists()` and `os.rename()`, and the local test-path predicate treated
+leaf paths named `test`, `tests`, or `__tests__` as excluded even though the
+release workflow excludes those names only when they are directory segments
+with a following slash. The same round added direct NUL/original-filename ZIP
+coverage.
+
+### RED
+
+I added three focused regressions before changing production behavior.
+
+Command:
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_verified_install.py \
+  VerifiedInstallTests.test_atomic_publish_fails_closed_without_a_known_no_replace_primitive \
+  VerifiedInstallTests.test_release_test_exclusion_policy_matches_packaging_workflow \
+  VerifiedInstallTests.test_nul_truncated_zip_original_name_is_rejected
+```
+
+Observed output (exit 1):
+
+```text
+FAIL test_atomic_publish_fails_closed_without_a_known_no_replace_primitive
+AssertionError: VerifiedInstallError not raised
+
+FAIL test_release_test_exclusion_policy_matches_packaging_workflow
+AssertionError: True is not false
+
+FAIL test_nul_truncated_zip_original_name_is_rejected
+expected: release archive layout is unsafe
+actual:   release payload does not match package SBOM
+
+Ran 3 tests in 0.109s
+FAILED (failures=3)
+```
+
+The forced-fallback test patches the platform to an unsupported POSIX value,
+requires the stable `atomic no-replace is unavailable` error, asserts that
+`os.rename` is never called, and confirms staging remains unpublished. The
+policy boundary test includes leaf `test`, `tests`, `__tests__`, and their
+nested leaf equivalents while excluding files below those directories. The
+NUL test creates real ZIP bytes whose central/local original filename contains
+a NUL but whose `ZipInfo.filename` is truncated by Python.
+
+### GREEN
+
+Production changes:
+
+- macOS and Linux still use their native atomic no-replace primitives.
+- Windows alone uses its documented non-replacing `os.rename` behavior.
+- An unknown platform or missing native primitive returns a stable fail-closed
+  error and never calls a racy generic rename fallback.
+- The test exclusion predicate now applies directory-name matching to
+  `parts[:-1]`, exactly preserving regular leaf files named `test`, `tests`, or
+  `__tests__` while retaining all workflow basename patterns.
+- ZIP inspection rejects NUL-truncated `orig_filename` metadata before trusting
+  the sanitized `filename` property.
+- Both install guides document the supported atomic-publish platforms and the
+  fail-closed behavior elsewhere.
+
+Focused GREEN output:
+
+```text
+Ran 3 tests in 0.077s
+OK
+```
+
+Full fix-round verification:
+
+```text
+python3 skills/clawsec-ps-fuzz/test/test_verified_install.py
+Ran 26 tests in 1.661s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_package_contract.py
+Ran 6 tests in 0.005s
+OK
+
+python3 skills/clawsec-ps-fuzz/test/test_ps_fuzz_runner.py
+Ran 45 tests in 0.409s
+OK
+
+python3 -m py_compile \
+  skills/clawsec-ps-fuzz/scripts/verified_install.py \
+  skills/clawsec-ps-fuzz/test/test_verified_install.py
+exit 0
+
+python3 utils/validate_skill.py skills/clawsec-ps-fuzz
+Validation PASSED - all checks passed
+[OK] Skill is valid
+
+node scripts/test-skill-release-workflow.mjs
+exit 0
+
+git diff --check
+exit 0
+```
+
+### Fix-round self-review and concern
+
+The unsupported-platform branch cannot reach `os.rename`; the regression
+checks that directly. Known-platform missing-symbol cases also fail closed.
+Existing-destination tests remain green on the native macOS no-replace path.
+The predicate now matches the workflow's slash-sensitive directory patterns
+and its basename patterns without widening either category. NUL rejection uses
+`orig_filename` specifically so Python's safety truncation cannot hide archive
+metadata from inspection.
+
+No release workflow, suite catalog, runner, lock, or release schema changed.
+The controller-owned fresh-agent documentation forward test remains the only
+outstanding external check; this fix round intentionally did not perform it.

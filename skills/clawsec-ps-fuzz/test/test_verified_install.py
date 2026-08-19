@@ -389,6 +389,18 @@ class VerifiedInstallTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assert_blocked("release archive layout is unsafe", self.release.build(entries=entries))
 
+    def test_nul_truncated_zip_original_name_is_rejected(self) -> None:
+        visible = "clawsec-ps-fuzz/README.mdXhidden"
+        nul_name = "clawsec-ps-fuzz/README.md\x00hidden"
+
+        def add_nul(value: bytes) -> bytes:
+            return value.replace(visible.encode(), nul_name.encode())
+
+        self.assert_blocked(
+            "release archive layout is unsafe",
+            self.release.build(entries=[(visible, b"bad", None)], archive_bytes_change=add_nul),
+        )
+
     def test_duplicate_normalized_and_outside_root_entries_are_rejected(self) -> None:
         duplicate = [
             ("clawsec-ps-fuzz/README.md", b"a", None),
@@ -453,6 +465,9 @@ class VerifiedInstallTests(unittest.TestCase):
     def test_release_test_exclusion_policy_matches_packaging_workflow(self) -> None:
         excluded = (
             "test/a.py",
+            "tests/a.py",
+            "__tests__/a.py",
+            "src/test/a.py",
             "src/tests/a.py",
             "src/__tests__/a.py",
             "scripts/test_helper.py",
@@ -462,7 +477,17 @@ class VerifiedInstallTests(unittest.TestCase):
             "scripts/name.test.py",
             "scripts/name.spec.py",
         )
-        included = ("scripts/contest.py", "scripts/latest.py", "scripts/verified_install.py")
+        included = (
+            "test",
+            "tests",
+            "__tests__",
+            "src/test",
+            "src/tests",
+            "src/__tests__",
+            "scripts/contest.py",
+            "scripts/latest.py",
+            "scripts/verified_install.py",
+        )
         self.assertTrue(all(verifier._is_test_release_path(path) for path in excluded))
         self.assertFalse(any(verifier._is_test_release_path(path) for path in included))
 
@@ -555,6 +580,25 @@ class VerifiedInstallTests(unittest.TestCase):
         self.assertTrue(destination.is_dir())
         self.assertEqual(list(destination.iterdir()), [])
         self.assertTrue((staging / "payload").is_file())
+
+    def test_atomic_publish_fails_closed_without_a_known_no_replace_primitive(self) -> None:
+        parent = self.root / "unsupported-publish"
+        staging = parent / "staging"
+        destination = parent / "destination"
+        staging.mkdir(parents=True)
+        (staging / "payload").write_text("new", encoding="utf-8")
+        with (
+            mock.patch.object(verifier.sys, "platform", "freebsd14"),
+            mock.patch.object(verifier.os, "rename") as rename,
+        ):
+            with self.assertRaisesRegex(
+                verifier.VerifiedInstallError,
+                "^atomic no-replace is unavailable$",
+            ):
+                verifier._atomic_publish_no_replace(staging, destination)
+        rename.assert_not_called()
+        self.assertTrue((staging / "payload").is_file())
+        self.assertFalse(destination.exists())
 
     def test_successful_install_is_atomic_and_contains_only_authenticated_payload(self) -> None:
         assets = self.release.build()

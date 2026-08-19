@@ -15,6 +15,8 @@ python3 scripts/verified_install.py --version 0.1.0 \
 
 The verifier requires an exact version and never follows `latest`. It downloads only the fixed `prompt-security/clawsec` tag assets, pins the canonical ClawSec Ed25519 public key by SPKI-DER SHA-256 fingerprint `711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8`, verifies the detached signature before parsing, checks the authenticated archive and complete package payload, and atomically installs only the `clawsec-ps-fuzz` leaf. `checksums.json` is the signed release manifest. `skill.json` is package metadata/SBOM, and there is no `skills.json` trust manifest.
 
+Atomic no-replace publication is supported through the native macOS, Linux, and Windows primitives. The verifier fails closed without installing on another platform rather than using a racy check-then-rename fallback.
+
 `clawsec-suite` is optional and not sufficient for candidate attestation. It is not a substitute trust root for the out-of-band verifier and pinned publisher key.
 
 ### Convenience installs without local attestation
