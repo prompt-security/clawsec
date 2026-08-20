@@ -125,10 +125,6 @@ export const FeedSetup: React.FC = () => {
     [advisories, selectedSeverity, selectedPlatform],
   );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [advisories, selectedSeverity, selectedPlatform]);
-
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('en-US', {
@@ -171,12 +167,18 @@ export const FeedSetup: React.FC = () => {
         <FilterTabs
           tabs={SEVERITY_TABS}
           selected={selectedSeverity}
-          onSelect={(value) => setSelectedSeverity(value as SeverityFilter)}
+          onSelect={(value) => {
+            setSelectedSeverity(value as SeverityFilter);
+            setCurrentPage(1);
+          }}
         />
         <FilterTabs
           tabs={PLATFORM_TABS}
           selected={selectedPlatform}
-          onSelect={(value) => setSelectedPlatform(value as AdvisoryPlatformFilter)}
+          onSelect={(value) => {
+            setSelectedPlatform(value as AdvisoryPlatformFilter);
+            setCurrentPage(1);
+          }}
         />
 
         {loading ? (

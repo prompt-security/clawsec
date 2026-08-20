@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search as _Search, Filter as _Filter, Package, Sparkles, FileText, GitFork } from 'lucide-react';
 import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
@@ -27,7 +27,6 @@ const parseSkillsIndex = (raw: string): SkillsIndex | null => {
 
 export const SkillsCatalog: React.FC = () => {
   const [skills, setSkills] = useState<SkillMetadata[]>([]);
-  const [filteredSkills, setFilteredSkills] = useState<SkillMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, _setSearchTerm] = useState('');
@@ -43,7 +42,6 @@ export const SkillsCatalog: React.FC = () => {
         // Missing index file is a valid "empty catalog" state.
         if (response.status === 404) {
           setSkills([]);
-          setFilteredSkills([]);
           return;
         }
 
@@ -57,7 +55,6 @@ export const SkillsCatalog: React.FC = () => {
         // Some SPA setups return index.html with 200 for missing JSON files.
         if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(raw)) {
           setSkills([]);
-          setFilteredSkills([]);
           return;
         }
 
@@ -67,7 +64,6 @@ export const SkillsCatalog: React.FC = () => {
         }
 
         setSkills(data.skills);
-        setFilteredSkills(data.skills);
       } catch (err) {
         console.error('Failed to load skills index:', err);
         setError('Failed to load skills catalog');
@@ -79,7 +75,7 @@ export const SkillsCatalog: React.FC = () => {
     fetchSkills();
   }, []);
 
-  useEffect(() => {
+  const filteredSkills = useMemo(() => {
     let result = skills;
 
     // Apply search filter
@@ -97,7 +93,7 @@ export const SkillsCatalog: React.FC = () => {
       result = result.filter((skill) => skill.category === categoryFilter);
     }
 
-    setFilteredSkills(result);
+    return result;
   }, [searchTerm, categoryFilter, skills]);
 
   // Get unique categories from skills (used in commented filter UI)
