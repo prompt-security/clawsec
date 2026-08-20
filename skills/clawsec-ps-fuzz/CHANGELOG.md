@@ -21,3 +21,5 @@ All notable changes to `clawsec-ps-fuzz` are documented here.
 - Keeps the local smoke user-controlled: no automatic server/model lifecycle, no persistent placeholder credential, no prompt logging, and no interpretation as a security assessment.
 - Requires an empty private state root, records and verifies a provision receipt before sensitive input, and reads bounded system prompts through no-follow file descriptors.
 - Treats missing or malformed aggregates and runs with upstream errors or skipped tests as nonzero invalid or incomplete assessments while persisting only redacted counts.
+- Rejects approval-only endpoint flags and fails closed for Windows provision/run until a current-user-private DACL can be verified.
+- Uses ClawHub-compatible `.txt` names for the reviewed dependency input and hash lock so neither signed SBOM file is omitted by registry packaging.

@@ -28,7 +28,7 @@
     }
   },
   "dependency_lock": {
-    "path": "requirements.lock",
+    "path": "requirements-lock.txt",
     "source": "https://pypi.org/simple",
     "scope": "upstream runtime and source-build dependencies; the release wheel is separately pinned above"
   }

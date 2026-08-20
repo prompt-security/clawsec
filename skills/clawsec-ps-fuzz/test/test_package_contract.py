@@ -21,8 +21,8 @@ EXPECTED_ARTIFACTS = {
     "resources/local-smoke-model.json",
     "resources/local-smoke-system-prompt.txt",
     "resources/local-smoke.md",
-    "resources/requirements.in",
-    "resources/requirements.lock",
+    "resources/requirements-input.txt",
+    "resources/requirements-lock.txt",
     "resources/upstream.json",
     "scripts/ps_fuzz_runner.py",
     "scripts/verified_install.py",
@@ -124,7 +124,7 @@ class PackageContractTests(unittest.TestCase):
             "trusted prerequisite executables",
             "provision receipt",
             "re-provision into a new empty state root",
-            "Windows ACL-private",
+            "fails closed on Windows",
             "same-user or root processes",
             "`invalid-output`",
             "`incomplete`",
@@ -136,8 +136,8 @@ class PackageContractTests(unittest.TestCase):
                     self.assertIn(phrase, document)
 
     def test_supported_python_native_wheel_boundary_and_chroma_numpy_lock_are_reviewed(self) -> None:
-        requirements_in = (SKILL_ROOT / "resources" / "requirements.in").read_text(encoding="utf-8")
-        lock = (SKILL_ROOT / "resources" / "requirements.lock").read_text(encoding="utf-8")
+        requirements_in = (SKILL_ROOT / "resources" / "requirements-input.txt").read_text(encoding="utf-8")
+        lock = (SKILL_ROOT / "resources" / "requirements-lock.txt").read_text(encoding="utf-8")
         manifest = json.loads((SKILL_ROOT / "resources" / "upstream.json").read_text(encoding="utf-8"))
 
         self.assertRegex(requirements_in, r"(?m)^chromadb==0\.5\.0\s*$")
@@ -151,7 +151,6 @@ class PackageContractTests(unittest.TestCase):
                 "minimum": "3.9",
                 "maximum": "3.11",
                 "native_wheel_platforms": [
-                    "windows-amd64",
                     "linux-glibc-2.28+-x86_64",
                     "linux-glibc-2.28+-aarch64",
                     "macos-14+-arm64",

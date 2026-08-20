@@ -45,7 +45,7 @@ npx clawhub@latest install clawsec-ps-fuzz
 
 ## Safe scope
 
-- The reviewed runtime is CPython 3.9 through 3.11 with `venv` and `pip`: Windows AMD64; glibc 2.28+ Linux x86_64/aarch64; or macOS 14+ arm64. Source provisioning also needs `git`.
+- The reviewed runtime is CPython 3.9 through 3.11 with `venv` and `pip` on glibc 2.28+ Linux x86_64/aarch64 or macOS 14+ arm64. Source provisioning also needs `git`. Provision and run fail closed on Windows in v0.1.0 because this standard-library wrapper cannot verify a current-user-private Windows DACL; read-only preflight remains available.
 - The reviewed provider scope is static: `open_ai` (including OpenAI-compatible base URLs) and `ollama`. There is no generic agent HTTP adapter, MCP execution, tool invocation, or arbitrary endpoint adapter.
 - Preflight is ungated and makes no writes or network calls. Provision and run each require a fresh authorization ID and their own confirmation flag.
 - The wrapper copies the system prompt only into a temporary workspace. Upstream configuration and `.env` discovery are isolated from the project. It never creates, changes, prints, or persists `.env` files.
@@ -58,7 +58,7 @@ Provider credentials are inherited only from the calling environment. For any `o
 ## Local runtime trust boundary
 
 - `preflight` uses isolated Python flags, a sanitized no-index environment, and a non-project working directory. The selected Python/`venv`/`pip` and source-mode Git binaries are trusted prerequisite executables; a malicious prerequisite or OS loader is outside the no-write/no-network claim.
-- Provision only into a caller-owned, empty, private state root. The wrapper enforces POSIX ownership and modes plus Darwin ACL checks; on Windows the caller must provide a Windows ACL-private root. A provision receipt binds the pinned manifest, source mode, selected runtime, entrypoint path, and entrypoint hash and is verified before the prompt or provider credentials are handled.
+- Provision only into a caller-owned, empty, private state root. The wrapper enforces POSIX ownership and modes plus Darwin ACL checks, and fails closed on Windows until it can verify a current-user-private DACL. A provision receipt binds the pinned manifest, source mode, selected runtime, entrypoint path, and entrypoint hash and is verified before the prompt or provider credentials are handled.
 - The receipt is a local integrity tripwire, not a signature against same-user or root processes. Keep the state root private and re-provision into a new empty state root after suspected tampering. Keep prompt and output parent paths private from concurrent local writers as well.
 - A prompt must be a non-symlink regular file of at most 1 MiB and is read once through a bound descriptor. The redaction boundary does not cover process memory, swap, core dumps, or abnormal-termination remnants; use OS controls where those matter.
 - Only an assessment status of `complete` returns zero. Missing, malformed, duplicate, or empty aggregate output is `invalid-output`; aggregate errors or skips are `incomplete`; both return nonzero without saving raw output.

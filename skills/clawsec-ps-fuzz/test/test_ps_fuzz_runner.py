@@ -1392,7 +1392,7 @@ else:
             ("url_fragment", original["artifacts"]["release_wheel"]["url"] + "#fragment"),
             ("filename", "../../outside.whl"),
             ("clone_url", "https://evil.example/ps-fuzz.git"),
-            ("lock_path", "../requirements.lock"),
+            ("lock_path", "../requirements-lock.txt"),
             ("python_implementation", "PyPy"),
             ("python_minimum", "3.8"),
             ("python_maximum", "3.12"),

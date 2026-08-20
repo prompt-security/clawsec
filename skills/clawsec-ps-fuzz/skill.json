@@ -69,12 +69,12 @@
         "description": "Operator-controlled local model download, server, readiness, and wrapper smoke guide"
       },
       {
-        "path": "resources/requirements.in",
+        "path": "resources/requirements-input.txt",
         "required": true,
         "description": "Reviewed direct dependency inputs"
       },
       {
-        "path": "resources/requirements.lock",
+        "path": "resources/requirements-lock.txt",
         "required": true,
         "description": "Hash-locked dependency closure"
       },
