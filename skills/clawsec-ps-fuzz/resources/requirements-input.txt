@@ -1,0 +1,24 @@
+# Direct dependencies declared by prompt-security/ps-fuzz v2.1.0's pyproject.toml.
+# `wheel` is included because source mode builds from that pinned revision with
+# build isolation disabled; its exact, hashed distribution is in requirements-lock.txt.
+setuptools>=61.0
+wheel
+httpx>=0.24.0,<0.25.0
+openai==1.6.1
+langchain>=0.3.0,<0.4.0
+langchain-community>=0.3.0,<0.4.0
+langchain-core>=0.3.81,<0.4.0
+argparse==1.4.0
+python-dotenv==1.0.0
+tqdm>=4.66.3
+colorama==0.4.6
+prettytable==3.10.0
+pandas==2.2.2
+inquirer==3.2.4
+prompt-toolkit==3.0.43
+fastparquet==2024.2.0
+chromadb==0.5.0
+# ChromaDB 0.5.x imports the NumPy 1.x alias ``np.float_``. Keep the reviewed
+# universal lock below NumPy 2 until ChromaDB is explicitly upgraded and retested.
+numpy<2
+tiktoken>=0.11.0

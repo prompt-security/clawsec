@@ -1,0 +1,139 @@
+{
+  "name": "clawsec-ps-fuzz",
+  "version": "0.1.0",
+  "description": "Harness-neutral, approval-gated provisioning and redacted direct-model fuzzing with the pinned Prompt Security ps-fuzz release.",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "platforms": [
+    "openclaw",
+    "nanoclaw",
+    "hermes",
+    "picoclaw"
+  ],
+  "keywords": [
+    "security",
+    "ai",
+    "llm",
+    "fuzzing",
+    "prompt-security",
+    "ps-fuzz",
+    "harness-neutral",
+    "authorized-testing"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
+      },
+      {
+        "path": "README.md",
+        "required": true,
+        "description": "Marketplace-facing installation and safety overview"
+      },
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Harness-neutral operator workflow and boundaries"
+      },
+      {
+        "path": "THIRD_PARTY_NOTICES.md",
+        "required": true,
+        "description": "Pinned upstream ps-fuzz attribution and license notice"
+      },
+      {
+        "path": "skill.json",
+        "required": true,
+        "description": "Skill metadata and software bill of materials"
+      },
+      {
+        "path": "resources/capabilities-v2.1.0.json",
+        "required": true,
+        "description": "Reviewed ps-fuzz v2.1.0 capability snapshot"
+      },
+      {
+        "path": "resources/local-smoke-model.json",
+        "required": true,
+        "description": "Pinned local Gemma smoke-model identity, artifact hash, size, and loopback alias"
+      },
+      {
+        "path": "resources/local-smoke-system-prompt.txt",
+        "required": true,
+        "description": "Harmless synthetic system prompt for the optional local smoke"
+      },
+      {
+        "path": "resources/local-smoke.md",
+        "required": true,
+        "description": "Operator-controlled local model download, server, readiness, and wrapper smoke guide"
+      },
+      {
+        "path": "resources/requirements-input.txt",
+        "required": true,
+        "description": "Reviewed direct dependency inputs"
+      },
+      {
+        "path": "resources/requirements-lock.txt",
+        "required": true,
+        "description": "Hash-locked dependency closure"
+      },
+      {
+        "path": "resources/upstream.json",
+        "required": true,
+        "description": "Pinned upstream tag, commit, wheel URL, and hash"
+      },
+      {
+        "path": "scripts/ps_fuzz_runner.py",
+        "required": true,
+        "description": "Portable provisioning and authorized-run wrapper"
+      },
+      {
+        "path": "scripts/verified_install.py",
+        "required": true,
+        "description": "Standalone signed-release verifier and atomic installer"
+      },
+      {
+        "path": "test/test_package_contract.py",
+        "required": true,
+        "description": "Offline package metadata and documentation contract tests"
+      },
+      {
+        "path": "test/test_local_smoke.py",
+        "required": true,
+        "description": "Offline executable contracts for fail-closed local smoke shell guidance"
+      },
+      {
+        "path": "test/test_ps_fuzz_runner.py",
+        "required": true,
+        "description": "Offline runner boundary tests with fake executables"
+      },
+      {
+        "path": "test/test_verified_install.py",
+        "required": true,
+        "description": "Offline signed-release verification and safe-install behavior tests"
+      }
+    ]
+  },
+  "openclaw": {
+    "emoji": "🧪",
+    "category": "security",
+    "execution": {
+      "always": false,
+      "persistence": "No hooks, scheduler, proxy, or platform runtime integration. Provisioning state and redacted reports are created only after explicit command flags and caller-selected external paths.",
+      "network_egress": "Preflight makes no network calls. Provisioning downloads only a pinned release wheel or clones only a pinned commit after explicit authorization. Runs contact only the explicitly approved direct-model origins."
+    },
+    "operator_review": [
+      "Obtain a fresh authorization ID and the matching confirmation flag before every provision and active run.",
+      "Confirm the exact direct model provider, model, endpoint origin, attack selectors, attempts, threads, and expected token cost before a run.",
+      "Do not treat rag_poisoning as evidence about a real retrieval system, vector store, agent tools, or persistence."
+    ],
+    "triggers": [
+      "clawsec ps fuzz",
+      "ps-fuzz",
+      "authorized model fuzz test",
+      "system prompt fuzzing",
+      "rag poisoning demonstration"
+    ]
+  }
+}
