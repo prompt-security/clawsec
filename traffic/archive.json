@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-08-24T03:36:43.228Z",
+  "updated_at": "2026-08-25T03:33:31.419Z",
   "daily": {
     "views": [
       {
@@ -449,6 +449,11 @@
         "timestamp": "2026-08-22T00:00:00Z",
         "count": 15,
         "uniques": 12
+      },
+      {
+        "timestamp": "2026-08-23T00:00:00Z",
+        "count": 53,
+        "uniques": 28
       }
     ],
     "clones": [
@@ -896,6 +901,11 @@
         "timestamp": "2026-08-22T00:00:00Z",
         "count": 81,
         "uniques": 51
+      },
+      {
+        "timestamp": "2026-08-23T00:00:00Z",
+        "count": 205,
+        "uniques": 75
       }
     ]
   },
@@ -5086,6 +5096,62 @@
           },
           {
             "referrer": "github-com.btglss.net",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "link.zhihu.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-08-25T03:33:31.419Z",
+        "date": "2026-08-25",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 155,
+            "uniques": 90
+          },
+          {
+            "referrer": "Google",
+            "count": 64,
+            "uniques": 43
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 31,
+            "uniques": 22
+          },
+          {
+            "referrer": "Bing",
+            "count": 6,
+            "uniques": 4
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "github-com.btglss.net",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
             "count": 1,
             "uniques": 1
           },
@@ -10052,6 +10118,72 @@
             "uniques": 2
           }
         ]
+      },
+      {
+        "captured_at": "2026-08-25T03:33:31.419Z",
+        "date": "2026-08-25",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 307,
+            "uniques": 220
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 23,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 16,
+            "uniques": 11
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 12,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 9,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 8,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/README.md",
+            "title": "/blob/main/README.md",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/hermes-attestation-guardian",
+            "title": "/blob/main/skills/hermes-attestation-guardian",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/CLAUDE.md",
+            "title": "/blob/main/CLAUDE.md",
+            "count": 3,
+            "uniques": 2
+          }
+        ]
       }
     ]
   },
@@ -10954,6 +11086,18 @@
       "clones_window": {
         "count": 2708,
         "uniques": 615
+      }
+    },
+    {
+      "captured_at": "2026-08-25T03:33:31.419Z",
+      "date": "2026-08-25",
+      "views_window": {
+        "count": 439,
+        "uniques": 256
+      },
+      "clones_window": {
+        "count": 2841,
+        "uniques": 630
       }
     }
   ]
