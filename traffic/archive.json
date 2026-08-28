@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-08-27T05:04:30.276Z",
+  "updated_at": "2026-08-28T05:57:44.169Z",
   "daily": {
     "views": [
       {
@@ -464,6 +464,11 @@
         "timestamp": "2026-08-25T00:00:00Z",
         "count": 60,
         "uniques": 27
+      },
+      {
+        "timestamp": "2026-08-26T00:00:00Z",
+        "count": 55,
+        "uniques": 26
       }
     ],
     "clones": [
@@ -926,6 +931,11 @@
         "timestamp": "2026-08-25T00:00:00Z",
         "count": 76,
         "uniques": 48
+      },
+      {
+        "timestamp": "2026-08-26T00:00:00Z",
+        "count": 90,
+        "uniques": 45
       }
     ]
   },
@@ -5294,6 +5304,62 @@
           },
           {
             "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-08-28T05:57:44.169Z",
+        "date": "2026-08-28",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 191,
+            "uniques": 90
+          },
+          {
+            "referrer": "Google",
+            "count": 62,
+            "uniques": 44
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 25,
+            "uniques": 20
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "github-com.btglss.net",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "waytoagi.feishu.cn",
             "count": 1,
             "uniques": 1
           }
@@ -10448,6 +10514,72 @@
             "uniques": 2
           }
         ]
+      },
+      {
+        "captured_at": "2026-08-28T05:57:44.169Z",
+        "date": "2026-08-28",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 347,
+            "uniques": 219
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 22,
+            "uniques": 12
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 17,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 14,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 13,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 9,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/CLAUDE.md",
+            "title": "/blob/main/CLAUDE.md",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/README.md",
+            "title": "/blob/main/README.md",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/architecture.md",
+            "title": "/blob/main/wiki/architecture.md",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 3,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -11385,6 +11517,18 @@
       },
       "clones_window": {
         "count": 2478,
+        "uniques": 630
+      }
+    },
+    {
+      "captured_at": "2026-08-28T05:57:44.169Z",
+      "date": "2026-08-28",
+      "views_window": {
+        "count": 518,
+        "uniques": 254
+      },
+      "clones_window": {
+        "count": 2490,
         "uniques": 630
       }
     }
