@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-08-29T03:28:14.519Z",
+  "updated_at": "2026-08-30T03:30:32.347Z",
   "daily": {
     "views": [
       {
@@ -5430,6 +5430,62 @@
             "uniques": 1
           }
         ]
+      },
+      {
+        "captured_at": "2026-08-30T03:30:32.347Z",
+        "date": "2026-08-30",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 191,
+            "uniques": 89
+          },
+          {
+            "referrer": "Google",
+            "count": 60,
+            "uniques": 41
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 25,
+            "uniques": 22
+          },
+          {
+            "referrer": "chatgpt.com",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "github-com.btglss.net",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "learnopenclaw.waytoagi.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
       }
     ],
     "paths": [
@@ -10712,6 +10768,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-08-30T03:30:32.347Z",
+        "date": "2026-08-30",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 355,
+            "uniques": 218
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 21,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 20,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 14,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 12,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 8,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/CLAUDE.md",
+            "title": "/blob/main/CLAUDE.md",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/README.md",
+            "title": "/blob/main/README.md",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/architecture.md",
+            "title": "/blob/main/wiki/architecture.md",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 3,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -11667,6 +11789,18 @@
     {
       "captured_at": "2026-08-29T03:28:14.519Z",
       "date": "2026-08-29",
+      "views_window": {
+        "count": 542,
+        "uniques": 251
+      },
+      "clones_window": {
+        "count": 2811,
+        "uniques": 630
+      }
+    },
+    {
+      "captured_at": "2026-08-30T03:30:32.347Z",
+      "date": "2026-08-30",
       "views_window": {
         "count": 542,
         "uniques": 251
