@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#
+# Last local gate before commits leave the machine. Backstop for
+# `git commit --no-verify` and for anything committed before the hooks were on.
+#
+# Both scanners run, because they fail in opposite directions:
+#   gitleaks   matches patterns offline -- catches private keys, which
+#              trufflehog cannot report at all (it only emits a PrivateKey
+#              finding for a key it can verify against a provider).
+#   trufflehog runs its detector set and, with `unverified` in --results,
+#              reports a credential whether or not it is still live.
+#
+# Dead or alive is deliberate: a rotated key is still a leak, and CI's
+# --results=verified,unknown would let it through. What makes that usable is
+# scanning only the commits being pushed. The same filter over full history
+# reports 140 findings on this repo -- the advisory feed cites upstream fix
+# commits as 40-char hex SHAs, which read as legacy GitHub PATs -- versus 0
+# for an ordinary push range.
+#
+# git passes <remote-name> <remote-url> as arguments and the ref updates on
+# stdin as "<local-ref> <local-sha> <remote-ref> <remote-sha>".
+#
+# Bypass:  git push --no-verify        (inherent to git; CI is the backstop)
+#          CLAWSEC_SKIP_SECRET_SCAN=1  skip both
+#          CLAWSEC_SKIP_TRUFFLEHOG=1   skip only trufflehog (it is the slow,
+#                                      network-bound one: ~5s vs ~0.3s)
+
+set -euo pipefail
+
+[[ "${CLAWSEC_SKIP_SECRET_SCAN:-0}" == "1" ]] && { echo "pre-push: secret scan skipped" >&2; exit 0; }
+
+command -v gitleaks >/dev/null 2>&1 || {
+  echo "pre-push: gitleaks not found; secrets were NOT checked." >&2
+  echo "  brew install gitleaks   (or CLAWSEC_SKIP_SECRET_SCAN=1 to skip)" >&2
+  exit 1
+}
+
+status=0
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [[ -n "${local_sha:-}" ]] || continue
+  [[ "$local_sha" =~ ^0+$ ]] && continue          # branch deletion pushes nothing
+
+  # Which commits are new to the remote. For a brand-new branch there is no
+  # remote sha, so ask git for everything not already on some remote.
+  if [[ "$remote_sha" =~ ^0+$ ]]; then
+    range_opts=("$local_sha" --not --remotes)
+    base="$(git rev-list "$local_sha" --not --remotes | tail -n 1)"
+    base="$(git rev-parse -q --verify "${base}^" 2>/dev/null || true)"
+  else
+    range_opts=("${remote_sha}..${local_sha}")
+    base="$remote_sha"
+  fi
+
+  git rev-list "${range_opts[@]}" | grep -q . || continue   # nothing new
+
+  gitleaks git --redact --no-banner --log-opts="${range_opts[*]}" || status=1
+
+  if [[ "${CLAWSEC_SKIP_TRUFFLEHOG:-0}" != "1" ]] && command -v trufflehog >/dev/null 2>&1; then
+    th=(git "file://$(git rev-parse --show-toplevel)")
+    th+=("--results=verified,unknown,unverified" --fail --no-update)
+    [[ -n "$base" ]] && th+=(--since-commit "$base")
+    trufflehog "${th[@]}" || status=1
+  fi
+done
+
+if [[ "$status" -ne 0 ]]; then
+  echo "" >&2
+  echo "pre-push: secrets detected in the commits you are pushing." >&2
+  echo "  Rotate the credential first -- removing it from git does not un-leak it." >&2
+  echo "  Suppress a genuine false positive with 'trufflehog:ignore' or" >&2
+  echo "  'gitleaks:allow' on the line, never a blanket rule." >&2
+fi
+exit "$status"

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# Block secrets before they enter git history.
+#
+# gitleaks rather than trufflehog, for two reasons. Staged content is not in
+# git yet, and `trufflehog git file://.` only reads committed objects -- it
+# reports nothing for a staged key (verified). And trufflehog only emits a
+# PrivateKey finding when it can verify the key against a provider, so an
+# unverifiable one -- exactly the shape of CLAWSEC_SIGNING_PRIVATE_KEY --
+# produces no output at all. `gitleaks protect --staged` reads the staged blobs
+# and matches on pattern, so it catches both.
+#
+# TruffleHog runs in CI, where it does what it is good at: verifying candidate
+# credentials against the provider.
+#
+# Bypass: git commit --no-verify   (inherent to git; CI is the backstop)
+
+set -euo pipefail
+
+# Before the tool check, not after: the guard below advertises this bypass in
+# its own error text, so testing it second made the advertised escape hatch
+# unreachable -- a machine without gitleaks could not commit at all. pre-push
+# has always had this order.
+if [[ "${CLAWSEC_SKIP_SECRET_SCAN:-0}" == "1" ]]; then
+  echo "pre-commit: secret scan skipped (CLAWSEC_SKIP_SECRET_SCAN=1)" >&2
+  exit 0
+fi
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not found; secrets were NOT checked." >&2
+  echo "  brew install gitleaks   (or CLAWSEC_SKIP_SECRET_SCAN=1 to skip)" >&2
+  exit 1
+fi
+
+exec gitleaks protect --staged --redact --no-banner

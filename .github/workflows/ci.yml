@@ -56,6 +56,12 @@ jobs:
         with:
           scandir: './scripts'
           severity: warning
+      - name: ShellCheck git hooks
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
+        with:
+          scandir: './.githooks'
+          additional_files: 'pre-commit pre-push'
+          severity: warning
 
   security-scan:
     name: Security Scan
@@ -77,6 +83,62 @@ jobs:
           scan-ref: '.'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    # Narrower than the workflow-wide read-all: this job runs third-party
+    # scanners over untrusted PR content and needs nothing but the checkout.
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # TruffleHog needs both sides of the range it is asked to diff.
+          fetch-depth: 0
+      # Dead or alive: `unverified` is included deliberately, so a rotated or
+      # already-dead credential still fails. It is the same policy as
+      # .githooks/pre-push, so the local gate and CI cannot disagree.
+      #
+      # What keeps that usable is that the Action scans the PR range, not the
+      # whole repo. Over full history this filter reports 140 findings here --
+      # the advisory feed cites upstream fix commits as 40-char hex SHAs, which
+      # read as legacy GitHub PATs -- but a range scan sees only the diff, so an
+      # ordinary PR reports 0.
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@20652fbbdefffcdaa493a5bf57ab2ac6b1db715b # v3.97.1
+        with:
+          extra_args: --results=verified,unknown,unverified
+      # Private keys and other deterministic patterns. TruffleHog only emits a
+      # PrivateKey finding when it can verify the key against a provider, so an
+      # unverifiable one -- exactly the shape of CLAWSEC_SIGNING_PRIVATE_KEY --
+      # produces no output at all. gitleaks matches on pattern and catches it.
+      # Scoped to the PR range: pre-existing test fixtures on main are not this
+      # PR's problem, and scanning the range is what a contributor can act on.
+      #
+      # Pinned by digest, not tag: a retagged image would change what this gate
+      # does with no commit to review. The other actions here are SHA-pinned for
+      # the same reason.
+      #
+      # workflow_dispatch has no pull_request payload, so it gets an explicit
+      # range instead of being skipped -- skipping left manual runs with no
+      # private-key detection at all, which is the one thing gitleaks is here
+      # for.
+      - name: Gitleaks
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          IMAGE: zricethezav/gitleaks@sha256:105ac66a57b2bb8afb61a3b8a5dcc4817773d03724a7e8a515214cfe58225556
+        run: |
+          if [ -n "$BASE_SHA" ] && [ -n "$HEAD_SHA" ]; then
+            RANGE="$BASE_SHA..$HEAD_SHA"
+          else
+            git fetch -q --no-tags origin "${GITHUB_BASE_REF:-main}"
+            RANGE="origin/${GITHUB_BASE_REF:-main}..HEAD"
+          fi
+          echo "scanning $RANGE"
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            "$IMAGE" git --redact --no-banner --log-opts="$RANGE"
 
   dependency-audit:
     name: Dependency Audit

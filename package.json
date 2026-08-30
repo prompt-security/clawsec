@@ -5,6 +5,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "gen:wiki-llms": "node scripts/generate-wiki-llms.mjs",
     "readme:heroes:check": "node --test assets/readme/source/hero-manifest.test.mjs && node assets/readme/source/generate-localized-hero-svgs.mjs --check && node assets/readme/source/verify-localized-heroes.mjs",
     "populate-local-wiki": "./scripts/populate-local-wiki.sh",
