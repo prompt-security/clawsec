@@ -237,6 +237,18 @@ assert.match(
 
 assert.doesNotMatch(
   workflow,
+  /\bgh\s+release\s+delete\b/,
+  'Skill release workflow must retain every published GitHub release, including superseded same-major versions',
+);
+
+assert.doesNotMatch(
+  workflow,
+  /- name: Delete superseded releases\b/,
+  'Skill release workflow must not run superseded-release cleanup',
+);
+
+assert.doesNotMatch(
+  workflow,
   /SKILLSPECTOR_REPORT_EOF|\$\{\{ steps\.skillspector_report\.outputs\.body \}\}|cat release-assets\/skillspector-report\.md[\s\S]*>> "\$GITHUB_OUTPUT"/,
   'SkillSpector report content must not be sent through GitHub Actions step outputs',
 );
