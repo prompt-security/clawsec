@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { installAgentForSkill, PLATFORM_KEYS } from "./skill_platforms.mjs";
+import { resolveSkillInstallability } from "./skill_installability.mjs";
+import { PLATFORM_KEYS, resolveDirectSkillsCliTargets } from "./skill_platforms.mjs";
 
 const KNOWN_AGENT_TYPES = new Set(["codex", "hermes-agent", "openclaw", "universal"]);
+const RELEASE_SIGNING_KEY_SHA256 = "711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8";
+const RELEASE_VERIFIER_URL = new URL("./verify_skill_release_bundle.py", import.meta.url);
 
 function usage() {
   return [
@@ -159,11 +162,42 @@ function requireField(skill, fieldName) {
   return skill[fieldName].trim();
 }
 
+function validateReleaseIdentity(skill, tag) {
+  if (!tag) {
+    return;
+  }
+
+  const expectedTag = `${skill.name}-v${skill.version}`;
+  if (tag !== expectedTag) {
+    throw new Error(`Release tag ${tag} does not match skill identity ${expectedTag}`);
+  }
+}
+
 function codeBlock(command) {
   return ["```bash", command, "```"].join("\n");
 }
 
-function buildPermissions({ skill, metadata, platform, generatedAt }) {
+function buildPermissions({ skill, metadata, platform, generatedAt, installable }) {
+  if (!installable) {
+    return {
+      schema_version: "1",
+      generated_at: generatedAt,
+      skill: skill.name,
+      version: skill.version,
+      platform: "not-applicable",
+      installable: false,
+      required_binaries: [],
+      optional_binaries: [],
+      required_env: [],
+      optional_env: [],
+      network_egress: "Not applicable: package is non-installable.",
+      persistence: "Not applicable: package is non-installable.",
+      automatic_execution: "Not applicable: package is non-installable.",
+      capabilities: [],
+      operator_review: ["Limit use to read-only historical review or migration planning."],
+    };
+  }
+
   const execution = metadata.execution && typeof metadata.execution === "object" ? metadata.execution : {};
   const permissions = {
     schema_version: "1",
@@ -171,6 +205,7 @@ function buildPermissions({ skill, metadata, platform, generatedAt }) {
     skill: skill.name,
     version: skill.version,
     platform,
+    installable: true,
     required_binaries: collectRequiredBinaries(metadata),
     optional_binaries: collectOptionalBinaries(metadata),
     required_env: collectRequiredEnv(metadata),
@@ -189,18 +224,44 @@ function buildSkillCard({ skill, frontmatter, permissions, repository, tag, sour
   const homepage = skill.homepage || frontmatter.homepage || `https://github.com/${repository}`;
   const supportRef = `${repository}@${tag || sourceRef}`;
   const licenseRef = `https://github.com/${repository}/blob/${tag || sourceRef}/LICENSE`;
-  const outputTypes = ["Markdown instructions", "release artifact files"];
-  if (permissions.capabilities.length > 0) {
+  const isInstallable = skill.installable !== false;
+  const outputTypes = isInstallable
+    ? ["Markdown instructions", "release artifact files"]
+    : ["Historical and migration documentation", "signed denial evidence"];
+  if (isInstallable && permissions.capabilities.length > 0) {
     outputTypes.push("local security findings or status reports");
   }
+
+  const description = isInstallable
+    ? `The \`${skill.name}\` skill provides this capability: ${skill.description}
+
+This skill is intended for operator-reviewed security workflows, not unattended production mutation without the review steps declared in the skill instructions.`
+    : `The \`${skill.name}\` package declares \`installable: false\`: ${skill.description}
+
+It is retained only as immutable historical, migration, or test-vector evidence. It has no supported execution or activation path.`;
+  const useCase = isInstallable
+    ? `Use this skill for ${permissions.platform} workflows where an agent or operator needs the capability described in \`${skill.name}\`.`
+    : `Use this package only for read-only historical review or migration planning. Do not install, activate, execute, or substitute another harness target.`;
+  const risks = isInstallable
+    ? `Risk: The skill may run commands, inspect local files, install hooks, or fetch remote security metadata depending on the workflow.
+
+Mitigation: Review \`permissions.json\`, \`SKILL.md\`, and the signed \`checksums.json\` before enabling the skill. Keep high-impact actions approval-gated.
+
+Risk: Security findings and remediation guidance can be incomplete or wrong.
+
+Mitigation: Treat output as operator guidance. Review proposed removals, installs, configuration changes, and reports before acting.`
+    : `Risk: Historical material may be mistaken for a supported integration.
+
+Mitigation: Enforce \`installable: false\`, emit no installation commands, and do not execute preserved source. \`SKILL.md\` may provide migration context, but it is not installation authority.`;
+  const outputFormat = isInstallable
+    ? "Markdown, JSON, shell commands, or local files as documented by the skill."
+    : "Read-only Markdown and JSON evidence; no runtime output is authorized.";
 
   return `# Skill Card
 
 ## Description
 
-The \`${skill.name}\` skill provides this capability: ${skill.description}
-
-This skill is intended for operator-reviewed security workflows, not unattended production mutation without the review steps declared in the skill instructions.
+${description}
 
 ## Owner
 
@@ -216,7 +277,7 @@ Project homepage: ${homepage}
 
 ## Use Case
 
-Use this skill for ${permissions.platform} workflows where an agent or operator needs the capability described in \`${skill.name}\`.
+${useCase}
 
 ## Deployment Geography for Use
 
@@ -224,13 +285,7 @@ Global, subject to the operator's local compliance, network, and data-handling r
 
 ## Known Risks and Mitigations
 
-Risk: The skill may run commands, inspect local files, install hooks, or fetch remote security metadata depending on the workflow.
-
-Mitigation: Review \`permissions.json\`, \`SKILL.md\`, and the signed \`checksums.json\` before enabling the skill. Keep high-impact actions approval-gated.
-
-Risk: Security findings and remediation guidance can be incomplete or wrong.
-
-Mitigation: Treat output as operator guidance. Review proposed removals, installs, configuration changes, and reports before acting.
+${risks}
 
 ## References
 
@@ -244,7 +299,7 @@ Mitigation: Treat output as operator guidance. Review proposed removals, install
 
 Output type(s): ${outputTypes.join(", ")}
 
-Output format: Markdown, JSON, shell commands, or local files as documented by the skill.
+Output format: ${outputFormat}
 
 Output parameters: See \`SKILL.md\`, \`permissions.json\`, and release checksums for exact files and side effects.
 
@@ -256,45 +311,117 @@ ${skill.version}${tag ? ` (${tag})` : ""}
 
 ## Ethical Considerations
 
-Use this skill only on systems, agents, repositories, and workspaces where you have authorization. Review generated security reports before sharing them because they may contain operational details.
+${isInstallable
+    ? "Use this skill only on systems, agents, repositories, and workspaces where you have authorization. Review generated security reports before sharing them because they may contain operational details."
+    : "Preserve operator data and history. Keep assessment read-only unless a separate reviewed migration plan explicitly authorizes a change."}
 `;
 }
 
 function buildInstallDoc({ skill, repository, tag, sourceRef }) {
+  const releaseUrl = tag ? `https://github.com/${repository}/releases/tag/${tag}` : `https://github.com/${repository}`;
+
+  if (skill.installable === false) {
+    return `# Installation Unavailable for ${skill.name}
+
+This package declares \`installable: false\` in signed package metadata. It may be retained as immutable historical, migration, or test-vector evidence, but it has no supported installation or activation path.
+
+Do not install, extract into a harness skill directory, activate, execute, or substitute another harness target. \`SKILL.md\` may provide status and migration context, but it cannot override this denial.
+
+Reference identifier only: ${releaseUrl}.
+`;
+  }
+
   const refSuffix = sourceRef && sourceRef !== "main" ? `#${sourceRef}` : "";
   const source = `${repository}${refSuffix}`;
-  const releaseUrl = tag ? `https://github.com/${repository}/releases/tag/${tag}` : `https://github.com/${repository}`;
-  const agent = installAgentForSkill(skill, KNOWN_AGENT_TYPES);
+  const archiveName = `${skill.name}-v${skill.version}.zip`;
+  const releaseAssetBase = tag ? `https://github.com/${repository}/releases/download/${tag}` : "";
+  const resolution = resolveDirectSkillsCliTargets(skill, KNOWN_AGENT_TYPES);
+  if (resolution.status === "error") {
+    throw new Error(`Cannot generate install instructions for ${skill.name}: ${resolution.errors.join(" ")}`);
+  }
 
-  return `# Install and Update ${skill.name}
+  const secureInstallSection = tag
+    ? `## Secure Path: Verify the Canonical Release Before Installation
 
-## Install With Agent Skills CLI
+The signed release archive is the only installation artifact this packet binds cryptographically. Confirm the pinned signing-key fingerprint through an independent trusted channel before first use; this packet cannot bootstrap trust in its own key.
 
-Harness-aware global install:
+${codeBlock(`set -euo pipefail
+VERIFY_DIR="$(mktemp -d)"
+cd "$VERIFY_DIR"
+SKILL="${skill.name}"
+VERSION="${skill.version}"
+TAG="${tag}"
+ARCHIVE="${archiveName}"
+BASE_URL="${releaseAssetBase}"
+EXPECTED_KEY_SHA256="${RELEASE_SIGNING_KEY_SHA256}"
 
-${codeBlock(`npx skills add ${source} --skill ${skill.name} --agent ${agent} --global --yes`)}
+curl -fSLO "$BASE_URL/$ARCHIVE"
+curl -fSLO "$BASE_URL/checksums.json"
+curl -fSLO "$BASE_URL/checksums.sig"
+curl -fSLO "$BASE_URL/signing-public.pem"
+curl -fSLO "$BASE_URL/verify_skill_release_bundle.py"
 
-Project-local install for compatible agents:
+ACTUAL_KEY_SHA256="$(openssl pkey -pubin -in signing-public.pem -outform DER | openssl dgst -sha256 | awk '{print $NF}')"
+test "$EXPECTED_KEY_SHA256" = "$ACTUAL_KEY_SHA256"
+openssl base64 -d -A -in checksums.sig -out checksums.sig.bin
+openssl pkeyutl -verify -rawin -pubin -inkey signing-public.pem -sigfile checksums.sig.bin -in checksums.json
 
-${codeBlock(`npx skills add ${source} --skill ${skill.name} --yes`)}
+EXPECTED_VERIFIER_SHA="$(jq -r '.files["verify_skill_release_bundle.py"].sha256 // empty' checksums.json)"
+ACTUAL_VERIFIER_SHA="$(openssl dgst -sha256 verify_skill_release_bundle.py | awk '{print $NF}')"
+EXPECTED_VERIFIER_SIZE="$(jq -r '.files["verify_skill_release_bundle.py"].size // empty' checksums.json)"
+ACTUAL_VERIFIER_SIZE="$(wc -c < verify_skill_release_bundle.py | tr -d ' ')"
+test -n "$EXPECTED_VERIFIER_SHA"
+test "$EXPECTED_VERIFIER_SHA" = "$ACTUAL_VERIFIER_SHA"
+test "$EXPECTED_VERIFIER_SIZE" = "$ACTUAL_VERIFIER_SIZE"
 
-## Update
+python3 verify_skill_release_bundle.py \
+  --release-dir "$VERIFY_DIR" \
+  --output-dir "$VERIFY_DIR/verified" \
+  --skill "$SKILL" \
+  --version "$VERSION" \
+  --tag "$TAG" \
+  --spki-sha256 "$EXPECTED_KEY_SHA256" \
+  --openssl openssl`)}
 
-Update this skill when installed through the Skills CLI:
+Integrate only the verified extracted \`${skill.name}/\` directory. Follow its harness-native installation instructions before enabling hooks, persistence, or automatic execution. Release page: ${releaseUrl}.`
+    : `## Secure Path: Exact Release Tag Required
 
-${codeBlock(`npx skills update ${skill.name}`)}
+This packet has no exact release tag, so it cannot render an executable secure-install procedure. Generate it with \`--tag\`, then verify the signed canonical archive before installation. Repository: ${releaseUrl}.`;
 
-List installed skills:
+  let skillsCliSection;
+  if (resolution.status === "not_applicable") {
+    const unsupportedSubject = resolution.unsupportedPlatforms.join(" and ");
+    const unsupportedVerb = resolution.unsupportedPlatforms.length === 1 ? "has" : "have";
+    skillsCliSection = `## Harness-Native Integration
 
-${codeBlock("npx skills list")}
+Not applicable. ${unsupportedSubject} ${unsupportedVerb} no reviewed direct Vercel Agent Skills target. Do not substitute an OpenClaw or other unrelated agent target.
 
-## Verify Release Artifact
+Follow \`SKILL.md\` and a harness-native installation document from the verified extracted archive above.`;
+  } else {
+    const commands = resolution.agents
+      .map((agent) => codeBlock(`npx skills add ${source} --skill ${skill.name} --agent ${agent} --yes`))
+      .join("\n\n");
+    let unsupportedNotice = "";
+    if (resolution.unsupportedPlatforms.length > 0) {
+      const unsupportedSubject = resolution.unsupportedPlatforms.join(" and ");
+      const unsupportedVerb = resolution.unsupportedPlatforms.length === 1 ? "has" : "have";
+      unsupportedNotice = `\n\nThese commands cover only the direct targets above. ${unsupportedSubject} ${unsupportedVerb} no reviewed direct Agent Skills target.`;
+    }
 
-When installing from a GitHub release instead of the Skills CLI, download the archive, \`checksums.json\`, \`checksums.sig\`, and \`signing-public.pem\` from:
+    skillsCliSection = `## Optional Compatibility-Only Agent Skills CLI Check
 
-${releaseUrl}
+These commands test reviewed direct-target compatibility in a disposable project. They resolve repository source; their installed tree is not byte-bound to the signed release archive or its manifest.
 
-Verify \`checksums.json\` before trusting the archive or standalone files.
+${commands}${unsupportedNotice}
+
+Do not treat the resolver output as a verified installation, do not promote it from staging, and do not run the CLI's mutable update operation on a verified install. This packet emits no installed-tree parity procedure; use the verified canonical release archive above for a trusted installation. Direct-target compatibility also does not grant catalog authorization.`;
+  }
+
+  return `# Verify and Install ${skill.name}
+
+${secureInstallSection}
+
+${skillsCliSection}
 `;
 }
 
@@ -305,9 +432,10 @@ async function main() {
 
   const skillJsonPath = path.join(skillDir, "skill.json");
   const skillMdPath = path.join(skillDir, "SKILL.md");
-  const [skillJsonRaw, skillMdRaw] = await Promise.all([
+  const [skillJsonRaw, skillMdRaw, releaseVerifier] = await Promise.all([
     readFile(skillJsonPath, "utf8"),
     readFile(skillMdPath, "utf8"),
+    readFile(RELEASE_VERIFIER_URL, "utf8"),
   ]);
 
   const skill = JSON.parse(skillJsonRaw);
@@ -316,11 +444,13 @@ async function main() {
   skill.version = requireField(skill, "version");
   skill.description = requireField(skill, "description");
   skill.license = requireField(skill, "license");
+  const { installable } = resolveSkillInstallability(skill);
+  validateReleaseIdentity(skill, args.tag);
 
-  const platform = detectPlatform(skill);
-  const metadata = platformMetadata(skill, platform);
+  const platform = installable ? detectPlatform(skill) : "not-applicable";
+  const metadata = installable ? platformMetadata(skill, platform) : {};
   const generatedAt = new Date().toISOString();
-  const permissions = buildPermissions({ skill, metadata, platform, generatedAt });
+  const permissions = buildPermissions({ skill, metadata, platform, generatedAt, installable });
 
   await mkdir(outputDir, { recursive: true });
   await Promise.all([
@@ -347,6 +477,10 @@ async function main() {
         tag: args.tag,
         sourceRef: args.sourceRef,
       }),
+    ),
+    writeFile(
+      path.join(outputDir, "verify_skill_release_bundle.py"),
+      releaseVerifier,
     ),
   ]);
 

@@ -15,11 +15,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { nextSimulatedReleaseVersion } from "./semver_increment.mjs";
 import { isTestReleasePath } from "./release_path_policy.mjs";
+import { resolveSkillInstallability } from "./skill_installability.mjs";
 
 const TRUST_ARTIFACTS = [
   "skill-card.md",
   "permissions.json",
   "install.md",
+  "verify_skill_release_bundle.py",
   "skillspector-report.md",
 ];
 
@@ -367,6 +369,7 @@ async function main() {
     const skillJsonPath = path.join(tempSkillDir, "skill.json");
     const skillMdPath = path.join(tempSkillDir, "SKILL.md");
     const skill = JSON.parse(await readFile(skillJsonPath, "utf8"));
+    const { installable } = resolveSkillInstallability(skill);
     const originalVersion = skill.version;
     const simulatedVersion = nextSimulatedReleaseVersion(originalVersion);
     const tag = `${skillName}-v${simulatedVersion}`;
@@ -486,6 +489,7 @@ async function main() {
       skill: skillName,
       original_version: originalVersion,
       simulated_version: simulatedVersion,
+      installable,
       tag,
       release_assets: path.relative(outputDir, releaseAssetsDir),
       archive: `release-assets/${zipName}`,

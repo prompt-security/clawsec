@@ -23,6 +23,12 @@ const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPa
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
+function requiredIndex(text, needle, message) {
+  const index = text.indexOf(needle);
+  assert.notEqual(index, -1, message);
+  return index;
+}
+
 const preservedHelperBlock = workflow.match(
   /- name: Prepare current ClawHub workflow helpers\s+run: \|\n(?<body>[\s\S]*?)\n\s+- name: Checkout tag/,
 )?.groups?.body;
@@ -31,6 +37,10 @@ const preservedHelperCopies = [...preservedHelperBlock.matchAll(
   /cp (scripts\/ci\/[^\s]+\.mjs) "\$RUNNER_TEMP\/([^"/]+\.mjs)"/g,
 )].map((match) => ({ source: match[1], destination: match[2] }));
 const preservedHelperDestinations = new Set(preservedHelperCopies.map(({ destination }) => destination));
+assert.ok(
+  preservedHelperDestinations.has('skill_installability.mjs'),
+  'Manual ClawHub republish must preserve the current installability policy before checking out an older tag',
+);
 
 for (const { source, destination } of preservedHelperCopies) {
   const sourceText = await readFile(new URL(`../${source}`, import.meta.url), 'utf8');
@@ -285,7 +295,13 @@ assert.match(
   'Skill release workflow must generate skill cards, permission summaries, and npx install instructions',
 );
 
-for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skillspector-report.md']) {
+for (const artifact of [
+  'skill-card.md',
+  'permissions.json',
+  'install.md',
+  'verify_skill_release_bundle.py',
+  'skillspector-report.md',
+]) {
   assert.match(
     workflow,
     new RegExp(`release-assets/${artifact.replace('.', '\\.')}`),
@@ -295,7 +311,13 @@ for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skil
 
 const escapeRegExp = (literal) => literal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-for (const artifact of ['skill-card.md', 'permissions.json', 'install.md', 'skillspector-report.md']) {
+for (const artifact of [
+  'skill-card.md',
+  'permissions.json',
+  'install.md',
+  'verify_skill_release_bundle.py',
+  'skillspector-report.md',
+]) {
   assert.match(
     workflow,
     new RegExp(
@@ -344,7 +366,13 @@ assert.match(
 assert.match(
   workflow,
   /add_release_asset_checksum "install\.md"/,
-  'npx install/update instructions must be included in the signed checksums manifest',
+  'verify-first install instructions must be included in the signed checksums manifest',
+);
+
+assert.match(
+  workflow,
+  /add_release_asset_checksum "verify_skill_release_bundle\.py"/,
+  'the bounded release verifier must be included in the signed checksums manifest',
 );
 
 assert.match(
@@ -438,6 +466,57 @@ assert.match(
   'Skill release workflow must call the tag release simulation script',
 );
 
+const simulationJob = workflow.slice(
+  requiredIndex(workflow, '  simulate-tag-release-build:', 'PR tag simulation job must exist'),
+  requiredIndex(workflow, '  release-tag:', 'Tag release job must exist'),
+);
+const simulationRunIndex = requiredIndex(
+  simulationJob,
+  'node scripts/ci/simulate_skill_tag_release.mjs',
+  'PR validation must build signed simulation evidence',
+);
+const simulationInstallabilityIndex = requiredIndex(
+  simulationJob,
+  "installable=\"$(jq -r '.installable'",
+  'PR simulation must read the resolved installability decision from its signed-build summary',
+);
+const simulationSkipIndex = requiredIndex(
+  simulationJob,
+  'Non-installable package: signed denial evidence generated; skipping ClawHub package preparation.',
+  'PR simulation must skip ClawHub staging for non-installable packages',
+);
+const simulationClawhubIndex = requiredIndex(
+  simulationJob,
+  'clawhub_release_package.mjs prepare',
+  'PR simulation must retain ClawHub staging for installable packages',
+);
+assert.ok(
+  simulationRunIndex < simulationInstallabilityIndex
+    && simulationInstallabilityIndex < simulationSkipIndex
+    && simulationSkipIndex < simulationClawhubIndex,
+  'PR simulation must first build denial evidence, then branch before ClawHub package preparation',
+);
+assert.match(
+  simulationJob,
+  /if \[ "\$installable" = "false" \]; then[\s\S]*continue[\s\S]*test "\$installable" = "true"/,
+  'PR simulation must fail closed on invalid summary values and continue past ClawHub staging only for false',
+);
+assert.match(
+  simulationJob,
+  /jq -e '\(\.installable \| type\) == "boolean"' "\$summary_path"/,
+  'PR simulation must reject a missing or non-boolean installability decision',
+);
+assert.match(
+  simulationJob,
+  /jq -e --argjson expected_installable "\$installable"[\s\S]*'\.installable == \$expected_installable'[\s\S]*"\$release_dir\/permissions\.json"/,
+  'PR simulation must cross-check its summary decision against the signed denial permissions',
+);
+assert.match(
+  simulationJob,
+  /if \[ "\$installable" = "false" \]; then[\s\S]*test ! -e "\$clawhub_output"[\s\S]*continue/,
+  'PR simulation must prove it did not prepare a ClawHub package for non-installable evidence',
+);
+
 assert.ok(
   workflow.includes('simulated_version | test("^[0-9]+\\\\.[0-9]+\\\\.[0-9]+(-[a-zA-Z0-9]+)?$")'),
   'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
@@ -453,10 +532,110 @@ assert.ok(
   'release-skill.sh must update hardcoded release verification VERSION assignments when bumping a skill',
 );
 
+const releaseScriptInstallabilityIndex = requiredIndex(
+  releaseSkillScript,
+  'node scripts/ci/skill_installability.mjs "$SKILL_PATH" --require-publication',
+  'release-skill.sh must enforce publication eligibility in full-release mode',
+);
+for (const [needle, description] of [
+  ['jq --arg v "$VERSION"', 'version mutation'],
+  ['git add "$file"', 'staging'],
+  ['git commit -m', 'commit creation'],
+  ['git tag -a "$TAG"', 'tag creation'],
+  ['gh release create "$TAG"', 'GitHub release creation'],
+]) {
+  assert.ok(
+    releaseScriptInstallabilityIndex
+      < requiredIndex(releaseSkillScript, needle, `release-skill.sh must contain ${description}`),
+    `release-skill.sh must reject a non-installable full release before ${description}`,
+  );
+}
+assert.match(
+  releaseSkillScript,
+  /if \[\[ "\$IS_RELEASE_BRANCH" == "true" \|\| "\$FORCE_TAG" == "true" \]\]; then[\s\S]*skill_installability\.mjs "\$SKILL_PATH" --require-publication[\s\S]*else[\s\S]*skill_installability\.mjs "\$SKILL_PATH"/,
+  'release-skill.sh must validate all modes while requiring publication eligibility only for tag-capable mode',
+);
+assert.match(
+  releaseSkillScript,
+  /if \[\[ "\$INSTALLABLE" == "false" \]\]; then[\s\S]*signed denial evidence[\s\S]*Do not create or push a public tag, GitHub Release, or skill-store publication/,
+  'Non-installable prep mode must not print follow-up instructions that authorize publication',
+);
+
 assert.match(
   workflow,
   /clawhub_slug: \$\{\{ steps\.publishable\.outputs\.clawhub_slug \}\}/,
   'Skill release workflow must expose the resolved ClawHub slug from release-tag outputs',
+);
+
+assert.match(
+  workflow,
+  /installable: \$\{\{ steps\.installability\.outputs\.installable \}\}/,
+  'Tag releases must expose the shared installability decision as a job output',
+);
+
+assert.equal(
+  workflow.match(/skill_installability\.mjs"? "\$SKILL_PATH" --require-publication/g)?.length,
+  2,
+  'Only public tag release and manual republish entrypoints may require publication eligibility',
+);
+
+const releaseTagJob = workflow.slice(
+  requiredIndex(workflow, '  release-tag:', 'Tag release job must exist'),
+  requiredIndex(workflow, '  publish-clawhub:', 'Automatic ClawHub job must exist'),
+);
+const tagGateIndex = requiredIndex(
+  releaseTagJob,
+  '- name: Reject non-installable public release',
+  'Tag release must reject non-installable packages',
+);
+for (const [needle, description] of [
+  ['- name: Install SkillSpector', 'SkillSpector installation'],
+  ['- name: Sign embedded advisory feed and verify', 'embedded advisory signing'],
+  ['- name: Build quick install instructions', 'install-command generation'],
+  ['- name: Create GitHub Release', 'GitHub release creation'],
+]) {
+  assert.ok(
+    tagGateIndex < requiredIndex(releaseTagJob, needle, `Tag release must contain ${description}`),
+    `Tag release installability denial must happen before ${description}`,
+  );
+}
+assert.match(
+  releaseTagJob,
+  /node scripts\/ci\/skill_installability\.mjs "\$SKILL_PATH" --require-publication/,
+  'Tag release must enforce the shared installability contract',
+);
+
+const republishJob = workflow.slice(
+  requiredIndex(workflow, '  republish-clawhub:', 'Manual ClawHub republish job must exist'),
+);
+const republishCheckoutIndex = requiredIndex(
+  republishJob,
+  '- name: Checkout tag',
+  'Manual republish must inspect the selected immutable tag',
+);
+const republishGateIndex = requiredIndex(
+  republishJob,
+  '- name: Reject non-installable public republish',
+  'Manual republish must reject non-installable packages',
+);
+assert.ok(
+  republishCheckoutIndex < republishGateIndex,
+  'Manual republish must evaluate installability from the selected tag metadata',
+);
+for (const [needle, description] of [
+  ['- name: Prepare verified ClawHub release package', 'release asset download and package preparation'],
+  ['- name: Login to ClawHub', 'ClawHub authentication'],
+  ['- name: Publish to ClawHub', 'ClawHub publication'],
+]) {
+  assert.ok(
+    republishGateIndex < requiredIndex(republishJob, needle, `Manual republish must contain ${description}`),
+    `Manual republish installability denial must happen before ${description}`,
+  );
+}
+assert.match(
+  republishJob,
+  /node "\$RUNNER_TEMP\/skill_installability\.mjs" "\$SKILL_PATH" --require-publication/,
+  'Manual republish must enforce the preserved current installability contract against selected tag metadata',
 );
 
 assert.match(

@@ -47,7 +47,9 @@ async function runSimulation({
   outputDir,
   expectedOriginal,
   expectedSimulated,
-  expectedAgent,
+  expectedInstallable = true,
+  expectedAgents = [],
+  verifyReleaseBundle = false,
   verifyEmbeddedAdvisory = false,
   expectedPreparationError = null,
   expectedExcludedPaths = [],
@@ -80,6 +82,7 @@ async function runSimulation({
   assert.equal(summary.skill, skillName);
   assert.equal(summary.original_version, expectedOriginal);
   assert.equal(summary.simulated_version, expectedSimulated);
+  assert.equal(summary.installable, expectedInstallable);
   assert.equal(summary.tag, expectedTag);
 
   const releaseAssetsDir = path.join(outputDir, "release-assets");
@@ -93,6 +96,7 @@ async function runSimulation({
     "skill-card.md",
     "permissions.json",
     "install.md",
+    "verify_skill_release_bundle.py",
     "skillspector-report.md",
     "checksums.sig",
     "signing-public.pem",
@@ -105,7 +109,15 @@ async function runSimulation({
     assert.ok(file.length > 0, `${artifact} should not be empty`);
   }
 
-  for (const artifact of ["skill.json", "SKILL.md", "skillspector-report.md"]) {
+  for (const artifact of [
+    "skill.json",
+    "SKILL.md",
+    "skill-card.md",
+    "permissions.json",
+    "install.md",
+    "verify_skill_release_bundle.py",
+    "skillspector-report.md",
+  ]) {
     const file = await readFile(path.join(releaseAssetsDir, artifact));
     assert.equal(
       checksums.files[artifact]?.sha256,
@@ -137,7 +149,52 @@ async function runSimulation({
     );
   }
 
-  if (!verifyEmbeddedAdvisory) {
+  if (verifyReleaseBundle) {
+    const publicKeyPath = path.join(releaseAssetsDir, "signing-public.pem");
+    const publicKeyDer = spawnSync(
+      "openssl",
+      ["pkey", "-pubin", "-in", publicKeyPath, "-outform", "DER"],
+    );
+    assert.equal(
+      publicKeyDer.status,
+      0,
+      `failed to encode simulated release key: ${publicKeyDer.stderr?.toString() || ""}`,
+    );
+    const verifiedOutputDir = path.join(outputDir, "verified-release");
+    const verifier = spawnSync(
+      "python3",
+      [
+        path.join(releaseAssetsDir, "verify_skill_release_bundle.py"),
+        "--release-dir",
+        releaseAssetsDir,
+        "--output-dir",
+        verifiedOutputDir,
+        "--skill",
+        skillName,
+        "--version",
+        expectedSimulated,
+        "--tag",
+        expectedTag,
+        "--spki-sha256",
+        sha256(publicKeyDer.stdout),
+        "--openssl",
+        "openssl",
+      ],
+      { encoding: "utf8" },
+    );
+    assert.equal(
+      verifier.status,
+      0,
+      `shipped verifier rejected a signed simulated bundle\nstdout:\n${verifier.stdout}\nstderr:\n${verifier.stderr}`,
+    );
+    const verifiedSkill = JSON.parse(
+      await readFile(path.join(verifiedOutputDir, skillName, "skill.json"), "utf8"),
+    );
+    assert.equal(verifiedSkill.name, skillName);
+    assert.equal(verifiedSkill.version, expectedSimulated);
+  }
+
+  if (expectedInstallable && !verifyEmbeddedAdvisory) {
     const clawhubOutputDir = path.join(outputDir, "clawhub-package");
     const prepareOptions = {
       releaseDir: releaseAssetsDir,
@@ -197,7 +254,7 @@ async function runSimulation({
     }
   }
 
-  if (verifyEmbeddedAdvisory) {
+  if (expectedInstallable && verifyEmbeddedAdvisory) {
     const readArchiveEntry = (entry) => {
       const extracted = spawnSync("unzip", ["-p", archivePath, entry], {
         maxBuffer: 64 * 1024 * 1024,
@@ -353,13 +410,82 @@ async function runSimulation({
   }
 
   const install = await readFile(path.join(releaseAssetsDir, "install.md"), "utf8");
-  assert.match(
-    install,
-    new RegExp(
-      `npx skills add prompt-security/clawsec#pull-request-head --skill ${skillName} --agent ${expectedAgent} --global --yes`,
-    ),
+  const permissions = JSON.parse(
+    await readFile(path.join(releaseAssetsDir, "permissions.json"), "utf8"),
   );
-  assert.match(install, new RegExp(`npx skills update ${skillName}`));
+  assert.equal(permissions.installable, expectedInstallable);
+
+  if (!expectedInstallable) {
+    const card = await readFile(path.join(releaseAssetsDir, "skill-card.md"), "utf8");
+    assert.match(install, /^# Installation Unavailable for /m);
+    assert.match(install, /declares `installable: false`/);
+    assert.match(install, /no supported installation or activation path/);
+    assert.doesNotMatch(install, /```|\bcurl\b|\bpython3\b|\bnpx\b|--agent|\bunzip\b/);
+    assert.equal(permissions.platform, "not-applicable");
+    assert.deepEqual(permissions.required_binaries, []);
+    assert.deepEqual(permissions.optional_binaries, []);
+    assert.deepEqual(permissions.required_env, []);
+    assert.deepEqual(permissions.optional_env, []);
+    assert.deepEqual(permissions.capabilities, []);
+    assert.match(permissions.network_egress, /Not applicable: package is non-installable/);
+    assert.match(card, /declares `installable: false`/);
+    assert.match(card, /no supported execution or activation path/);
+    assert.doesNotMatch(card, /provides this capability|Use this skill for/);
+    assert.equal(
+      existsSync(path.join(outputDir, "clawhub-package")),
+      false,
+      "non-installable simulation must not prepare a ClawHub package",
+    );
+    const rejectedClawhubOutputDir = path.join(outputDir, "rejected-clawhub-package");
+    await assert.rejects(
+      prepareReleasePackage({
+        releaseDir: releaseAssetsDir,
+        outputDir: rejectedClawhubOutputDir,
+        skillName,
+        version: expectedSimulated,
+        canonicalKeyPath: path.join(releaseAssetsDir, "signing-public.pem"),
+      }),
+      /Publication denied .*skill\.json declares "installable": false/,
+    );
+    assert.deepEqual(
+      await readdir(rejectedClawhubOutputDir),
+      [],
+      "rejected non-installable release staging must leave no publishable package",
+    );
+    return;
+  }
+
+  assert.match(install, /## Secure Path: Verify the Canonical Release Before Installation/);
+  assert.match(install, new RegExp(`TAG="${expectedTag}"`));
+  assert.match(install, new RegExp(`ARCHIVE="${expectedTag}\\.zip"`));
+  assert.match(install, /EXPECTED_KEY_SHA256="711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8"/);
+  assert.match(install, /installed tree is not byte-bound|## Harness-Native Integration/);
+  assert.doesNotMatch(install, /npx skills (?:update|list)/);
+
+  const keyCheckIndex = install.indexOf('test "$EXPECTED_KEY_SHA256" = "$ACTUAL_KEY_SHA256"');
+  const signatureCheckIndex = install.indexOf("openssl pkeyutl -verify");
+  const verifierHashIndex = install.indexOf('test "$EXPECTED_VERIFIER_SHA" = "$ACTUAL_VERIFIER_SHA"');
+  const verifierExecutionIndex = install.indexOf("python3 verify_skill_release_bundle.py");
+  assert.ok(keyCheckIndex > 0 && keyCheckIndex < signatureCheckIndex);
+  assert.ok(signatureCheckIndex < verifierHashIndex);
+  assert.ok(verifierHashIndex < verifierExecutionIndex);
+  assert.doesNotMatch(install, /\bunzip\b/);
+
+  if (expectedAgents.length === 0) {
+    assert.match(install, /## Harness-Native Integration/);
+    assert.match(install, /no reviewed direct Vercel Agent Skills target/);
+    assert.doesNotMatch(install, /npx skills (?:add|update|list)/);
+  } else {
+    for (const expectedAgent of expectedAgents) {
+      assert.match(
+        install,
+        new RegExp(
+          `npx skills add prompt-security/clawsec#pull-request-head --skill ${skillName} --agent ${expectedAgent} --yes`,
+        ),
+      );
+    }
+    assert.ok(verifierExecutionIndex < install.indexOf("npx skills add"));
+  }
 }
 
 try {
@@ -435,7 +561,8 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "stable"),
     expectedOriginal: "0.1.16",
     expectedSimulated: "0.1.17",
-    expectedAgent: "openclaw",
+    expectedAgents: ["openclaw"],
+    verifyReleaseBundle: true,
     verifyEmbeddedAdvisory: true,
   });
 
@@ -444,7 +571,28 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "feed-only"),
     expectedOriginal: "0.0.11",
     expectedSimulated: "0.0.12",
-    expectedAgent: "openclaw",
+    expectedAgents: ["openclaw"],
+  });
+
+  const nonInstallableSkillDir = await prereleaseFixture(
+    "skills/picoclaw-security-guardian",
+    "0.0.7",
+    "non-installable-fixture",
+  );
+  const nonInstallableSkillJsonPath = path.join(nonInstallableSkillDir, "skill.json");
+  const nonInstallableSkill = JSON.parse(await readFile(nonInstallableSkillJsonPath, "utf8"));
+  nonInstallableSkill.installable = false;
+  await writeFile(
+    nonInstallableSkillJsonPath,
+    `${JSON.stringify(nonInstallableSkill, null, 2)}\n`,
+  );
+  await runSimulation({
+    skillDir: nonInstallableSkillDir,
+    outputDir: path.join(tempRoot, "non-installable"),
+    expectedOriginal: "0.0.7",
+    expectedSimulated: "0.0.8",
+    expectedInstallable: false,
+    verifyReleaseBundle: true,
   });
 
   await runSimulation({
@@ -452,7 +600,7 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "beta"),
     expectedOriginal: "0.0.1-beta5",
     expectedSimulated: "0.0.1-beta6",
-    expectedAgent: "hermes-agent",
+    expectedAgents: ["hermes-agent"],
   });
 
   const alphaSkillDir = await prereleaseFixture("skills/picoclaw-self-pen-testing", "0.0.3-alpha1", "alpha-fixture");
@@ -461,7 +609,6 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "alpha"),
     expectedOriginal: "0.0.3-alpha1",
     expectedSimulated: "0.0.3-alpha2",
-    expectedAgent: "openclaw",
   });
 
   const rcSkillDir = await prereleaseFixture("skills/picoclaw-security-guardian", "0.0.4-rc1", "rc-fixture");
@@ -470,7 +617,6 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "rc"),
     expectedOriginal: "0.0.4-rc1",
     expectedSimulated: "0.0.4-rc2",
-    expectedAgent: "openclaw",
   });
 
   const previewSkillDir = await prereleaseFixture("skills/openclaw-traffic-guardian", "0.0.1-preview", "preview-fixture");
@@ -479,7 +625,7 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "preview"),
     expectedOriginal: "0.0.1-preview",
     expectedSimulated: "0.0.1-preview1",
-    expectedAgent: "openclaw",
+    expectedAgents: ["openclaw"],
   });
 
   const testFilterSkillDir = await prereleaseFixture(
@@ -513,7 +659,6 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "test-filter"),
     expectedOriginal: "0.0.5",
     expectedSimulated: "0.0.6",
-    expectedAgent: "openclaw",
     expectedExcludedPaths: testOnlyPaths,
   });
 
@@ -536,7 +681,6 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
     outputDir: path.join(tempRoot, "unsupported-client-file"),
     expectedOriginal: "0.0.5",
     expectedSimulated: "0.0.6",
-    expectedAgent: "openclaw",
     expectedPreparationError: /would omit non-placeholder package file: runtime\.bin/,
   });
 } finally {

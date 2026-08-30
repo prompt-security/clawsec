@@ -1,6 +1,15 @@
 export const PLATFORM_KEYS = Object.freeze(["openclaw", "nanoclaw", "hermes", "picoclaw"]);
 
-const PLATFORM_AGENT_ALIASES = new Map([["hermes", "hermes-agent"]]);
+// This reviewed map answers only whether the Vercel Skills CLI has a direct
+// target for a declared platform. It does not grant release-channel eligibility.
+// A null value is an explicit, fail-closed "no direct target" decision.
+const PLATFORM_AGENT_TARGETS = new Map([
+  ["codex", "codex"],
+  ["openclaw", "openclaw"],
+  ["hermes", "hermes-agent"],
+  ["nanoclaw", null],
+  ["picoclaw", null],
+]);
 
 function asStringArray(value) {
   if (Array.isArray(value)) {
@@ -27,26 +36,63 @@ export function collectDeclaredPlatforms(skill) {
   return [...platforms];
 }
 
-export function installAgentForSkill(skill, agentTypes, fallback = "openclaw") {
+export function resolveDirectSkillsCliTargets(skill, agentTypes) {
   const platforms = collectDeclaredPlatforms(skill);
   if (platforms.length === 0) {
-    return fallback;
+    return {
+      status: "error",
+      agents: [],
+      unsupportedPlatforms: [],
+      errors: ["Skill metadata does not declare a platform."],
+    };
   }
 
   const matchedAgents = new Set();
-  let allPlatformsMatched = true;
+  const unsupportedPlatforms = new Set();
+  const errors = [];
+
   for (const platform of platforms) {
-    const candidate = PLATFORM_AGENT_ALIASES.get(platform) || platform;
-    if (agentTypes.has(candidate)) {
-      matchedAgents.add(candidate);
-    } else {
-      allPlatformsMatched = false;
+    if (PLATFORM_AGENT_TARGETS.has(platform)) {
+      const target = PLATFORM_AGENT_TARGETS.get(platform);
+      if (target === null) {
+        unsupportedPlatforms.add(platform);
+      } else if (agentTypes.has(target)) {
+        matchedAgents.add(target);
+      } else {
+        errors.push(`Configured npx skills target ${target} for ${platform} is unavailable.`);
+      }
+      continue;
     }
+
+    errors.push(`Unknown platform without a reviewed npx skills target: ${platform}.`);
   }
 
-  if (allPlatformsMatched && matchedAgents.size === 1) {
-    return [...matchedAgents][0];
+  const agents = [...matchedAgents].sort();
+  const unsupported = [...unsupportedPlatforms].sort();
+  if (errors.length > 0) {
+    return {
+      status: "error",
+      agents,
+      unsupportedPlatforms: unsupported,
+      errors,
+    };
   }
 
-  return fallback;
+  return {
+    status: agents.length > 0 ? "required" : "not_applicable",
+    agents,
+    unsupportedPlatforms: unsupported,
+    errors: [],
+  };
+}
+
+export function installAgentForSkill(skill, agentTypes) {
+  const resolution = resolveDirectSkillsCliTargets(skill, agentTypes);
+  if (resolution.status === "error") {
+    throw new Error(resolution.errors.join(" "));
+  }
+  if (resolution.agents.length !== 1 || resolution.unsupportedPlatforms.length > 0) {
+    throw new Error("Skill does not resolve to exactly one reviewed npx skills target.");
+  }
+  return resolution.agents[0];
 }

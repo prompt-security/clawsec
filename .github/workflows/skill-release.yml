@@ -758,6 +758,13 @@ jobs:
               continue
             fi
 
+            if ! add_release_asset_checksum "${out_assets}" "verify_skill_release_bundle.py"; then
+              failures=$((failures + 1))
+              rm -rf "${staging_dir}"
+              echo "::endgroup::"
+              continue
+            fi
+
             if ! add_release_asset_checksum "${out_assets}" "skillspector-report.md"; then
               failures=$((failures + 1))
               rm -rf "${staging_dir}"
@@ -1054,16 +1061,31 @@ jobs:
               "dist/tag-release-simulation/${skill_name}" \
               --repository "${{ github.repository }}" \
               --source-ref "${{ github.event.pull_request.head.sha }}"
+            summary_path="dist/tag-release-simulation/${skill_name}/simulation-summary.json"
             jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9]+)?$")' \
-              "dist/tag-release-simulation/${skill_name}/simulation-summary.json" >/dev/null
+              "$summary_path" >/dev/null
+            jq -e '(.installable | type) == "boolean"' "$summary_path" >/dev/null
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.json"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.sig"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/signing-public.pem"
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/skillspector-report.md"
 
-            simulated_version="$(jq -r '.simulated_version' "dist/tag-release-simulation/${skill_name}/simulation-summary.json")"
+            simulated_version="$(jq -r '.simulated_version' "$summary_path")"
+            installable="$(jq -r '.installable' "$summary_path")"
             release_dir="dist/tag-release-simulation/${skill_name}/release-assets"
             clawhub_output="dist/tag-release-simulation/${skill_name}/clawhub-package"
+            jq -e --argjson expected_installable "$installable" \
+              '.installable == $expected_installable' \
+              "$release_dir/permissions.json" >/dev/null
+
+            if [ "$installable" = "false" ]; then
+              echo "Non-installable package: signed denial evidence generated; skipping ClawHub package preparation."
+              test ! -e "$clawhub_output"
+              echo "::endgroup::"
+              continue
+            fi
+            test "$installable" = "true"
+
             node scripts/ci/clawhub_release_package.mjs prepare \
               --release-dir "$release_dir" \
               --output-dir "$clawhub_output" \
@@ -1085,6 +1107,7 @@ jobs:
       skill_name: ${{ steps.parse.outputs.skill_name }}
       version: ${{ steps.parse.outputs.version }}
       skill_path: ${{ steps.parse.outputs.skill_path }}
+      installable: ${{ steps.installability.outputs.installable }}
       publishable: ${{ steps.publishable.outputs.publishable }}
       openclaw_skill: ${{ steps.publishable.outputs.openclaw_skill }}
       publish_clawhub: ${{ steps.publishable.outputs.publish_clawhub }}
@@ -1164,10 +1187,20 @@ jobs:
             exit 1
           fi
 
+      - name: Reject non-installable public release
+        id: installability
+        run: |
+          set -euo pipefail
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          INSTALLABLE="$(node scripts/ci/skill_installability.mjs "$SKILL_PATH" --require-publication)"
+          test "$INSTALLABLE" = "true"
+          echo "installable=${INSTALLABLE}" >> "$GITHUB_OUTPUT"
+
       - name: Detect publishability and install defaults
         id: publishable
         run: |
           SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          INSTALLABLE="${{ steps.installability.outputs.installable }}"
           INTERNAL=$(jq -r 'if (.openclaw | type) == "object" then (.openclaw.internal // false) else false end' "$SKILL_PATH/skill.json")
 
           OPENCLAW_SKILL=false
@@ -1176,7 +1209,10 @@ jobs:
           fi
 
           PUBLISHABLE=true
-          if [ "$INTERNAL" = "true" ]; then
+          if [ "$INSTALLABLE" != "true" ]; then
+            PUBLISHABLE=false
+            echo "Skill is non-installable; public publication is disabled."
+          elif [ "$INTERNAL" = "true" ]; then
             PUBLISHABLE=false
             echo "Skill marked internal=true; will skip ClawHub publishing."
           fi
@@ -1479,11 +1515,13 @@ jobs:
           test -s release-assets/skill-card.md
           test -s release-assets/permissions.json
           test -s release-assets/install.md
+          test -s release-assets/verify_skill_release_bundle.py
           test -s release-assets/skillspector-report.md
 
           add_release_asset_checksum "skill-card.md"
           add_release_asset_checksum "permissions.json"
           add_release_asset_checksum "install.md"
+          add_release_asset_checksum "verify_skill_release_bundle.py"
           add_release_asset_checksum "skillspector-report.md"
 
           if ! jq -e . "release-assets/checksums.json" >/dev/null 2>&1; then
@@ -1986,6 +2024,7 @@ jobs:
         run: |
           cp scripts/ci/resolve_clawhub_slug.mjs "$RUNNER_TEMP/resolve_clawhub_slug.mjs"
           cp scripts/ci/skill_platforms.mjs "$RUNNER_TEMP/skill_platforms.mjs"
+          cp scripts/ci/skill_installability.mjs "$RUNNER_TEMP/skill_installability.mjs"
           cp scripts/ci/clawhub_release_package.mjs "$RUNNER_TEMP/clawhub_release_package.mjs"
           cp scripts/ci/release_path_policy.mjs "$RUNNER_TEMP/release_path_policy.mjs"
           cp scripts/ci/patch_clawhub_trust_extensions.mjs "$RUNNER_TEMP/patch_clawhub_trust_extensions.mjs"
@@ -2007,6 +2046,13 @@ jobs:
             exit 1
           fi
           echo "Skill validated: $SKILL_PATH"
+
+      - name: Reject non-installable public republish
+        run: |
+          set -euo pipefail
+          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          INSTALLABLE="$(node "$RUNNER_TEMP/skill_installability.mjs" "$SKILL_PATH" --require-publication)"
+          test "$INSTALLABLE" = "true"
 
       - name: Check if publishable
         id: publishable
