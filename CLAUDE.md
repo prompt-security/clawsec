@@ -18,7 +18,11 @@ source .venv/bin/activate
 uv pip install ruff bandit   # linters configured in pyproject.toml
 ```
 
-Required tools: Node 20+, Python 3.10+, openssl, jq, shellcheck (`brew install shellcheck`).
+Required tools: Node 20+, Python 3.10+, openssl, jq, shellcheck, trufflehog
+(`brew install shellcheck trufflehog`).
+
+`npm install` points `core.hooksPath` at `.githooks/` via the `prepare` script,
+which enables the secret-scanning pre-commit hook. See **Secret Scanning** below.
 
 ## Common Commands
 
@@ -49,6 +53,15 @@ node skills/clawsec-suite/test/skill_catalog_discovery.test.mjs
 
 ```bash
 python utils/validate_skill.py skills/<skill-name>
+```
+
+**Secret scanning** (same engine as the hooks and CI):
+
+```bash
+gitleaks protect --staged --redact          # staged blobs, as pre-commit sees them
+gitleaks git --redact                       # every commit
+trufflehog git "file://$(pwd)" --results=verified,unknown --fail
+git config core.hooksPath .githooks         # (re)enable the hook
 ```
 
 **Signing key consistency check:**
@@ -100,11 +113,51 @@ python utils/validate_skill.py skills/<skill-name>
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `ci.yml` | PR / push to main | Lint (TS, Python, shell), Trivy security scan, npm audit, tests, build |
+| `ci.yml` | PR to main / manual | Lint (TS, Python, shell), Trivy security scan, TruffleHog secret scan, npm audit, tests, build. No `push` trigger, so direct commits to main are not CI-scanned — accepted risk: the only direct-to-main writer is the NVD/GHSA poller, whose input is public advisory data. |
 | `skill-release.yml` | Tag `*-v*.*.*` or PR touching skill files | Sign checksums, publish to GitHub Releases, supersede old versions |
 | `deploy-pages.yml` | After CI or release succeeds | Build web frontend + skills catalog, deploy to GitHub Pages |
 | `poll-nvd-cves.yml` | Daily 06:00 UTC | Poll NVD for CVEs, update `advisories/feed.json` + signature |
 | `community-advisory.yml` | Issue labeled `advisory-approved` | Process community report into `CLAW-YYYY-NNNN` advisory |
+
+## Secret Scanning
+
+Two tools, split by what each is actually good at.
+
+| Gate | Runs | Tool | Scope |
+|---|---|---|---|
+| `.githooks/pre-commit` | on commit | `gitleaks protect --staged` | staged blobs |
+| `ci.yml` / `secret-scan` | on PR | TruffleHog Action + gitleaks | the PR's commit range |
+
+**Why both.** TruffleHog verifies candidate credentials against the provider,
+which is what makes `--results=verified,unknown` usable: it reports what is live
+(or what it could not reach) and drops the merely secret-shaped. On this repo
+that is the difference between 140 findings and 2 — the advisory feed cites
+upstream fix commits as 40-char hex SHAs, which read as legacy GitHub PATs.
+
+But TruffleHog only emits a **PrivateKey** finding when it can verify the key
+against a provider. An unverifiable key produces no output at all — confirmed
+against RSA-2048, EC prime256v1, PKCS#8 Ed25519 and OpenSSH Ed25519. That is
+exactly the shape of `CLAWSEC_SIGNING_PRIVATE_KEY`, so gitleaks covers it: its
+built-in `private-key` rule matches on pattern and needs no network.
+
+**Why gitleaks in the hook.** Staged content is not in git yet, and
+`trufflehog git file://.` only reads committed objects — it reports nothing for
+a staged key. `gitleaks protect --staged` reads the staged blobs directly.
+
+**Tuning.** Use each tool's native mechanism — `trufflehog:ignore` on the line,
+or `--exclude-paths` / `--exclude-detectors`; `gitleaks:allow` on the line, or
+`.gitleaksignore`. Do not add a custom suppression layer.
+
+**`--no-verify` cannot be disabled.** It is built into git's CLI. Client-side
+hooks are a fast feedback loop, not a boundary; CI is the backstop.
+
+**The control worth more than all of the above** is GitHub secret scanning
+**push protection** — it rejects the push itself, so the secret never lands on
+any branch. Free for public repositories, and currently **disabled** on this
+repo. Enable it at Settings → Code security.
+
+Note that TruffleHog verifies by calling the provider's API, so the CI scan
+makes outbound network requests.
 
 ## Key Conventions
 
@@ -112,5 +165,6 @@ python utils/validate_skill.py skills/<skill-name>
 - **Python:** ruff + bandit, configured in `pyproject.toml`, line-length 120
 - **Shell:** shellcheck on `scripts/*.sh`
 - **Tests:** each `.test.mjs` is a standalone Node.js script with its own pass/fail counters and `process.exit(1)` on failure. Tests generate ephemeral Ed25519 keys — they don't use the repo signing keys.
+- **Secret scanning:** suppress a false positive with the scanner's own mechanism (`trufflehog:ignore` / `gitleaks:allow` on the line), scoped to that value. Never add a custom suppression layer.
 - **Advisory feed:** fail-closed signature verification by default. `CLAWSEC_ALLOW_UNSIGNED_FEED=1` is a temporary migration bypass only.
 - **Hook event model:** hooks mutate `event.messages` array in-place (not return values). Rate-limited to 300s by default (`CLAWSEC_HOOK_INTERVAL_SECONDS`).

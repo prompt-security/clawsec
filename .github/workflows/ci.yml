@@ -56,6 +56,12 @@ jobs:
         with:
           scandir: './scripts'
           severity: warning
+      - name: ShellCheck git hooks
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
+        with:
+          scandir: './.githooks'
+          additional_files: 'pre-commit'
+          severity: warning
 
   security-scan:
     name: Security Scan
@@ -77,6 +83,37 @@ jobs:
           scan-ref: '.'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # TruffleHog needs both sides of the range it is asked to diff.
+          fetch-depth: 0
+      # Live credentials. TruffleHog verifies candidates against the provider,
+      # so --results=verified,unknown reports what is live (or unreachable) and
+      # drops the merely secret-shaped -- 140 findings on this repo become 2.
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified,unknown
+      # Private keys and other deterministic patterns. TruffleHog only emits a
+      # PrivateKey finding when it can verify the key against a provider, so an
+      # unverifiable one -- exactly the shape of CLAWSEC_SIGNING_PRIVATE_KEY --
+      # produces no output at all. gitleaks matches on pattern and catches it.
+      # Scoped to the PR range: pre-existing test fixtures on main are not this
+      # PR's problem, and scanning the range is what a contributor can act on.
+      - name: Gitleaks
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            zricethezav/gitleaks:v8.30.0 git --redact --no-banner \
+            --log-opts="$BASE_SHA..$HEAD_SHA"
 
   dependency-audit:
     name: Dependency Audit

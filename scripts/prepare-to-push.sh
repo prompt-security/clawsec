@@ -208,10 +208,23 @@ else
   echo "  Install with: brew install trivy"
 fi
 
-# Gitleaks (scans git history to match CI)
+# Secret scanning, same split as CI: trufflehog verifies live credentials
+# against the provider, gitleaks matches deterministic patterns (private keys).
+echo -e "\n${YELLOW}Running TruffleHog secret scan...${NC}"
+if command -v trufflehog &> /dev/null; then
+  if trufflehog git "file://$(pwd)" --results=verified,unknown --fail --no-update; then
+    check_pass "TruffleHog secret scan"
+  else
+    check_fail "TruffleHog found live credentials"
+  fi
+else
+  check_skip "TruffleHog"
+  echo "  Install with: brew install trufflehog"
+fi
+
+echo -e "\n${YELLOW}Running Gitleaks secrets scan...${NC}"
 if command -v gitleaks &> /dev/null; then
-  echo -e "\n${YELLOW}Running Gitleaks secrets scan...${NC}"
-  if gitleaks detect --source . --verbose; then
+  if gitleaks git --redact --no-banner; then
     check_pass "Gitleaks secrets scan"
   else
     check_fail "Gitleaks found potential secrets"
@@ -219,6 +232,7 @@ if command -v gitleaks &> /dev/null; then
 else
   check_skip "Gitleaks"
   echo "  Install with: brew install gitleaks"
+  echo "  Note: the pre-commit hook fails closed without it."
 fi
 
 # npm audit (use public registry since private registries like CodeArtifact don't support audit)

@@ -324,7 +324,7 @@ for (const [label, options, expectedMessage] of [
 }
 
 {
-  const sensitiveBaseUrl = "https://ci-user:ci-password@example.test/private/path?token=secret#fragment";
+  const sensitiveBaseUrl = "https://ci-user:ci-password@example.test/private/path?token=secret#fragment"; // trufflehog:ignore -- synthetic fixture; example.test is RFC 6761 reserved and cannot resolve
   await assert.rejects(
     retryLiveAdvisoryEndpointVerification({
       baseUrl: sensitiveBaseUrl,
@@ -443,7 +443,7 @@ try {
     };
     try {
       const sensitiveBaseUrl =
-        fixture.origin.replace("://", "://ci-user:ci-password@") + "/?token=secret#fragment";
+        fixture.origin.replace("://", "://ci-user:ci-password@") + "/?token=secret#fragment"; // trufflehog:ignore -- synthetic fixture
       await verifyLiveAdvisoryEndpoints({
         baseUrl: sensitiveBaseUrl,
         attempts: 1,

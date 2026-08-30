@@ -41,12 +41,21 @@ cd clawsec
 # Add upstream remote to sync with main repo
 git remote add upstream https://github.com/prompt-security/clawsec.git
 
-# Install dependencies (if any)
+# Install dependencies. This also installs the secret-scanning git hooks
+# via the "prepare" script.
 npm install
+
+# The pre-commit hook needs gitleaks on PATH, and fails closed without it.
+brew install gitleaks trufflehog
 
 # Create a new branch for your skill
 git checkout -b skill/my-new-skill
 ```
+
+A pre-commit hook scans staged changes for credentials. If it fires, rotate the
+credential before removing it from git — deleting it from the branch does not
+un-leak it.
+See the Secret Scanning section of `CLAUDE.md` for how to tune false positives.
 
 ---
 
