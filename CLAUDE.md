@@ -126,13 +126,18 @@ Two tools, split by what each is actually good at.
 | Gate | Runs | Tool | Scope |
 |---|---|---|---|
 | `.githooks/pre-commit` | on commit | `gitleaks protect --staged` | staged blobs |
+| `.githooks/pre-push` | on push | gitleaks **+** TruffleHog | the commits being pushed |
 | `ci.yml` / `secret-scan` | on PR | TruffleHog Action + gitleaks | the PR's commit range |
 
-**Why both.** TruffleHog verifies candidate credentials against the provider,
-which is what makes `--results=verified,unknown` usable: it reports what is live
-(or what it could not reach) and drops the merely secret-shaped. On this repo
-that is the difference between 140 findings and 2 — the advisory feed cites
-upstream fix commits as 40-char hex SHAs, which read as legacy GitHub PATs.
+**Dead or alive.** pre-push and CI both pass `unverified` in `--results`, so a
+rotated or already-dead credential still fails — a leaked key is a leak whether
+or not it still works. CI's default (`verified,unknown`) would let it through.
+
+What makes that policy usable is that **every gate scans a range, never full
+history**. Over the whole repo this filter reports 140 findings — the advisory
+feed cites upstream fix commits as 40-char hex SHAs, which read as legacy GitHub
+PATs — but a range scan sees only the diff, so an ordinary push or PR reports 0.
+Never widen a gate to full history without re-checking that.
 
 But TruffleHog only emits a **PrivateKey** finding when it can verify the key
 against a provider. An unverifiable key produces no output at all — confirmed
@@ -140,9 +145,12 @@ against RSA-2048, EC prime256v1, PKCS#8 Ed25519 and OpenSSH Ed25519. That is
 exactly the shape of `CLAWSEC_SIGNING_PRIVATE_KEY`, so gitleaks covers it: its
 built-in `private-key` rule matches on pattern and needs no network.
 
-**Why gitleaks in the hook.** Staged content is not in git yet, and
+**Why gitleaks in the hooks.** Staged content is not in git yet, and
 `trufflehog git file://.` only reads committed objects — it reports nothing for
-a staged key. `gitleaks protect --staged` reads the staged blobs directly.
+a staged key. `gitleaks protect --staged` reads the staged blobs directly. At
+pre-push both run: gitleaks is offline and ~0.3s, TruffleHog adds its detector
+set for ~5s on a 20-commit range. `CLAWSEC_SKIP_TRUFFLEHOG=1` drops the slow
+half when you are offline; `CLAWSEC_SKIP_SECRET_SCAN=1` skips both.
 
 **Tuning.** Use each tool's native mechanism — `trufflehog:ignore` on the line,
 or `--exclude-paths` / `--exclude-detectors`; `gitleaks:allow` on the line, or

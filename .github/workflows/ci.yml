@@ -60,7 +60,7 @@ jobs:
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
         with:
           scandir: './.githooks'
-          additional_files: 'pre-commit'
+          additional_files: 'pre-commit pre-push'
           severity: warning
 
   security-scan:
@@ -92,13 +92,19 @@ jobs:
         with:
           # TruffleHog needs both sides of the range it is asked to diff.
           fetch-depth: 0
-      # Live credentials. TruffleHog verifies candidates against the provider,
-      # so --results=verified,unknown reports what is live (or unreachable) and
-      # drops the merely secret-shaped -- 140 findings on this repo become 2.
+      # Dead or alive: `unverified` is included deliberately, so a rotated or
+      # already-dead credential still fails. It is the same policy as
+      # .githooks/pre-push, so the local gate and CI cannot disagree.
+      #
+      # What keeps that usable is that the Action scans the PR range, not the
+      # whole repo. Over full history this filter reports 140 findings here --
+      # the advisory feed cites upstream fix commits as 40-char hex SHAs, which
+      # read as legacy GitHub PATs -- but a range scan sees only the diff, so an
+      # ordinary PR reports 0.
       - name: TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --results=verified,unknown
+          extra_args: --results=verified,unknown,unverified
       # Private keys and other deterministic patterns. TruffleHog only emits a
       # PrivateKey finding when it can verify the key against a provider, so an
       # unverifiable one -- exactly the shape of CLAWSEC_SIGNING_PRIVATE_KEY --

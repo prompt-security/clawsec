@@ -52,9 +52,11 @@ brew install gitleaks trufflehog
 git checkout -b skill/my-new-skill
 ```
 
-A pre-commit hook scans staged changes for credentials. If it fires, rotate the
-credential before removing it from git — deleting it from the branch does not
-un-leak it.
+A pre-commit hook scans staged changes for credentials, and a pre-push hook
+scans the commits you are about to push with both gitleaks and TruffleHog —
+including credentials that are already dead, since a leaked key is a leak
+either way. If one fires, rotate the credential before removing it from git —
+deleting it from the branch does not un-leak it.
 See the Secret Scanning section of `CLAUDE.md` for how to tune false positives.
 
 ---
