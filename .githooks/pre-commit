@@ -17,15 +17,19 @@
 
 set -euo pipefail
 
+# Before the tool check, not after: the guard below advertises this bypass in
+# its own error text, so testing it second made the advertised escape hatch
+# unreachable -- a machine without gitleaks could not commit at all. pre-push
+# has always had this order.
+if [[ "${CLAWSEC_SKIP_SECRET_SCAN:-0}" == "1" ]]; then
+  echo "pre-commit: secret scan skipped (CLAWSEC_SKIP_SECRET_SCAN=1)" >&2
+  exit 0
+fi
+
 if ! command -v gitleaks >/dev/null 2>&1; then
   echo "pre-commit: gitleaks not found; secrets were NOT checked." >&2
   echo "  brew install gitleaks   (or CLAWSEC_SKIP_SECRET_SCAN=1 to skip)" >&2
   exit 1
-fi
-
-if [[ "${CLAWSEC_SKIP_SECRET_SCAN:-0}" == "1" ]]; then
-  echo "pre-commit: secret scan skipped (CLAWSEC_SKIP_SECRET_SCAN=1)" >&2
-  exit 0
 fi
 
 exec gitleaks protect --staged --redact --no-banner

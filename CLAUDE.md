@@ -18,8 +18,9 @@ source .venv/bin/activate
 uv pip install ruff bandit   # linters configured in pyproject.toml
 ```
 
-Required tools: Node 20+, Python 3.10+, openssl, jq, shellcheck, trufflehog
-(`brew install shellcheck trufflehog`).
+Required tools: Node 20+, Python 3.10+, openssl, jq, shellcheck, gitleaks,
+trufflehog (`brew install shellcheck gitleaks trufflehog`). The pre-commit hook
+exits 1 without gitleaks.
 
 `npm install` points `core.hooksPath` at `.githooks/` via the `prepare` script,
 which enables the secret-scanning pre-commit hook. See **Secret Scanning** below.
@@ -158,6 +159,16 @@ or `--exclude-paths` / `--exclude-detectors`; `gitleaks:allow` on the line, or
 
 **`--no-verify` cannot be disabled.** It is built into git's CLI. Client-side
 hooks are a fast feedback loop, not a boundary; CI is the backstop.
+
+**Worktrees that pin `core.hooksPath` get no hooks.** `prepare` sets
+`core.hooksPath=.githooks` in local scope, which every checkout inherits — the
+relative path resolves per worktree, so the main checkout and ordinary linked
+worktrees are all covered (verified). But worktree scope outranks local scope,
+so a worktree carrying its own `core.hooksPath` in `config.worktree` silently
+wins and no hook runs. Today that is 2 of 19 checkouts here, both agent
+sandboxes created by tooling that pins it. Check with
+`git config --get core.hooksPath` — anything other than `.githooks` means the
+local gates are off in that checkout and only CI is protecting you.
 
 **The control worth more than all of the above** is GitHub secret scanning
 **push protection** — it rejects the push itself, so the secret never lands on

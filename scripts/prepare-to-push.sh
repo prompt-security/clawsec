@@ -212,10 +212,10 @@ fi
 # against the provider, gitleaks matches deterministic patterns (private keys).
 echo -e "\n${YELLOW}Running TruffleHog secret scan...${NC}"
 if command -v trufflehog &> /dev/null; then
-  if trufflehog git "file://$(pwd)" --results=verified,unknown --fail --no-update; then
+  if trufflehog git "file://$(pwd)" --results=verified,unknown,unverified --fail --no-update; then
     check_pass "TruffleHog secret scan"
   else
-    check_fail "TruffleHog found live credentials"
+    check_fail "TruffleHog found credential material"
   fi
 else
   check_skip "TruffleHog"
