@@ -1,0 +1,200 @@
+{
+  "name": "clawsec-analyst",
+  "version": "0.1.0",
+  "description": "AI-powered security analyst using Claude API for automated advisory triage, pre-installation risk assessment, and natural language security policy parsing",
+  "author": "prompt-security",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://clawsec.prompt.security/",
+  "keywords": [
+    "security",
+    "ai",
+    "llm",
+    "claude",
+    "anthropic",
+    "advisory",
+    "triage",
+    "risk-assessment",
+    "policy",
+    "threat-intel",
+    "analysis",
+    "agents",
+    "openclaw",
+    "nanoclaw",
+    "automation"
+  ],
+  "sbom": {
+    "files": [
+      {
+        "path": "skill.json",
+        "required": true,
+        "description": "Skill metadata, SBOM, and OpenClaw configuration"
+      },
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Skill documentation with YAML frontmatter and usage instructions"
+      },
+      {
+        "path": "HOOK.md",
+        "required": true,
+        "description": "OpenClaw hook metadata (events, rate limiting, handler registration)"
+      },
+      {
+        "path": "handler.ts",
+        "required": true,
+        "description": "Main entry point for skill logic (OpenClaw hook handler + NanoClaw CLI)"
+      },
+      {
+        "path": "package.json",
+        "required": true,
+        "description": "Node.js dependencies and scripts"
+      },
+      {
+        "path": "tsconfig.json",
+        "required": true,
+        "description": "TypeScript configuration"
+      },
+      {
+        "path": "lib/types.ts",
+        "required": true,
+        "description": "TypeScript type definitions for advisory feed, policies, and analysis results"
+      },
+      {
+        "path": "lib/claude-client.ts",
+        "required": true,
+        "description": "Claude API client wrapper with retry logic and exponential backoff"
+      },
+      {
+        "path": "lib/feed-reader.ts",
+        "required": true,
+        "description": "Advisory feed integration with Ed25519 signature verification"
+      },
+      {
+        "path": "lib/cache.ts",
+        "required": true,
+        "description": "Result caching for offline resilience and API rate limit mitigation"
+      },
+      {
+        "path": "lib/state.ts",
+        "required": true,
+        "description": "State persistence for rate limiting and hook deduplication"
+      },
+      {
+        "path": "lib/advisory-analyzer.ts",
+        "required": true,
+        "description": "Automated advisory triage with AI-powered risk prioritization"
+      },
+      {
+        "path": "lib/risk-assessor.ts",
+        "required": true,
+        "description": "Pre-installation risk scoring for skills (0-100 scale)"
+      },
+      {
+        "path": "lib/policy-engine.ts",
+        "required": true,
+        "description": "Natural language security policy parser with confidence thresholds"
+      },
+      {
+        "path": "test/claude-client.test.mjs",
+        "required": false,
+        "description": "Unit tests for Claude API client error handling and retries"
+      },
+      {
+        "path": "test/feed-reader.test.mjs",
+        "required": false,
+        "description": "Unit tests for feed reading and signature verification"
+      },
+      {
+        "path": "test/analyzer.test.mjs",
+        "required": false,
+        "description": "Unit tests for advisory analysis logic"
+      },
+      {
+        "path": "test/risk-assessor.test.mjs",
+        "required": false,
+        "description": "Unit tests for risk assessment scoring"
+      },
+      {
+        "path": "test/policy-engine.test.mjs",
+        "required": false,
+        "description": "Unit tests for policy parsing and validation"
+      },
+      {
+        "path": "test/integration-triage.test.mjs",
+        "required": false,
+        "description": "Integration test for end-to-end advisory triage workflow"
+      },
+      {
+        "path": "test/integration-risk.test.mjs",
+        "required": false,
+        "description": "Integration test for risk assessment workflow"
+      },
+      {
+        "path": "test/integration-policy.test.mjs",
+        "required": false,
+        "description": "Integration test for policy parsing workflow"
+      }
+    ]
+  },
+  "openclaw": {
+    "emoji": "🔍",
+    "required_bins": [
+      "node"
+    ],
+    "environment_variables": {
+      "ANTHROPIC_API_KEY": {
+        "required": true,
+        "description": "Anthropic API key for Claude access (obtain from https://console.anthropic.com/)"
+      },
+      "CLAWSEC_ALLOW_UNSIGNED_FEED": {
+        "required": false,
+        "description": "Emergency bypass for signature verification (dev only, NOT for production)"
+      },
+      "CLAWSEC_HOOK_INTERVAL_SECONDS": {
+        "required": false,
+        "description": "Override default 300s rate limit for hook execution"
+      }
+    },
+    "triggers": [
+      "analyze-advisory",
+      "assess-skill-risk",
+      "define-policy"
+    ]
+  },
+  "capabilities": [
+    "Automated security advisory triage with AI-powered risk assessment",
+    "Pre-installation skill risk scoring (0-100 scale) with dependency CVE cross-reference",
+    "Natural language security policy parsing with confidence thresholds",
+    "Integration with ClawSec advisory feed (Ed25519 signature verification)",
+    "Offline resilience via result caching (7-day TTL)",
+    "Exponential backoff retry logic for Claude API rate limits",
+    "OpenClaw hook support (agent:bootstrap, command:new events)",
+    "NanoClaw CLI invocation support for manual analysis"
+  ],
+  "integration": {
+    "advisory_feed": {
+      "source": "advisories/feed.json",
+      "signature_verification": true,
+      "local_fallback": true,
+      "remote_url": "https://clawsec.prompt.security/advisories/feed.json"
+    },
+    "claude_api": {
+      "model": "claude-sonnet-4-5-20250929",
+      "max_tokens": 2048,
+      "retry_strategy": "exponential_backoff",
+      "max_retries": 3,
+      "cache_ttl_days": 7
+    }
+  },
+  "compatibility": {
+    "openclaw": true,
+    "nanoclaw": true,
+    "moltbot": true,
+    "clawdbot": true,
+    "platforms": [
+      "linux",
+      "darwin"
+    ],
+    "node_version": ">=20.0.0"
+  }
+}
