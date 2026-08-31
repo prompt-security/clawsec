@@ -1,0 +1,23 @@
+scripts/generate-wiki-llms.mjs
+  3b73edc8c549875d 12,30-49,75,80,144,153,156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "498b449e8fc9772881e8fd935b777365104cd7a0",
+  "prompts": {
+    "3b73edc8c549875d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3644864d-9d58-4157-9185-101cffebe348",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 4,
+      "accepted_lines": 26,
+      "overriden_lines": 0
+    }
+  }
+}
