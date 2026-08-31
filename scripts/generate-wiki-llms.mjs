@@ -9,6 +9,7 @@ import {
 } from '../utils/markdownHelpers.mjs';
 import {
   isWikiIndexSlug,
+  resolveWikiLinkTarget,
   toWikiLlmsPath,
   toWikiRoute,
 } from '../utils/wikiPathHelpers.mjs';
@@ -25,6 +26,26 @@ const RAW_BASE = 'https://raw.githubusercontent.com/prompt-security/clawsec/main
 
 const toPosix = (inputPath) => inputPath.split(path.sep).join('/');
 const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}${toWikiLlmsPath(slug)}`;
+
+// Wiki markdown uses repo-relative links (`overview.md`, `../assets/x.svg`), which only resolve
+// inside the wiki/ tree. Exported llms.txt files are served from the website, so internal links
+// must be rewritten to absolute URLs or they 404 for anyone following them.
+const rewriteInternalLinks = (content, docRelativePath, slugSet) =>
+  content.replace(/\]\(([^)\s]+)\)/g, (match, href) => {
+    const target = resolveWikiLinkTarget(docRelativePath, href);
+    if (!target) return match; // external, hash-only, or root-absolute — leave as-is
+
+    const { path: resolvedPath, hash } = target;
+    const targetSlug = resolvedPath.toLowerCase().endsWith('.md')
+      ? resolvedPath.replace(/\.md$/i, '').toLowerCase()
+      : null;
+
+    if (!targetSlug || !slugSet.has(targetSlug)) {
+      return `](${RAW_BASE}/wiki/${resolvedPath}${hash})`;
+    }
+
+    return `](${WEBSITE_BASE}/#${toWikiRoute(targetSlug)}${hash})`;
+  });
 
 const walkMarkdownFiles = async (dir) => {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -51,11 +72,12 @@ const sortDocs = (a, b) => {
   return a.slug.localeCompare(b.slug, 'en', { sensitivity: 'base' });
 };
 
-const buildPageBody = (doc) => {
+const buildPageBody = (doc, slugSet) => {
   const pageRoute = toWikiRoute(doc.slug);
   const pageUrl = `${WEBSITE_BASE}/#${pageRoute}`;
   const sourceUrl = `${RAW_BASE}/wiki/${doc.relativePath}`;
   const llmsUrl = toLlmsPageUrl(doc.slug);
+  const content = rewriteInternalLinks(doc.content, doc.relativePath, slugSet).trim();
 
   return [
     `# ClawSec Wiki · ${doc.title}`,
@@ -69,7 +91,7 @@ const buildPageBody = (doc) => {
     '',
     '## Markdown',
     '',
-    doc.content.trim(),
+    content,
     '',
   ].join('\n');
 };
@@ -119,6 +141,7 @@ const main = async () => {
     docs.sort(sortDocs);
     const pageDocs = docs.filter((doc) => !isWikiIndexSlug(doc.slug));
     const indexDoc = docs.find((doc) => isWikiIndexSlug(doc.slug));
+    const slugSet = new Set(docs.map((doc) => doc.slug));
 
     // `public/wiki/` is fully generated; wipe stale output before regenerating.
     await fs.rm(PUBLIC_WIKI_ROOT, { recursive: true, force: true });
@@ -127,10 +150,10 @@ const main = async () => {
     for (const doc of pageDocs) {
       const outputFile = path.join(PUBLIC_WIKI_ROOT, doc.slug, 'llms.txt');
       await fs.mkdir(path.dirname(outputFile), { recursive: true });
-      await fs.writeFile(outputFile, buildPageBody(doc), 'utf8');
+      await fs.writeFile(outputFile, buildPageBody(doc, slugSet), 'utf8');
     }
 
-    const indexBody = indexDoc ? buildPageBody(indexDoc) : buildFallbackIndexBody(pageDocs);
+    const indexBody = indexDoc ? buildPageBody(indexDoc, slugSet) : buildFallbackIndexBody(pageDocs);
     await fs.writeFile(LLM_INDEX_FILE, indexBody, 'utf8');
 
     // Keep logs short for CI readability.
