@@ -1,0 +1,27 @@
+.github/workflows/wiki-export-verify.yml
+  3b73edc8c549875d 11-12,40-42
+scripts/test-wiki-llms-export.mjs
+  3b73edc8c549875d 1-123
+scripts/generate-wiki-llms.mjs
+  3b73edc8c549875d 121-129,131,134,138,152-153,155-156,158,160-161,164,166-167,169-179,181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "f0751b85afdfa256fdf04df5eecf6c7ee0752567",
+  "prompts": {
+    "3b73edc8c549875d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3644864d-9d58-4157-9185-101cffebe348",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 189,
+      "total_deletions": 42,
+      "accepted_lines": 168,
+      "overriden_lines": 0
+    }
+  }
+}
