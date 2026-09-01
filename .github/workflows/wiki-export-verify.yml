@@ -11,6 +11,7 @@ on:
       - 'scripts/generate-wiki-llms.mjs'
       - 'scripts/test-wiki-llms-export.mjs'
       - 'utils/wikiPathHelpers.mjs'
+      - 'utils/markdownHelpers.mjs'
       - '.github/workflows/wiki-export-verify.yml'
       - '.github/workflows/wiki-sync.yml'
   workflow_dispatch:

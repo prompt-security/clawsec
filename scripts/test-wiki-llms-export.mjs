@@ -19,6 +19,31 @@ const writeFixture = async (root, relativePath, content) => {
 const extractLinkTargets = (content) =>
   [...content.matchAll(/\]\(([^)\s]+)\)/g)].map(([, target]) => target);
 
+// The rewriter parses the plain `](dest)` form only. That covers all wiki content today,
+// but CommonMark also allows titles (`](a.md "t")`), angle-bracket destinations
+// (`](<a b.md>)`), and parenthesized paths — forms the rewriter would silently pass
+// through (leaving a dead relative link) or truncate. The danger is that a validator
+// using the same grammar is blind to exactly those cases and reports success.
+//
+// So rather than teaching both sides full CommonMark for forms no page uses, flag any
+// `](` the rewriter cannot faithfully handle and fail loudly. If someone adds one later,
+// CI says so instead of shipping another dead link.
+const findUnparseableLinkForms = (content) => {
+  const problems = [];
+
+  for (const [snippet] of content.matchAll(/\]\((?![^)\s]+\))[^\n]{0,60}/g)) {
+    problems.push(`unsupported link form (title / angle-bracket / spaced destination): ${snippet}`);
+  }
+
+  for (const [, target] of content.matchAll(/\]\(([^)\s]+)\)/g)) {
+    if (target.includes('(')) {
+      problems.push(`destination truncated at an unbalanced parenthesis: ${target}`);
+    }
+  }
+
+  return problems;
+};
+
 const isAbsoluteHref = (target) =>
   /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(target) || target.startsWith('/') || target.startsWith('#');
 
@@ -120,6 +145,39 @@ test('generateWikiLlms resolves links that climb above the wiki root against the
   await rm(tmpRoot, { recursive: true, force: true });
 });
 
+test('the export gate rejects link forms the rewriter cannot faithfully handle', async () => {
+  // No wiki page uses these CommonMark forms today, and the rewriter does not parse them.
+  // What must not happen is the validator sharing that blind spot and reporting success —
+  // that is how a dead link ships unnoticed (the #349 failure mode). Assert it fails loudly.
+  const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-forms-'));
+  const wikiRoot = path.join(tmpRoot, 'wiki');
+  const publicWikiRoot = path.join(tmpRoot, 'public-wiki');
+
+  await writeFixture(wikiRoot, 'INDEX.md', [
+    '# Wiki Index',
+    '',
+    '- [Titled](overview.md "page title")',
+    '- [Angled](<assets/my image.svg>)',
+    '- [Parenthesized](spec_(v2).md)',
+    '',
+  ].join('\n'));
+  await writeFixture(wikiRoot, 'overview.md', '# Overview\n');
+
+  await generateWikiLlms({ wikiRoot, publicWikiRoot });
+  const index = await readFile(path.join(publicWikiRoot, 'llms.txt'), 'utf8');
+
+  const problems = findUnparseableLinkForms(index);
+  assert.equal(problems.length, 3, `expected all three unsupported forms flagged, got: ${problems}`);
+  assert.ok(problems.some((p) => p.includes('page title')));
+  assert.ok(problems.some((p) => p.includes('my image.svg')));
+  assert.ok(problems.some((p) => p.includes('spec_(v2')));
+
+  // A plain link alongside them still rewrites correctly and is not flagged.
+  assert.ok(findUnparseableLinkForms('[Overview](overview.md)').length === 0);
+
+  await rm(tmpRoot, { recursive: true, force: true });
+});
+
 test('generateWikiLlms only emits internal links that resolve to a real target, across the actual wiki/', async () => {
   const wikiRoot = path.join(REPO_ROOT, 'wiki');
   const publicWikiRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-real-'));
@@ -135,7 +193,7 @@ test('generateWikiLlms only emits internal links that resolve to a real target, 
 
   for (const outputFile of outputFiles) {
     const content = await readFile(outputFile, 'utf8');
-    const broken = [];
+    const broken = findUnparseableLinkForms(content);
 
     for (const target of extractLinkTargets(content)) {
       if (target.startsWith('#')) continue; // same-page anchor
