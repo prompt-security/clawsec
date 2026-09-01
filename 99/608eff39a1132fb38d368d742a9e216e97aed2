@@ -1,0 +1,35 @@
+index.html
+  339abc4db9f220cb 18-23,30-32,36-45,66-73,81,84,88
+components/Header.tsx
+  339abc4db9f220cb 20,29-30,43,57,59,68,74,83,92,104
+components/LobsterBackground.tsx
+  339abc4db9f220cb 7-10
+components/Footer.tsx
+  339abc4db9f220cb 6
+pages/Home.tsx
+  339abc4db9f220cb 66,71,100,161,164
+pages/SkillsCatalog.tsx
+  339abc4db9f220cb 107,119-120,134,137,183-184
+components/Layout.tsx
+  339abc4db9f220cb 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "99608eff39a1132fb38d368d742a9e216e97aed2",
+  "prompts": {
+    "339abc4db9f220cb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ca0c31c8-bf09-4e35-81a1-388af3c44186",
+        "model": "claude-fable-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 90,
+      "total_deletions": 105,
+      "accepted_lines": 59,
+      "overriden_lines": 0
+    }
+  }
+}
