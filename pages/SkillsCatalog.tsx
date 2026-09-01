@@ -104,7 +104,7 @@ export const SkillsCatalog: React.FC = () => {
       <div className="pt-[52px]">
         <div className="py-16 text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-clawd-accent"></div>
-          <p className="mt-4 text-gray-400">Loading skills...</p>
+          <p className="mt-4 text-gray-600">Loading skills...</p>
         </div>
         <Footer />
       </div>
@@ -116,8 +116,8 @@ export const SkillsCatalog: React.FC = () => {
       <div className="pt-[52px]">
         <div className="py-16 text-center">
           <Package className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">No Skills Available</h2>
-          <p className="text-gray-400 mb-4">{error}</p>
+          <h2 className="text-xl font-bold text-clawd-800 mb-2">No Skills Available</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500">
             Skills will appear here after the first skill release.
           </p>
@@ -131,10 +131,10 @@ export const SkillsCatalog: React.FC = () => {
     <div className="pt-[52px] space-y-8">
       {/* Header */}
       <section className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl text-white">
+        <h1 className="text-3xl md:text-4xl text-clawd-800">
           Skills Catalog
         </h1>
-        <p className="text-gray-400 max-w-2xl mx-auto">
+        <p className="text-gray-600 max-w-2xl mx-auto">
           Browse security skills for your AI agents. Each skill is verified for safety
           and distributed with checksums for integrity verification.
         </p>
@@ -180,8 +180,8 @@ export const SkillsCatalog: React.FC = () => {
       ) : (
         <section className="text-center py-12">
           <Package className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No skills found</h3>
-          <p className="text-gray-400">
+          <h3 className="text-lg font-medium text-clawd-800 mb-2">No skills found</h3>
+          <p className="text-gray-600">
             {searchTerm || categoryFilter !== 'all'
               ? 'Try adjusting your filters'
               : 'No skills have been released yet'}

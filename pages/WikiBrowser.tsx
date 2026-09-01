@@ -190,8 +190,8 @@ export const WikiBrowser: React.FC = () => {
     return (
       <div className="pt-[52px] py-20 text-center space-y-4">
         <BookOpenText className="w-12 h-12 text-gray-500 mx-auto" />
-        <h1 className="text-2xl text-white">Wiki unavailable</h1>
-        <p className="text-gray-400">No markdown files were found in the wiki source.</p>
+        <h1 className="text-2xl text-clawd-800">Wiki unavailable</h1>
+        <p className="text-gray-600">No markdown files were found in the wiki source.</p>
       </div>
     );
   }
@@ -299,15 +299,15 @@ export const WikiBrowser: React.FC = () => {
   return (
     <div className="pt-[52px] space-y-8">
       <section className="space-y-3">
-        <h1 className="text-3xl md:text-4xl text-white flex items-center gap-3">
+        <h1 className="text-3xl md:text-4xl text-clawd-800 flex items-center gap-3">
           <BookOpenText className="text-clawd-accent" />
           Wiki
         </h1>
-        <p className="text-gray-400 max-w-3xl">
-          Full repository wiki rendered from markdown in <code className="text-gray-300">wiki/</code>.
+        <p className="text-gray-600 max-w-3xl">
+          Full repository wiki rendered from markdown in <code className="text-clawd-600">wiki/</code>.
           This is the same source synced to GitHub Wiki.
         </p>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-300">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
           <span className="text-gray-400">Language:</span>
           {languageOptions.map((option) => {
             const isActiveLanguage = option.code === currentLanguageCode;
@@ -322,7 +322,7 @@ export const WikiBrowser: React.FC = () => {
               <Link
                 key={option.code}
                 to={option.route}
-                className="px-2 py-1 rounded border border-clawd-700 hover:border-clawd-accent hover:text-white transition-colors"
+                className="px-2 py-1 rounded border border-clawd-700 hover:border-clawd-accent hover:text-clawd-800 transition-colors"
                 title={option.translated ? `Open ${option.label} translation` : `Open ${option.label} index fallback`}
               >
                 {option.label}
@@ -361,7 +361,7 @@ export const WikiBrowser: React.FC = () => {
             href="https://github.com/prompt-security/clawsec/wiki"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-clawd-700 hover:border-clawd-accent text-gray-200 text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-clawd-700 hover:border-clawd-accent text-gray-700 hover:text-clawd-800 text-sm transition-colors"
           >
             <ExternalLink size={15} />
             GitHub Wiki
@@ -370,7 +370,7 @@ export const WikiBrowser: React.FC = () => {
       </section>
 
       <div className="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-6 items-start">
-        <aside className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-4 lg:sticky lg:top-20 max-h-[calc(100vh-7rem)] overflow-auto">
+        <aside className="bg-clawd-800 border border-clawd-700 rounded-xl p-4 lg:sticky lg:top-20 max-h-[calc(100vh-7rem)] overflow-auto">
           <div className="space-y-5">
             {groupedDocs.map((group) => (
               <section key={group.name} className="space-y-2">
@@ -398,7 +398,7 @@ export const WikiBrowser: React.FC = () => {
           </div>
         </aside>
 
-        <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-4 sm:p-6 md:p-8 overflow-x-hidden">
+        <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-4 sm:p-6 md:p-8 overflow-x-hidden">
           {notFound && (
             <div className="mb-6 p-3 rounded-md border border-orange-800 bg-orange-900/20 text-orange-200 text-sm">
               Wiki page not found for <code>{requested}</code>. Showing <strong>{selectedDoc.title}</strong> instead.

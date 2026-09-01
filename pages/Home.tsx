@@ -63,12 +63,12 @@ export const Home: React.FC = () => {
     <div className="pt-[52px]">
       {/* Logo Section */}
       <section className="text-center mb-6">
-        <h1 className="text-5xl md:text-6xl font text-white">ClawSec</h1>
+        <h1 className="text-5xl md:text-6xl font text-clawd-800">ClawSec</h1>
       </section>
 
       {/* Hero Section */}
       <section className="text-center space-y-6 max-w-3xl mx-auto mb-12 md:mb-16">
-        <h2 className="text-3xl md:text-4xl tracking-tight text-white">
+        <h2 className="text-3xl md:text-4xl tracking-tight text-clawd-800">
           Secure your{' '}
           <code
             key={currentPlatformIndex}
@@ -97,7 +97,7 @@ export const Home: React.FC = () => {
           </code>{' '}
           agents
         </h2>
-        <p className="text-lg md:text-xl text-gray-400 leading-relaxed">
+        <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
           A complete security skill suite for OpenClaw, NanoClaw, and Hermes agents. Protect your{' '}
           <code
             key={currentFileIndex}
@@ -158,10 +158,10 @@ export const Home: React.FC = () => {
               background-color: rgb(30 27 75 / 1);
             }
             50% {
-              background-color: rgb(249 179 71 / 0.25);
+              background-color: rgb(97 0 255 / 0.55);
             }
             100% {
-              background-color: rgb(191 107 42 / 0.15);
+              background-color: rgb(11 12 27 / 1);
             }
           }
           @keyframes lockReveal {

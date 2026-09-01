@@ -114,7 +114,7 @@ export const AdvisoryDetail: React.FC = () => {
     return (
       <div className="py-16 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-clawd-accent"></div>
-        <p className="mt-4 text-gray-400">Loading advisory...</p>
+        <p className="mt-4 text-gray-600">Loading advisory...</p>
       </div>
     );
   }
@@ -123,8 +123,8 @@ export const AdvisoryDetail: React.FC = () => {
     return (
       <div className="py-16 text-center">
         <Shield className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Advisory Not Found</h2>
-        <p className="text-gray-400 mb-4">{error || 'This advisory does not exist'}</p>
+        <h2 className="text-xl font-bold text-clawd-800 mb-2">Advisory Not Found</h2>
+        <p className="text-gray-600 mb-4">{error || 'This advisory does not exist'}</p>
         <Link to="/feed" className="text-clawd-accent hover:underline">
           Back to Security Feed
         </Link>
@@ -137,7 +137,7 @@ export const AdvisoryDetail: React.FC = () => {
       {/* Back Link */}
       <Link
         to="/feed"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-gray-600 hover:text-clawd-800 transition-colors"
       >
         <ArrowLeft size={20} />
         Back to Security Feed
@@ -165,12 +165,12 @@ export const AdvisoryDetail: React.FC = () => {
           ))}
         </div>
 
-        <h1 className="text-3xl font-bold text-white">{advisory.id}</h1>
-        <p className="text-xl text-gray-300">{advisory.title}</p>
+        <h1 className="text-3xl font-bold text-clawd-800">{advisory.id}</h1>
+        <p className="text-xl text-gray-600">{advisory.title}</p>
       </section>
 
       {/* Description */}
-      <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6">
+      <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-6">
         <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
           <AlertTriangle size={20} className="text-orange-400" />
           Description
@@ -179,7 +179,7 @@ export const AdvisoryDetail: React.FC = () => {
       </section>
 
       {/* Recommended Action */}
-      <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6">
+      <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-6">
         <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
           <Shield size={20} className="text-green-400" />
           Recommended Action
@@ -189,7 +189,7 @@ export const AdvisoryDetail: React.FC = () => {
 
       {/* Affected Components */}
       {advisory.affected && advisory.affected.length > 0 && (
-        <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6">
+        <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-6">
           <h2 className="text-lg font-bold text-white mb-3">Affected Components</h2>
           <ul className="list-disc list-inside space-y-1">
             {advisory.affected.map((item, index) => (
@@ -201,7 +201,7 @@ export const AdvisoryDetail: React.FC = () => {
 
       {/* References */}
       {advisory.references && advisory.references.length > 0 && (
-        <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6">
+        <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-6">
           <h2 className="text-lg font-bold text-white mb-3">References</h2>
           <ul className="space-y-2">
             {advisory.references.map((ref, index) => (
@@ -247,7 +247,7 @@ export const AdvisoryDetail: React.FC = () => {
       </section>
 
       {/* Metadata */}
-      <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6">
+      <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-6">
         <h3 className="font-bold text-white mb-4">Metadata</h3>
         <dl className="grid md:grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between md:block">

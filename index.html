@@ -15,50 +15,34 @@
     <title>ClawSec | Agent Hardening | Prompt Security, SentinelOne </title>
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_Rg.ttf') format('truetype');
-        font-weight: 400;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_Md.ttf') format('truetype');
-        font-weight: 500;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_Bd.ttf') format('truetype');
-        font-weight: 700;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_XBd.ttf') format('truetype');
-        font-weight: 800;
-        font-style: normal;
-      }
-    </style>
+    <!-- Quicksand: prompt.security brand face -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Prometo', 'system-ui', 'sans-serif'],
-              display: ['Prometo', 'system-ui', 'sans-serif'],
-              mono: ['Prometo', 'system-ui', 'sans-serif'],
+              sans: ['Quicksand', 'system-ui', 'sans-serif'],
+              display: ['Quicksand', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
             },
             colors: {
               clawd: {
-                900: '#26115d', // Deep base
-                800: '#3a1f7a', // Mid base
-                700: '#523899', // Lifted mid
-                600: '#8c6ae7', // Light highlight
-                accent: '#ffa23f', // Prompt orange (target)
-                accentHover: '#e89232',
-                secondary: '#c7b6ff', // Soft lavender
+                900: '#05060f', // Deepest ink — code block chrome
+                800: '#0b0c1b', // Ink box surface (--ps-purple-dark)
+                700: '#232647', // Lifted surface / borders on ink
+                600: '#6100ff', // Electric purple (--ps-purple-electric)
+                500: '#8f6bff', // Light electric
+                accent: '#b56fed', // Brand lavender — highlights on ink
+                accentHover: '#c98fff',
+                secondary: '#6100ff', // Electric purple on light
+                green: '#8fff08', // Acid green (--ps-green) — trace hints only
+                greenHover: '#7ee208',
               }
             },
             animation: {
@@ -79,12 +63,14 @@
     <style>
       body {
         background:
-          linear-gradient(90deg, rgba(12, 6, 24, 0.55) 0%, rgba(12, 6, 24, 0.0) 45%),
-          radial-gradient(circle at 10% 18%, rgba(255, 162, 63, 0.06), transparent 28%),
-          radial-gradient(circle at 82% 18%, rgba(140, 106, 231, 0.20), transparent 30%),
-          radial-gradient(circle at 55% 78%, rgba(82, 56, 153, 0.22), transparent 34%),
-          linear-gradient(180deg, #26115d 0%, #523899 52%, #8c6ae7 100%);
-        color: #f4f0ff;
+          radial-gradient(circle at 82% 12%, rgba(97, 0, 255, 0.06), transparent 30%),
+          radial-gradient(circle at 12% 72%, rgba(181, 111, 237, 0.05), transparent 32%),
+          linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
+        color: #0b0c1b;
+      }
+      ::selection {
+        background: #8fff08;
+        color: #0b0c1b;
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -92,14 +78,14 @@
         height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: #14103b;
+        background: #f8f8f8;
       }
       ::-webkit-scrollbar-thumb {
-        background: #2f2261;
+        background: #d9d7e4;
         border-radius: 6px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #f9b347;
+        background: #8fff08;
       }
       /* Mobile overflow fixes */
       html, body {

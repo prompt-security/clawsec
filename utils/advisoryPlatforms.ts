@@ -10,19 +10,19 @@ export const normalizePlatformSlug = (platform: string) => platform.trim().toLow
 const PLATFORM_DESCRIPTOR_BY_SLUG: Record<string, PlatformDescriptor> = {
   openclaw: {
     label: 'OpenClaw',
-    classes: 'bg-clawd-accent/20 text-clawd-accent border border-clawd-accent/40',
+    classes: 'bg-clawd-800 text-clawd-accent border border-clawd-accent/40',
   },
   nanoclaw: {
     label: 'NanoClaw',
-    classes: 'bg-clawd-secondary/20 text-clawd-secondary border border-clawd-secondary/40',
+    classes: 'bg-clawd-800 text-clawd-500 border border-clawd-500/40',
   },
   hermes: {
     label: 'Hermes',
-    classes: 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40',
+    classes: 'bg-clawd-800 text-emerald-300 border border-emerald-400/40',
   },
   picoclaw: {
     label: 'Picoclaw',
-    classes: 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40',
+    classes: 'bg-clawd-800 text-cyan-300 border border-cyan-400/40',
   },
 };
 
@@ -35,6 +35,6 @@ export const getPlatformDescriptor = (platform: string): PlatformDescriptor => {
   const normalized = normalizePlatformSlug(platform);
   return PLATFORM_DESCRIPTOR_BY_SLUG[normalized] ?? {
     label: platform.trim() || platform,
-    classes: 'bg-clawd-700 text-gray-300 border border-clawd-600',
+    classes: 'bg-clawd-800 text-gray-300 border border-clawd-700',
   };
 };
