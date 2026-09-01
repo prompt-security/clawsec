@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { generateWikiLlms } from './generate-wiki-llms.mjs';
+import { generateWikiLlms, RAW_BASE, WEBSITE_BASE } from './generate-wiki-llms.mjs';
+import { toWikiRoute } from '../utils/wikiPathHelpers.mjs';
+
+const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const writeFixture = async (root, relativePath, content) => {
   const fullPath = path.join(root, relativePath);
@@ -13,13 +16,16 @@ const writeFixture = async (root, relativePath, content) => {
   await writeFile(fullPath, content, 'utf8');
 };
 
-// Any `](something)` whose target isn't absolute (http(s)://, mailto:, a bare `#hash`,
-// or root-absolute `/...`) is a link that only resolved inside the wiki/ source tree.
-// Once exported into llms.txt and served from the website, that link is dead.
-const findDeadRelativeLinks = (content) =>
-  [...content.matchAll(/\]\(([^)\s]+)\)/g)]
-    .map(([, target]) => target)
-    .filter((target) => !/^([a-zA-Z][a-zA-Z0-9+.-]*:|\/|#)/.test(target));
+const extractLinkTargets = (content) =>
+  [...content.matchAll(/\]\(([^)\s]+)\)/g)].map(([, target]) => target);
+
+const isAbsoluteHref = (target) =>
+  /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(target) || target.startsWith('/') || target.startsWith('#');
+
+const toSlug = (outputFile, publicWikiRoot) => {
+  const relDir = path.relative(publicWikiRoot, path.dirname(outputFile));
+  return relDir === '' ? 'index' : relDir.split(path.sep).join('/');
+};
 
 test('generateWikiLlms rewrites internal wiki links to absolute URLs', async () => {
   const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-'));
@@ -57,7 +63,7 @@ test('generateWikiLlms rewrites internal wiki links to absolute URLs', async () 
   assert.match(index, /\[External\]\(https:\/\/example\.com\/docs\)/);
   assert.match(index, /\[Same-page section\]\(#summary\)/);
   assert.match(index, /\[Root absolute\]\(\/wiki\/overview\)/);
-  assert.deepEqual(findDeadRelativeLinks(index), []);
+  assert.ok(extractLinkTargets(index).every(isAbsoluteHref));
 
   const overview = await readFile(path.join(publicWikiRoot, 'overview', 'llms.txt'), 'utf8');
   assert.match(
@@ -68,32 +74,108 @@ test('generateWikiLlms rewrites internal wiki links to absolute URLs', async () 
     overview,
     /!\[Logo\]\(https:\/\/raw\.githubusercontent\.com\/prompt-security\/clawsec\/main\/wiki\/assets\/logo\.svg\)/,
   );
-  assert.deepEqual(findDeadRelativeLinks(overview), []);
+  assert.ok(extractLinkTargets(overview).every(isAbsoluteHref));
 
   await rm(tmpRoot, { recursive: true, force: true });
 });
 
-test('generateWikiLlms ships no dead relative links across the real wiki/ export', async () => {
-  const wikiRoot = fileURLToPath(new URL('../wiki', import.meta.url));
+test('generateWikiLlms resolves links that climb above the wiki root against the repo root, not wiki/', async () => {
+  // Regression fixture for a real defect: wiki content lives one directory below the repo
+  // root, and real pages link out to root-level docs (e.g. wiki/exploitability-scoring.md's
+  // `../CONTRIBUTING.md`, or wiki/de/exploitability-scoring.md's `../../CONTRIBUTING.md` —
+  // both name the same repo-root file from different nesting depths). A resolver that clamps
+  // `..` at the wiki root instead of counting the overflow can't tell that apart from an
+  // in-wiki reference, and ends up emitting a `wiki/`-prefixed raw URL that 404s.
+  const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-escape-'));
+  const wikiRoot = path.join(tmpRoot, 'wiki');
+  const publicWikiRoot = path.join(tmpRoot, 'public-wiki');
+
+  await writeFixture(tmpRoot, 'CONTRIBUTING.md', '# Contributing\n');
+  await writeFixture(wikiRoot, 'top-level.md', [
+    '# Top Level',
+    '',
+    'See [CONTRIBUTING](../CONTRIBUTING.md).',
+    '',
+  ].join('\n'));
+  await writeFixture(wikiRoot, 'de/nested.md', [
+    '# Nested',
+    '',
+    'See [CONTRIBUTING](../../CONTRIBUTING.md).',
+    '',
+  ].join('\n'));
+
+  await generateWikiLlms({ wikiRoot, publicWikiRoot });
+
+  const expectedLink = `[CONTRIBUTING](${RAW_BASE}/CONTRIBUTING.md)`;
+  const wrongLink = `${RAW_BASE}/wiki/CONTRIBUTING.md`;
+
+  const topLevel = await readFile(path.join(publicWikiRoot, 'top-level', 'llms.txt'), 'utf8');
+  assert.ok(topLevel.includes(expectedLink), `expected ${expectedLink} in top-level export`);
+  assert.ok(!topLevel.includes(wrongLink), `must not resolve into a nonexistent wiki/-prefixed path`);
+
+  const nested = await readFile(path.join(publicWikiRoot, 'de', 'nested', 'llms.txt'), 'utf8');
+  assert.ok(nested.includes(expectedLink), `expected ${expectedLink} in nested export`);
+  assert.ok(!nested.includes(wrongLink), `must not resolve into a nonexistent wiki/-prefixed path`);
+
+  await rm(tmpRoot, { recursive: true, force: true });
+});
+
+test('generateWikiLlms only emits internal links that resolve to a real target, across the actual wiki/', async () => {
+  const wikiRoot = path.join(REPO_ROOT, 'wiki');
   const publicWikiRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-real-'));
 
   const { pageCount, outputFiles } = await generateWikiLlms({ wikiRoot, publicWikiRoot });
-
   assert.ok(pageCount > 0, 'expected at least one wiki page to be exported');
-  assert.ok(outputFiles.length > 0);
 
-  const deadLinksByFile = new Map();
+  const knownRoutes = new Set(outputFiles.map((file) => toWikiRoute(toSlug(file, publicWikiRoot))));
+  const websitePrefix = `${WEBSITE_BASE}/#`;
+  const rawPrefix = `${RAW_BASE}/`;
+
+  const brokenLinksByFile = new Map();
+
   for (const outputFile of outputFiles) {
     const content = await readFile(outputFile, 'utf8');
-    const dead = findDeadRelativeLinks(content);
-    if (dead.length > 0) deadLinksByFile.set(path.relative(publicWikiRoot, outputFile), dead);
+    const broken = [];
+
+    for (const target of extractLinkTargets(content)) {
+      if (target.startsWith('#')) continue; // same-page anchor
+
+      if (!isAbsoluteHref(target)) {
+        broken.push(`relative link left unrewritten: ${target}`);
+        continue;
+      }
+
+      if (target.startsWith(rawPrefix)) {
+        // The one check that actually catches a wrong-but-absolute URL: does the path this
+        // points at exist in the repo? A `wiki/`-prefixed path for a repo-root file passes
+        // every "is it absolute" check and still 404s — only an existence check catches it.
+        const repoRelativePath = target.slice(rawPrefix.length).split('#')[0];
+        const exists = await access(path.join(REPO_ROOT, repoRelativePath))
+          .then(() => true)
+          .catch(() => false);
+        if (!exists) broken.push(`raw link points at a path that does not exist in the repo: ${target}`);
+        continue;
+      }
+
+      if (target.startsWith(websitePrefix)) {
+        const route = target.slice(websitePrefix.length).split('#')[0];
+        if (!knownRoutes.has(route)) {
+          broken.push(`website link points at a route with no generated export: ${target}`);
+        }
+      }
+    }
+
+    if (broken.length > 0) {
+      brokenLinksByFile.set(path.relative(publicWikiRoot, outputFile), broken);
+    }
   }
 
   assert.deepEqual(
-    [...deadLinksByFile.entries()],
+    [...brokenLinksByFile.entries()],
     [],
-    'every internal wiki link must be rewritten to an absolute URL before export — a relative ' +
-      'link here 404s once served from the website (see issue #349)',
+    'every internal wiki link must resolve to something that actually exists — a relative link, ' +
+      'or an absolute URL pointing at a nonexistent path, 404s once served from the website ' +
+      '(see issue #349)',
   );
 
   await rm(publicWikiRoot, { recursive: true, force: true });

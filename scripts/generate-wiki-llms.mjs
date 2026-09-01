@@ -8,8 +8,9 @@ import {
   stripFrontmatter,
 } from '../utils/markdownHelpers.mjs';
 import {
+  isExternalHref,
   isWikiIndexSlug,
-  resolveWikiLinkTarget,
+  splitWikiHash,
   toWikiLlmsPath,
   toWikiRoute,
 } from '../utils/wikiPathHelpers.mjs';
@@ -19,22 +20,62 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const WIKI_ROOT = path.join(REPO_ROOT, 'wiki');
 const PUBLIC_WIKI_ROOT = path.join(REPO_ROOT, 'public', 'wiki');
 
-const WEBSITE_BASE = 'https://clawsec.prompt.security';
-const REPO_BASE = 'https://github.com/prompt-security/clawsec';
-const RAW_BASE = 'https://raw.githubusercontent.com/prompt-security/clawsec/main';
+export const WEBSITE_BASE = 'https://clawsec.prompt.security';
+export const REPO_BASE = 'https://github.com/prompt-security/clawsec';
+export const RAW_BASE = 'https://raw.githubusercontent.com/prompt-security/clawsec/main';
 
 const toPosix = (inputPath) => inputPath.split(path.sep).join('/');
 const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}${toWikiLlmsPath(slug)}`;
+
+// Resolve a wiki-relative link, tracking how many `..` segments climb past the wiki root
+// (`aboveWikiRoot`). wikiPathHelpers' resolveWikiLinkTarget clamps `..` at the wiki root
+// instead of counting the overflow, so it can't tell "wiki/CONTRIBUTING.md" apart from
+// "../CONTRIBUTING.md" written from wiki/ itself — both normalize to the same string,
+// even though the wiki content actually lives one directory below the repo root and real
+// pages link out to root-level docs (e.g. wiki/exploitability-scoring.md -> CONTRIBUTING.md).
+// Losing that distinction here would point the raw-GitHub fallback at a `wiki/`-prefixed
+// path that doesn't exist.
+const resolveLinkPath = (docRelativePath, targetPath) => {
+  const baseDirParts = docRelativePath.includes('/')
+    ? docRelativePath.split('/').slice(0, -1)
+    : [];
+  const parts = [...baseDirParts];
+  let aboveWikiRoot = 0;
+
+  for (const segment of targetPath.split('/')) {
+    if (!segment || segment === '.') continue;
+    if (segment === '..') {
+      if (parts.length > 0) parts.pop();
+      else aboveWikiRoot += 1;
+      continue;
+    }
+    parts.push(segment);
+  }
+
+  return { path: parts.join('/'), aboveWikiRoot };
+};
 
 // Wiki markdown uses repo-relative links (`overview.md`, `../assets/x.svg`), which only resolve
 // inside the wiki/ tree. Exported llms.txt files are served from the website, so internal links
 // must be rewritten to absolute URLs or they 404 for anyone following them.
 const rewriteInternalLinks = (content, docRelativePath, slugSet) =>
   content.replace(/\]\(([^)\s]+)\)/g, (match, href) => {
-    const target = resolveWikiLinkTarget(docRelativePath, href);
-    if (!target) return match; // external, hash-only, or root-absolute — leave as-is
+    if (!href || isExternalHref(href) || href.startsWith('#') || href.startsWith('/')) {
+      return match; // external, hash-only, or root-absolute — leave as-is
+    }
 
-    const { path: resolvedPath, hash } = target;
+    const { path: rawTarget, hash } = splitWikiHash(href);
+    if (!rawTarget) return match;
+
+    const { path: resolvedPath, aboveWikiRoot } = resolveLinkPath(docRelativePath, rawTarget);
+    if (!resolvedPath) return match;
+
+    if (aboveWikiRoot > 0) {
+      // Escapes the wiki/ tree (e.g. `../CONTRIBUTING.md`) — resolve against the repo root,
+      // not `wiki/`. There is no website route for content outside the wiki tree.
+      return `](${RAW_BASE}/${resolvedPath}${hash})`;
+    }
+
     const targetSlug = resolvedPath.toLowerCase().endsWith('.md')
       ? resolvedPath.replace(/\.md$/i, '').toLowerCase()
       : null;
