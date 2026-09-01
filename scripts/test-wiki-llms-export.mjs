@@ -6,7 +6,6 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { generateWikiLlms, RAW_BASE, WEBSITE_BASE } from './generate-wiki-llms.mjs';
-import { toWikiRoute } from '../utils/wikiPathHelpers.mjs';
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -18,6 +17,9 @@ const writeFixture = async (root, relativePath, content) => {
 
 const extractLinkTargets = (content) =>
   [...content.matchAll(/\]\(([^)\s]+)\)/g)].map(([, target]) => target);
+
+const isAbsoluteHref = (target) =>
+  /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(target) || target.startsWith('/') || target.startsWith('#');
 
 // The rewriter parses the plain `](dest)` form only. That covers all wiki content today,
 // but CommonMark also allows titles (`](a.md "t")`), angle-bracket destinations
@@ -44,27 +46,21 @@ const findUnparseableLinkForms = (content) => {
   return problems;
 };
 
-const isAbsoluteHref = (target) =>
-  /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(target) || target.startsWith('/') || target.startsWith('#');
-
-const toSlug = (outputFile, publicWikiRoot) => {
-  const relDir = path.relative(publicWikiRoot, path.dirname(outputFile));
-  return relDir === '' ? 'index' : relDir.split(path.sep).join('/');
-};
-
-test('generateWikiLlms rewrites internal wiki links to absolute URLs', async () => {
+test('wiki links resolve to the markdown alternate, not the SPA route', async () => {
+  // llms.txt v2: "The links in an llms.txt file should therefore point to LLM-friendly
+  // content, such as the markdown versions of pages." A `#/wiki/...` fragment is never
+  // sent to the server, so linking there hands an agent the app shell and no content.
   const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-'));
   const wikiRoot = path.join(tmpRoot, 'wiki');
-  const publicWikiRoot = path.join(tmpRoot, 'public-wiki');
+  const publicWikiRoot = path.join(tmpRoot, 'public', 'wiki');
 
   await writeFixture(wikiRoot, 'INDEX.md', [
     '# Wiki Index',
     '',
+    '## Start Here',
     '- [Overview](overview.md)',
     '- [Missing page](missing-page.md)',
     '- [External](https://example.com/docs)',
-    '- [Same-page section](#summary)',
-    '- [Root absolute](/wiki/overview)',
     '',
   ].join('\n'));
   await writeFixture(wikiRoot, 'overview.md', [
@@ -79,27 +75,82 @@ test('generateWikiLlms rewrites internal wiki links to absolute URLs', async () 
 
   await generateWikiLlms({ wikiRoot, publicWikiRoot });
 
-  const index = await readFile(path.join(publicWikiRoot, 'llms.txt'), 'utf8');
-  assert.match(index, /\[Overview\]\(https:\/\/clawsec\.prompt\.security\/#\/wiki\/overview\)/);
+  const overviewMd = await readFile(path.join(publicWikiRoot, 'overview.md'), 'utf8');
   assert.match(
-    index,
-    /\[Missing page\]\(https:\/\/raw\.githubusercontent\.com\/prompt-security\/clawsec\/main\/wiki\/missing-page\.md\)/,
+    overviewMd,
+    /\[Automation\]\(https:\/\/clawsec\.prompt\.security\/wiki\/modules\/automation\.md#dry-run\)/,
+    'in-wiki link must point at the .md alternate, preserving the hash',
   );
-  assert.match(index, /\[External\]\(https:\/\/example\.com\/docs\)/);
-  assert.match(index, /\[Same-page section\]\(#summary\)/);
-  assert.match(index, /\[Root absolute\]\(\/wiki\/overview\)/);
-  assert.ok(extractLinkTargets(index).every(isAbsoluteHref));
-
-  const overview = await readFile(path.join(publicWikiRoot, 'overview', 'llms.txt'), 'utf8');
+  assert.doesNotMatch(overviewMd, /\/#\/wiki\//, 'must not emit SPA hash routes as link targets');
   assert.match(
-    overview,
-    /\[Automation\]\(https:\/\/clawsec\.prompt\.security\/#\/wiki\/modules\/automation#dry-run\)/,
-  );
-  assert.match(
-    overview,
+    overviewMd,
     /!\[Logo\]\(https:\/\/raw\.githubusercontent\.com\/prompt-security\/clawsec\/main\/wiki\/assets\/logo\.svg\)/,
+    'assets have no .md alternate and fall back to raw source',
   );
-  assert.ok(extractLinkTargets(overview).every(isAbsoluteHref));
+
+  const index = await readFile(path.join(publicWikiRoot, 'llms.txt'), 'utf8');
+  assert.match(index, /- \[Overview\]\(https:\/\/clawsec\.prompt\.security\/wiki\/overview\.md\)/);
+  assert.doesNotMatch(index, /\/#\/wiki\/overview/);
+  // Entries that resolve to no wiki page are dropped from the index rather than shipped dead.
+  assert.doesNotMatch(index, /Missing page/);
+
+  await rm(tmpRoot, { recursive: true, force: true });
+});
+
+test('generated llms.txt files follow the v2 structure', async () => {
+  const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-v2-'));
+  const wikiRoot = path.join(tmpRoot, 'wiki');
+  const publicRoot = path.join(tmpRoot, 'public');
+  const publicWikiRoot = path.join(publicRoot, 'wiki');
+
+  await writeFixture(wikiRoot, 'INDEX.md', [
+    '# Wiki Index',
+    '',
+    '## Summary',
+    '- Prose only, no links, so this section is dropped.',
+    '',
+    '## Start Here',
+    '- [Overview](overview.md)',
+    '',
+  ].join('\n'));
+  await writeFixture(wikiRoot, 'overview.md', '# Overview\n\nBody.\n');
+
+  const { rootIndexFile } = await generateWikiLlms({ wikiRoot, publicWikiRoot, publicRoot });
+  assert.ok(rootIndexFile, 'a site-root /llms.txt must be generated');
+
+  for (const file of [rootIndexFile, path.join(publicWikiRoot, 'llms.txt')]) {
+    const body = await readFile(file, 'utf8');
+    const lines = body.split('\n');
+
+    // "An H1 with the name of the project or site. This is the only required section."
+    const h1s = lines.filter((line) => /^# /.test(line));
+    assert.equal(h1s.length, 1, `${path.basename(file)} must contain exactly one H1, got ${h1s.length}`);
+    assert.match(lines[0], /^# /, 'the H1 must be the first line');
+
+    // "A blockquote with a short summary of the project."
+    assert.ok(
+      lines.some((line) => line.startsWith('> ')),
+      `${path.basename(file)} must contain a blockquote summary`,
+    );
+
+    // "Zero or more markdown sections delimited by H2 headers, containing file lists of URLs."
+    // Every line under an H2 must be a link list item — never an inlined page body.
+    let inSection = false;
+    for (const line of lines) {
+      if (/^## /.test(line)) { inSection = true; continue; }
+      if (!inSection || line.trim() === '') continue;
+      assert.match(
+        line,
+        /^- \[[^\]]+\]\([^)]+\)/,
+        `${path.basename(file)}: content under an H2 must be a link list item, got: ${line}`,
+      );
+    }
+  }
+
+  // A prose-only section contributes no links and must not be emitted as an empty H2.
+  const wikiIndex = await readFile(path.join(publicWikiRoot, 'llms.txt'), 'utf8');
+  assert.doesNotMatch(wikiIndex, /^## Summary$/m);
+  assert.match(wikiIndex, /^## Start Here$/m);
 
   await rm(tmpRoot, { recursive: true, force: true });
 });
@@ -113,7 +164,7 @@ test('generateWikiLlms resolves links that climb above the wiki root against the
   // in-wiki reference, and ends up emitting a `wiki/`-prefixed raw URL that 404s.
   const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-escape-'));
   const wikiRoot = path.join(tmpRoot, 'wiki');
-  const publicWikiRoot = path.join(tmpRoot, 'public-wiki');
+  const publicWikiRoot = path.join(tmpRoot, 'public', 'wiki');
 
   await writeFixture(tmpRoot, 'CONTRIBUTING.md', '# Contributing\n');
   await writeFixture(wikiRoot, 'top-level.md', [
@@ -134,13 +185,11 @@ test('generateWikiLlms resolves links that climb above the wiki root against the
   const expectedLink = `[CONTRIBUTING](${RAW_BASE}/CONTRIBUTING.md)`;
   const wrongLink = `${RAW_BASE}/wiki/CONTRIBUTING.md`;
 
-  const topLevel = await readFile(path.join(publicWikiRoot, 'top-level', 'llms.txt'), 'utf8');
-  assert.ok(topLevel.includes(expectedLink), `expected ${expectedLink} in top-level export`);
-  assert.ok(!topLevel.includes(wrongLink), `must not resolve into a nonexistent wiki/-prefixed path`);
-
-  const nested = await readFile(path.join(publicWikiRoot, 'de', 'nested', 'llms.txt'), 'utf8');
-  assert.ok(nested.includes(expectedLink), `expected ${expectedLink} in nested export`);
-  assert.ok(!nested.includes(wrongLink), `must not resolve into a nonexistent wiki/-prefixed path`);
+  for (const relativePath of ['top-level.md', path.join('de', 'nested.md')]) {
+    const body = await readFile(path.join(publicWikiRoot, relativePath), 'utf8');
+    assert.ok(body.includes(expectedLink), `expected ${expectedLink} in ${relativePath}`);
+    assert.ok(!body.includes(wrongLink), `${relativePath} must not resolve into a wiki/-prefixed path`);
+  }
 
   await rm(tmpRoot, { recursive: true, force: true });
 });
@@ -151,10 +200,11 @@ test('the export gate rejects link forms the rewriter cannot faithfully handle',
   // that is how a dead link ships unnoticed (the #349 failure mode). Assert it fails loudly.
   const tmpRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-forms-'));
   const wikiRoot = path.join(tmpRoot, 'wiki');
-  const publicWikiRoot = path.join(tmpRoot, 'public-wiki');
+  const publicWikiRoot = path.join(tmpRoot, 'public', 'wiki');
 
-  await writeFixture(wikiRoot, 'INDEX.md', [
-    '# Wiki Index',
+  await writeFixture(wikiRoot, 'INDEX.md', '# Wiki Index\n');
+  await writeFixture(wikiRoot, 'page.md', [
+    '# Page',
     '',
     '- [Titled](overview.md "page title")',
     '- [Angled](<assets/my image.svg>)',
@@ -164,49 +214,60 @@ test('the export gate rejects link forms the rewriter cannot faithfully handle',
   await writeFixture(wikiRoot, 'overview.md', '# Overview\n');
 
   await generateWikiLlms({ wikiRoot, publicWikiRoot });
-  const index = await readFile(path.join(publicWikiRoot, 'llms.txt'), 'utf8');
+  const page = await readFile(path.join(publicWikiRoot, 'page.md'), 'utf8');
 
-  const problems = findUnparseableLinkForms(index);
+  const problems = findUnparseableLinkForms(page);
   assert.equal(problems.length, 3, `expected all three unsupported forms flagged, got: ${problems}`);
   assert.ok(problems.some((p) => p.includes('page title')));
   assert.ok(problems.some((p) => p.includes('my image.svg')));
   assert.ok(problems.some((p) => p.includes('spec_(v2')));
 
-  // A plain link alongside them still rewrites correctly and is not flagged.
-  assert.ok(findUnparseableLinkForms('[Overview](overview.md)').length === 0);
+  assert.equal(findUnparseableLinkForms('[Overview](overview.md)').length, 0);
 
   await rm(tmpRoot, { recursive: true, force: true });
 });
 
-test('generateWikiLlms only emits internal links that resolve to a real target, across the actual wiki/', async () => {
+test('every emitted link resolves to a real target, across the actual wiki/', async () => {
   const wikiRoot = path.join(REPO_ROOT, 'wiki');
-  const publicWikiRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-real-'));
+  const publicRoot = await mkdtemp(path.join(os.tmpdir(), 'clawsec-wiki-llms-real-'));
+  const publicWikiRoot = path.join(publicRoot, 'wiki');
 
-  const { pageCount, outputFiles } = await generateWikiLlms({ wikiRoot, publicWikiRoot });
+  const { pageCount, outputFiles, markdownFiles } = await generateWikiLlms({
+    wikiRoot,
+    publicWikiRoot,
+    publicRoot,
+  });
   assert.ok(pageCount > 0, 'expected at least one wiki page to be exported');
+  assert.ok(markdownFiles.length > 0, 'expected .md alternates to be generated');
 
-  const knownRoutes = new Set(outputFiles.map((file) => toWikiRoute(toSlug(file, publicWikiRoot))));
-  const websitePrefix = `${WEBSITE_BASE}/#`;
+  // Every markdown alternate the generator produced, addressable as the index links it.
+  const publishedMarkdown = new Set(
+    markdownFiles.map((file) => `/wiki/${path.relative(publicWikiRoot, file).split(path.sep).join('/')}`),
+  );
+
   const rawPrefix = `${RAW_BASE}/`;
-
   const brokenLinksByFile = new Map();
 
-  for (const outputFile of outputFiles) {
+  for (const outputFile of [...outputFiles, ...markdownFiles]) {
     const content = await readFile(outputFile, 'utf8');
     const broken = findUnparseableLinkForms(content);
 
     for (const target of extractLinkTargets(content)) {
-      if (target.startsWith('#')) continue; // same-page anchor
+      if (target.startsWith('#')) continue;
 
       if (!isAbsoluteHref(target)) {
         broken.push(`relative link left unrewritten: ${target}`);
         continue;
       }
 
+      if (target.includes('/#/wiki/')) {
+        broken.push(`links to an SPA hash route, which serves no content to agents: ${target}`);
+        continue;
+      }
+
       if (target.startsWith(rawPrefix)) {
-        // The one check that actually catches a wrong-but-absolute URL: does the path this
-        // points at exist in the repo? A `wiki/`-prefixed path for a repo-root file passes
-        // every "is it absolute" check and still 404s — only an existence check catches it.
+        // Catches a wrong-but-absolute URL: a `wiki/`-prefixed path for a repo-root file
+        // passes every "is it absolute" check and still 404s.
         const repoRelativePath = target.slice(rawPrefix.length).split('#')[0];
         const exists = await access(path.join(REPO_ROOT, repoRelativePath))
           .then(() => true)
@@ -215,28 +276,30 @@ test('generateWikiLlms only emits internal links that resolve to a real target, 
         continue;
       }
 
-      if (target.startsWith(websitePrefix)) {
-        const route = target.slice(websitePrefix.length).split('#')[0];
-        if (!knownRoutes.has(route)) {
-          broken.push(`website link points at a route with no generated export: ${target}`);
+      if (target.startsWith(WEBSITE_BASE)) {
+        const sitePath = target.slice(WEBSITE_BASE.length).split('#')[0];
+        // The wiki index is a generated artifact, not a markdown alternate.
+        if (sitePath === '/wiki/llms.txt') continue;
+        if (!publishedMarkdown.has(sitePath)) {
+          broken.push(`site link points at a file that is not generated: ${target}`);
         }
       }
     }
 
     if (broken.length > 0) {
-      brokenLinksByFile.set(path.relative(publicWikiRoot, outputFile), broken);
+      brokenLinksByFile.set(path.relative(publicRoot, outputFile), broken);
     }
   }
 
   assert.deepEqual(
     [...brokenLinksByFile.entries()],
     [],
-    'every internal wiki link must resolve to something that actually exists — a relative link, ' +
-      'or an absolute URL pointing at a nonexistent path, 404s once served from the website ' +
-      '(see issue #349)',
+    'every emitted link must resolve to something that actually exists — a relative link, an '
+      + 'SPA hash route, or an absolute URL pointing at a nonexistent path all dead-end for the '
+      + 'agents these files exist for (see issue #349)',
   );
 
-  await rm(publicWikiRoot, { recursive: true, force: true });
+  await rm(publicRoot, { recursive: true, force: true });
 });
 
 test('wiki export verification workflow covers the llms.txt generator', async () => {

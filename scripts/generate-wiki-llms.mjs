@@ -18,7 +18,8 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 const WIKI_ROOT = path.join(REPO_ROOT, 'wiki');
-const PUBLIC_WIKI_ROOT = path.join(REPO_ROOT, 'public', 'wiki');
+const PUBLIC_ROOT = path.join(REPO_ROOT, 'public');
+const PUBLIC_WIKI_ROOT = path.join(PUBLIC_ROOT, 'wiki');
 
 export const WEBSITE_BASE = 'https://clawsec.prompt.security';
 export const REPO_BASE = 'https://github.com/prompt-security/clawsec';
@@ -26,6 +27,14 @@ export const RAW_BASE = 'https://raw.githubusercontent.com/prompt-security/claws
 
 const toPosix = (inputPath) => inputPath.split(path.sep).join('/');
 const toLlmsPageUrl = (slug) => `${WEBSITE_BASE}${toWikiLlmsPath(slug)}`;
+
+// llms.txt v2: "The links in an llms.txt file should therefore point to LLM-friendly
+// content, such as the markdown versions of pages." We publish a clean `.md` alternate
+// per page and point every generated link at that, not at the SPA route — a `#/wiki/...`
+// fragment is never sent to the server, so an agent following it receives the app shell
+// with none of the page content.
+export const toWikiMarkdownPath = (slug) => `/wiki/${slug}.md`;
+const toWikiMarkdownUrl = (slug) => `${WEBSITE_BASE}${toWikiMarkdownPath(slug)}`;
 
 // Resolve a wiki-relative link, tracking how many `..` segments climb past the wiki root
 // (`aboveWikiRoot`). wikiPathHelpers' resolveWikiLinkTarget clamps `..` at the wiki root
@@ -84,7 +93,7 @@ const rewriteInternalLinks = (content, docRelativePath, slugSet) =>
       return `](${RAW_BASE}/wiki/${resolvedPath}${hash})`;
     }
 
-    return `](${WEBSITE_BASE}/#${toWikiRoute(targetSlug)}${hash})`;
+    return `](${toWikiMarkdownUrl(targetSlug)}${hash})`;
   });
 
 const walkMarkdownFiles = async (dir) => {
@@ -136,28 +145,70 @@ const buildPageBody = (doc, slugSet) => {
   ].join('\n');
 };
 
-const buildFallbackIndexBody = (docs) => {
-  const lines = [
-    '# ClawSec Wiki llms.txt',
-    '',
-    'LLM-readable index for wiki pages.',
-    '',
-    `Website wiki root: ${WEBSITE_BASE}/#/wiki`,
-    `GitHub wiki mirror: ${REPO_BASE}/wiki`,
-    `Canonical source of truth: ${REPO_BASE}/tree/main/wiki`,
-    '',
-    '## Generated Page Exports',
-  ];
+// Group the wiki's own INDEX.md link lists by their H2 heading, so the generated index
+// mirrors the curated ordering maintained in wiki/INDEX.md rather than inventing one.
+// Only list items that resolve to a real wiki page are kept; prose sections (Summary,
+// Update Notes, Source References) yield no entries and are dropped.
+const extractIndexSections = (indexDoc, docsBySlug) => {
+  if (!indexDoc) return [];
 
-  for (const doc of docs) {
-    const pageRoute = toWikiRoute(doc.slug);
-    const pageUrl = `${WEBSITE_BASE}/#${pageRoute}`;
-    const llmsUrl = toLlmsPageUrl(doc.slug);
-    lines.push(`- ${doc.title}: ${llmsUrl} (page: ${pageUrl})`);
+  const sections = [];
+  let current = null;
+
+  for (const line of indexDoc.content.split(/\r?\n/)) {
+    const heading = /^##\s+(.+?)\s*$/.exec(line);
+    if (heading) {
+      current = { title: heading[1], entries: [] };
+      sections.push(current);
+      continue;
+    }
+
+    const item = /^\s*-\s+\[([^\]]+)\]\(([^)\s]+)\)/.exec(line);
+    if (!current || !item) continue;
+
+    const [, label, href] = item;
+    const { path: resolvedPath, aboveWikiRoot } = resolveLinkPath(indexDoc.relativePath, splitWikiHash(href).path);
+    if (aboveWikiRoot > 0 || !resolvedPath.toLowerCase().endsWith('.md')) continue;
+
+    const slug = resolvedPath.replace(/\.md$/i, '').toLowerCase();
+    const doc = docsBySlug.get(slug);
+    if (doc) current.entries.push({ label, doc });
   }
 
-  return `${lines.join('\n')}\n`;
+  return sections.filter((section) => section.entries.length > 0);
 };
+
+// llms.txt v2 structure: a single H1, a blockquote summary, optional prose, then H2
+// sections whose bodies are link lists. Anything else (notably a second H1, or an entire
+// page body inlined under an H2) breaks the format agents are told to expect.
+const buildLlmsIndex = ({ h1, summary, notes, sections, extraSections = [] }) => {
+  const lines = [`# ${h1}`, '', `> ${summary}`, ''];
+
+  for (const note of notes) lines.push(note, '');
+
+  for (const section of sections) {
+    lines.push(`## ${section.title}`);
+    for (const entry of section.entries) {
+      lines.push(`- [${entry.label}](${toWikiMarkdownUrl(entry.doc.slug)})`);
+    }
+    lines.push('');
+  }
+
+  for (const section of extraSections) {
+    lines.push(`## ${section.title}`);
+    for (const entry of section.entries) {
+      lines.push(entry.note ? `- [${entry.label}](${entry.url}): ${entry.note}` : `- [${entry.label}](${entry.url})`);
+    }
+    lines.push('');
+  }
+
+  return `${lines.join('\n').trimEnd()}\n`;
+};
+
+// Fallback when wiki/INDEX.md is missing: one flat section listing every page.
+const buildFallbackSections = (docs) => [
+  { title: 'Pages', entries: docs.map((doc) => ({ label: doc.title, doc })) },
+];
 
 /**
  * Generate llms.txt exports for every wiki page under `wikiRoot`, writing them to
@@ -166,7 +217,7 @@ const buildFallbackIndexBody = (docs) => {
  * @param {{ wikiRoot: string, publicWikiRoot: string }} options
  * @returns {Promise<{ pageCount: number, outputFiles: string[] }>}
  */
-export const generateWikiLlms = async ({ wikiRoot, publicWikiRoot }) => {
+export const generateWikiLlms = async ({ wikiRoot, publicWikiRoot, publicRoot }) => {
   const wikiStat = await fs.stat(wikiRoot).catch(() => null);
   if (!wikiStat || !wikiStat.isDirectory()) {
     throw new Error(`wiki/ directory not found at ${wikiRoot}.`);
@@ -194,20 +245,80 @@ export const generateWikiLlms = async ({ wikiRoot, publicWikiRoot }) => {
   await fs.mkdir(publicWikiRoot, { recursive: true });
 
   const outputFiles = [];
+  const markdownFilesWritten = [];
 
-  for (const doc of pageDocs) {
+  for (const doc of docs) {
+    // The `.md` alternate is the LLM-friendly content surface the index links to.
+    const markdownFile = path.join(publicWikiRoot, `${doc.slug}.md`);
+    await fs.mkdir(path.dirname(markdownFile), { recursive: true });
+    await fs.writeFile(markdownFile, `${rewriteInternalLinks(doc.content, doc.relativePath, slugSet).trim()}\n`, 'utf8');
+    markdownFilesWritten.push(markdownFile);
+
+    // Retained unchanged so anything already consuming /wiki/<slug>/llms.txt keeps working.
+    if (isWikiIndexSlug(doc.slug)) continue;
     const outputFile = path.join(publicWikiRoot, doc.slug, 'llms.txt');
     await fs.mkdir(path.dirname(outputFile), { recursive: true });
     await fs.writeFile(outputFile, buildPageBody(doc, slugSet), 'utf8');
     outputFiles.push(outputFile);
   }
 
-  const indexFile = path.join(publicWikiRoot, 'llms.txt');
-  const indexBody = indexDoc ? buildPageBody(indexDoc, slugSet) : buildFallbackIndexBody(pageDocs);
-  await fs.writeFile(indexFile, indexBody, 'utf8');
-  outputFiles.push(indexFile);
+  const docsBySlug = new Map(docs.map((doc) => [doc.slug, doc]));
+  const sections = indexDoc
+    ? extractIndexSections(indexDoc, docsBySlug)
+    : buildFallbackSections(pageDocs);
 
-  return { pageCount: pageDocs.length, outputFiles };
+  const wikiIndexBody = buildLlmsIndex({
+    h1: 'ClawSec Wiki',
+    summary:
+      'Full repository wiki for ClawSec, a security skill suite for AI agents covering the web '
+      + 'catalog, signed advisory feed, and per-skill release packaging. Every link below points to '
+      + 'the markdown version of a page.',
+    notes: [
+      `Canonical source of truth: ${REPO_BASE}/tree/main/wiki`,
+      `Human-readable wiki: ${WEBSITE_BASE}/#/wiki`,
+    ],
+    sections,
+  });
+  const wikiIndexFile = path.join(publicWikiRoot, 'llms.txt');
+  await fs.writeFile(wikiIndexFile, wikiIndexBody, 'utf8');
+  outputFiles.push(wikiIndexFile);
+
+  // Site-root index. Spec: a file "covers the pages under its path, and the most specific
+  // file applies", so this points at the wiki index rather than duplicating its entries.
+  let rootIndexFile = null;
+  if (publicRoot) {
+    const rootIndexBody = buildLlmsIndex({
+      h1: 'ClawSec',
+      summary:
+        'Security skill suite for AI agents: integrity checks, drift detection, and a signed '
+        + 'advisory feed, distributed as installable skills for OpenClaw and NanoClaw.',
+      notes: [`Repository: ${REPO_BASE}`],
+      sections: [],
+      extraSections: [
+        {
+          title: 'Docs',
+          entries: [
+            {
+              label: 'ClawSec Wiki',
+              url: `${WEBSITE_BASE}/wiki/llms.txt`,
+              note: 'index of every wiki page, in markdown',
+            },
+          ],
+        },
+      ],
+    });
+    rootIndexFile = path.join(publicRoot, 'llms.txt');
+    await fs.mkdir(publicRoot, { recursive: true });
+    await fs.writeFile(rootIndexFile, rootIndexBody, 'utf8');
+    outputFiles.push(rootIndexFile);
+  }
+
+  return {
+    pageCount: pageDocs.length,
+    outputFiles,
+    markdownFiles: markdownFilesWritten,
+    rootIndexFile,
+  };
 };
 
 const isDirectRun = () => {
@@ -217,9 +328,15 @@ const isDirectRun = () => {
 
 if (isDirectRun()) {
   try {
-    const { pageCount } = await generateWikiLlms({ wikiRoot: WIKI_ROOT, publicWikiRoot: PUBLIC_WIKI_ROOT });
+    const { pageCount, markdownFiles } = await generateWikiLlms({
+      wikiRoot: WIKI_ROOT,
+      publicWikiRoot: PUBLIC_WIKI_ROOT,
+      publicRoot: PUBLIC_ROOT,
+    });
     // Keep logs short for CI readability.
-    console.log(`Generated ${pageCount} page llms.txt exports and /wiki/llms.txt`);
+    console.log(
+      `Generated ${markdownFiles.length} wiki .md alternates, ${pageCount} page llms.txt exports, /wiki/llms.txt and /llms.txt`,
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`Failed to generate wiki llms exports: ${message}`);
