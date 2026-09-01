@@ -1,0 +1,31 @@
+pages/WikiBrowser.tsx
+  3b73edc8c549875d 1,189-206
+scripts/generate-wiki-llms.mjs
+  3b73edc8c549875d 21-22,31-38,96,148-164,166-175,178,181-202,205,207-211,220,248,250-258,265-268,270-314,318-320,331,333-334,338
+scripts/test-wiki-llms-export.mjs
+  3b73edc8c549875d 21-23,49-52,55,60,78,80-82,84,86,88,90-145,147-148,150-153,167,188-192,203,205-207,217,219,225,230,232-233,235,237-238,241,243-246,251,256,263-264,269-270,279-284,290,297-299,302
+.gitignore
+  3b73edc8c549875d 29
+index.html
+  3b73edc8c549875d 17-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "1bfcef5662e6291afe6a3a439fc2aa4f7bb08854",
+  "prompts": {
+    "3b73edc8c549875d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3644864d-9d58-4157-9185-101cffebe348",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 299,
+      "total_deletions": 98,
+      "accepted_lines": 286,
+      "overriden_lines": 0
+    }
+  }
+}
