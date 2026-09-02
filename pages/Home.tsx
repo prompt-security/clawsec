@@ -288,7 +288,7 @@ export const Home: React.FC = () => {
                 </div>
               </>
             )}
-            <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
+            <p className="mt-4 text-center text-xs leading-relaxed text-gray-400">
               * For harnesses other than OpenClaw, consult the{' '}
               <Link
                 to="/wiki/skill-feature-matrix"

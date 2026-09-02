@@ -15,6 +15,13 @@
     <title>ClawSec | Agent Hardening | Prompt Security, SentinelOne </title>
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/font/quicksand-latin.woff2"
+    />
     <!-- Quicksand: prompt.security brand face. Self-hosted so offline and
          network-restricted previews still render the brand type instead of
          falling back to system-ui. OFL-1.1; see public/font/Quicksand-OFL.txt -->
@@ -90,6 +97,8 @@
       :focus-visible {
         outline: 2px solid #6100ff;
         outline-offset: 2px;
+        /* Fallback only: Tailwind's CDN sheet loads after this one at equal
+           specificity, so any element with its own rounded-* keeps that radius. */
         border-radius: 4px;
       }
       /* #6100ff reaches only ~2.7:1 against the ink surfaces, so controls sitting
@@ -177,9 +186,18 @@
         background-position: top, bottom;
         background-repeat: no-repeat;
       }
-      @media (max-width: 767px) {
+      /* The document gets SHORTER as the viewport widens (less text wrapping),
+         so one height cannot serve 320px through 767px. Phones keep the tall
+         band that puts the apex on the install card; the short tablet/landscape/
+         zoomed range gets one that finishes inside the document. */
+      @media (max-width: 430px) {
         .ps-break.ps-break {
           height: 1700px;
+        }
+      }
+      @media (min-width: 431px) and (max-width: 767px) {
+        .ps-break.ps-break {
+          height: 1230px;
         }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -201,11 +219,11 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #d9d7e4;
+        background: #a9a4bd; /* 3.0:1 on the white page */
         border-radius: 6px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #8fff08;
+        background: #6100ff; /* 7.1:1 — hover must be MORE visible, not less */
       }
       /* Mobile overflow fixes */
       html, body {
