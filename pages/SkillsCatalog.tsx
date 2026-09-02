@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search as _Search, Filter as _Filter, Package, Sparkles, FileText, GitFork } from 'lucide-react';
 import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
-import type { SkillMetadata, SkillsIndex } from '../types';
+import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
+import type { AdvisoryPlatformFilter, SkillMetadata, SkillsIndex } from '../types';
+import { isCorePlatformSlug, normalizePlatformSlug } from '../utils/advisoryPlatforms';
 
 const SKILLS_INDEX_PATH = '/skills/index.json';
 
@@ -31,6 +33,7 @@ export const SkillsCatalog: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, _setSearchTerm] = useState('');
   const [categoryFilter, _setCategoryFilter] = useState<string>('all');
+  const [selectedPlatform, setSelectedPlatform] = useState<AdvisoryPlatformFilter>('all');
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -93,8 +96,32 @@ export const SkillsCatalog: React.FC = () => {
       result = result.filter((skill) => skill.category === categoryFilter);
     }
 
+    // Apply harness filter — mirrors the advisory predicate in FeedSetup
+    if (selectedPlatform !== 'all') {
+      result = result.filter((skill) => {
+        const skillPlatforms = (skill.platforms ?? [])
+          .map(normalizePlatformSlug)
+          .filter(Boolean);
+
+        if (selectedPlatform === 'other') {
+          return skillPlatforms.some((platform) => !isCorePlatformSlug(platform));
+        }
+
+        // A skill that names no harness is treated as running anywhere
+        return skillPlatforms.length === 0 || skillPlatforms.includes(selectedPlatform);
+      });
+    }
+
     return result;
-  }, [searchTerm, categoryFilter, skills]);
+  }, [searchTerm, categoryFilter, selectedPlatform, skills]);
+
+  // "Other" only earns a tab once a skill actually targets a non-core harness
+  const platformTabs = useMemo<ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>>(() => {
+    const hasNonCore = skills.some((skill) =>
+      (skill.platforms ?? []).some((platform) => !isCorePlatformSlug(normalizePlatformSlug(platform)))
+    );
+    return hasNonCore ? PLATFORM_TABS : PLATFORM_TABS.filter((tab) => tab.value !== 'other');
+  }, [skills]);
 
   // Get unique categories from skills (used in commented filter UI)
   const _categories = ['all', ...new Set(skills.map((s) => s.category).filter(Boolean))];
@@ -140,6 +167,18 @@ export const SkillsCatalog: React.FC = () => {
         </p>
       </section>
 
+      {skills.length > 0 && (
+        <section>
+          <FilterTabs
+            tabs={platformTabs}
+            selected={selectedPlatform}
+            onSelect={(value) => setSelectedPlatform(value)}
+            ariaLabel="Filter skills by agent harness"
+            className="mb-0"
+          />
+        </section>
+      )}
+
       {/* Filters - Hidden for now, uncomment when needed
       <section className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
         <div className="relative flex-1">
@@ -182,8 +221,8 @@ export const SkillsCatalog: React.FC = () => {
           <Package className="w-12 h-12 mx-auto text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-clawd-800 mb-2">No skills found</h3>
           <p className="text-gray-600">
-            {searchTerm || categoryFilter !== 'all'
-              ? 'Try adjusting your filters'
+            {searchTerm || categoryFilter !== 'all' || selectedPlatform !== 'all'
+              ? 'Try another harness to see more skills'
               : 'No skills have been released yet'}
           </p>
         </section>
@@ -193,6 +232,8 @@ export const SkillsCatalog: React.FC = () => {
       {skills.length > 0 && (
         <section className="text-center text-sm text-gray-500">
           Showing {filteredSkills.length} of {skills.length} skills
+          {selectedPlatform !== 'all' &&
+            ` for ${PLATFORM_TABS.find((tab) => tab.value === selectedPlatform)?.label}`}
         </section>
       )}
 

@@ -17,7 +17,7 @@ export const Header: React.FC = () => {
     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all';
 
   const desktopNav = (
-    <aside className="hidden md:flex w-64 flex-col border-r border-[#e8e6f2] bg-white/85 backdrop-blur-xl shadow-[20px_0_50px_rgba(11,12,27,0.04)] z-40 pt-[75px]">
+    <aside className="hidden md:flex w-64 flex-col border-r border-[#e8e6f2] bg-white/70 backdrop-blur-xl shadow-[20px_0_50px_rgba(11,12,27,0.04)] z-40 pt-[75px]">
       <nav className="overflow-y-auto px-4 pt-8 space-y-2">
         {navItems.map(({ label, path, icon: Icon }) => (
           <NavLink

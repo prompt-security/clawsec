@@ -196,9 +196,10 @@ export const Home: React.FC = () => {
               <div className="inline-flex bg-clawd-800 rounded-lg p-1">
                 <button
                   onClick={() => setIsAgent(false)}
+                  aria-pressed={!isAgent}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
                     !isAgent
-                      ? 'bg-white text-clawd-900'
+                      ? 'bg-clawd-600 text-white shadow-[0_6px_18px_rgba(97,0,255,0.45)]'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -207,9 +208,10 @@ export const Home: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setIsAgent(true)}
+                  aria-pressed={isAgent}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
                     isAgent
-                      ? 'bg-white text-clawd-900'
+                      ? 'bg-clawd-600 text-white shadow-[0_6px_18px_rgba(97,0,255,0.45)]'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >

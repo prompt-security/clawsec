@@ -5,6 +5,7 @@ import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
 import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter } from '../types';
 import { isCorePlatformSlug, normalizePlatformSlug } from '../utils/advisoryPlatforms';
+import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
 import {
   ADVISORY_FEED_URL,
   LEGACY_ADVISORY_FEED_URL,
@@ -14,48 +15,14 @@ import {
 const ITEMS_PER_PAGE = 9;
 
 type SeverityFilter = 'all' | Advisory['severity'];
-type FilterTabOption<T extends string> = { value: T; label: string; active: string; inactive: string };
 
 const SEVERITY_TABS = [
-  { value: 'all',      label: 'All',      active: 'bg-clawd-600 text-white border-2 border-clawd-600',                                    inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
-  { value: 'critical', label: 'Critical', active: 'bg-red-500/20 text-red-400 border-2 border-red-400',            inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-red-400/50' },
-  { value: 'high',     label: 'High',     active: 'bg-orange-500/20 text-orange-400 border-2 border-orange-400',   inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-orange-400/50' },
-  { value: 'medium',   label: 'Medium',   active: 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-400',   inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-yellow-400/50' },
-  { value: 'low',      label: 'Low',      active: 'bg-blue-500/20 text-blue-400 border-2 border-blue-400',         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-blue-400/50' },
+  { value: 'all', label: 'All' },
+  { value: 'critical', label: 'Critical' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
 ] as const satisfies ReadonlyArray<FilterTabOption<SeverityFilter>>;
-
-const PLATFORM_TABS = [
-  { value: 'all',      label: 'All Platforms', active: 'bg-clawd-600 text-white border-2 border-clawd-600',                                         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
-  { value: 'openclaw', label: 'OpenClaw',      active: 'bg-clawd-accent/20 text-clawd-600 border-2 border-clawd-accent',  inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
-  { value: 'nanoclaw', label: 'NanoClaw',      active: 'bg-clawd-secondary/20 text-clawd-secondary border-2 border-clawd-secondary', inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-secondary/50' },
-  { value: 'hermes',   label: 'Hermes',        active: 'bg-emerald-500/20 text-emerald-300 border-2 border-emerald-400',      inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-emerald-400/50' },
-  { value: 'picoclaw', label: 'Picoclaw',      active: 'bg-cyan-500/20 text-cyan-300 border-2 border-cyan-400',               inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-cyan-400/50' },
-  { value: 'other',    label: 'Other',         active: 'bg-clawd-600/15 text-clawd-600 border-2 border-clawd-500',            inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-500/50' },
-] as const satisfies ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>;
-
-const FilterTabs = <T extends string,>({
-  tabs,
-  selected,
-  onSelect,
-}: {
-  tabs: ReadonlyArray<FilterTabOption<T>>;
-  selected: T;
-  onSelect: (value: T) => void;
-}) => (
-  <div className="flex flex-wrap justify-center gap-3 mb-8">
-    {tabs.map(({ value, label, active, inactive }) => (
-      <button
-        key={value}
-        onClick={() => onSelect(value)}
-        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-          selected === value ? active : inactive
-        }`}
-      >
-        {label}
-      </button>
-    ))}
-  </div>
-);
 
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
@@ -167,6 +134,7 @@ export const FeedSetup: React.FC = () => {
         <FilterTabs
           tabs={SEVERITY_TABS}
           selected={selectedSeverity}
+          ariaLabel="Filter advisories by severity"
           onSelect={(value) => {
             setSelectedSeverity(value as SeverityFilter);
             setCurrentPage(1);
@@ -175,6 +143,7 @@ export const FeedSetup: React.FC = () => {
         <FilterTabs
           tabs={PLATFORM_TABS}
           selected={selectedPlatform}
+          ariaLabel="Filter advisories by platform"
           onSelect={(value) => {
             setSelectedPlatform(value as AdvisoryPlatformFilter);
             setCurrentPage(1);

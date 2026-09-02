@@ -62,15 +62,108 @@
     </script>
     <style>
       body {
-        background:
-          radial-gradient(circle at 82% 12%, rgba(97, 0, 255, 0.06), transparent 30%),
-          radial-gradient(circle at 12% 72%, rgba(181, 111, 237, 0.05), transparent 32%),
-          linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
+        background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
         color: #0b0c1b;
       }
       ::selection {
         background: #8fff08;
         color: #0b0c1b;
+      }
+      :focus-visible {
+        outline: 2px solid #6100ff;
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      /* --- prompt.security background system ---------------------------------
+         Reproduced from the brand site's own assets: bg-grid.svg is a uniform
+         160x90 grid stroked #C4B6E0 at 20% opacity, and the purple break is the
+         Gradient Break Top/Bottom .avif pair, whose per-stop RGBA is sampled
+         below so the grid still reads through the translucent ends.
+         The brand site hides its grid under 768px; we match that exactly. */
+      .ps-grid {
+        background-image:
+          linear-gradient(to right, rgba(196, 182, 224, 0.2) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(196, 182, 224, 0.2) 1px, transparent 1px);
+        /* The brand's grid.svg is 1920 wide with 160x90 cells and scales to the
+           viewport, so it is always 12 columns of 16:9 cells at any width. */
+        background-size: calc(100vw / 12) calc(100vw / 21.3333);
+      }
+      @media (max-width: 767px) {
+        .ps-grid {
+          display: none;
+        }
+      }
+      .ps-wash {
+        /* The brand's hero wash is short: pure white by ~8.5% of the viewport
+           width down the page, #cdc0eb at the top centre and more saturated at
+           the edges. Same ellipse-outside model and t^2 alpha as .ps-break. */
+        height: max(110px, 8.46vw);
+        background-image: radial-gradient(
+          ellipse 137.4% 476% at 50% 390%,
+          rgba(83, 37, 186, 0) 60.9%,
+          rgba(83, 37, 186, 0.013) 66%,
+          rgba(83, 37, 186, 0.05) 71%,
+          rgba(83, 37, 186, 0.113) 76%,
+          rgba(83, 37, 186, 0.2) 81%,
+          rgba(83, 37, 186, 0.29) 85%,
+          rgba(83, 37, 186, 0.45) 91%,
+          rgba(83, 37, 186, 0.66) 96%,
+          rgba(83, 37, 186, 0.85) 100%
+        );
+      }
+      /* White -> #5325ba apex -> white, as two mirrored halves. The brand's
+         isolines are elliptical and centred well off the band, so the purple
+         climbs ~50px higher at the left and right edges than at the centre.
+         Alpha follows t^2 because the source art interpolates from transparent
+         WHITE, not from transparent purple. Height puts the apex on the card. */
+      .ps-break {
+        top: 70px;
+        height: 1254px;
+        background-image:
+          radial-gradient(
+            ellipse 160% 150.74% at 50% -51.14%,
+            rgba(83, 37, 186, 0) 56.87%,
+            rgba(83, 37, 186, 0.023) 63.34%,
+            rgba(83, 37, 186, 0.09) 69.81%,
+            rgba(83, 37, 186, 0.203) 76.28%,
+            rgba(83, 37, 186, 0.36) 82.75%,
+            rgba(83, 37, 186, 0.563) 89.22%,
+            rgba(83, 37, 186, 0.81) 95.69%,
+            rgba(83, 37, 186, 1) 98%,
+            rgba(83, 37, 186, 1) 100%
+          ),
+          radial-gradient(
+            ellipse 160% 150.74% at 50% 151.14%,
+            rgba(83, 37, 186, 0) 56.87%,
+            rgba(83, 37, 186, 0.023) 63.34%,
+            rgba(83, 37, 186, 0.09) 69.81%,
+            rgba(83, 37, 186, 0.203) 76.28%,
+            rgba(83, 37, 186, 0.36) 82.75%,
+            rgba(83, 37, 186, 0.563) 89.22%,
+            rgba(83, 37, 186, 0.81) 95.69%,
+            rgba(83, 37, 186, 1) 98%,
+            rgba(83, 37, 186, 1) 100%
+          );
+        /* +1px so the two halves overlap and leave no hairline at the seam */
+        background-size: 100% calc(50% + 1px);
+        background-position: top, bottom;
+        background-repeat: no-repeat;
+      }
+      @media (max-width: 767px) {
+        .ps-break {
+          height: 1700px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -78,7 +171,7 @@
         height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: #f8f8f8;
+        background: transparent;
       }
       ::-webkit-scrollbar-thumb {
         background: #d9d7e4;
