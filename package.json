@@ -38,7 +38,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "fast-check": "^4.9.0",
-    "typescript": "~5.9.3",
+    "typescript": "~7.0.2",
     "vite": "^8.0.16"
   },
   "overrides": {
