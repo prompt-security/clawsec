@@ -72,7 +72,7 @@ export const Home: React.FC = () => {
           Secure your{' '}
           <code
             key={currentPlatformIndex}
-            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative"
+            className="px-2 py-1 rounded text-clawd-green inline-block align-baseline relative"
             style={{
               minWidth: '9ch',
               textAlign: 'center',
@@ -85,10 +85,9 @@ export const Home: React.FC = () => {
                 key={`platform-${currentPlatformIndex}-${index}`}
                 className="inline-block"
                 style={{
-                  animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 forwards`,
+                  animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 backwards`,
                   transformStyle: 'preserve-3d',
-                  perspective: '400px',
-                  opacity: 0
+                  perspective: '400px'
                 }}
               >
                 {char}
@@ -101,7 +100,7 @@ export const Home: React.FC = () => {
           A complete security skill suite for OpenClaw, NanoClaw, and Hermes agents. Protect your{' '}
           <code
             key={currentFileIndex}
-            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative text-base"
+            className="px-2 py-1 rounded text-clawd-green inline-block align-baseline relative text-base"
             style={{
               width: '188px',
               textAlign: 'center',
@@ -116,10 +115,9 @@ export const Home: React.FC = () => {
                   key={`${currentFileIndex}-${index}`}
                   className="inline-block"
                   style={{
-                    animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 forwards`,
+                    animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 backwards`,
                     transformStyle: 'preserve-3d',
-                    perspective: '400px',
-                    opacity: 0
+                    perspective: '400px'
                   }}
                 >
                   {char}
@@ -128,7 +126,7 @@ export const Home: React.FC = () => {
             </span>
             <Lock
               size={14}
-              className="text-clawd-accent absolute right-2 top-1/2 -translate-y-1/2"
+              className="text-clawd-green absolute right-2 top-1/2 -translate-y-1/2"
               style={{
                 opacity: 0,
                 animation: `lockReveal ${FILE_LOCK_REVEAL_DELAY_MS}ms steps(1, end) 1 forwards`
