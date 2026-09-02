@@ -120,7 +120,10 @@
           linear-gradient(to right, rgba(196, 182, 224, 0.2) 1px, transparent 1px),
           linear-gradient(to bottom, rgba(196, 182, 224, 0.2) 1px, transparent 1px);
         /* The brand's grid.svg is 1920 wide with 160x90 cells and scales to the
-           viewport, so it is always 12 columns of 16:9 cells at any width. */
+           viewport, so it is always 12 columns of 16:9 cells at any width.
+           The box is 100vw to match, otherwise a classic scrollbar leaves the
+           last column ~10px short. The overhang is clipped by the holder. */
+        width: 100vw;
         background-size: calc(100vw / 12) calc(100vw / 21.3333);
       }
       @media (max-width: 767px) {
@@ -219,7 +222,7 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #a9a4bd; /* 3.0:1 on the white page */
+        background: #8f8aa4; /* 3.31:1 on the white page (1.4.11 wants 3:1) */
         border-radius: 6px;
       }
       ::-webkit-scrollbar-thumb:hover {
