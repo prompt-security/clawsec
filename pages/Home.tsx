@@ -6,6 +6,8 @@ import { Footer } from '../components/Footer';
 const FILE_NAMES = ['SOUL.md', 'AGENTS.md', 'USER.md', 'TOOLS.md', 'IDENTITY.md', 'HEARTBEAT.md', 'MEMORY.md'];
 const PLATFORM_NAMES = ['OpenClaw', 'NanoClaw', 'Hermes'];
 const FILE_LOCK_REVEAL_DELAY_MS = 1600;
+const CHAR_FLIP_MS = 300;
+const CHAR_STAGGER_MS = 50;
 
 export const Home: React.FC = () => {
   const [isAgent, setIsAgent] = useState(true);
@@ -47,6 +49,10 @@ export const Home: React.FC = () => {
 
   const humanInstruction = `Please install clawsec-suite with npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y`;
 
+  // The caret holds steady while the name is still being uncovered, then blinks.
+  const platformRevealMs =
+    (PLATFORM_NAMES[currentPlatformIndex].length - 1) * CHAR_STAGGER_MS + CHAR_FLIP_MS;
+
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
     setCopiedCurl(true);
@@ -85,7 +91,7 @@ export const Home: React.FC = () => {
                 key={`platform-${currentPlatformIndex}-${index}`}
                 className="inline-block"
                 style={{
-                  animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 backwards`,
+                  animation: `flipChar ${CHAR_FLIP_MS}ms ease-in-out ${index * CHAR_STAGGER_MS}ms 1 backwards`,
                   transformStyle: 'preserve-3d',
                   perspective: '400px'
                 }}
@@ -99,10 +105,12 @@ export const Home: React.FC = () => {
               style={{
                 width: '0.6em',
                 height: '1em',
-                marginLeft: '0.08em',
+                marginLeft: '0.3em',
                 verticalAlign: '-0.14em',
                 backgroundColor: 'currentColor',
-                animation: 'caretBlink 1.1s linear infinite'
+                // `backwards` holds the 0% frame (opaque) through the delay, so the
+                // caret sits steady until the last letter has landed.
+                animation: `caretBlink 1.1s linear ${platformRevealMs}ms infinite backwards`
               }}
             />
           </code>{' '}
@@ -127,7 +135,7 @@ export const Home: React.FC = () => {
                   key={`${currentFileIndex}-${index}`}
                   className="inline-block"
                   style={{
-                    animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 backwards`,
+                    animation: `flipChar ${CHAR_FLIP_MS}ms ease-in-out ${index * CHAR_STAGGER_MS}ms 1 backwards`,
                     transformStyle: 'preserve-3d',
                     perspective: '400px'
                   }}
