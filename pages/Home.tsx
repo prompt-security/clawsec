@@ -101,16 +101,18 @@ export const Home: React.FC = () => {
             ))}
             <span
               aria-hidden="true"
-              className="inline-block"
+              className="ps-caret inline-block"
               style={{
                 width: '0.6em',
                 height: '1em',
                 marginLeft: '0.3em',
                 verticalAlign: '-0.14em',
                 backgroundColor: 'currentColor',
-                // `backwards` holds the 0% frame (opaque) through the delay, so the
-                // caret sits steady until the last letter has landed.
-                animation: `caretBlink 1.1s linear ${platformRevealMs}ms infinite backwards`
+                // Hidden by its own style, and the animation carries NO fill mode,
+                // so the caret stays blank for the whole reveal delay and only
+                // appears once the last letter has landed.
+                opacity: 0,
+                animation: `caretBlink 1.1s linear ${platformRevealMs}ms infinite`
               }}
             />
           </code>{' '}
@@ -186,13 +188,18 @@ export const Home: React.FC = () => {
             0%, 49.9% {
               opacity: 1;
             }
-            50%, 99.9% {
+            50%, 100% {
               opacity: 0;
             }
-            /* Ends ON so the reduced-motion clamp (one 0.01ms iteration) leaves a
-               steady caret rather than removing it. */
-            100% {
-              opacity: 1;
+          }
+          /* Without this the reduced-motion clamp would collapse the blink and
+             leave the caret on its own opacity: 0, i.e. gone. Steady instead.
+             .ps-caret outranks the global * rule, and an !important author
+             declaration outranks the inline opacity. */
+          @media (prefers-reduced-motion: reduce) {
+            .ps-caret {
+              opacity: 1 !important;
+              animation: none !important;
             }
           }
           @keyframes lockReveal {
