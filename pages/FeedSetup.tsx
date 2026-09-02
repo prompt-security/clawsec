@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
 import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter } from '../types';
-import { isCorePlatformSlug, normalizePlatformSlug } from '../utils/advisoryPlatforms';
+import { matchesPlatformFilter } from '../utils/advisoryPlatforms';
 import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
 import {
   ADVISORY_FEED_URL,
@@ -75,19 +75,7 @@ export const FeedSetup: React.FC = () => {
         return false;
       }
 
-      if (selectedPlatform === 'all') {
-        return true;
-      }
-
-      const advisoryPlatforms = (a.platforms ?? [])
-        .map(normalizePlatformSlug)
-        .filter(Boolean);
-
-      if (selectedPlatform === 'other') {
-        return advisoryPlatforms.some((platform) => !isCorePlatformSlug(platform));
-      }
-
-      return advisoryPlatforms.length === 0 || advisoryPlatforms.includes(selectedPlatform);
+      return matchesPlatformFilter(a.platforms, selectedPlatform);
     }),
     [advisories, selectedSeverity, selectedPlatform],
   );
@@ -271,7 +259,7 @@ export const FeedSetup: React.FC = () => {
       </section>
 
       <section className="text-center pt-8 border-t border-clawd-700">
-        <h3 className="text-clawd-800 font-bold mb-4">Human looking to contribute</h3>
+        <h3 className="text-clawd-800 font-bold mb-4">Humans looking to contribute</h3>
         <p className="text-gray-600 text-sm mb-6 max-w-xl mx-auto">
           Found a prompt injection vector or malicious skill? Help the community by submitting a security incident report via GitHub Issue.
           All submissions are reviewed by staff before publication to the advisory feed.

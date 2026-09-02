@@ -40,7 +40,7 @@ export const Header: React.FC = () => {
           href="https://github.com/prompt-security/clawsec"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-clawd-green text-clawd-800 font-semibold shadow-[0_12px_30px_rgba(143,255,8,0.3)] hover:bg-clawd-greenHover transition-colors"
+          className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-clawd-green text-clawd-800 font-semibold border border-clawd-800 shadow-[0_12px_30px_rgba(143,255,8,0.3)] hover:bg-clawd-greenHover transition-colors"
         >
           <Terminal size={16} />
           GitHub
@@ -101,7 +101,7 @@ export const Header: React.FC = () => {
                 href="https://github.com/prompt-security/clawsec"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-clawd-green text-clawd-800 font-semibold hover:bg-clawd-greenHover transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-clawd-green text-clawd-800 font-semibold border border-clawd-800 hover:bg-clawd-greenHover transition-colors"
               >
                 <Terminal size={16} />
                 GitHub

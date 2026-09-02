@@ -1,4 +1,3 @@
-import React from 'react';
 import type { AdvisoryPlatformFilter } from '../types';
 
 export type FilterTabOption<T extends string> = {

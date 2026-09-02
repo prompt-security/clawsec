@@ -158,7 +158,7 @@ export const Home: React.FC = () => {
               background-color: rgb(30 27 75 / 1);
             }
             50% {
-              background-color: rgb(97 0 255 / 0.55);
+              background-color: rgb(45 12 110 / 1);
             }
             100% {
               background-color: rgb(11 12 27 / 1);

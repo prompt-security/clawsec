@@ -308,7 +308,7 @@ export const WikiBrowser: React.FC = () => {
           This is the same source synced to GitHub Wiki.
         </p>
         <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-          <span className="text-gray-400">Language:</span>
+          <span>Language:</span>
           {languageOptions.map((option) => {
             const isActiveLanguage = option.code === currentLanguageCode;
             return isActiveLanguage ? (

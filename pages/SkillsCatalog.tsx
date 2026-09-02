@@ -4,7 +4,7 @@ import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
 import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
 import type { AdvisoryPlatformFilter, SkillMetadata, SkillsIndex } from '../types';
-import { isCorePlatformSlug, normalizePlatformSlug } from '../utils/advisoryPlatforms';
+import { hasNonCorePlatform, matchesPlatformFilter } from '../utils/advisoryPlatforms';
 
 const SKILLS_INDEX_PATH = '/skills/index.json';
 
@@ -96,20 +96,9 @@ export const SkillsCatalog: React.FC = () => {
       result = result.filter((skill) => skill.category === categoryFilter);
     }
 
-    // Apply harness filter — mirrors the advisory predicate in FeedSetup
+    // Apply harness filter — same predicate the advisory feed uses
     if (selectedPlatform !== 'all') {
-      result = result.filter((skill) => {
-        const skillPlatforms = (skill.platforms ?? [])
-          .map(normalizePlatformSlug)
-          .filter(Boolean);
-
-        if (selectedPlatform === 'other') {
-          return skillPlatforms.some((platform) => !isCorePlatformSlug(platform));
-        }
-
-        // A skill that names no harness is treated as running anywhere
-        return skillPlatforms.length === 0 || skillPlatforms.includes(selectedPlatform);
-      });
+      result = result.filter((skill) => matchesPlatformFilter(skill.platforms, selectedPlatform));
     }
 
     return result;
@@ -117,9 +106,7 @@ export const SkillsCatalog: React.FC = () => {
 
   // "Other" only earns a tab once a skill actually targets a non-core harness
   const platformTabs = useMemo<ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>>(() => {
-    const hasNonCore = skills.some((skill) =>
-      (skill.platforms ?? []).some((platform) => !isCorePlatformSlug(normalizePlatformSlug(platform)))
-    );
+    const hasNonCore = skills.some((skill) => hasNonCorePlatform(skill.platforms));
     return hasNonCore ? PLATFORM_TABS : PLATFORM_TABS.filter((tab) => tab.value !== 'other');
   }, [skills]);
 
@@ -221,16 +208,18 @@ export const SkillsCatalog: React.FC = () => {
           <Package className="w-12 h-12 mx-auto text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-clawd-800 mb-2">No skills found</h3>
           <p className="text-gray-600">
-            {searchTerm || categoryFilter !== 'all' || selectedPlatform !== 'all'
+            {selectedPlatform !== 'all'
               ? 'Try another harness to see more skills'
-              : 'No skills have been released yet'}
+              : searchTerm || categoryFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'No skills have been released yet'}
           </p>
         </section>
       )}
 
       {/* Stats */}
       {skills.length > 0 && (
-        <section className="text-center text-sm text-gray-500">
+        <section role="status" className="text-center text-sm text-gray-500">
           Showing {filteredSkills.length} of {skills.length} skills
           {selectedPlatform !== 'all' &&
             ` for ${PLATFORM_TABS.find((tab) => tab.value === selectedPlatform)?.label}`}
