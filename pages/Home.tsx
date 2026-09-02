@@ -74,7 +74,7 @@ export const Home: React.FC = () => {
             key={currentPlatformIndex}
             className="px-2 py-1 rounded text-clawd-green inline-block align-baseline relative"
             style={{
-              minWidth: '9ch',
+              minWidth: '10ch',
               textAlign: 'center',
               backgroundColor: 'rgb(30 27 75 / 1)',
               animation: 'bgFade 0.4s ease-out 1.2s 1 forwards'
@@ -93,6 +93,18 @@ export const Home: React.FC = () => {
                 {char}
               </span>
             ))}
+            <span
+              aria-hidden="true"
+              className="inline-block"
+              style={{
+                width: '0.6em',
+                height: '1em',
+                marginLeft: '0.08em',
+                verticalAlign: '-0.14em',
+                backgroundColor: 'currentColor',
+                animation: 'caretBlink 1.1s linear infinite'
+              }}
+            />
           </code>{' '}
           agents
         </h2>
@@ -162,6 +174,19 @@ export const Home: React.FC = () => {
               background-color: rgb(11 12 27 / 1);
             }
           }
+          @keyframes caretBlink {
+            0%, 49.9% {
+              opacity: 1;
+            }
+            50%, 99.9% {
+              opacity: 0;
+            }
+            /* Ends ON so the reduced-motion clamp (one 0.01ms iteration) leaves a
+               steady caret rather than removing it. */
+            100% {
+              opacity: 1;
+            }
+          }
           @keyframes lockReveal {
             0% {
               opacity: 0;
@@ -195,7 +220,7 @@ export const Home: React.FC = () => {
                 <button
                   onClick={() => setIsAgent(false)}
                   aria-pressed={!isAgent}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium border border-clawd-accent/70 transition-all ${
                     !isAgent
                       ? 'bg-clawd-600 text-white shadow-[0_6px_18px_rgba(97,0,255,0.45)]'
                       : 'text-gray-400 hover:text-white'
@@ -207,7 +232,7 @@ export const Home: React.FC = () => {
                 <button
                   onClick={() => setIsAgent(true)}
                   aria-pressed={isAgent}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium border border-clawd-accent/70 transition-all ${
                     isAgent
                       ? 'bg-clawd-600 text-white shadow-[0_6px_18px_rgba(97,0,255,0.45)]'
                       : 'text-gray-400 hover:text-white'
@@ -235,13 +260,13 @@ export const Home: React.FC = () => {
                 </div>
 
                 {/* Agent View - Curl Command */}
-                <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
+                <div className="bg-clawd-800 rounded-lg border border-clawd-accent/50 p-4 flex items-center justify-between gap-2 sm:gap-4">
                   <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
                     {curlCommand}
                   </code>
                   <button
                     onClick={handleCopyCurl}
-                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 border border-clawd-accent/70 hover:bg-clawd-600 transition-colors"
                     title="Copy to clipboard"
                   >
                     {copiedCurl ? (
@@ -268,13 +293,13 @@ export const Home: React.FC = () => {
                 </div>
 
                 {/* Human View - Instruction Command */}
-                <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
+                <div className="bg-clawd-800 rounded-lg border border-clawd-accent/50 p-4 flex items-center justify-between gap-2 sm:gap-4">
                   <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
                     {humanInstruction}
                   </code>
                   <button
                     onClick={handleCopyHuman}
-                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 border border-clawd-accent/70 hover:bg-clawd-600 transition-colors"
                     title="Copy to clipboard"
                   >
                     {copiedHuman ? (
