@@ -51,7 +51,7 @@ export const defaultMarkdownComponents: Components = {
     const isInline = !className;
     if (isInline) {
       return (
-        <code className="text-orange-300 bg-clawd-900 px-1.5 py-0.5 rounded text-sm font-mono">
+        <code className="text-clawd-accent bg-clawd-900 px-1.5 py-0.5 rounded text-sm font-mono">
           {children}
         </code>
       );

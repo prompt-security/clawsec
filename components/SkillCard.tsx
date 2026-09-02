@@ -17,7 +17,7 @@ export const SkillCard: React.FC<SkillCardProps> = ({ skill }) => {
       className="group block bg-clawd-800 border border-clawd-700 rounded-lg p-5 hover:border-clawd-accent/30 hover:bg-clawd-800/80 transition-all duration-200"
     >
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-2xl">{skill.emoji || '📦'}</span>
+        <span className="text-2xl text-white">{skill.emoji || '📦'}</span>
         <div>
           <h3 className="font-bold text-white group-hover:text-clawd-accent transition-colors">
             {skill.name}

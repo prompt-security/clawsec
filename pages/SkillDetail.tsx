@@ -181,7 +181,7 @@ export const SkillDetail: React.FC = () => {
     return (
       <div className="py-16 text-center">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-clawd-accent"></div>
-        <p className="mt-4 text-gray-400">Loading skill...</p>
+        <p className="mt-4 text-gray-600">Loading skill...</p>
       </div>
     );
   }
@@ -190,8 +190,8 @@ export const SkillDetail: React.FC = () => {
     return (
       <div className="py-16 text-center">
         <Shield className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-        <h2 className="text-xl font-bold text-white mb-2">Skill Not Found</h2>
-        <p className="text-gray-400 mb-4">{error || 'This skill does not exist'}</p>
+        <h2 className="text-xl font-bold text-clawd-800 mb-2">Skill Not Found</h2>
+        <p className="text-gray-600 mb-4">{error || 'This skill does not exist'}</p>
         <Link to="/skills" className="text-clawd-accent hover:underline">
           Back to Skills Catalog
         </Link>
@@ -204,7 +204,7 @@ export const SkillDetail: React.FC = () => {
       {/* Back Link */}
       <Link
         to="/skills"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-gray-600 hover:text-clawd-800 transition-colors"
       >
         <ArrowLeft size={20} />
         Back to Skills
@@ -215,7 +215,7 @@ export const SkillDetail: React.FC = () => {
         <div className="flex items-start gap-4">
           <span className="text-4xl">{platformMetadata?.emoji || '📦'}</span>
           <div>
-            <h1 className="text-3xl font-bold text-white mb-1">{skillData.name}</h1>
+            <h1 className="text-3xl font-bold text-clawd-800 mb-1">{skillData.name}</h1>
             <div className="flex items-center gap-3 text-sm">
               <span className="text-gray-500 font-mono">v{skillData.version}</span>
               {recommendedPlatforms.slice(0, 4).map((platform) => {
@@ -253,19 +253,19 @@ export const SkillDetail: React.FC = () => {
       </section>
 
       {/* Description */}
-      <section className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6">
+      <section className="bg-clawd-800 border border-clawd-700 rounded-xl p-6">
         <p className="text-gray-300 text-lg">{skillData.description}</p>
       </section>
 
       {/* Install Command */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-xl font-bold text-clawd-800 flex items-center gap-2">
           <Download size={20} />
           Quick Install
         </h2>
         <div>
-          <p className="text-sm font-medium text-white">{installLabel}</p>
-          <p className="text-sm text-gray-400">{installHelp}</p>
+          <p className="text-sm font-medium text-clawd-800">{installLabel}</p>
+          <p className="text-sm text-gray-600">{installHelp}</p>
         </div>
         <div className="bg-clawd-800 rounded-lg p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-4">
           <code className="text-gray-200 font-mono text-xs sm:text-sm overflow-x-auto break-all min-w-0 flex-1">
@@ -288,11 +288,11 @@ export const SkillDetail: React.FC = () => {
       {/* Checksums */}
       {checksums && Object.keys(checksums.files).length > 0 && (
         <section className="space-y-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-clawd-800 flex items-center gap-2">
             <Shield size={20} />
             File Checksums
           </h2>
-          <div className="bg-clawd-800/50 border border-clawd-700 rounded-xl overflow-hidden">
+          <div className="bg-clawd-800 border border-clawd-700 rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
             <table className="w-full min-w-[500px]">
               <thead>
@@ -358,11 +358,11 @@ export const SkillDetail: React.FC = () => {
       {/* Documentation */}
       {doc && (
         <section className="space-y-4">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-clawd-800 flex items-center gap-2">
             <FileText size={20} />
             Documentation <span className="text-sm font-normal text-gray-500">({doc.filename})</span>
           </h2>
-          <div className="skill-docs bg-clawd-800/50 border border-clawd-700 rounded-xl p-4 sm:p-6 md:p-8 overflow-x-hidden">
+          <div className="skill-docs bg-clawd-800 border border-clawd-700 rounded-xl p-4 sm:p-6 md:p-8 overflow-x-hidden">
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={defaultMarkdownComponents}
@@ -375,7 +375,7 @@ export const SkillDetail: React.FC = () => {
 
       {/* Metadata */}
       <section className="grid md:grid-cols-2 gap-6">
-        <div className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6 space-y-4">
+        <div className="bg-clawd-800 border border-clawd-700 rounded-xl p-6 space-y-4">
           <h3 className="font-bold text-white">Metadata</h3>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -394,7 +394,7 @@ export const SkillDetail: React.FC = () => {
         </div>
 
         {triggers.length > 0 && (
-          <div className="bg-clawd-800/50 border border-clawd-700 rounded-xl p-6 space-y-4">
+          <div className="bg-clawd-800 border border-clawd-700 rounded-xl p-6 space-y-4">
             <h3 className="font-bold text-white">Trigger Phrases</h3>
             <div className="flex flex-wrap gap-2">
               {triggers.slice(0, 8).map((trigger) => (

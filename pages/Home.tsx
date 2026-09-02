@@ -6,6 +6,8 @@ import { Footer } from '../components/Footer';
 const FILE_NAMES = ['SOUL.md', 'AGENTS.md', 'USER.md', 'TOOLS.md', 'IDENTITY.md', 'HEARTBEAT.md', 'MEMORY.md'];
 const PLATFORM_NAMES = ['OpenClaw', 'NanoClaw', 'Hermes'];
 const FILE_LOCK_REVEAL_DELAY_MS = 1600;
+const CHAR_FLIP_MS = 300;
+const CHAR_STAGGER_MS = 50;
 
 export const Home: React.FC = () => {
   const [isAgent, setIsAgent] = useState(true);
@@ -47,6 +49,10 @@ export const Home: React.FC = () => {
 
   const humanInstruction = `Please install clawsec-suite with npx skills add prompt-security/clawsec --skill clawsec-suite -a openclaw -y`;
 
+  // The caret holds steady while the name is still being uncovered, then blinks.
+  const platformRevealMs =
+    (PLATFORM_NAMES[currentPlatformIndex].length - 1) * CHAR_STAGGER_MS + CHAR_FLIP_MS;
+
   const handleCopyCurl = () => {
     navigator.clipboard.writeText(curlCommand);
     setCopiedCurl(true);
@@ -63,18 +69,18 @@ export const Home: React.FC = () => {
     <div className="pt-[52px]">
       {/* Logo Section */}
       <section className="text-center mb-6">
-        <h1 className="text-5xl md:text-6xl font text-white">ClawSec</h1>
+        <h1 className="text-5xl md:text-6xl font text-clawd-800">ClawSec</h1>
       </section>
 
       {/* Hero Section */}
       <section className="text-center space-y-6 max-w-3xl mx-auto mb-12 md:mb-16">
-        <h2 className="text-3xl md:text-4xl tracking-tight text-white">
+        <h2 className="text-3xl md:text-4xl tracking-tight text-clawd-800">
           Secure your{' '}
           <code
             key={currentPlatformIndex}
-            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative"
+            className="px-2 py-1 rounded text-clawd-green inline-block align-baseline relative"
             style={{
-              minWidth: '9ch',
+              minWidth: '10ch',
               textAlign: 'center',
               backgroundColor: 'rgb(30 27 75 / 1)',
               animation: 'bgFade 0.4s ease-out 1.2s 1 forwards'
@@ -85,23 +91,38 @@ export const Home: React.FC = () => {
                 key={`platform-${currentPlatformIndex}-${index}`}
                 className="inline-block"
                 style={{
-                  animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 forwards`,
+                  animation: `flipChar ${CHAR_FLIP_MS}ms ease-in-out ${index * CHAR_STAGGER_MS}ms 1 backwards`,
                   transformStyle: 'preserve-3d',
-                  perspective: '400px',
-                  opacity: 0
+                  perspective: '400px'
                 }}
               >
                 {char}
               </span>
             ))}
+            <span
+              aria-hidden="true"
+              className="ps-caret inline-block"
+              style={{
+                width: '0.6em',
+                height: '1em',
+                marginLeft: '0.3em',
+                verticalAlign: '-0.14em',
+                backgroundColor: 'currentColor',
+                // Hidden by its own style, and the animation carries NO fill mode,
+                // so the caret stays blank for the whole reveal delay and only
+                // appears once the last letter has landed.
+                opacity: 0,
+                animation: `caretBlink 1.1s linear ${platformRevealMs}ms infinite`
+              }}
+            />
           </code>{' '}
           agents
         </h2>
-        <p className="text-lg md:text-xl text-gray-400 leading-relaxed">
+        <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
           A complete security skill suite for OpenClaw, NanoClaw, and Hermes agents. Protect your{' '}
           <code
             key={currentFileIndex}
-            className="px-2 py-1 rounded text-clawd-accent inline-block align-baseline relative text-base"
+            className="px-2 py-1 rounded text-clawd-green inline-block align-baseline relative text-base"
             style={{
               width: '188px',
               textAlign: 'center',
@@ -116,10 +137,9 @@ export const Home: React.FC = () => {
                   key={`${currentFileIndex}-${index}`}
                   className="inline-block"
                   style={{
-                    animation: `flipChar 0.3s ease-in-out ${index * 0.05}s 1 forwards`,
+                    animation: `flipChar ${CHAR_FLIP_MS}ms ease-in-out ${index * CHAR_STAGGER_MS}ms 1 backwards`,
                     transformStyle: 'preserve-3d',
-                    perspective: '400px',
-                    opacity: 0
+                    perspective: '400px'
                   }}
                 >
                   {char}
@@ -128,7 +148,7 @@ export const Home: React.FC = () => {
             </span>
             <Lock
               size={14}
-              className="text-clawd-accent absolute right-2 top-1/2 -translate-y-1/2"
+              className="text-clawd-green absolute right-2 top-1/2 -translate-y-1/2"
               style={{
                 opacity: 0,
                 animation: `lockReveal ${FILE_LOCK_REVEAL_DELAY_MS}ms steps(1, end) 1 forwards`
@@ -158,10 +178,28 @@ export const Home: React.FC = () => {
               background-color: rgb(30 27 75 / 1);
             }
             50% {
-              background-color: rgb(249 179 71 / 0.25);
+              background-color: rgb(45 12 110 / 1);
             }
             100% {
-              background-color: rgb(191 107 42 / 0.15);
+              background-color: rgb(11 12 27 / 1);
+            }
+          }
+          @keyframes caretBlink {
+            0%, 49.9% {
+              opacity: 1;
+            }
+            50%, 100% {
+              opacity: 0;
+            }
+          }
+          /* Without this the reduced-motion clamp would collapse the blink and
+             leave the caret on its own opacity: 0, i.e. gone. Steady instead.
+             .ps-caret outranks the global * rule, and an !important author
+             declaration outranks the inline opacity. */
+          @media (prefers-reduced-motion: reduce) {
+            .ps-caret {
+              opacity: 1 !important;
+              animation: none !important;
             }
           }
           @keyframes lockReveal {
@@ -196,9 +234,10 @@ export const Home: React.FC = () => {
               <div className="inline-flex bg-clawd-800 rounded-lg p-1">
                 <button
                   onClick={() => setIsAgent(false)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+                  aria-pressed={!isAgent}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium border border-clawd-accent/70 transition-all ${
                     !isAgent
-                      ? 'bg-white text-clawd-900'
+                      ? 'bg-clawd-600 text-white shadow-[0_6px_18px_rgba(97,0,255,0.45)]'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -207,9 +246,10 @@ export const Home: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setIsAgent(true)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+                  aria-pressed={isAgent}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium border border-clawd-accent/70 transition-all ${
                     isAgent
-                      ? 'bg-white text-clawd-900'
+                      ? 'bg-clawd-600 text-white shadow-[0_6px_18px_rgba(97,0,255,0.45)]'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -235,13 +275,13 @@ export const Home: React.FC = () => {
                 </div>
 
                 {/* Agent View - Curl Command */}
-                <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
+                <div className="bg-clawd-800 rounded-lg border border-clawd-accent/50 p-4 flex items-center justify-between gap-2 sm:gap-4">
                   <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
                     {curlCommand}
                   </code>
                   <button
                     onClick={handleCopyCurl}
-                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 border border-clawd-accent/70 hover:bg-clawd-600 transition-colors"
                     title="Copy to clipboard"
                   >
                     {copiedCurl ? (
@@ -268,13 +308,13 @@ export const Home: React.FC = () => {
                 </div>
 
                 {/* Human View - Instruction Command */}
-                <div className="bg-clawd-800 rounded-lg p-4 flex items-center justify-between gap-2 sm:gap-4">
+                <div className="bg-clawd-800 rounded-lg border border-clawd-accent/50 p-4 flex items-center justify-between gap-2 sm:gap-4">
                   <code className="text-gray-200 font-mono text-xs sm:text-sm md:text-base overflow-x-auto break-all min-w-0 flex-1">
                     {humanInstruction}
                   </code>
                   <button
                     onClick={handleCopyHuman}
-                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 hover:bg-clawd-600 transition-colors"
+                    className="flex-shrink-0 p-2 rounded-md bg-clawd-700 border border-clawd-accent/70 hover:bg-clawd-600 transition-colors"
                     title="Copy to clipboard"
                   >
                     {copiedHuman ? (
@@ -286,7 +326,7 @@ export const Home: React.FC = () => {
                 </div>
               </>
             )}
-            <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
+            <p className="mt-4 text-center text-xs leading-relaxed text-gray-400">
               * For harnesses other than OpenClaw, consult the{' '}
               <Link
                 to="/wiki/skill-feature-matrix"

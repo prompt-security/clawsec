@@ -4,7 +4,7 @@ import { LobsterBackground } from './LobsterBackground';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen font-sans text-slate-50 relative overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen font-sans text-clawd-800 relative overflow-x-hidden w-full max-w-full">
       <LobsterBackground />
       <div className="relative z-10 flex min-h-screen w-full max-w-full">
         <Header />

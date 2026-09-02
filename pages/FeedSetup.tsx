@@ -4,7 +4,8 @@ import { Link } from 'react-router';
 import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
 import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter } from '../types';
-import { isCorePlatformSlug, normalizePlatformSlug } from '../utils/advisoryPlatforms';
+import { matchesPlatformFilter } from '../utils/advisoryPlatforms';
+import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
 import {
   ADVISORY_FEED_URL,
   LEGACY_ADVISORY_FEED_URL,
@@ -14,48 +15,14 @@ import {
 const ITEMS_PER_PAGE = 9;
 
 type SeverityFilter = 'all' | Advisory['severity'];
-type FilterTabOption<T extends string> = { value: T; label: string; active: string; inactive: string };
 
 const SEVERITY_TABS = [
-  { value: 'all',      label: 'All',      active: 'bg-clawd-accent text-white',                                    inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
-  { value: 'critical', label: 'Critical', active: 'bg-red-500/20 text-red-400 border-2 border-red-400',            inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-red-400/50' },
-  { value: 'high',     label: 'High',     active: 'bg-orange-500/20 text-orange-400 border-2 border-orange-400',   inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-orange-400/50' },
-  { value: 'medium',   label: 'Medium',   active: 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-400',   inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-yellow-400/50' },
-  { value: 'low',      label: 'Low',      active: 'bg-blue-500/20 text-blue-400 border-2 border-blue-400',         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-blue-400/50' },
+  { value: 'all', label: 'All' },
+  { value: 'critical', label: 'Critical' },
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
 ] as const satisfies ReadonlyArray<FilterTabOption<SeverityFilter>>;
-
-const PLATFORM_TABS = [
-  { value: 'all',      label: 'All Platforms', active: 'bg-clawd-accent text-white',                                         inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
-  { value: 'openclaw', label: 'OpenClaw',      active: 'bg-clawd-accent/20 text-clawd-accent border-2 border-clawd-accent',  inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-accent/50' },
-  { value: 'nanoclaw', label: 'NanoClaw',      active: 'bg-clawd-secondary/20 text-clawd-secondary border-2 border-clawd-secondary', inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-secondary/50' },
-  { value: 'hermes',   label: 'Hermes',        active: 'bg-emerald-500/20 text-emerald-300 border-2 border-emerald-400',      inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-emerald-400/50' },
-  { value: 'picoclaw', label: 'Picoclaw',      active: 'bg-cyan-500/20 text-cyan-300 border-2 border-cyan-400',               inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-cyan-400/50' },
-  { value: 'other',    label: 'Other',         active: 'bg-clawd-600/40 text-gray-100 border-2 border-clawd-500',            inactive: 'bg-clawd-800 text-gray-400 border border-clawd-700 hover:border-clawd-500/50' },
-] as const satisfies ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>;
-
-const FilterTabs = <T extends string,>({
-  tabs,
-  selected,
-  onSelect,
-}: {
-  tabs: ReadonlyArray<FilterTabOption<T>>;
-  selected: T;
-  onSelect: (value: T) => void;
-}) => (
-  <div className="flex flex-wrap justify-center gap-3 mb-8">
-    {tabs.map(({ value, label, active, inactive }) => (
-      <button
-        key={value}
-        onClick={() => onSelect(value)}
-        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-          selected === value ? active : inactive
-        }`}
-      >
-        {label}
-      </button>
-    ))}
-  </div>
-);
 
 export const FeedSetup: React.FC = () => {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
@@ -108,19 +75,7 @@ export const FeedSetup: React.FC = () => {
         return false;
       }
 
-      if (selectedPlatform === 'all') {
-        return true;
-      }
-
-      const advisoryPlatforms = (a.platforms ?? [])
-        .map(normalizePlatformSlug)
-        .filter(Boolean);
-
-      if (selectedPlatform === 'other') {
-        return advisoryPlatforms.some((platform) => !isCorePlatformSlug(platform));
-      }
-
-      return advisoryPlatforms.length === 0 || advisoryPlatforms.includes(selectedPlatform);
+      return matchesPlatformFilter(a.platforms, selectedPlatform);
     }),
     [advisories, selectedSeverity, selectedPlatform],
   );
@@ -151,8 +106,8 @@ export const FeedSetup: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto pt-[52px] space-y-12">
       <section className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl text-white">Security Hardening Feed</h1>
-        <p className="text-gray-400 max-w-2xl mx-auto">
+        <h1 className="text-3xl md:text-4xl text-clawd-800">Security Hardening Feed</h1>
+        <p className="text-gray-600 max-w-2xl mx-auto">
           A continuous stream of security advisories from NVD CVE data and staff-approved community reports. 
           This feed is automatically updated with OpenClaw, NanoClaw, Hermes, and Picoclaw-related vulnerabilities and verified security incidents.
         </p>
@@ -167,6 +122,7 @@ export const FeedSetup: React.FC = () => {
         <FilterTabs
           tabs={SEVERITY_TABS}
           selected={selectedSeverity}
+          ariaLabel="Filter advisories by severity"
           onSelect={(value) => {
             setSelectedSeverity(value as SeverityFilter);
             setCurrentPage(1);
@@ -175,6 +131,7 @@ export const FeedSetup: React.FC = () => {
         <FilterTabs
           tabs={PLATFORM_TABS}
           selected={selectedPlatform}
+          ariaLabel="Filter advisories by platform"
           onSelect={(value) => {
             setSelectedPlatform(value as AdvisoryPlatformFilter);
             setCurrentPage(1);
@@ -184,16 +141,16 @@ export const FeedSetup: React.FC = () => {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-clawd-accent animate-spin" />
-            <span className="ml-3 text-gray-400">Loading advisories...</span>
+            <span className="ml-3 text-gray-600">Loading advisories...</span>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-12 text-center">
             <AlertTriangle className="w-6 h-6 text-orange-400 mr-2" />
-            <span className="text-gray-400">{error}</span>
+            <span className="text-gray-600">{error}</span>
           </div>
         ) : filteredAdvisories.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               {advisories.length === 0
                 ? 'No security advisories at this time. Check back later.'
                 : 'No advisories found for the selected filters.'}
@@ -218,7 +175,7 @@ export const FeedSetup: React.FC = () => {
                   <ChevronLeft size={18} />
                   Previous
                 </button>
-                <span className="text-gray-400 text-sm">
+                <span className="text-gray-600 text-sm">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
@@ -302,8 +259,8 @@ export const FeedSetup: React.FC = () => {
       </section>
 
       <section className="text-center pt-8 border-t border-clawd-700">
-        <h3 className="text-white font-bold mb-4">Human looking to contribute</h3>
-        <p className="text-gray-400 text-sm mb-6 max-w-xl mx-auto">
+        <h3 className="text-clawd-800 font-bold mb-4">Humans looking to contribute</h3>
+        <p className="text-gray-600 text-sm mb-6 max-w-xl mx-auto">
           Found a prompt injection vector or malicious skill? Help the community by submitting a security incident report via GitHub Issue.
           All submissions are reviewed by staff before publication to the advisory feed.
         </p>

@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search as _Search, Filter as _Filter, Package, Sparkles, FileText, GitFork } from 'lucide-react';
 import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
-import type { SkillMetadata, SkillsIndex } from '../types';
+import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
+import type { AdvisoryPlatformFilter, SkillMetadata, SkillsIndex } from '../types';
+import { hasNonCorePlatform, matchesPlatformFilter } from '../utils/advisoryPlatforms';
 
 const SKILLS_INDEX_PATH = '/skills/index.json';
 
@@ -31,6 +33,7 @@ export const SkillsCatalog: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, _setSearchTerm] = useState('');
   const [categoryFilter, _setCategoryFilter] = useState<string>('all');
+  const [selectedPlatform, setSelectedPlatform] = useState<AdvisoryPlatformFilter>('all');
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -93,8 +96,19 @@ export const SkillsCatalog: React.FC = () => {
       result = result.filter((skill) => skill.category === categoryFilter);
     }
 
+    // Apply harness filter — same predicate the advisory feed uses
+    if (selectedPlatform !== 'all') {
+      result = result.filter((skill) => matchesPlatformFilter(skill.platforms, selectedPlatform));
+    }
+
     return result;
-  }, [searchTerm, categoryFilter, skills]);
+  }, [searchTerm, categoryFilter, selectedPlatform, skills]);
+
+  // "Other" only earns a tab once a skill actually targets a non-core harness
+  const platformTabs = useMemo<ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>>(() => {
+    const hasNonCore = skills.some((skill) => hasNonCorePlatform(skill.platforms));
+    return hasNonCore ? PLATFORM_TABS : PLATFORM_TABS.filter((tab) => tab.value !== 'other');
+  }, [skills]);
 
   // Get unique categories from skills (used in commented filter UI)
   const _categories = ['all', ...new Set(skills.map((s) => s.category).filter(Boolean))];
@@ -104,7 +118,7 @@ export const SkillsCatalog: React.FC = () => {
       <div className="pt-[52px]">
         <div className="py-16 text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-clawd-accent"></div>
-          <p className="mt-4 text-gray-400">Loading skills...</p>
+          <p className="mt-4 text-gray-600">Loading skills...</p>
         </div>
         <Footer />
       </div>
@@ -116,8 +130,8 @@ export const SkillsCatalog: React.FC = () => {
       <div className="pt-[52px]">
         <div className="py-16 text-center">
           <Package className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">No Skills Available</h2>
-          <p className="text-gray-400 mb-4">{error}</p>
+          <h2 className="text-xl font-bold text-clawd-800 mb-2">No Skills Available</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500">
             Skills will appear here after the first skill release.
           </p>
@@ -131,14 +145,26 @@ export const SkillsCatalog: React.FC = () => {
     <div className="pt-[52px] space-y-8">
       {/* Header */}
       <section className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl text-white">
+        <h1 className="text-3xl md:text-4xl text-clawd-800">
           Skills Catalog
         </h1>
-        <p className="text-gray-400 max-w-2xl mx-auto">
+        <p className="text-gray-600 max-w-2xl mx-auto">
           Browse security skills for your AI agents. Each skill is verified for safety
           and distributed with checksums for integrity verification.
         </p>
       </section>
+
+      {skills.length > 0 && (
+        <section>
+          <FilterTabs
+            tabs={platformTabs}
+            selected={selectedPlatform}
+            onSelect={(value) => setSelectedPlatform(value)}
+            ariaLabel="Filter skills by agent harness"
+            className="mb-0"
+          />
+        </section>
+      )}
 
       {/* Filters - Hidden for now, uncomment when needed
       <section className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
@@ -180,19 +206,23 @@ export const SkillsCatalog: React.FC = () => {
       ) : (
         <section className="text-center py-12">
           <Package className="w-12 h-12 mx-auto text-gray-600 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No skills found</h3>
-          <p className="text-gray-400">
-            {searchTerm || categoryFilter !== 'all'
-              ? 'Try adjusting your filters'
-              : 'No skills have been released yet'}
+          <h3 className="text-lg font-medium text-clawd-800 mb-2">No skills found</h3>
+          <p className="text-gray-600">
+            {selectedPlatform !== 'all'
+              ? 'Try another harness to see more skills'
+              : searchTerm || categoryFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'No skills have been released yet'}
           </p>
         </section>
       )}
 
       {/* Stats */}
       {skills.length > 0 && (
-        <section className="text-center text-sm text-gray-500">
+        <section role="status" className="text-center text-sm text-gray-500">
           Showing {filteredSkills.length} of {skills.length} skills
+          {selectedPlatform !== 'all' &&
+            ` for ${PLATFORM_TABS.find((tab) => tab.value === selectedPlatform)?.label}`}
         </section>
       )}
 

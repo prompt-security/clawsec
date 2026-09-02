@@ -35,11 +35,11 @@ export const ProductDemo: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto pt-[52px] space-y-10">
       <section className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl text-white flex items-center justify-center gap-3">
+        <h1 className="text-3xl md:text-4xl text-clawd-800 flex items-center justify-center gap-3">
           <PlayCircle className="text-clawd-accent" />
           Watch It in Action
         </h1>
-        <p className="text-gray-400 max-w-3xl mx-auto">
+        <p className="text-gray-600 max-w-3xl mx-auto">
           Product demos for ClawSec installation and runtime protection behavior. These are the
           same demo assets referenced in the repository README, presented as playable videos.
         </p>

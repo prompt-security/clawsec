@@ -15,30 +15,36 @@
     <title>ClawSec | Agent Hardening | Prompt Security, SentinelOne </title>
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="/font/quicksand-latin.woff2"
+    />
+    <!-- Quicksand: prompt.security brand face. Self-hosted so offline and
+         network-restricted previews still render the brand type instead of
+         falling back to system-ui. OFL-1.1; see public/font/Quicksand-OFL.txt -->
     <style>
       @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_Rg.ttf') format('truetype');
-        font-weight: 400;
+        font-family: 'Quicksand';
         font-style: normal;
+        font-weight: 300 700;
+        font-display: swap;
+        src: url('/font/quicksand-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+          U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+          U+2212, U+2215, U+FEFF, U+FFFD;
       }
       @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_Md.ttf') format('truetype');
-        font-weight: 500;
+        font-family: 'Quicksand';
         font-style: normal;
-      }
-      @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_Bd.ttf') format('truetype');
-        font-weight: 700;
-        font-style: normal;
-      }
-      @font-face {
-        font-family: 'Prometo';
-        src: url('/font/Prometo_Trial_XBd.ttf') format('truetype');
-        font-weight: 800;
-        font-style: normal;
+        font-weight: 300 700;
+        font-display: swap;
+        src: url('/font/quicksand-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+          U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+          U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
       }
     </style>
     <script>
@@ -46,19 +52,22 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Prometo', 'system-ui', 'sans-serif'],
-              display: ['Prometo', 'system-ui', 'sans-serif'],
-              mono: ['Prometo', 'system-ui', 'sans-serif'],
+              sans: ['Quicksand', 'system-ui', 'sans-serif'],
+              display: ['Quicksand', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
             },
             colors: {
               clawd: {
-                900: '#26115d', // Deep base
-                800: '#3a1f7a', // Mid base
-                700: '#523899', // Lifted mid
-                600: '#8c6ae7', // Light highlight
-                accent: '#ffa23f', // Prompt orange (target)
-                accentHover: '#e89232',
-                secondary: '#c7b6ff', // Soft lavender
+                900: '#05060f', // Deepest ink — code block chrome
+                800: '#0b0c1b', // Ink box surface (--ps-purple-dark)
+                700: '#232647', // Lifted surface / borders on ink
+                600: '#6100ff', // Electric purple (--ps-purple-electric)
+                500: '#8f6bff', // Light electric
+                accent: '#b56fed', // Brand lavender — highlights on ink
+                accentHover: '#c98fff',
+                secondary: '#6100ff', // Electric purple on light
+                green: '#8fff08', // Acid green (--ps-green) — trace hints only
+                greenHover: '#7ee208',
               }
             },
             animation: {
@@ -78,13 +87,131 @@
     </script>
     <style>
       body {
-        background:
-          linear-gradient(90deg, rgba(12, 6, 24, 0.55) 0%, rgba(12, 6, 24, 0.0) 45%),
-          radial-gradient(circle at 10% 18%, rgba(255, 162, 63, 0.06), transparent 28%),
-          radial-gradient(circle at 82% 18%, rgba(140, 106, 231, 0.20), transparent 30%),
-          radial-gradient(circle at 55% 78%, rgba(82, 56, 153, 0.22), transparent 34%),
-          linear-gradient(180deg, #26115d 0%, #523899 52%, #8c6ae7 100%);
-        color: #f4f0ff;
+        background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%);
+        color: #0b0c1b;
+      }
+      ::selection {
+        background: #8fff08;
+        color: #0b0c1b;
+      }
+      :focus-visible {
+        outline: 2px solid #6100ff;
+        outline-offset: 2px;
+        /* Fallback only: Tailwind's CDN sheet loads after this one at equal
+           specificity, so any element with its own rounded-* keeps that radius. */
+        border-radius: 4px;
+      }
+      /* #6100ff reaches only ~2.7:1 against the ink surfaces, so controls sitting
+         inside an ink card take the brand lavender instead (5.97:1 on #0b0c1b).
+         Controls on the white page keep the purple ring at 7.1:1. */
+      .bg-clawd-800 :focus-visible,
+      .bg-clawd-900 :focus-visible {
+        outline-color: #b56fed;
+      }
+
+      /* --- prompt.security background system ---------------------------------
+         Reproduced from the brand site's own assets: bg-grid.svg is a uniform
+         160x90 grid stroked #C4B6E0 at 20% opacity, and the purple break is the
+         Gradient Break Top/Bottom .avif pair, whose per-stop RGBA is sampled
+         below so the grid still reads through the translucent ends.
+         The brand site hides its grid under 768px; we match that exactly. */
+      .ps-grid {
+        background-image:
+          linear-gradient(to right, rgba(196, 182, 224, 0.2) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(196, 182, 224, 0.2) 1px, transparent 1px);
+        /* The brand's grid.svg is 1920 wide with 160x90 cells and scales to the
+           viewport, so it is always 12 columns of 16:9 cells at any width.
+           The box is 100vw to match, otherwise a classic scrollbar leaves the
+           last column ~10px short. The overhang is clipped by the holder. */
+        width: 100vw;
+        background-size: calc(100vw / 12) calc(100vw / 21.3333);
+      }
+      @media (max-width: 767px) {
+        .ps-grid {
+          display: none;
+        }
+      }
+      .ps-wash {
+        /* The brand's hero wash is short: pure white by ~8.5% of the viewport
+           width down the page, #cdc0eb at the top centre and more saturated at
+           the edges. Same ellipse-outside model and t^2 alpha as .ps-break. */
+        height: max(110px, 8.46vw);
+        background-image: radial-gradient(
+          ellipse 137.4% 476% at 50% 390%,
+          rgba(83, 37, 186, 0) 60.9%,
+          rgba(83, 37, 186, 0.013) 66%,
+          rgba(83, 37, 186, 0.05) 71%,
+          rgba(83, 37, 186, 0.113) 76%,
+          rgba(83, 37, 186, 0.2) 81%,
+          rgba(83, 37, 186, 0.29) 85%,
+          rgba(83, 37, 186, 0.45) 91%,
+          rgba(83, 37, 186, 0.66) 96%,
+          rgba(83, 37, 186, 0.85) 100%
+        );
+      }
+      /* White -> #5325ba apex -> white, as two mirrored halves. The brand's
+         isolines are elliptical and centred well off the band, so the purple
+         climbs ~50px higher at the left and right edges than at the centre.
+         Alpha follows t^2 because the source art interpolates from transparent
+         WHITE, not from transparent purple. Height puts the apex on the card. */
+      /* doubled: the Tailwind CDN sheet loads after this one, so a stray
+         top-0/inset-0 would otherwise zero the offset with no error */
+      .ps-break.ps-break {
+        top: 70px;
+        height: 1254px;
+        background-image:
+          radial-gradient(
+            ellipse 160% 150.74% at 50% -51.14%,
+            rgba(83, 37, 186, 0) 56.87%,
+            rgba(83, 37, 186, 0.023) 63.34%,
+            rgba(83, 37, 186, 0.09) 69.81%,
+            rgba(83, 37, 186, 0.203) 76.28%,
+            rgba(83, 37, 186, 0.36) 82.75%,
+            rgba(83, 37, 186, 0.563) 89.22%,
+            rgba(83, 37, 186, 0.81) 95.69%,
+            rgba(83, 37, 186, 1) 98%,
+            rgba(83, 37, 186, 1) 100%
+          ),
+          radial-gradient(
+            ellipse 160% 150.74% at 50% 151.14%,
+            rgba(83, 37, 186, 0) 56.87%,
+            rgba(83, 37, 186, 0.023) 63.34%,
+            rgba(83, 37, 186, 0.09) 69.81%,
+            rgba(83, 37, 186, 0.203) 76.28%,
+            rgba(83, 37, 186, 0.36) 82.75%,
+            rgba(83, 37, 186, 0.563) 89.22%,
+            rgba(83, 37, 186, 0.81) 95.69%,
+            rgba(83, 37, 186, 1) 98%,
+            rgba(83, 37, 186, 1) 100%
+          );
+        /* +1px so the two halves overlap and leave no hairline at the seam */
+        background-size: 100% calc(50% + 1px);
+        background-position: top, bottom;
+        background-repeat: no-repeat;
+      }
+      /* The document gets SHORTER as the viewport widens (less text wrapping),
+         so one height cannot serve 320px through 767px. Phones keep the tall
+         band that puts the apex on the install card; the short tablet/landscape/
+         zoomed range gets one that finishes inside the document. */
+      @media (max-width: 430px) {
+        .ps-break.ps-break {
+          height: 1700px;
+        }
+      }
+      @media (min-width: 431px) and (max-width: 767px) {
+        .ps-break.ps-break {
+          height: 1230px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -92,14 +219,14 @@
         height: 10px;
       }
       ::-webkit-scrollbar-track {
-        background: #14103b;
+        background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #2f2261;
+        background: #8f8aa4; /* 3.31:1 on the white page (1.4.11 wants 3:1) */
         border-radius: 6px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #f9b347;
+        background: #6100ff; /* 7.1:1 — hover must be MORE visible, not less */
       }
       /* Mobile overflow fixes */
       html, body {
