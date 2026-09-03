@@ -10,7 +10,8 @@ on:
       - '.github/workflows/i18n-qa.yml'
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   i18n-qa:
@@ -20,7 +21,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
       - name: Run i18n QA
@@ -29,7 +31,7 @@ jobs:
       - name: Check markdown links (README/wiki)
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            python scripts/i18n/link_check.py --changed-only --base-ref "origin/${{ github.base_ref }}"
+            python scripts/i18n/link_check.py --changed-only --base-ref "origin/${GITHUB_BASE_REF}"
           else
             python scripts/i18n/link_check.py
           fi

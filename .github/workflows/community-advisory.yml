@@ -4,7 +4,8 @@ on:
   issues:
     types: [labeled]
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: community-advisory
@@ -27,6 +28,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Parse issue and create advisory
         id: parse
@@ -197,7 +199,7 @@ jobs:
 
       - name: Set up Python for exploitability analysis
         if: steps.parse.outputs.already_exists != 'true'
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.10'
 
@@ -252,7 +254,7 @@ jobs:
 
       - name: Sign advisory feed and verify
         if: steps.parse.outputs.already_exists != 'true'
-        uses: ./.github/actions/sign-and-verify
+        uses: $/.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
@@ -313,12 +315,16 @@ jobs:
       - name: Comment on issue
         if: steps.parse.outputs.already_exists != 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ADVISORY_ID: ${{ steps.parse.outputs.advisory_id }}
+          PULL_REQUEST_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          PULL_REQUEST_OPERATION: ${{ steps.create-pr.outputs.pull-request-operation }}
         with:
           github-token: ${{ secrets.POLL_NVD_CVES_PAT }}
           script: |
-            const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
-            const pullRequestUrl = '${{ steps.create-pr.outputs.pull-request-url }}';
-            const operation = '${{ steps.create-pr.outputs.pull-request-operation }}';
+            const advisoryId = process.env.ADVISORY_ID;
+            const pullRequestUrl = process.env.PULL_REQUEST_URL;
+            const operation = process.env.PULL_REQUEST_OPERATION;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -339,10 +345,12 @@ jobs:
       - name: Comment if already exists
         if: steps.parse.outputs.already_exists == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ADVISORY_ID: ${{ steps.parse.outputs.advisory_id }}
         with:
           github-token: ${{ secrets.POLL_NVD_CVES_PAT }}
           script: |
-            const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
+            const advisoryId = process.env.ADVISORY_ID;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
