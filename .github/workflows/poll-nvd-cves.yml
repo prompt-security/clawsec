@@ -12,7 +12,8 @@ on:
         default: 'false'
         type: boolean
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: poll-nvd-cves
@@ -40,6 +41,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Get last poll date from feed
         id: last_poll
@@ -63,8 +65,10 @@ jobs:
 
       - name: Set date window
         id: dates
+        env:
+          STEPS_LAST_POLL_OUTPUTS_LAST_DATE: ${{ steps.last_poll.outputs.last_date }}
         run: |
-          START_DATE="${{ steps.last_poll.outputs.last_date }}"
+          START_DATE="${STEPS_LAST_POLL_OUTPUTS_LAST_DATE}"
           END_DATE=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
           
           # Convert to epoch for comparison
@@ -85,6 +89,9 @@ jobs:
 
       - name: Fetch CVEs from NVD
         id: fetch
+        env:
+          STEPS_DATES_OUTPUTS_START_DATE: ${{ steps.dates.outputs.start_date }}
+          STEPS_DATES_OUTPUTS_END_DATE: ${{ steps.dates.outputs.end_date }}
         run: |
           set -euo pipefail
           source scripts/feed-utils.sh
@@ -92,8 +99,8 @@ jobs:
           FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
           NVD_QUERY_SPECS="$(nvd_query_specs)"
           
-          START_DATE="${{ steps.dates.outputs.start_date }}"
-          END_DATE="${{ steps.dates.outputs.end_date }}"
+          START_DATE="${STEPS_DATES_OUTPUTS_START_DATE}"
+          END_DATE="${STEPS_DATES_OUTPUTS_END_DATE}"
           
           # URL encode the dates
           START_ENC=$(echo "$START_DATE" | sed 's/:/%3A/g')
@@ -540,6 +547,8 @@ jobs:
 
       - name: Transform CVEs to advisories
         id: transform
+        env:
+          STEPS_PROCESS_OUTPUTS_FILTERED_COUNT: ${{ steps.process.outputs.filtered_count }}
         run: |
           # Read existing IDs into jq-friendly files (avoids huge CLI args on full scans).
           jq -R -s 'split("\n") | map(select(length > 0))' < tmp/existing_ids.txt > tmp/existing_ids_from_feed.json
@@ -747,7 +756,7 @@ jobs:
           echo "nvd_new_to_feed_count=$NET_NEW_COUNT" >> $GITHUB_OUTPUT
 
           if [ "${{ inputs.force_full_scan }}" = "true" ]; then
-            FILTERED_COUNT="${{ steps.process.outputs.filtered_count }}"
+            FILTERED_COUNT="${STEPS_PROCESS_OUTPUTS_FILTERED_COUNT}"
             if [ "$NEW_COUNT" -ne "$FILTERED_COUNT" ]; then
               echo "::error::Full scan transform mismatch: filtered CVEs=$FILTERED_COUNT transformed advisories=$NEW_COUNT"
               exit 1
@@ -761,9 +770,9 @@ jobs:
 
       - name: Set up Python for exploitability analysis
         if: steps.transform.outputs.new_count != '0'
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Analyze exploitability for new advisories
         if: steps.transform.outputs.new_count != '0'
@@ -916,6 +925,10 @@ jobs:
 
       - name: Detect advisory feed changes
         id: feed_changes
+        env:
+          STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT: ${{ steps.transform.outputs.nvd_rebuilt_count }}
+          STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT: ${{ steps.transform.outputs.nvd_new_to_feed_count }}
+          STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT: ${{ steps.nvd_counts.outputs.nvd_updated_count }}
         run: |
           set -euo pipefail
 
@@ -935,7 +948,7 @@ jobs:
             ' "$FEED_PATH"
           )"
 
-          if [ "${{ steps.transform.outputs.nvd_rebuilt_count }}" != "0" ] || [ "${{ steps.transform.outputs.nvd_new_to_feed_count }}" != "0" ] || [ "${{ steps.nvd_counts.outputs.nvd_updated_count }}" != "0" ]; then
+          if [ "${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT}" != "0" ] || [ "${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT}" != "0" ] || [ "${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT}" != "0" ]; then
             NVD_CHANGED=true
           fi
 
@@ -979,7 +992,7 @@ jobs:
 
       - name: Sign GHSA feed and verify
         if: steps.feed_changes.outputs.ghsa_changed == 'true'
-        uses: ./.github/actions/sign-and-verify
+        uses: $/.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
@@ -988,7 +1001,7 @@ jobs:
 
       - name: Sign advisory feed and verify
         if: steps.feed_changes.outputs.agent_changed == 'true'
-        uses: ./.github/actions/sign-and-verify
+        uses: $/.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
@@ -1017,14 +1030,25 @@ jobs:
         id: upsert-pr
         env:
           GH_TOKEN: ${{ github.token }}
+          STEPS_DATES_OUTPUTS_START_DATE: ${{ steps.dates.outputs.start_date }}
+          STEPS_DATES_OUTPUTS_END_DATE: ${{ steps.dates.outputs.end_date }}
+          STEPS_PROCESS_OUTPUTS_NVD_FILTERED_COUNT: ${{ steps.process.outputs.nvd_filtered_count }}
+          STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT: ${{ steps.transform.outputs.nvd_rebuilt_count }}
+          STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT: ${{ steps.transform.outputs.nvd_new_to_feed_count }}
+          STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT: ${{ steps.nvd_counts.outputs.nvd_updated_count }}
+          STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT: ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }}
+          STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED: ${{ steps.feed_changes.outputs.ghsa_changed }}
+          STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED: ${{ steps.feed_changes.outputs.agent_changed }}
         run: |
           set -euo pipefail
 
           BRANCH_PREFIX="automated/nvd-cve-update"
           PR_COMMENT="Superseded by newer automated NVD advisory update."
-          TITLE="chore: update NVD/GHSA advisories - ${{ steps.transform.outputs.nvd_new_to_feed_count }} NVD new, ${{ steps.nvd_counts.outputs.nvd_updated_count }} NVD updated, ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }} GHSA active added"
+          TITLE="chore: update NVD/GHSA advisories - ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT} NVD new, ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT} NVD updated, ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT} GHSA active added"
           COMMIT_SUBJECT="$TITLE"
-          COMMIT_BODY=$'Automated update from NVD CVE and GHSA advisory feeds.\nKeywords: ${{ env.KEYWORDS }}\nPoll window: ${{ steps.dates.outputs.start_date }} to ${{ steps.dates.outputs.end_date }}'
+          # printf, not $'...': ANSI-C quoting does not expand parameters.
+          COMMIT_BODY="$(printf 'Automated update from NVD CVE and GHSA advisory feeds.\nKeywords: %s\nPoll window: %s to %s' \
+            "$KEYWORDS" "$STEPS_DATES_OUTPUTS_START_DATE" "$STEPS_DATES_OUTPUTS_END_DATE")"
 
           GHSA_TOTAL="$(jq '.advisories | length' "$GHSA_FEED_PATH")"
           GHSA_ACTIVE="$(jq '[.advisories[] | select(.status == "active")] | length' "$GHSA_FEED_PATH")"
@@ -1043,16 +1067,16 @@ jobs:
           Automated update from NVD CVE and GHSA advisory feeds.
 
           - **Mode:** ${MODE}
-          - **Filtered NVD CVEs:** ${{ steps.process.outputs.nvd_filtered_count }}
-          - **Rebuilt NVD advisories:** ${{ steps.transform.outputs.nvd_rebuilt_count }}
-          - **Net-new NVD advisories:** ${{ steps.transform.outputs.nvd_new_to_feed_count }}
-          - **Updated NVD advisories:** ${{ steps.nvd_counts.outputs.nvd_updated_count }}
-          - **GHSA active advisories added to consolidated feed:** ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }}
-          - **GHSA source feed changed:** ${{ steps.feed_changes.outputs.ghsa_changed }}
-          - **Consolidated agent feed changed:** ${{ steps.feed_changes.outputs.agent_changed }}
+          - **Filtered NVD CVEs:** ${STEPS_PROCESS_OUTPUTS_NVD_FILTERED_COUNT}
+          - **Rebuilt NVD advisories:** ${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT}
+          - **Net-new NVD advisories:** ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT}
+          - **Updated NVD advisories:** ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT}
+          - **GHSA active advisories added to consolidated feed:** ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT}
+          - **GHSA source feed changed:** ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED}
+          - **Consolidated agent feed changed:** ${STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED}
           - **GHSA provisional advisories:** ${GHSA_TOTAL} total (${GHSA_ACTIVE} active, ${GHSA_MATURED} matured, ${GHSA_STALE} stale)
-          - **Poll window:** ${{ steps.dates.outputs.start_date }} → ${{ steps.dates.outputs.end_date }}
-          - **Keywords:** ${{ env.KEYWORDS }}
+          - **Poll window:** ${STEPS_DATES_OUTPUTS_START_DATE} → ${STEPS_DATES_OUTPUTS_END_DATE}
+          - **Keywords:** ${KEYWORDS}
 
           ---
           *This PR was automatically generated by the NVD CVE polling workflow with GHSA consolidation.*
@@ -1130,10 +1154,11 @@ jobs:
         if: steps.upsert-pr.outputs.pull-request-number != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          STEPS_UPSERT_PR_OUTPUTS_PULL_REQUEST_BRANCH: ${{ steps.upsert-pr.outputs.pull-request-branch }}
         run: |
           set -euo pipefail
 
-          BRANCH="${{ steps.upsert-pr.outputs.pull-request-branch }}"
+          BRANCH="${STEPS_UPSERT_PR_OUTPUTS_PULL_REQUEST_BRANCH}"
           if [ -z "$BRANCH" ]; then
             echo "::error::Missing pull-request-branch output from upsert-pr step"
             exit 1
@@ -1179,6 +1204,18 @@ jobs:
           gh run watch "$RUN_ID" --exit-status
 
       - name: Summary
+        env:
+          STEPS_DATES_OUTPUTS_START_DATE: ${{ steps.dates.outputs.start_date }}
+          STEPS_DATES_OUTPUTS_END_DATE: ${{ steps.dates.outputs.end_date }}
+          STEPS_PROCESS_OUTPUTS_NVD_FILTERED_COUNT: ${{ steps.process.outputs.nvd_filtered_count }}
+          STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT: ${{ steps.transform.outputs.nvd_rebuilt_count }}
+          STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT: ${{ steps.transform.outputs.nvd_new_to_feed_count }}
+          STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT: ${{ steps.nvd_counts.outputs.nvd_updated_count }}
+          STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT: ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }}
+          STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED: ${{ steps.feed_changes.outputs.ghsa_changed }}
+          STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED: ${{ steps.feed_changes.outputs.agent_changed }}
+          STEPS_FEED_CHANGES_OUTPUTS_CHANGED: ${{ steps.feed_changes.outputs.changed }}
+          STEPS_UPSERT_PR_OUTPUTS_PULL_REQUEST_URL: ${{ steps.upsert-pr.outputs.pull-request-url }}
         run: |
           if [ "${{ inputs.force_full_scan }}" = "true" ]; then
             MODE="full-rebuild (ignore feed state)"
@@ -1191,34 +1228,34 @@ jobs:
           echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Mode | $MODE |" >> $GITHUB_STEP_SUMMARY
-          echo "| Poll Window | ${{ steps.dates.outputs.start_date }} → ${{ steps.dates.outputs.end_date }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Poll Window | ${STEPS_DATES_OUTPUTS_START_DATE} → ${STEPS_DATES_OUTPUTS_END_DATE} |" >> $GITHUB_STEP_SUMMARY
           echo "| Keywords | $KEYWORDS |" >> $GITHUB_STEP_SUMMARY
-          echo "| NVD CVEs Found (filtered) | ${{ steps.process.outputs.nvd_filtered_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| NVD Advisories Rebuilt | ${{ steps.transform.outputs.nvd_rebuilt_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Net-new NVD Advisories | ${{ steps.transform.outputs.nvd_new_to_feed_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Updated NVD Advisories | ${{ steps.nvd_counts.outputs.nvd_updated_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| GHSA Active Added | ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| GHSA source feed changed | ${{ steps.feed_changes.outputs.ghsa_changed }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Consolidated agent feed changed | ${{ steps.feed_changes.outputs.agent_changed }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| NVD CVEs Found (filtered) | ${STEPS_PROCESS_OUTPUTS_NVD_FILTERED_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| NVD Advisories Rebuilt | ${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Net-new NVD Advisories | ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Updated NVD Advisories | ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GHSA Active Added | ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| GHSA source feed changed | ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Consolidated agent feed changed | ${STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED} |" >> $GITHUB_STEP_SUMMARY
           echo "| GHSA provisional advisories | $(jq '.advisories | length' "$GHSA_FEED_PATH") |" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ steps.transform.outputs.nvd_new_to_feed_count }}" != "0" ]; then
+          if [ "${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT}" != "0" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Net-new NVD Advisories" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             jq -r '.[] | "- **\(.id)** (\(.severity)): \(.title)"' tmp/net_new_advisories.json >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ steps.nvd_counts.outputs.nvd_updated_count }}" != "0" ]; then
+          if [ "${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT}" != "0" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Updated NVD Advisories" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             jq -r '.[] | "- **\(.id)**: \(.changes | join(", "))"' tmp/updated_advisories.json >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ "${{ steps.feed_changes.outputs.changed }}" = "true" ]; then
+          if [ "${STEPS_FEED_CHANGES_OUTPUTS_CHANGED}" = "true" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🔀 Upserted PR: ${{ steps.upsert-pr.outputs.pull-request-url }}" >> $GITHUB_STEP_SUMMARY
+            echo "🔀 Upserted PR: ${STEPS_UPSERT_PR_OUTPUTS_PULL_REQUEST_URL}" >> $GITHUB_STEP_SUMMARY
           else
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "✅ No new or updated NVD CVEs or GHSA changes found." >> $GITHUB_STEP_SUMMARY
