@@ -47,7 +47,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           # This workflow signs and publishes releases; never restore a cache
           # into that trust path. Explicit because the input defaults to true.
           package-manager-cache: false
@@ -294,7 +294,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           # This workflow signs and publishes releases; never restore a cache
           # into that trust path. Explicit because the input defaults to true.
           package-manager-cache: false
@@ -1032,7 +1032,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           # This workflow signs and publishes releases; never restore a cache
           # into that trust path. Explicit because the input defaults to true.
           package-manager-cache: false
@@ -1222,7 +1222,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           # This workflow signs and publishes releases; never restore a cache
           # into that trust path. Explicit because the input defaults to true.
           package-manager-cache: false
@@ -1863,7 +1863,7 @@ jobs:
         if: needs.release-tag.outputs.publish_clawhub == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           # This workflow signs and publishes releases; never restore a cache
           # into that trust path. Explicit because the input defaults to true.
           package-manager-cache: false
@@ -2128,7 +2128,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
           # This workflow signs and publishes releases; never restore a cache
           # into that trust path. Explicit because the input defaults to true.
           package-manager-cache: false
