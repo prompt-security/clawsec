@@ -1,8 +1,218 @@
 {
   "version": "0.0.3",
-  "updated": "2026-08-19T06:07:49Z",
+  "updated": "2026-09-06T06:07:48Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-85107",
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "A vulnerability was found in NousResearch hermes-agent 0.18.0. This vulnerability affects the functi...",
+      "description": "A vulnerability was found in NousResearch hermes-agent 0.18.0. This vulnerability affects the function resourceBufferFromUrl of the file apps/desktop/electron/main.ts of the component Electron Main Process. Performing a manipulation results in allocation of resources. The attack may be initiated remotely. copyImageFromUrl() entry point no longer reachable on current main. That function did exist at v2026.8.3 but was removed by v2026.8.19. The modern copy-image path is Electron-native event.sender.copyImageAt().",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-09-03T13:06:21.603",
+      "references": [
+        "https://vuldb.com/cve/CVE-2026-85107",
+        "https://vuldb.com/submit/885135",
+        "https://vuldb.com/vuln/398314"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-85107",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-85106",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "A vulnerability has been found in NousResearch hermes-agent 0.18.0. This affects the function fetchL...",
+      "description": "A vulnerability has been found in NousResearch hermes-agent 0.18.0. This affects the function fetchLinkTitle of the file apps/desktop/src/app/artifacts/index.tsx of the component Link Title Fetch. Such manipulation of the argument url leads to server-side request forgery. The attack can be launched remotely. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-09-03T13:06:21.437",
+      "references": [
+        "https://vuldb.com/cve/CVE-2026-85106",
+        "https://vuldb.com/submit/885132",
+        "https://vuldb.com/vuln/398313"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-85106",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-85105",
+      "severity": "high",
+      "type": "improper_authorization",
+      "nvd_category_id": "CWE-285",
+      "title": "A flaw has been found in NousResearch hermes-agent 0.18.0. Affected by this issue is the function _s...",
+      "description": "A flaw has been found in NousResearch hermes-agent 0.18.0. Affected by this issue is the function _sess_nowait of the file s71.py of the component Session Management. This manipulation of the argument session_id causes authorization bypass. The attack can be initiated remotely. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-09-03T13:06:21.250",
+      "references": [
+        "https://vuldb.com/cve/CVE-2026-85105",
+        "https://vuldb.com/submit/885131",
+        "https://vuldb.com/vuln/398312"
+      ],
+      "cvss_score": 7.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-85105",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.3); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-84289",
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "A vulnerability was found in NousResearch hermes-agent up to 0.18.2. This vulnerability affects the ...",
+      "description": "A vulnerability was found in NousResearch hermes-agent up to 0.18.2. This vulnerability affects the function list_tools of the file tools/mcp_tool.py of the component MCP Tool. Performing a manipulation results in uncontrolled memory allocation. It is possible to initiate the attack remotely. The exploit has been made public and could be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-09-01T22:17:18.813",
+      "references": [
+        "https://github.com/lche511/cve/blob/main/Hermes_MCP_Tool_Resource_Amplification_DoS_Report/REPORT.md",
+        "https://vuldb.com/cve/CVE-2026-84289",
+        "https://vuldb.com/submit/882960"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-84289",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-84288",
+      "severity": "medium",
+      "type": "unknown_cwe_404",
+      "nvd_category_id": "CWE-404",
+      "title": "A vulnerability has been found in NousResearch hermes-agent up to 0.18.2. This affects the function ...",
+      "description": "A vulnerability has been found in NousResearch hermes-agent up to 0.18.2. This affects the function HermesACPAgent.prompt of the file acp_adapter/session.py of the component ACP Prompt Workflow. Such manipulation leads to denial of service. The attack may be performed from remote. The exploit has been disclosed to the public and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-09-01T22:17:18.647",
+      "references": [
+        "https://github.com/hackerguopeng/cve/tree/main/Hermes_ACP_Queued_Prompt_DoS_Report",
+        "https://vuldb.com/cve/CVE-2026-84288",
+        "https://vuldb.com/submit/882873"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-84288",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-84287",
+      "severity": "medium",
+      "type": "unknown_cwe_404",
+      "nvd_category_id": "CWE-404",
+      "title": "A flaw has been found in NousResearch hermes-agent 0.18.0. Affected by this issue is some unknown fu...",
+      "description": "A flaw has been found in NousResearch hermes-agent 0.18.0. Affected by this issue is some unknown functionality of the file gateway/platforms/api_server.py of the component Session Chat Interface. This manipulation causes denial of service. The attack is possible to be carried out remotely. The exploit has been published and may be used. The vendor was contacted early about this disclosure but did not respond in any way.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-09-01T21:18:46.567",
+      "references": [
+        "https://github.com/hackerguopeng/cve/tree/main/Hermes_API_Server_Session_Chat_DoS_Report",
+        "https://vuldb.com/cve/CVE-2026-84287",
+        "https://vuldb.com/submit/882712"
+      ],
+      "cvss_score": 4.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-84287",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (4.3); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-19008",
       "severity": "medium",
@@ -395,6 +605,7 @@
       "title": "OpenClaw Dashboard contains a stored cross-site scripting vulnerability that allows unauthenticated ...",
       "description": "OpenClaw Dashboard contains a stored cross-site scripting vulnerability that allows unauthenticated remote attackers to execute arbitrary JavaScript in the administrator's browser session by injecting HTML markup into agent transcript messages processed through the sessions API. Attackers can craft a message containing inline event handler payloads such as an img tag with an onerror attribute within the 60-character rendering budget, which is stored in the session transcript and interpolated unsanitized into innerHTML on the default landing page, allowing theft of session tokens and unauthorized calls to authenticated administrative endpoints including agent instruction file modification.",
       "affected": [
+        "cpe:2.3:a:tugcantopaloglu:openclaw_agent_dashboard:*:*:*:*:*:*:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -430,6 +641,7 @@
       "title": "OpenClaw Dashboard v3.0.0 contains a stored cross-site scripting vulnerability that allows unauthent...",
       "description": "OpenClaw Dashboard v3.0.0 contains a stored cross-site scripting vulnerability that allows unauthenticated remote attackers to inject arbitrary HTML and script payloads by submitting a crafted username in a failed login POST request, which is recorded verbatim in the audit log. When an administrator opens the notification panel, the unescaped log entry is rendered via innerHTML with a permissive Content-Security-Policy allowing inline event handlers, enabling the attacker-supplied payload to execute in the administrator's session and interact with authenticated endpoints including agent instruction file editing and configuration changes.",
       "affected": [
+        "cpe:2.3:a:tugcantopaloglu:openclaw_agent_dashboard:*:*:*:*:*:*:*:*",
         "openclaw@*"
       ],
       "platforms": [
@@ -2910,8 +3122,8 @@
       "id": "GHSA-575v-8hfq-m3mc",
       "ghsa_id": "GHSA-575v-8hfq-m3mc",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "high",
       "type": "path_traversal",

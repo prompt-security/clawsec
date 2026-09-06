@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated": "2026-08-19T06:07:49Z",
+  "updated": "2026-09-06T06:07:48Z",
   "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
   "stale_after_days": 60,
   "semantics": {
@@ -1234,8 +1234,8 @@
       "id": "GHSA-575v-8hfq-m3mc",
       "ghsa_id": "GHSA-575v-8hfq-m3mc",
       "cve_id": null,
-      "status": "active",
-      "stale": false,
+      "status": "stale",
+      "stale": true,
       "stale_after_days": 60,
       "severity": "high",
       "type": "path_traversal",
