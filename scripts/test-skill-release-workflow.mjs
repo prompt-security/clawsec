@@ -23,6 +23,14 @@ const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPa
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
+for (const resolverStep of ['Detect publishability and install defaults', 'Check if publishable']) {
+  assert.match(
+    workflow,
+    new RegExp(`      - name: Setup Node\n        uses: actions/setup-node@[^\n]+\n        with:\n          node-version: 24\n\n      - name: ${resolverStep}\n`),
+    `${resolverStep} must run after Setup Node selects Node 24`,
+  );
+}
+
 const preservedHelperBlock = workflow.match(
   /- name: Prepare current ClawHub workflow helpers\s+run: \|\n(?<body>[\s\S]*?)\n\s+- name: Checkout tag/,
 )?.groups?.body;
