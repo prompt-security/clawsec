@@ -1164,6 +1164,11 @@ jobs:
             exit 1
           fi
 
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
       - name: Detect publishability and install defaults
         id: publishable
         run: |
@@ -1193,11 +1198,6 @@ jobs:
           echo "publish_clawhub=${PUBLISH_CLAWHUB}" >> $GITHUB_OUTPUT
           echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
-
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
 
       - name: Validate npx skills install docs
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
@@ -1776,6 +1776,11 @@ jobs:
     env:
       CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
     steps:
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
       - name: Check if publishable
         if: needs.release-tag.outputs.publish_clawhub != 'true'
         run: |
@@ -2022,11 +2027,6 @@ jobs:
           CLAWHUB_SLUG=$(node "$RUNNER_TEMP/resolve_clawhub_slug.mjs" "$SKILL_PATH")
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
           echo "Skill is publishable to ClawHub"
-
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 24
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
