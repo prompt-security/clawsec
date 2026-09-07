@@ -29,7 +29,7 @@ jobs:
       - name: Check markdown links (README/wiki)
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            python scripts/i18n/link_check.py --changed-only --base-ref "origin/${{ github.base_ref }}"
+            python scripts/i18n/link_check.py --changed-only --base-ref "origin/${GITHUB_BASE_REF}"
           else
             python scripts/i18n/link_check.py
           fi
