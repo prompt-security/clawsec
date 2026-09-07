@@ -1,5 +1,16 @@
 version: 2
 updates:
+  # The clawhub CLI that skill-release.yml installs with `npm ci --prefix
+  # .github/clawhub-cli`. Its own entry rather than `directories:` on the root
+  # npm block, so a mistake here cannot take root npm updates down with it.
+  - package-ecosystem: "npm"
+    directory: "/.github/clawhub-cli"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
