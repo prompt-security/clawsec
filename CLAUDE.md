@@ -18,7 +18,7 @@ source .venv/bin/activate
 uv pip install ruff bandit   # linters configured in pyproject.toml
 ```
 
-Required tools: Node 20+, Python 3.10+, openssl, jq, shellcheck, gitleaks,
+Required tools: Node 24+, Python 3.10+, openssl, jq, shellcheck, gitleaks,
 trufflehog (`brew install shellcheck gitleaks trufflehog`). The pre-commit hook
 exits 1 without gitleaks.
 
