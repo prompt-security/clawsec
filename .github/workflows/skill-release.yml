@@ -21,7 +21,8 @@ on:
         required: true
         type: string
 
-permissions: read-all
+permissions:
+  contents: read
 
 # The ClawHub CLI version is pinned (with integrity hashes) in
 # .github/clawhub-cli/package-lock.json — bump it there.
