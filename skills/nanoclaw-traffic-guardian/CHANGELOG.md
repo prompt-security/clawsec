@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.2] - 2026-09-07
+
+### Changed
+
+- Promoted out of beta. First stable release of the NanoClaw traffic guardian baseline; no runtime changes from `0.0.1-beta5`.
+
 ## [0.0.1-beta5] - 2026-06-23
 
 ### Changed
