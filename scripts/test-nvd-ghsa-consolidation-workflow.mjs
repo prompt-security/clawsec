@@ -64,6 +64,22 @@ assert.match(
   /node scripts\/ci\/repair_stale_exploitability\.mjs[\s\S]*--feed "\$FEED_PATH"[\s\S]*--updates tmp\/updated_advisories\.json[\s\S]*--output tmp\/updated_advisories\.json[\s\S]*--nvd-json tmp\/filtered_cves\.json/,
   'NVD delta updates must repair stale exploitability enrichment before publishing the feed',
 );
+const pollJob = workflow.split('\n  poll-and-update:\n')[1]?.split(/\n {2}[\w-]+:\n/)[0];
+assert.ok(pollJob, 'NVD workflow must define the poll-and-update job');
+const pollSteps = pollJob.split('\n      - ');
+const pythonSetupSteps = pollSteps.filter((step) => /uses: actions\/setup-python@/.test(step));
+assert.equal(pythonSetupSteps.length, 1, 'NVD job must select Python exactly once');
+const pythonSetupStep = pythonSetupSteps[0];
+assert.match(pythonSetupStep, /python-version: '3\.12'/, 'NVD analyzers must use Python 3.12');
+assert.doesNotMatch(pythonSetupStep, /^ {8}if:/m, 'Python setup must also run when there are no new CVEs');
+for (const analyzer of ['repair_stale_exploitability.mjs', 'enrich_exploitability.sh']) {
+  const analyzerStepIndex = pollSteps.findIndex((step) => step.includes(analyzer));
+  assert.ok(analyzerStepIndex !== -1, `NVD job must invoke ${analyzer}`);
+  assert.ok(
+    pollSteps.indexOf(pythonSetupStep) < analyzerStepIndex,
+    `Python 3.12 setup must precede the step that invokes ${analyzer}`,
+  );
+}
 assert.match(
   workflow,
   /id: nvd_counts[\s\S]*Final NVD advisories to update:[\s\S]*nvd_updated_count=\$UPDATE_COUNT/,
