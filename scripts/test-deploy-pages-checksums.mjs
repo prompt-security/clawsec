@@ -96,6 +96,35 @@ assert.match(
 const productionMirrorStep = stepBody(workflow, "Get latest clawsec-suite release URL");
 assert.match(
   productionMirrorStep,
+  /^\s+id: suite_url$/m,
+  "Deploy Pages must identify the suite URL producer as suite_url",
+);
+assert.match(
+  productionMirrorStep,
+  /echo "url=https:\/\/clawsec\.prompt\.security\/releases\/download\/\$\{LATEST_TAG\}\/SKILL\.md" >> "\$GITHUB_OUTPUT"/,
+  "Deploy Pages must publish the suite release URL as the url step output",
+);
+assert.doesNotMatch(
+  productionMirrorStep,
+  /\$\{?GITHUB_ENV\}?/,
+  "the suite URL producer must not write to the shared workflow environment",
+);
+assert.match(
+  productionMirrorStep,
+  /else\n\s+echo "No clawsec-suite release found, using fallback"\n\s+fi\s*$/,
+  "without a suite tag, the producer must leave the URL output unset for the build fallback",
+);
+assert.match(
+  stepBody(workflow, "Build"),
+  /^\s+VITE_CLAWSEC_SUITE_URL: \$\{\{ steps\.suite_url\.outputs\.url \}\}$/m,
+  "Build must consume the suite_url step output",
+);
+assert.ok(
+  stepIndex(workflow, "Get latest clawsec-suite release URL") < stepIndex(workflow, "Build"),
+  "Deploy Pages must derive the suite URL before Build consumes it",
+);
+assert.match(
+  productionMirrorStep,
   /advisory_pages_artifacts\.mjs publish-release-mirror/,
   "Deploy Pages must use the tested release compatibility mirror",
 );
