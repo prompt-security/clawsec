@@ -23,11 +23,17 @@ const patchClawhubTrustExtensions = await readFile(patchClawhubTrustExtensionsPa
 const guardClawhubSlugOwner = await readFile(guardClawhubSlugOwnerPath, 'utf8');
 const releaseSkillScript = await readFile(releaseSkillScriptPath, 'utf8');
 
-for (const resolverStep of ['Detect publishability and install defaults', 'Check if publishable']) {
+for (const [jobName, resolverStep] of [
+  ['release-tag', 'Detect publishability and install defaults'],
+  ['republish-clawhub', 'Check if publishable'],
+]) {
+  const jobStart = workflow.indexOf(`\n  ${jobName}:\n`);
+  assert.ok(jobStart !== -1, `${jobName} must exist`);
+  const job = workflow.slice(jobStart + 1).split(/\n {2}[\w-]+:\n/)[0];
   assert.match(
-    workflow,
+    job,
     new RegExp(`      - name: Setup Node\n        uses: actions/setup-node@[^\n]+\n        with:\n          node-version: 24\n\n      - name: ${resolverStep}\n`),
-    `${resolverStep} must run after Setup Node selects Node 24`,
+    `${jobName}: ${resolverStep} must run after Setup Node selects Node 24`,
   );
 }
 
