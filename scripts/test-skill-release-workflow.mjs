@@ -550,7 +550,7 @@ assert.doesNotMatch(
 );
 
 assert.equal(
-  workflow.match(/SKILL_PATH="\$\{\{ steps\.clawhub-package\.outputs\.skill_path \}\}"/g)?.length,
+  workflow.match(/SKILL_PATH="\$\{STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH\}"/g)?.length,
   4,
   'ClawHub publish, republish, and their verification steps must use the verified release package path',
 );

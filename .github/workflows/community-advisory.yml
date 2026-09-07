@@ -313,12 +313,16 @@ jobs:
       - name: Comment on issue
         if: steps.parse.outputs.already_exists != 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ADVISORY_ID: ${{ steps.parse.outputs.advisory_id }}
+          PULL_REQUEST_URL: ${{ steps.create-pr.outputs.pull-request-url }}
+          PULL_REQUEST_OPERATION: ${{ steps.create-pr.outputs.pull-request-operation }}
         with:
           github-token: ${{ secrets.POLL_NVD_CVES_PAT }}
           script: |
-            const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
-            const pullRequestUrl = '${{ steps.create-pr.outputs.pull-request-url }}';
-            const operation = '${{ steps.create-pr.outputs.pull-request-operation }}';
+            const advisoryId = process.env.ADVISORY_ID;
+            const pullRequestUrl = process.env.PULL_REQUEST_URL;
+            const operation = process.env.PULL_REQUEST_OPERATION;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -339,10 +343,12 @@ jobs:
       - name: Comment if already exists
         if: steps.parse.outputs.already_exists == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ADVISORY_ID: ${{ steps.parse.outputs.advisory_id }}
         with:
           github-token: ${{ secrets.POLL_NVD_CVES_PAT }}
           script: |
-            const advisoryId = '${{ steps.parse.outputs.advisory_id }}';
+            const advisoryId = process.env.ADVISORY_ID;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

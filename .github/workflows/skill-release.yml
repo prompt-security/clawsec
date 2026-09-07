@@ -1093,7 +1093,7 @@ jobs:
       - name: Parse tag
         id: parse
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${GITHUB_REF_NAME}"
           # Extract skill name (everything before -v)
           SKILL_NAME="${TAG%-v*}"
           # Extract version (everything after -v)
@@ -1113,7 +1113,7 @@ jobs:
 
       - name: Validate skill exists
         run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
           if [ ! -d "$SKILL_PATH" ]; then
             echo "Error: Skill directory not found: $SKILL_PATH"
             exit 1
@@ -1123,11 +1123,13 @@ jobs:
             exit 1
           fi
           echo "Skill validated: $SKILL_PATH"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Validate version match
         run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-          TAG_VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
+          TAG_VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
 
           # Extract version from skill.json
           JSON_VERSION=$(jq -r '.version' "$SKILL_PATH/skill.json")
@@ -1139,11 +1141,14 @@ jobs:
           fi
 
           echo "Version validated: $TAG_VERSION"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
       - name: Validate SKILL.md frontmatter version
         run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-          TAG_VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
+          TAG_VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
 
           # Check if SKILL.md exists
           if [ -f "$SKILL_PATH/SKILL.md" ]; then
@@ -1163,11 +1168,14 @@ jobs:
             echo "::error::Missing required SKILL.md: $SKILL_PATH/SKILL.md"
             exit 1
           fi
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
       - name: Detect publishability and install defaults
         id: publishable
         run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
           INTERNAL=$(jq -r 'if (.openclaw | type) == "object" then (.openclaw.internal // false) else false end' "$SKILL_PATH/skill.json")
 
           OPENCLAW_SKILL=false
@@ -1193,6 +1201,8 @@ jobs:
           echo "publish_clawhub=${PUBLISH_CLAWHUB}" >> $GITHUB_OUTPUT
           echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -1200,7 +1210,9 @@ jobs:
           node-version: 24
 
       - name: Validate npx skills install docs
-        run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
+        run: node scripts/ci/validate_skill_install_docs.mjs --skills "${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Install SkillSpector
         run: |
@@ -1226,7 +1238,7 @@ jobs:
         if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
         run: |
           set -euo pipefail
-          ADVISORY_DIR="${{ steps.parse.outputs.skill_path }}/advisories"
+          ADVISORY_DIR="${STEPS_PARSE_OUTPUTS_SKILL_PATH}/advisories"
           FEED_SHA=$(sha256sum "$ADVISORY_DIR/feed.json" | awk '{print $1}')
           FEED_SIZE=$(stat -c%s "$ADVISORY_DIR/feed.json" 2>/dev/null || stat -f%z "$ADVISORY_DIR/feed.json")
           FEED_SIG_SHA=$(sha256sum "$ADVISORY_DIR/feed.json.sig" | awk '{print $1}')
@@ -1237,7 +1249,7 @@ jobs:
           jq -n \
             --arg schema_version "1" \
             --arg algorithm "sha256" \
-            --arg version "${{ steps.parse.outputs.version }}" \
+            --arg version "${STEPS_PARSE_OUTPUTS_VERSION}" \
             --arg generated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg repo "${{ github.repository }}" \
             --arg feed_sha "$FEED_SHA" \
@@ -1273,6 +1285,9 @@ jobs:
 
           echo "Generated $ADVISORY_DIR/checksums.json"
           jq . "$ADVISORY_DIR/checksums.json"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
       - name: Sign embedded advisory checksums and verify
         if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
@@ -1286,17 +1301,19 @@ jobs:
       - name: Show embedded advisory signing outputs
         if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
         run: |
-          ADVISORY_DIR="${{ steps.parse.outputs.skill_path }}/advisories"
+          ADVISORY_DIR="${STEPS_PARSE_OUTPUTS_SKILL_PATH}/advisories"
           echo "Successfully signed embedded advisory artifacts:"
           ls -la "$ADVISORY_DIR"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Package release assets
         run: |
           set -euo pipefail
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-          VERSION="${{ steps.parse.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
+          VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
+          TAG="${GITHUB_REF_NAME}"
 
           mkdir -p release-assets
 
@@ -1518,6 +1535,10 @@ jobs:
           echo ""
           echo "=== Release assets ==="
           ls -la release-assets/
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_NAME: ${{ steps.parse.outputs.skill_name }}
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
       - name: Sign checksums and verify
         uses: ./.github/actions/sign-and-verify
@@ -1549,8 +1570,8 @@ jobs:
         id: changelog
         run: |
           set -euo pipefail
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
-          VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
+          VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
 
           if [ ! -f "$SKILL_PATH/CHANGELOG.md" ]; then
             echo "::error::Missing required changelog file: $SKILL_PATH/CHANGELOG.md"
@@ -1580,16 +1601,19 @@ jobs:
             echo "$CHANGELOG_ENTRY"
             echo "EOF"
           } >> $GITHUB_OUTPUT
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
       - name: Build quick install instructions
         id: install
         run: |
           set -euo pipefail
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          CLAWHUB_SLUG="${{ steps.publishable.outputs.clawhub_slug }}"
-          VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
+          CLAWHUB_SLUG="${STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG}"
+          VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
           REPO="${{ github.repository }}"
-          TAG="${{ github.ref_name }}"
+          TAG="${GITHUB_REF_NAME}"
 
           {
             echo "quick_install<<INSTALL_EOF"
@@ -1614,7 +1638,7 @@ jobs:
 
           EOF
 
-            if [ "${{ steps.publishable.outputs.publish_clawhub }}" = "true" ] && [ "${{ steps.publishable.outputs.openclaw_skill }}" = "true" ]; then
+            if [ "${STEPS_PUBLISHABLE_OUTPUTS_PUBLISH_CLAWHUB}" = "true" ] && [ "${STEPS_PUBLISHABLE_OUTPUTS_OPENCLAW_SKILL}" = "true" ]; then
               cat <<EOF
           ### Quick Install
 
@@ -1666,6 +1690,12 @@ jobs:
 
             echo "INSTALL_EOF"
           } >> "$GITHUB_OUTPUT"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_NAME: ${{ steps.parse.outputs.skill_name }}
+          STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG: ${{ steps.publishable.outputs.clawhub_slug }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
+          STEPS_PUBLISHABLE_OUTPUTS_PUBLISH_CLAWHUB: ${{ steps.publishable.outputs.publish_clawhub }}
+          STEPS_PUBLISHABLE_OUTPUTS_OPENCLAW_SKILL: ${{ steps.publishable.outputs.openclaw_skill }}
 
       - name: Prepare GitHub release body
         env:
@@ -1729,8 +1759,8 @@ jobs:
 
       - name: Delete superseded releases
         run: |
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          CURRENT_VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
+          CURRENT_VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
 
           # Extract major version from current release
           CURRENT_MAJOR=$(echo "$CURRENT_VERSION" | cut -d. -f1)
@@ -1763,6 +1793,8 @@ jobs:
           echo "Superseded release cleanup complete"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STEPS_PARSE_OUTPUTS_SKILL_NAME: ${{ steps.parse.outputs.skill_name }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
   publish-clawhub:
     # Separate blocking job for ClawHub publishing - runs after GitHub release.
@@ -1797,11 +1829,13 @@ jobs:
         if: needs.release-tag.outputs.publish_clawhub == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          NEEDS_RELEASE_TAG_OUTPUTS_SKILL_NAME: ${{ needs.release-tag.outputs.skill_name }}
+          NEEDS_RELEASE_TAG_OUTPUTS_VERSION: ${{ needs.release-tag.outputs.version }}
         run: |
           set -euo pipefail
-          SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
-          VERSION="${{ needs.release-tag.outputs.version }}"
-          TAG="${{ github.ref_name }}"
+          SKILL_NAME="${NEEDS_RELEASE_TAG_OUTPUTS_SKILL_NAME}"
+          VERSION="${NEEDS_RELEASE_TAG_OUTPUTS_VERSION}"
+          TAG="${GITHUB_REF_NAME}"
           RELEASE_DIR="$RUNNER_TEMP/clawhub-release"
           OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
 
@@ -1866,7 +1900,9 @@ jobs:
           export CLAWHUB_SITE="$SITE"
           export CLAWHUB_REGISTRY="$REGISTRY"
           bash scripts/ci/guard_clawhub_slug_owner.sh \
-            "${{ needs.release-tag.outputs.clawhub_slug }}"
+            "${NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG}"
+        env:
+          NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG: ${{ needs.release-tag.outputs.clawhub_slug }}
 
       - name: Check existing ClawHub version
         id: clawhub-version
@@ -1875,9 +1911,9 @@ jobs:
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
-          CLAWHUB_SLUG="${{ needs.release-tag.outputs.clawhub_slug }}"
-          VERSION="${{ needs.release-tag.outputs.version }}"
+          SKILL_NAME="${NEEDS_RELEASE_TAG_OUTPUTS_SKILL_NAME}"
+          CLAWHUB_SLUG="${NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG}"
+          VERSION="${NEEDS_RELEASE_TAG_OUTPUTS_VERSION}"
           export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
 
           set +e
@@ -1901,6 +1937,10 @@ jobs:
             cat /tmp/clawhub-existing-version.err
             exit 1
           fi
+        env:
+          NEEDS_RELEASE_TAG_OUTPUTS_SKILL_NAME: ${{ needs.release-tag.outputs.skill_name }}
+          NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG: ${{ needs.release-tag.outputs.clawhub_slug }}
+          NEEDS_RELEASE_TAG_OUTPUTS_VERSION: ${{ needs.release-tag.outputs.version }}
 
       - name: Publish to ClawHub
         if: needs.release-tag.outputs.publish_clawhub == 'true' && steps.clawhub-version.outputs.already_exists != 'true'
@@ -1908,10 +1948,10 @@ jobs:
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
-          SKILL_NAME="${{ needs.release-tag.outputs.skill_name }}"
-          CLAWHUB_SLUG="${{ needs.release-tag.outputs.clawhub_slug }}"
-          VERSION="${{ needs.release-tag.outputs.version }}"
+          SKILL_PATH="${STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH}"
+          SKILL_NAME="${NEEDS_RELEASE_TAG_OUTPUTS_SKILL_NAME}"
+          CLAWHUB_SLUG="${NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG}"
+          VERSION="${NEEDS_RELEASE_TAG_OUTPUTS_VERSION}"
           NAME=$(jq -r '.name' "$SKILL_PATH/skill.json")
           CHANGELOG="Release ${VERSION} via CI"
 
@@ -1934,6 +1974,11 @@ jobs:
           fi
 
           echo "ClawHub publish request completed for $SKILL_NAME@$VERSION as $CLAWHUB_SLUG"
+        env:
+          STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH: ${{ steps.clawhub-package.outputs.skill_path }}
+          NEEDS_RELEASE_TAG_OUTPUTS_SKILL_NAME: ${{ needs.release-tag.outputs.skill_name }}
+          NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG: ${{ needs.release-tag.outputs.clawhub_slug }}
+          NEEDS_RELEASE_TAG_OUTPUTS_VERSION: ${{ needs.release-tag.outputs.version }}
 
       - name: Verify published ClawHub package
         if: needs.release-tag.outputs.publish_clawhub == 'true'
@@ -1941,9 +1986,9 @@ jobs:
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          CLAWHUB_SLUG="${{ needs.release-tag.outputs.clawhub_slug }}"
-          VERSION="${{ needs.release-tag.outputs.version }}"
-          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
+          CLAWHUB_SLUG="${NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG}"
+          VERSION="${NEEDS_RELEASE_TAG_OUTPUTS_VERSION}"
+          SKILL_PATH="${STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH}"
           export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
           export CLAWHUB_SITE="$SITE"
           export CLAWHUB_REGISTRY="$REGISTRY"
@@ -1953,6 +1998,10 @@ jobs:
             --slug "$CLAWHUB_SLUG" \
             --version "$VERSION"
           echo "✓ Verified published ClawHub package matches the signed release payload"
+        env:
+          NEEDS_RELEASE_TAG_OUTPUTS_CLAWHUB_SLUG: ${{ needs.release-tag.outputs.clawhub_slug }}
+          NEEDS_RELEASE_TAG_OUTPUTS_VERSION: ${{ needs.release-tag.outputs.version }}
+          STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH: ${{ steps.clawhub-package.outputs.skill_path }}
 
   republish-clawhub:
     # Manual workflow to republish a specific tag to ClawHub
@@ -1967,7 +2016,7 @@ jobs:
       - name: Parse tag
         id: parse
         run: |
-          TAG="${{ github.event.inputs.tag }}"
+          TAG="${GITHUB_EVENT_INPUTS_TAG}"
           # Extract skill name (everything before -v)
           SKILL_NAME="${TAG%-v*}"
           # Extract version (everything after -v)
@@ -1978,6 +2027,8 @@ jobs:
           echo "skill_path=skills/${SKILL_NAME}" >> $GITHUB_OUTPUT
 
           echo "Parsed tag: skill=${SKILL_NAME}, version=${VERSION}"
+        env:
+          GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
 
       - name: Checkout workflow helpers
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1997,7 +2048,7 @@ jobs:
 
       - name: Validate skill exists
         run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
           if [ ! -d "$SKILL_PATH" ]; then
             echo "Error: Skill directory not found: $SKILL_PATH"
             exit 1
@@ -2007,11 +2058,13 @@ jobs:
             exit 1
           fi
           echo "Skill validated: $SKILL_PATH"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Check if publishable
         id: publishable
         run: |
-          SKILL_PATH="${{ steps.parse.outputs.skill_path }}"
+          SKILL_PATH="${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
           INTERNAL=$(jq -r 'if (.openclaw | type) == "object" then (.openclaw.internal // false) else false end' "$SKILL_PATH/skill.json")
 
           if [ "$INTERNAL" = "true" ]; then
@@ -2022,6 +2075,8 @@ jobs:
           CLAWHUB_SLUG=$(node "$RUNNER_TEMP/resolve_clawhub_slug.mjs" "$SKILL_PATH")
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
           echo "Skill is publishable to ClawHub"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -2032,11 +2087,14 @@ jobs:
         id: clawhub-package
         env:
           GH_TOKEN: ${{ github.token }}
+          STEPS_PARSE_OUTPUTS_SKILL_NAME: ${{ steps.parse.outputs.skill_name }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
+          GITHUB_EVENT_INPUTS_TAG: ${{ github.event.inputs.tag }}
         run: |
           set -euo pipefail
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          VERSION="${{ steps.parse.outputs.version }}"
-          TAG="${{ github.event.inputs.tag }}"
+          SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
+          VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
+          TAG="${GITHUB_EVENT_INPUTS_TAG}"
           RELEASE_DIR="$RUNNER_TEMP/clawhub-release"
           OUTPUT_DIR="$RUNNER_TEMP/clawhub-package"
 
@@ -2073,7 +2131,9 @@ jobs:
           echo "skill_path=$OUTPUT_DIR/$SKILL_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Validate npx skills install docs
-        run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
+        run: node scripts/ci/validate_skill_install_docs.mjs --skills "${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
       - name: Install clawhub CLI
         run: bash scripts/ci/install_clawhub_cli.sh
@@ -2110,17 +2170,19 @@ jobs:
           export CLAWHUB_SITE="$SITE"
           export CLAWHUB_REGISTRY="$REGISTRY"
           bash scripts/ci/guard_clawhub_slug_owner.sh \
-            "${{ steps.publishable.outputs.clawhub_slug }}"
+            "${STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG}"
+        env:
+          STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG: ${{ steps.publishable.outputs.clawhub_slug }}
 
       - name: Publish to ClawHub
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
-          SKILL_NAME="${{ steps.parse.outputs.skill_name }}"
-          CLAWHUB_SLUG="${{ steps.publishable.outputs.clawhub_slug }}"
-          VERSION="${{ steps.parse.outputs.version }}"
+          SKILL_PATH="${STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH}"
+          SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
+          CLAWHUB_SLUG="${STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG}"
+          VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
           NAME=$(jq -r '.name' "$SKILL_PATH/skill.json")
           CHANGELOG="Manual republish of ${VERSION} via workflow_dispatch"
 
@@ -2152,15 +2214,20 @@ jobs:
           fi
 
           echo "✓ Successfully published $SKILL_NAME@$VERSION to ClawHub"
+        env:
+          STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH: ${{ steps.clawhub-package.outputs.skill_path }}
+          STEPS_PARSE_OUTPUTS_SKILL_NAME: ${{ steps.parse.outputs.skill_name }}
+          STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG: ${{ steps.publishable.outputs.clawhub_slug }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
 
       - name: Verify published ClawHub package
         run: |
           set -euo pipefail
           SITE=${CLAWHUB_SITE:-https://clawhub.ai}
           REGISTRY=${CLAWHUB_REGISTRY:-$SITE}
-          CLAWHUB_SLUG="${{ steps.publishable.outputs.clawhub_slug }}"
-          VERSION="${{ steps.parse.outputs.version }}"
-          SKILL_PATH="${{ steps.clawhub-package.outputs.skill_path }}"
+          CLAWHUB_SLUG="${STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG}"
+          VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
+          SKILL_PATH="${STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH}"
           export CLAWHUB_CONFIG_PATH="$HOME/.clawhub-ci/config.json"
           export CLAWHUB_SITE="$SITE"
           export CLAWHUB_REGISTRY="$REGISTRY"
@@ -2170,3 +2237,7 @@ jobs:
             --slug "$CLAWHUB_SLUG" \
             --version "$VERSION"
           echo "✓ Verified published ClawHub package matches the signed release payload"
+        env:
+          STEPS_PUBLISHABLE_OUTPUTS_CLAWHUB_SLUG: ${{ steps.publishable.outputs.clawhub_slug }}
+          STEPS_PARSE_OUTPUTS_VERSION: ${{ steps.parse.outputs.version }}
+          STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH: ${{ steps.clawhub-package.outputs.skill_path }}

@@ -152,16 +152,21 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Feed changed | ${{ steps.changes.outputs.changed }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Agent feed changed | ${{ steps.changes.outputs.agent_changed }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| GHSA source feed changed | ${{ steps.changes.outputs.ghsa_changed }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Feed changed | ${STEPS_CHANGES_OUTPUTS_CHANGED} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Agent feed changed | ${STEPS_CHANGES_OUTPUTS_AGENT_CHANGED} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| GHSA source feed changed | ${STEPS_CHANGES_OUTPUTS_GHSA_CHANGED} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Feed path | $GHSA_FEED_PATH |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Agent feed path | $FEED_PATH |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Total advisories | $(jq '.advisories | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Active | $(jq '[.advisories[] | select(.status == "active")] | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Matured | $(jq '[.advisories[] | select(.status == "matured")] | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Stale | $(jq '[.advisories[] | select(.status == "stale")] | length' "$GHSA_FEED_PATH") |" >> "$GITHUB_STEP_SUMMARY"
-          if [ -n "${{ steps.create-pr.outputs.pull-request-url }}" ]; then
+          if [ -n "${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL}" ]; then
             echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Upserted PR: ${{ steps.create-pr.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "Upserted PR: ${STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL}" >> "$GITHUB_STEP_SUMMARY"
           fi
+        env:
+          STEPS_CHANGES_OUTPUTS_CHANGED: ${{ steps.changes.outputs.changed }}
+          STEPS_CHANGES_OUTPUTS_AGENT_CHANGED: ${{ steps.changes.outputs.agent_changed }}
+          STEPS_CHANGES_OUTPUTS_GHSA_CHANGED: ${{ steps.changes.outputs.ghsa_changed }}
+          STEPS_CREATE_PR_OUTPUTS_PULL_REQUEST_URL: ${{ steps.create-pr.outputs.pull-request-url }}

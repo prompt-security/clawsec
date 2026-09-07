@@ -96,12 +96,12 @@ assert.match(
 );
 assert.match(
   workflow,
-  /TITLE="chore: update NVD\/GHSA advisories - \$\{\{ steps\.transform\.outputs\.nvd_new_to_feed_count \}\} NVD new, \$\{\{ steps\.nvd_counts\.outputs\.nvd_updated_count \}\} NVD updated, \$\{\{ steps\.feed_changes\.outputs\.ghsa_added_to_consolidated_count \}\} GHSA active added"/,
+  /TITLE="chore: update NVD\/GHSA advisories - \$\{STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT\} NVD new, \$\{STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT\} NVD updated, \$\{STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT\} GHSA active added"/,
   'Generated PR titles must include net-new NVD, updated NVD, and GHSA-only addition counts',
 );
 assert.match(
   workflow,
-  /\*\*GHSA active advisories added to consolidated feed:\*\* \$\{\{ steps\.feed_changes\.outputs\.ghsa_added_to_consolidated_count \}\}/,
+  /\*\*GHSA active advisories added to consolidated feed:\*\* \$\{STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT\}/,
   'Generated PR bodies must include GHSA-only additions',
 );
 assert.doesNotMatch(
