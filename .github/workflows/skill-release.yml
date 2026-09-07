@@ -14,6 +14,9 @@ on:
       - '.github/workflows/skill-release.yml'
       - 'scripts/ci/**'
       - 'scripts/test-skill-*.mjs'
+      # Dependabot bumps of the pinned ClawHub CLI must exercise
+      # simulate-tag-release-build; nothing else installs the CLI on a PR.
+      - '.github/clawhub-cli/**'
   workflow_dispatch:
     inputs:
       tag:

@@ -94,6 +94,12 @@ assert.match(
   'Skill release workflow must also run when the release pipeline itself changes',
 );
 
+assert.match(
+  workflow,
+  /pull_request:[\s\S]*paths:[\s\S]*- '\.github\/clawhub-cli\/\*\*'/,
+  'Skill release workflow must run for Dependabot bumps of the pinned ClawHub CLI; simulate-tag-release-build is the only PR-time job that installs it',
+);
+
 assert.ok(
   ciWorkflow.includes(`      - name: Skill Release Tooling Tests
         run: |
