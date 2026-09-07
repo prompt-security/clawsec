@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # zizmor: ignore[dangerous-triggers] no PR head is checked out and no artifact
+  # from the triggering run is consumed; every job additionally guards on
+  # workflow_run.event != 'pull_request'.
   workflow_run:
     workflows: ["Skill Release"]
     types: [completed]
@@ -315,6 +318,7 @@ jobs:
           ls -la public/checksums.json public/checksums.sig public/signing-public.pem
 
       - name: Get latest clawsec-suite release URL
+        id: suite_url
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -326,10 +330,10 @@ jobs:
               "/repos/${REPO}/releases?per_page=100" \
               | jq -r -s 'add // [] | [.[] | select(.tag_name | startswith("clawsec-suite-v"))] | first | .tag_name // empty'
           )
-          
+
           if [ -n "$LATEST_TAG" ]; then
             echo "Found latest clawsec-suite tag: $LATEST_TAG"
-            echo "VITE_CLAWSEC_SUITE_URL=https://clawsec.prompt.security/releases/download/${LATEST_TAG}/SKILL.md" >> $GITHUB_ENV
+            echo "url=https://clawsec.prompt.security/releases/download/${LATEST_TAG}/SKILL.md" >> "$GITHUB_OUTPUT"
 
             # Create a local "latest" mirror path for clients that use GitHub-style URLs.
             # This enables swapping the host:
@@ -362,7 +366,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          VITE_CLAWSEC_SUITE_URL: ${{ env.VITE_CLAWSEC_SUITE_URL }}
+          VITE_CLAWSEC_SUITE_URL: ${{ steps.suite_url.outputs.url }}
 
       - name: Verify built public artifacts
         run: |
