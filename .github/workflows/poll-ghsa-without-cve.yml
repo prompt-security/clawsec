@@ -3,7 +3,8 @@ name: Poll GHSA Without CVE
 on:
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: poll-ghsa-without-cve

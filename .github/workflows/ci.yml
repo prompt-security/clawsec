@@ -5,7 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   lint-typescript:
@@ -91,8 +92,9 @@ jobs:
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
-    # Narrower than the workflow-wide read-all: this job runs third-party
-    # scanners over untrusted PR content and needs nothing but the checkout.
+    # Stated explicitly, not inherited: this job runs third-party scanners over
+    # untrusted PR content and needs nothing but the checkout. Keeping the block
+    # here means a future widening of the workflow default cannot widen this job.
     permissions:
       contents: read
     steps:
