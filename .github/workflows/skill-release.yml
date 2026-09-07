@@ -43,9 +43,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
@@ -286,9 +286,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install SkillSpector
         run: |
@@ -1020,9 +1020,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install SkillSpector
         run: |
@@ -1164,6 +1164,11 @@ jobs:
             exit 1
           fi
 
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
       - name: Detect publishability and install defaults
         id: publishable
         run: |
@@ -1193,11 +1198,6 @@ jobs:
           echo "publish_clawhub=${PUBLISH_CLAWHUB}" >> $GITHUB_OUTPUT
           echo "publishable=${PUBLISHABLE}" >> $GITHUB_OUTPUT
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
-
-      - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 20
 
       - name: Validate npx skills install docs
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${{ steps.parse.outputs.skill_path }}"
@@ -1788,9 +1788,9 @@ jobs:
 
       - name: Setup Node
         if: needs.release-tag.outputs.publish_clawhub == 'true'
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
@@ -2008,6 +2008,11 @@ jobs:
           fi
           echo "Skill validated: $SKILL_PATH"
 
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
       - name: Check if publishable
         id: publishable
         run: |
@@ -2022,11 +2027,6 @@ jobs:
           CLAWHUB_SLUG=$(node "$RUNNER_TEMP/resolve_clawhub_slug.mjs" "$SKILL_PATH")
           echo "clawhub_slug=${CLAWHUB_SLUG}" >> $GITHUB_OUTPUT
           echo "Skill is publishable to ClawHub"
-
-      - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 20
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
