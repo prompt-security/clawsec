@@ -268,7 +268,7 @@ jobs:
           fi
 
       - name: Sign advisory feed and verify
-        uses: ./.github/actions/sign-and-verify
+        uses: $/.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
@@ -278,7 +278,7 @@ jobs:
 
       - name: Sign provisional GHSA feed and verify
         if: hashFiles('public/advisories/ghsa-without-cve.json') != ''
-        uses: ./.github/actions/sign-and-verify
+        uses: $/.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
@@ -289,7 +289,7 @@ jobs:
         run: node scripts/ci/advisory_pages_artifacts.mjs generate --public-dir public --repository "${{ github.repository }}"
 
       - name: Sign checksums and verify
-        uses: ./.github/actions/sign-and-verify
+        uses: $/.github/actions/sign-and-verify
         with:
           private_key: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY }}
           private_key_passphrase: ${{ secrets.CLAWSEC_SIGNING_PRIVATE_KEY_PASSPHRASE }}
