@@ -12,7 +12,8 @@ on:
         default: 'false'
         type: boolean
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: poll-nvd-cves

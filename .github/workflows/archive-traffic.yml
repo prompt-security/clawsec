@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: traffic-archive
@@ -20,6 +20,9 @@ jobs:
   archive:
     name: Capture traffic snapshot
     runs-on: ubuntu-latest
+    permissions:
+      # Pushes the traffic snapshot to the traffic-archive branch.
+      contents: write
     steps:
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -10,7 +10,8 @@ on:
       - '.github/workflows/i18n-qa.yml'
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   i18n-qa:

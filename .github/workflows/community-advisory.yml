@@ -4,7 +4,8 @@ on:
   issues:
     types: [labeled]
 
-permissions: read-all
+permissions:
+  contents: read
 
 concurrency:
   group: community-advisory
