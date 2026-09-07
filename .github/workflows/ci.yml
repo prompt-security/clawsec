@@ -156,6 +156,12 @@ jobs:
       - run: npm ci
       - name: npm audit
         run: npm audit --audit-level=high --registry=https://registry.npmjs.org
+      # The pinned ClawHub CLI runs in skill-release.yml with publish secrets,
+      # so its lockfile gets the same gate as the root one. No install step:
+      # --package-lock-only audits the lockfile directly, so nothing from that
+      # dependency tree executes in this job.
+      - name: npm audit (clawhub-cli)
+        run: npm audit --prefix .github/clawhub-cli --package-lock-only --audit-level=high --registry=https://registry.npmjs.org
       - name: Check for outdated deps
         run: npm outdated || true
 

@@ -14,6 +14,8 @@ on:
       - package.json
       - package-lock.json
       - npm-shrinkwrap.json
+      - .github/clawhub-cli/package.json
+      - .github/clawhub-cli/package-lock.json
       - requirements*.txt
       - .github/requirements*.txt
       - .github/requirements-lint-python.txt
