@@ -41,6 +41,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Get last poll date from feed
         id: last_poll
@@ -1132,7 +1133,12 @@ jobs:
           fi
 
           git commit -m "$COMMIT_SUBJECT" -m "$COMMIT_BODY"
-          git push --force origin "$TARGET_BRANCH"
+          # The checkout runs with persist-credentials: false, so `origin` carries
+          # no auth. GH_TOKEN is read by gh, not by git -- push via an explicit
+          # token URL, the same idiom archive-traffic.yml and wiki-sync.yml use.
+          git push --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$TARGET_BRANCH"
 
           if [ -n "$TARGET_PR_NUMBER" ]; then
             gh pr edit "$TARGET_PR_NUMBER" --title "$TITLE" --body-file "$BODY_FILE"
