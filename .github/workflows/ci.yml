@@ -41,10 +41,14 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
+      # Versions come from the manifest so Dependabot's pip entry governs what
+      # CI actually executes. Inline `pipx --spec` pins are invisible to it.
+      - name: Install linters
+        run: pip install -r .github/requirements-lint-python.txt
       - name: Ruff (lint + format check)
-        run: pipx run --spec "ruff==0.6.9" ruff check utils/ --output-format=github
+        run: ruff check utils/ --output-format=github
       - name: Bandit (security)
-        run: pipx run --spec "bandit==1.7.9" bandit -r utils/ -ll
+        run: bandit -r utils/ -ll
 
   lint-shell:
     name: Lint Shell Scripts
