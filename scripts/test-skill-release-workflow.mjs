@@ -231,8 +231,17 @@ assert.match(
 
 assert.match(
   workflow,
-  /body_path: \$\{\{ runner\.temp \}\}\/skill-release-body\.md/,
-  'GitHub release creation must use body_path for the generated release body file',
+  /BODY_FILE="\$\{RUNNER_TEMP\}\/skill-release-body\.md"/,
+  'GitHub release creation must derive the release body path from RUNNER_TEMP',
+);
+
+// Both the edit and create branches must use it. A single [\s\S]* match would
+// be satisfied by either one alone, leaving the create branch -- the path taken
+// for every brand-new release -- uncovered.
+assert.equal(
+  workflow.match(/--notes-file "\$BODY_FILE"/g)?.length,
+  2,
+  'both the release edit and create branches must take their body from the generated file',
 );
 
 assert.doesNotMatch(

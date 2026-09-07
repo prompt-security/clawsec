@@ -46,6 +46,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a cache
+          # into that trust path. Explicit because the input defaults to true.
+          package-manager-cache: false
 
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
@@ -289,6 +292,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a cache
+          # into that trust path. Explicit because the input defaults to true.
+          package-manager-cache: false
 
       - name: Install SkillSpector
         run: |
@@ -1023,6 +1029,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a cache
+          # into that trust path. Explicit because the input defaults to true.
+          package-manager-cache: false
 
       - name: Install SkillSpector
         run: |
@@ -1208,6 +1217,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a cache
+          # into that trust path. Explicit because the input defaults to true.
+          package-manager-cache: false
 
       - name: Validate npx skills install docs
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
@@ -1746,16 +1758,37 @@ jobs:
           '
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        with:
-          name: "${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}"
-          tag_name: ${{ github.ref_name }}
-          files: release-assets/*
-          body_path: ${{ runner.temp }}/skill-release-body.md
-          draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          RELEASE_TITLE: ${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}
+          PRERELEASE: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+        run: |
+          set -euo pipefail
+
+          BODY_FILE="${RUNNER_TEMP}/skill-release-body.md"
+          shopt -s nullglob
+          ASSETS=(release-assets/*)
+          if [ "${#ASSETS[@]}" -eq 0 ]; then
+            echo "::error::No release assets found in release-assets/"
+            exit 1
+          fi
+
+          # Re-pushing a tag re-runs this job, so upsert rather than create.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "$RELEASE_TITLE" \
+              --notes-file "$BODY_FILE" \
+              --draft=false \
+              --prerelease="$PRERELEASE"
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            gh release create "$TAG" \
+              --title "$RELEASE_TITLE" \
+              --notes-file "$BODY_FILE" \
+              --prerelease="$PRERELEASE" \
+              "${ASSETS[@]}"
+          fi
 
       - name: Delete superseded releases
         run: |
@@ -1823,6 +1856,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a cache
+          # into that trust path. Explicit because the input defaults to true.
+          package-manager-cache: false
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
@@ -2082,6 +2118,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a cache
+          # into that trust path. Explicit because the input defaults to true.
+          package-manager-cache: false
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
