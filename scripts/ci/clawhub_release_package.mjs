@@ -439,6 +439,18 @@ export async function verifyClawhubClientSelection({ packageDir, cliPrefix }) {
   return { files: expectedFiles.size };
 }
 
+// ClawHub synthesises skill-card.md at publish time from the skill's own
+// metadata. It is in no release zip and no source tree, so it is never in
+// expectedFiles -- which made this check impossible to pass for any skill.
+// Verified against the registry: every published version carries one, at a
+// different size per version (nanoclaw-traffic-guardian 0.0.2 -> 2595B,
+// 0.0.1-beta5 -> 2196B, clawsec-suite 0.1.16 -> 2849B).
+//
+// Exempting it by exact path keeps the integrity property intact: every file we
+// published must still be present with a matching sha256 and size, and any
+// other unexpected path is still a failure.
+const REGISTRY_GENERATED_FILES = new Set(["skill-card.md"]);
+
 async function verifyPublishedInspect({ packageDir, inspect, version }) {
   const expectedFiles = await collectClawhubPackageFiles(path.resolve(packageDir));
   const publishedVersion = inspect.version?.version;
@@ -465,9 +477,10 @@ async function verifyPublishedInspect({ packageDir, inspect, version }) {
   }
 
   for (const filePath of publishedFiles.keys()) {
-    if (!expectedFiles.has(filePath)) {
-      throw new Error(`Published ClawHub package contains unexpected file: ${filePath}`);
+    if (expectedFiles.has(filePath) || REGISTRY_GENERATED_FILES.has(filePath)) {
+      continue;
     }
+    throw new Error(`Published ClawHub package contains unexpected file: ${filePath}`);
   }
 
   return { version, files: expectedFiles.size };
