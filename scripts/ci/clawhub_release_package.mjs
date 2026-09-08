@@ -478,16 +478,25 @@ export async function verifyPublishedPackage({ packageDir, inspectJsonPath, vers
   return verifyPublishedInspect({ packageDir, inspect, version });
 }
 
+// ClawHub indexes a freshly published version asynchronously. Observed latency
+// on the nanoclaw-traffic-guardian 0.0.2 release was ~3m18s, against a former
+// window of 6 attempts x 5s = ~44s -- so the publish succeeded and this check
+// failed the job anyway. Back off exponentially to a ~6m ceiling: the happy path
+// still returns on the first attempt, and a genuinely unpublished version still
+// fails rather than being waited away.
 export async function verifyRegistryPackage({
   packageDir,
   slug,
   version,
-  attempts = 6,
+  attempts = 15,
   delayMs = 5000,
+  maxDelayMs = 30000,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 }) {
   const site = process.env.CLAWHUB_SITE || "https://clawhub.ai";
   const registry = process.env.CLAWHUB_REGISTRY || site;
   let lastError = "";
+  let waitedMs = 0;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const result = spawnSync(
@@ -511,11 +520,15 @@ export async function verifyRegistryPackage({
 
     lastError = result.stderr || result.stdout || `clawhub inspect exited ${result.status}`;
     if (attempt < attempts) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      const backoffMs = Math.min(delayMs * 2 ** (attempt - 1), maxDelayMs);
+      waitedMs += backoffMs;
+      await sleep(backoffMs);
     }
   }
 
-  throw new Error(`Unable to inspect published ClawHub package after ${attempts} attempts:\n${lastError}`);
+  throw new Error(
+    `Unable to inspect published ClawHub package after ${attempts} attempts over ${Math.round(waitedMs / 1000)}s:\n${lastError}`,
+  );
 }
 
 async function main() {
