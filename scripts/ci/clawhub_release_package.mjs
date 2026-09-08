@@ -439,6 +439,18 @@ export async function verifyClawhubClientSelection({ packageDir, cliPrefix }) {
   return { files: expectedFiles.size };
 }
 
+// ClawHub synthesises skill-card.md at publish time from the skill's own
+// metadata. It is in no release zip and no source tree, so it is never in
+// expectedFiles -- which made this check impossible to pass for any skill.
+// Verified against the registry: every published version carries one, at a
+// different size per version (nanoclaw-traffic-guardian 0.0.2 -> 2595B,
+// 0.0.1-beta5 -> 2196B, clawsec-suite 0.1.16 -> 2849B).
+//
+// Exempting it by exact path keeps the integrity property intact: every file we
+// published must still be present with a matching sha256 and size, and any
+// other unexpected path is still a failure.
+const REGISTRY_GENERATED_FILES = new Set(["skill-card.md"]);
+
 async function verifyPublishedInspect({ packageDir, inspect, version }) {
   const expectedFiles = await collectClawhubPackageFiles(path.resolve(packageDir));
   const publishedVersion = inspect.version?.version;
@@ -465,9 +477,10 @@ async function verifyPublishedInspect({ packageDir, inspect, version }) {
   }
 
   for (const filePath of publishedFiles.keys()) {
-    if (!expectedFiles.has(filePath)) {
-      throw new Error(`Published ClawHub package contains unexpected file: ${filePath}`);
+    if (expectedFiles.has(filePath) || REGISTRY_GENERATED_FILES.has(filePath)) {
+      continue;
     }
+    throw new Error(`Published ClawHub package contains unexpected file: ${filePath}`);
   }
 
   return { version, files: expectedFiles.size };
@@ -478,16 +491,25 @@ export async function verifyPublishedPackage({ packageDir, inspectJsonPath, vers
   return verifyPublishedInspect({ packageDir, inspect, version });
 }
 
+// ClawHub indexes a freshly published version asynchronously. Observed latency
+// on the nanoclaw-traffic-guardian 0.0.2 release was ~3m18s, against a former
+// window of 6 attempts x 5s = ~44s -- so the publish succeeded and this check
+// failed the job anyway. Back off exponentially to a ~6m ceiling: the happy path
+// still returns on the first attempt, and a genuinely unpublished version still
+// fails rather than being waited away.
 export async function verifyRegistryPackage({
   packageDir,
   slug,
   version,
-  attempts = 6,
+  attempts = 15,
   delayMs = 5000,
+  maxDelayMs = 30000,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 }) {
   const site = process.env.CLAWHUB_SITE || "https://clawhub.ai";
   const registry = process.env.CLAWHUB_REGISTRY || site;
   let lastError = "";
+  let waitedMs = 0;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     const result = spawnSync(
@@ -511,11 +533,15 @@ export async function verifyRegistryPackage({
 
     lastError = result.stderr || result.stdout || `clawhub inspect exited ${result.status}`;
     if (attempt < attempts) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      const backoffMs = Math.min(delayMs * 2 ** (attempt - 1), maxDelayMs);
+      waitedMs += backoffMs;
+      await sleep(backoffMs);
     }
   }
 
-  throw new Error(`Unable to inspect published ClawHub package after ${attempts} attempts:\n${lastError}`);
+  throw new Error(
+    `Unable to inspect published ClawHub package after ${attempts} attempts over ${Math.round(waitedMs / 1000)}s:\n${lastError}`,
+  );
 }
 
 async function main() {
