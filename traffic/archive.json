@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-09-11T03:31:08.807Z",
+  "updated_at": "2026-09-12T03:30:09.327Z",
   "daily": {
     "views": [
       {
@@ -539,6 +539,11 @@
         "timestamp": "2026-09-09T00:00:00Z",
         "count": 86,
         "uniques": 29
+      },
+      {
+        "timestamp": "2026-09-10T00:00:00Z",
+        "count": 59,
+        "uniques": 24
       }
     ],
     "clones": [
@@ -1076,6 +1081,11 @@
         "timestamp": "2026-09-09T00:00:00Z",
         "count": 109,
         "uniques": 79
+      },
+      {
+        "timestamp": "2026-09-10T00:00:00Z",
+        "count": 130,
+        "uniques": 99
       }
     ]
   },
@@ -6284,6 +6294,62 @@
           },
           {
             "referrer": "com.reddit.frontpage",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-09-12T03:30:09.327Z",
+        "date": "2026-09-12",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 141,
+            "uniques": 73
+          },
+          {
+            "referrer": "Google",
+            "count": 54,
+            "uniques": 37
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 34,
+            "uniques": 15
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "rentamac.io",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "com.reddit.frontpage",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "instagram.com",
             "count": 1,
             "uniques": 1
           }
@@ -12428,6 +12494,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-09-12T03:30:09.327Z",
+        "date": "2026-09-12",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 297,
+            "uniques": 194
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 18,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 14,
+            "uniques": 11
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 12,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 12,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 11,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/242",
+            "title": "/pull/242",
+            "count": 7,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/clawsec-suite-v0.1.16",
+            "title": "/releases/tag/clawsec-suite-v0.1.16",
+            "count": 6,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/285",
+            "title": "/pull/285",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 5,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -13546,6 +13678,18 @@
       "clones_window": {
         "count": 4065,
         "uniques": 1019
+      }
+    },
+    {
+      "captured_at": "2026-09-12T03:30:09.327Z",
+      "date": "2026-09-12",
+      "views_window": {
+        "count": 741,
+        "uniques": 231
+      },
+      "clones_window": {
+        "count": 3791,
+        "uniques": 1051
       }
     }
   ]
