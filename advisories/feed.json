@@ -1,8 +1,3282 @@
 {
   "version": "0.0.3",
-  "updated": "2026-09-07T06:11:10Z",
+  "updated": "2026-09-13T06:10:29Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "GHSA-xx9p-hc9w-6p5h",
+      "ghsa_id": "GHSA-xx9p-hc9w-6p5h",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-1236",
+      "title": "Usage CSV export could interpret session labels as formulas",
+      "description": "Summary Usage CSV export could interpret session labels as formulas. In affected versions, the Control UI quoted session labels as CSV text but did not neutralize leading characters that spreadsheet applications can interpret as formulas. This advisory is scoped to the exported artifact and the spreadsheet application used to open it. OpenClaw did not evaluate the formula itself, and impact required an operator to open the export in software with formula evaluation enabled. Impact A lower-trust participant who influenced a session label or first user message could place a formula-like cell in the Usage export. Opening that file in an affected spreadsheet could evaluate the cell with the spreadsheet user's permissions. Practical impact depended on spreadsheet security settings and formula support. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, import Usage exports as plain text or inspect formula-leading cells before opening them in a spreadsheet.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:59Z",
+      "updated": "2026-09-11T00:58:59Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-xx9p-hc9w-6p5h"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-xx9p-hc9w-6p5h",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-1236"
+      ],
+      "credits": [
+        "anagnorisis2peripeteia"
+      ],
+      "aliases": [
+        "GHSA-xx9p-hc9w-6p5h"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-xw9g-7xvv-gcjc",
+      "ghsa_id": "GHSA-xw9g-7xvv-gcjc",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Active Memory global toggles could omit owner checks",
+      "description": "Summary Active Memory global toggles could omit owner checks. In affected versions, an authorized non-owner external-channel sender could enable or disable Active Memory for the Gateway. This advisory is scoped to persistent global on and off mutations. Session-level controls and read-only status remain governed by their existing command policy, and OpenClaw does not treat one shared Gateway as adversarial multi-tenant isolation. Impact A non-owner sender could disable memory recall for future sessions or re-enable global recall where the owner expected it to remain disabled. Practical confidentiality and availability impact depends on stored memories and subsequent conversations. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable global Active Memory commands in external channels or restrict command access to owners.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:58Z",
+      "updated": "2026-09-11T00:58:58Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-xw9g-7xvv-gcjc"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-xw9g-7xvv-gcjc",
+      "nvd_url": null,
+      "cvss_score": 6.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "rexpository"
+      ],
+      "aliases": [
+        "GHSA-xw9g-7xvv-gcjc"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-xw48-j584-r73h",
+      "ghsa_id": "GHSA-xw48-j584-r73h",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "Twilio pre-auth limits could lock out valid webhooks",
+      "description": "Summary Twilio pre-auth limits could lock out valid webhooks. In affected versions, the SMS webhook applied its invalid-request rate limit before signature verification and identified clients only by the raw proxy socket address. Affected configurations This affected SMS/Twilio webhooks behind a trusted reverse proxy or tunnel where multiple external clients shared one socket address at OpenClaw. Impact An unauthenticated sender could consume the shared pre-auth budget with invalid requests and cause later correctly signed Twilio callbacks to receive HTTP 429. The attacker could not forge a callback or access message data; impact was temporary inbound SMS loss while the shared window remained exhausted. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, avoid placing untrusted traffic and Twilio callbacks behind the same proxy source address, or enforce per-client limits at the proxy.",
+      "affected": [
+        "openclaw@>= 2026.6.6, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:56Z",
+      "updated": "2026-09-11T00:58:56Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-xw48-j584-r73h"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-xw48-j584-r73h",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+      "cwe_ids": [
+        "CWE-400"
+      ],
+      "credits": [
+        "harjothkhara"
+      ],
+      "aliases": [
+        "GHSA-xw48-j584-r73h"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-xvwp-wmh2-fq48",
+      "ghsa_id": "GHSA-xvwp-wmh2-fq48",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Discord asset uploads could skip sender media policy",
+      "description": "Summary Discord emoji and sticker upload actions could lose the sender-scoped media policy before loading a local file. A sender permitted to invoke those actions could cause OpenClaw to read a host path that the same sender's configured media roots would otherwise reject. Impact Affected Discord deployments could place bytes from an out-of-policy local file into an outbound emoji or sticker upload. Exploitation requires access to the guild asset action and knowledge or derivation of a useful local path. The issue did not provide unrestricted filesystem browsing or code execution. Patched Versions The first stable patched version is 2026.9.3. Mitigations Upgrade @openclaw/discord to 2026.9.3 or later. Until upgraded, deny Discord emoji and sticker upload actions to lower-trust senders and keep their media roots limited to directories that contain no sensitive files.",
+      "affected": [
+        "@openclaw/discord@< 2026.9.3"
+      ],
+      "patched": [
+        "@openclaw/discord@2026.9.3"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:55Z",
+      "updated": "2026-09-11T00:58:55Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-xvwp-wmh2-fq48"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-xvwp-wmh2-fq48",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-xvwp-wmh2-fq48"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-wwx7-573h-pqwc",
+      "ghsa_id": "GHSA-wwx7-573h-pqwc",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "MCP configuration changes could omit owner authorization",
+      "description": "Summary MCP configuration changes could omit owner authorization. In affected versions, an authorized non-owner external-channel sender could use /mcp set or /mcp unset to persist Gateway MCP server configuration. This advisory is scoped to mutating MCP chat commands. Installed and owner-configured MCP servers remain trusted integrations; the failed boundary is authorization to add, replace, or remove their process configuration. Impact A non-owner sender could persist an attacker-selected stdio MCP command that executed with the OpenClaw process user's privileges when MCP configuration loaded. This could affect host confidentiality, integrity, and availability. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable MCP chat commands in external channels and inspect configured MCP servers for unexpected entries.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:53Z",
+      "updated": "2026-09-11T00:58:53Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wwx7-573h-pqwc"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-wwx7-573h-pqwc",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-78",
+        "CWE-862"
+      ],
+      "credits": [
+        "yetval"
+      ],
+      "aliases": [
+        "GHSA-wwx7-573h-pqwc"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-wwcw-jfpp-gpxw",
+      "ghsa_id": "GHSA-wwcw-jfpp-gpxw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Codex native tools could ignore per-chat policy",
+      "description": "Summary Codex native tools could ignore per-chat policy. In affected versions, a conversation-level tools.allow rule filtered OpenClaw tools but did not restrict shell, process, file, and patch tools owned by the Codex app-server runtime. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When a lower-trust conversation was assigned to a Codex runtime and restricted with a per-chat tool allowlist, a participant who could trigger that agent could still reach native command and file tools. Practical impact depended on the runtime's host permissions and sandbox configuration. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, route restricted chats to an agent runtime without native host tools or disable those tools at the agent boundary.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:52Z",
+      "updated": "2026-09-11T00:58:52Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wwcw-jfpp-gpxw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-wwcw-jfpp-gpxw",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-wwcw-jfpp-gpxw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-wjfv-5qch-m5vj",
+      "ghsa_id": "GHSA-wjfv-5qch-m5vj",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "low",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Active Memory recall could ignore requester policy",
+      "description": "Summary Active Memory automatic recall could omit the originating requester's effective tool policy. Deterministic and hidden recall paths could retrieve and inject durable memory even when toolsBySender explicitly denied that requester access to memory tools. Impact In deployments using Active Memory and requester-specific tool rules, an admitted sender denied memorysearch and memoryget could receive information derived from durable memory in the agent's response. The issue was a deterministic policy omission in context assembly and did not depend on the sender directly invoking a hidden tool. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, disable Active Memory for conversations containing requesters who are denied memory access, or isolate those conversations in an agent and workspace without sensitive durable memory.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:50Z",
+      "updated": "2026-09-11T00:58:50Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-wjfv-5qch-m5vj"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-wjfv-5qch-m5vj",
+      "nvd_url": null,
+      "cvss_score": 3.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:N/A:N",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-wjfv-5qch-m5vj"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-w5x7-c87m-3jpc",
+      "ghsa_id": "GHSA-w5x7-c87m-3jpc",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Outbound attachments could ignore requester read denials",
+      "description": "Summary Outbound attachment handling could read a local path without applying the originating sender's global or per-agent toolsBySender policy. A sender explicitly denied filesystem reads could still cause a known host file to be returned through a final-response media directive or message attachment. Impact Affected deployments could disclose local file contents to an admitted requester whose normal agent turn did not include the read tool. Exploitation required knowledge or derivation of a useful path and a delivery flow that accepted local attachments. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, disable local outbound attachments for agents serving restricted senders, keep generated artifacts in dedicated non-sensitive directories, and avoid treating toolsBySender read denial alone as an attachment boundary.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:49Z",
+      "updated": "2026-09-11T00:58:49Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-w5x7-c87m-3jpc"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-w5x7-c87m-3jpc",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-w5x7-c87m-3jpc"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-vhpg-cq3w-v8p9",
+      "ghsa_id": "GHSA-vhpg-cq3w-v8p9",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "OpenAI-compatible transport could send provider credentials to the wrong endpoint",
+      "description": "Summary OpenAI-compatible transport could send provider credentials to the wrong endpoint. In affected versions, a pinned third-party provider session whose model metadata lacked a concrete base URL could retain that provider's credential while the OpenAI SDK selected its default endpoint after a model hot reload. Affected configurations This affects configurations where a third-party provider uses an OpenAI-compatible API, the resolved model lacks an explicit provider endpoint, and an existing pinned session continues after model configuration is reloaded. Impact A request could disclose the configured third-party provider credential to an unrelated provider endpoint and fail with a misleading authentication error. Operators who observed this condition should rotate the affected credential. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, configure explicit base URLs for third-party OpenAI-compatible providers and avoid continuing pinned sessions after changing model defaults.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:47Z",
+      "updated": "2026-09-11T00:58:48Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-vhpg-cq3w-v8p9"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-vhpg-cq3w-v8p9",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:N/A:L",
+      "cwe_ids": [
+        "CWE-200"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-vhpg-cq3w-v8p9"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-v7hh-7676-rg67",
+      "ghsa_id": "GHSA-v7hh-7676-rg67",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-639",
+      "title": "Slack file downloads could miss conversation authorization",
+      "description": "Summary Slack download-file authorization could fail open when a file lacked the share metadata used to prove that it belonged to the requested conversation. A caller limited to one conversation could retrieve a known file outside that scope when the expected relationship data was absent. Impact Affected Slack deployments could disclose file contents across configured conversation boundaries to an authenticated caller who knew or obtained the file identifier. The issue did not permit listing arbitrary Slack files and did not bypass Slack authentication itself. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade @openclaw/slack to 2026.8.1 or later. Until upgraded, deny download-file to lower-trust senders and avoid relying on conversation scoping for files whose Slack metadata is missing, incomplete, or imported from older records.",
+      "affected": [
+        "@openclaw/slack@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/slack@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:46Z",
+      "updated": "2026-09-11T00:58:46Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-v7hh-7676-rg67"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-v7hh-7676-rg67",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-639",
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-v7hh-7676-rg67"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-rx8p-qcpv-c7vr",
+      "ghsa_id": "GHSA-rx8p-qcpv-c7vr",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Prometheus diagnostics could omit operator.read enforcement",
+      "description": "Summary The OpenClaw Prometheus diagnostics plugin did not enforce operator.read for its authenticated metrics endpoint. An identity-bearing Gateway caller whose effective role had no read scope could retrieve the diagnostics document even though ordinary read methods rejected the same identity. Impact Deployments using the Prometheus plugin with trusted-proxy or another identity-bearing authentication mode could expose operational metrics to an authenticated profile that was intentionally limited below read access. Shared-secret Gateway callers already have the documented full operator scope set and do not create this condition. Patched Versions The first stable patched version is 2026.9.3. Mitigations Upgrade the @openclaw/diagnostics-prometheus plugin to 2026.9.3 or later. Until upgraded, disable the Prometheus endpoint or ensure every identity allowed to reach it is intended to hold operator.read.",
+      "affected": [
+        "@openclaw/diagnostics-prometheus@< 2026.9.3"
+      ],
+      "patched": [
+        "@openclaw/diagnostics-prometheus@2026.9.3"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:45Z",
+      "updated": "2026-09-11T00:58:45Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rx8p-qcpv-c7vr"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rx8p-qcpv-c7vr",
+      "nvd_url": null,
+      "cvss_score": 4.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-rx8p-qcpv-c7vr"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-rrxp-5mx8-mvhh",
+      "ghsa_id": "GHSA-rrxp-5mx8-mvhh",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Inbound voice calls could inherit owner tool authority",
+      "description": "Summary Classic inbound voice calls could launch the configured agent without carrying the caller's identity or non-owner status. Owner-only filtering could therefore fail open and expose the agent's normal tool authority to an admitted remote caller. Impact A caller who passed the configured inbound-call policy could steer tools intended for the trusted owner, potentially reading data, modifying files, executing commands, or controlling connected services according to the agent's configuration. Inbound calling had to be enabled, and the caller still had to pass its open, pairing, or allowlist admission policy. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade @openclaw/voice-call to 2026.8.1 or later. Until upgraded, disable classic inbound calling or assign inbound calls to an agent with a strict read-only tool policy and no owner-only capabilities.",
+      "affected": [
+        "@openclaw/voice-call@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/voice-call@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:43Z",
+      "updated": "2026-09-11T00:58:43Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rrxp-5mx8-mvhh"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rrxp-5mx8-mvhh",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-rrxp-5mx8-mvhh"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-rm45-4jx5-2927",
+      "ghsa_id": "GHSA-rm45-4jx5-2927",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "QQBot voice filenames could escape the staging directory",
+      "description": "Summary QQBot voice filenames could escape the staging directory. In affected versions, voice attachment filenames were decoded twice, allowing encoded traversal segments to reappear after filename sanitization. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When a remote QQ sender supplied an attachment that the agent forwarded as voice, attacker-supplied bytes could be written outside the intended voice staging directory to another process-writable location. Generated filename material limited targeted overwrite, but the staging path boundary was not enforced. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable QQBot voice forwarding for lower-trust senders and remove unexpected staged media files.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:42Z",
+      "updated": "2026-09-11T00:58:42Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rm45-4jx5-2927"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rm45-4jx5-2927",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:L",
+      "cwe_ids": [
+        "CWE-22"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-rm45-4jx5-2927"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-rgjw-6v73-php6",
+      "ghsa_id": "GHSA-rgjw-6v73-php6",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-426",
+      "title": "Windows allowlist execution could use workspace shadows",
+      "description": "Summary Windows allowlist execution could use workspace shadows. In affected versions, PowerShell command analysis could approve an exact executable from PATH but later run a same-named executable from the workspace directory. This advisory is scoped to Windows hosts using exec allowlist mode with a PowerShell inner command and a workspace-controlled executable sharing the approved basename. It does not rely on replacement of the approved executable itself. Impact If lower-trust content could place an executable in the workspace and steer an approved PowerShell command, OpenClaw could execute the workspace file instead of the allowlisted path. The process would run with the Gateway or node-host user's privileges. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, avoid bare executable names inside approved PowerShell commands and keep executable files out of agent-writable workspaces.",
+      "affected": [
+        "openclaw@>= 2026.2.26 < 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:41Z",
+      "updated": "2026-09-11T00:58:41Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-rgjw-6v73-php6"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-rgjw-6v73-php6",
+      "nvd_url": null,
+      "cvss_score": 6.7,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-426",
+        "CWE-863"
+      ],
+      "credits": [
+        "wwwvwwvwwwwwvwwvw"
+      ],
+      "aliases": [
+        "GHSA-rgjw-6v73-php6"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-r88x-r7jj-f2cf",
+      "ghsa_id": "GHSA-r88x-r7jj-f2cf",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-346",
+      "title": "Signal reactions could bind to the wrong approval",
+      "description": "Summary Signal reactions could bind to the wrong approval. In affected versions, an approval reaction could attach to ordinary outbound text instead of the structured approval request it was intended to resolve. This advisory is scoped to Signal approval reactions when unrelated outbound messages and a pending approval were present in the same conversation. It does not change the authority of correctly identified approvers. Impact A reaction to unrelated text could be interpreted as approving or denying a pending host action. Practical impact depends on the pending request, conversation timing, and actions available to the OpenClaw process. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, avoid reaction-based approvals in Signal, use another approval surface, and cancel pending requests when unrelated messages appear.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:39Z",
+      "updated": "2026-09-11T00:58:39Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-r88x-r7jj-f2cf"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-r88x-r7jj-f2cf",
+      "nvd_url": null,
+      "cvss_score": 7.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-346",
+        "CWE-451"
+      ],
+      "credits": [
+        "rexpository"
+      ],
+      "aliases": [
+        "GHSA-r88x-r7jj-f2cf"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-qw7m-h363-33qw",
+      "ghsa_id": "GHSA-qw7m-h363-33qw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-269",
+      "title": "chat.send could expose owner-only infrastructure tools",
+      "description": "Summary chat.send could expose owner-only infrastructure tools. In affected versions, a non-owner caller in an identity-bearing Gateway deployment could start a chat turn whose tool inventory included gateway and cron. This advisory is scoped to Gateway authentication modes that honor caller identity and narrower operator scopes. Shared-secret token and password callers are full trusted operators under OpenClaw's security model. Impact A write-scoped non-owner caller could cause an agent turn to invoke owner-only configuration or scheduling operations, including persistent state changes. Practical impact depends on the tools selected by the model and the caller's ability to steer the turn. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, restrict chat.send to administrators in identity-bearing deployments and remove gateway and cron from affected agent tool policies.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:38Z",
+      "updated": "2026-09-11T00:58:38Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qw7m-h363-33qw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-qw7m-h363-33qw",
+      "nvd_url": null,
+      "cvss_score": 7.6,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:L",
+      "cwe_ids": [
+        "CWE-269",
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-qw7m-h363-33qw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-qgj5-6x35-9g6f",
+      "ghsa_id": "GHSA-qgj5-6x35-9g6f",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "Config revision hashes could expose password verifiers",
+      "description": "Summary Redacted configuration responses could include deterministic hashes computed over the original unredacted configuration. When a Gateway password had low entropy and the rest of the configuration was reconstructable, those values acted as offline password verifiers. Impact A caller able to obtain the redacted configuration could test password candidates without reaching the rate-limited Gateway authentication path. Recovering the password could grant the documented shared-secret operator authority. Practical exploitation depended on a weak password and sufficient knowledge of every other hashed configuration value. Secret references were not affected in the same way. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, use a high-entropy Gateway token or password, prefer secret references over inline low-entropy values, and restrict config.get to trusted operators.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:37Z",
+      "updated": "2026-09-11T00:58:37Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-qgj5-6x35-9g6f"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-qgj5-6x35-9g6f",
+      "nvd_url": null,
+      "cvss_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-200"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-qgj5-6x35-9g6f"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-q9j5-4xr6-xqqw",
+      "ghsa_id": "GHSA-q9j5-4xr6-xqqw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Group activation changes could omit owner authorization",
+      "description": "Summary Group activation changes could omit owner authorization. In affected versions, an authorized non-owner channel sender could change whether a group required mention-based activation. This advisory is scoped to persistent /activation policy changes. It does not make session presence or conversation ownership a security boundary; the failed control is the documented owner requirement for changing channel trigger policy. Impact A non-owner sender could make the agent respond more broadly in a group or suppress expected activation behavior. This could expose responses to additional group traffic or reduce availability until an owner restored the intended setting. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable activation-setting commands in shared channels and verify group activation configuration after untrusted command activity.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:35Z",
+      "updated": "2026-09-11T00:58:35Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-q9j5-4xr6-xqqw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-q9j5-4xr6-xqqw",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [
+        "yetval"
+      ],
+      "aliases": [
+        "GHSA-q9j5-4xr6-xqqw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-pjjr-5qhr-5w6r",
+      "ghsa_id": "GHSA-pjjr-5qhr-5w6r",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Codex computer-use install could omit owner authorization",
+      "description": "Summary Codex computer-use install could omit owner authorization. In affected versions, an authorized non-owner channel sender could install a Codex plugin and cause its configured MCP process to start on the OpenClaw host. This advisory is scoped to the Codex computer-use installation command. Installed plugins remain trusted code under OpenClaw's security model; the failed boundary is authorization to install that code in the first place. Impact A non-owner sender with command access could install attacker-selected plugin code and execute a host MCP process with the OpenClaw user's privileges. This could affect host confidentiality, integrity, and availability. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable Codex computer-use installation in message channels and review installed Codex plugins for unexpected entries.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:34Z",
+      "updated": "2026-09-11T00:58:34Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-pjjr-5qhr-5w6r"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-pjjr-5qhr-5w6r",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [
+        "wwwvwwvwwwwwvwwvw"
+      ],
+      "aliases": [
+        "GHSA-pjjr-5qhr-5w6r"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-pfrw-r5vr-89hw",
+      "ghsa_id": "GHSA-pfrw-r5vr-89hw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-522",
+      "title": "Workspace endpoint override could expose Azure Speech credentials",
+      "description": "Summary A workspace endpoint override could expose Azure Speech credentials. In affected versions, an untrusted workspace .env could set AZURESPEECHENDPOINT because the workspace filter did not block the ENDPOINT suffix. Azure Speech preferred that value over its configured region. This advisory is scoped to operators who started OpenClaw in attacker-controlled workspace content, configured Azure Speech with a key and region, and had not set a trusted endpoint override. Impact When Azure Speech made a synthesis or voice-list request, the attacker-selected endpoint received the operator's Azure Speech key in the request header. The exposed key could then be used against the operator's Azure Speech resource. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, run OpenClaw only from trusted workspaces or set AZURESPEECHENDPOINT through a trusted process or global runtime environment.",
+      "affected": [
+        "openclaw@>= 2026.4.25, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:33Z",
+      "updated": "2026-09-11T00:58:33Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-pfrw-r5vr-89hw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-pfrw-r5vr-89hw",
+      "nvd_url": null,
+      "cvss_score": 5.5,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-522",
+        "CWE-610"
+      ],
+      "credits": [
+        "qc9c"
+      ],
+      "aliases": [
+        "GHSA-pfrw-r5vr-89hw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-p5g8-m35v-7m82",
+      "ghsa_id": "GHSA-p5g8-m35v-7m82",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Claude permission replies could omit owner authorization",
+      "description": "Summary Claude permission replies could omit owner authorization. In affected versions, an authorized non-owner channel sender could approve or deny a pending Claude Code permission request through the MCP channel bridge. This advisory is scoped to Claude permission prompts delivered through configured message channels. It does not change OpenClaw's shared-agent model; the failed boundary is the explicit owner requirement for resolving host permission requests. Impact When a Claude Code run was waiting for permission, a non-owner sender with channel command access could approve an action intended for the owner. Practical impact depends on the pending action and the host capabilities requested by Claude Code. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, avoid delivering Claude permission prompts to channels with non-owner participants and cancel unattended pending requests.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:31Z",
+      "updated": "2026-09-11T00:58:31Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p5g8-m35v-7m82"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-p5g8-m35v-7m82",
+      "nvd_url": null,
+      "cvss_score": 8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "whyiug"
+      ],
+      "aliases": [
+        "GHSA-p5g8-m35v-7m82"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-p3h6-v2h4-36q2",
+      "ghsa_id": "GHSA-p3h6-v2h4-36q2",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "Browser CDP connections could discard DNS pinning",
+      "description": "Summary Browser CDP connections could discard DNS pinning. In affected versions, OpenClaw validated one DNS result for a configured CDP hostname but raw WebSocket and Playwright transports performed a later independent resolution. This advisory is scoped to configured remote CDP endpoints. It does not treat intentional local browser control as a vulnerability; the failed boundary was the SSRF policy that approved one destination but connected to another. Impact An attacker who controlled an approved CDP hostname or its DNS answers could use rebinding to make the Gateway connect to a loopback, private, link-local, metadata, or other policy-denied address. Practical impact depended on remote CDP configuration, DNS timing, and services reachable from the Gateway host. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable hostname-based remote CDP endpoints or restrict them to trusted, stable infrastructure.",
+      "affected": [
+        "openclaw@>= 2026.4.5, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:30Z",
+      "updated": "2026-09-11T00:58:30Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-p3h6-v2h4-36q2"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-p3h6-v2h4-36q2",
+      "nvd_url": null,
+      "cvss_score": 8.2,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:L",
+      "cwe_ids": [
+        "CWE-918"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-p3h6-v2h4-36q2"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-mm7m-wcgh-8mfq",
+      "ghsa_id": "GHSA-mm7m-wcgh-8mfq",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "WhatsApp session resets could bypass command authorization",
+      "description": "Summary WhatsApp session resets could bypass command authorization. In affected versions, a group sender admitted for ordinary messages could use /new <model to reset the shared group session and persist a provider and model override even when canonical command policy denied that sender. This advisory is scoped to WhatsApp group senders who pass ordinary message admission but fail commands.allowFrom or owner command authorization. The failed boundary is the configured distinction between message admission and command authorization. Impact A command-denied group member could select a provider and model already allowed by the operator for later turns in the shared group session. This could change provider routing, cost, data flow, or availability. It does not add a provider or grant host execution. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, ensure WhatsApp group admission and commands.allowFrom contain the same trusted senders, and reset affected group sessions after unauthorized /new attempts.",
+      "affected": [
+        "openclaw@>= 2026.5.2, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:28Z",
+      "updated": "2026-09-11T00:58:28Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-mm7m-wcgh-8mfq"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-mm7m-wcgh-8mfq",
+      "nvd_url": null,
+      "cvss_score": 6.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "andrewCantina"
+      ],
+      "aliases": [
+        "GHSA-mm7m-wcgh-8mfq"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-m78m-7h3q-q938",
+      "ghsa_id": "GHSA-m78m-7h3q-q938",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "Browser relay authentication could exhaust shared pending capacity",
+      "description": "Summary The Browser extension relay reserved entries in a single global pending-authentication pool before a client proved possession of the relay key. An unauthenticated network source could hold every pending slot and prevent a paired extension from completing Browser Relay Authentication v2. Impact Operators with a network-reachable Browser relay could experience denial of service for paired Chrome extensions while an attacker maintained enough silent WebSocket upgrades. The issue did not disclose the relay key, browser data, or authenticated relay capability. Patched Versions The first stable patched version is 2026.8.2. Mitigations Upgrade openclaw to 2026.8.2 or later. Until upgraded, restrict network access to the Browser extension relay route, avoid exposing it to lower-trust networks, and restart the relay if its pending-authentication capacity becomes saturated.",
+      "affected": [
+        "openclaw@< 2026.8.2"
+      ],
+      "patched": [
+        "openclaw@2026.8.2"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:27Z",
+      "updated": "2026-09-11T00:58:27Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-m78m-7h3q-q938"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-m78m-7h3q-q938",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+      "cwe_ids": [
+        "CWE-400"
+      ],
+      "credits": [
+        "rexpository"
+      ],
+      "aliases": [
+        "GHSA-m78m-7h3q-q938"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-jjpc-p3xf-8g7p",
+      "ghsa_id": "GHSA-jjpc-p3xf-8g7p",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-295",
+      "title": "iOS Control UI did not enforce saved Gateway TLS pins",
+      "description": "Summary The iOS Control UI did not enforce saved Gateway TLS pins. In affected versions, authenticated Terminal and session Dashboard WebViews omitted the saved Gateway fingerprint even though native connections enforced it. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When an iOS user had accepted a Gateway fingerprint, an attacker who could redirect the same host and port and present a different certificate accepted by iOS system trust could serve a replacement Control UI page. Opening Terminal or a session Dashboard allowed that page to read the injected Gateway token or password. The credential could provide operator access, including reading sensitive Gateway state and invoking host-capable tools. Patched Versions The first stable patched version is 2026.8.11. Mitigations Upgrade OpenClaw for iOS to 2026.8.11 or later. Before upgrading, avoid the in-app Terminal and session Dashboard for pinned Gateways when network routing or installed certificate authorities are not fully trusted.",
+      "affected": [
+        "OpenClaw iOS@>= 2026.7.1, < 2026.8.11"
+      ],
+      "patched": [
+        "OpenClaw iOS@2026.8.11"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:25Z",
+      "updated": "2026-09-11T00:58:25Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jjpc-p3xf-8g7p"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-jjpc-p3xf-8g7p",
+      "nvd_url": null,
+      "cvss_score": 8.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-295"
+      ],
+      "credits": [
+        "0xca1x",
+        "migraine-sudo"
+      ],
+      "aliases": [
+        "GHSA-jjpc-p3xf-8g7p"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-jghr-xp78-995p",
+      "ghsa_id": "GHSA-jghr-xp78-995p",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Browser proxy could miss its admin scope",
+      "description": "Summary Browser proxy could miss its admin scope. In affected versions, a write-scoped caller in an identity-bearing Gateway deployment could reach browser control through node.invoke even though direct browser.request access required administrator scope. This advisory is scoped to Gateway authentication modes that honor caller identity and narrower operator scopes. Shared-secret token and password callers are full trusted operators under OpenClaw's security model. Impact A write-scoped caller with access to a connected browser-capable node could inspect pages, navigate tabs, or interact with browser-visible applications without the configured admin requirement. Practical impact depends on the browser profile and signed-in state. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, restrict node.invoke to administrators in identity-bearing deployments and disconnect sensitive browser nodes.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:23Z",
+      "updated": "2026-09-11T00:58:23Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-jghr-xp78-995p"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-jghr-xp78-995p",
+      "nvd_url": null,
+      "cvss_score": 8.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "wwwvwwvwwwwwvwwvw"
+      ],
+      "aliases": [
+        "GHSA-jghr-xp78-995p"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-j4mm-p864-vx7f",
+      "ghsa_id": "GHSA-j4mm-p864-vx7f",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "sessions.create could miss admin scope for keyed reconfiguration",
+      "description": "Summary sessions.create could miss admin scope for keyed reconfiguration. In affected versions, an operator.write caller could target an existing session key while supplying model or thinking changes that sessions.patch reserved for operator.admin. This advisory is scoped to the Gateway operator-scope boundary. It does not create isolation between mutually untrusted users on one Gateway; it enforces the documented distinction between issued write and admin credentials. Impact A write-scoped operator client could change an existing session's model, provider, thinking level, and configured auth-profile selection. Impact was limited to models and credentials already configured by the operator, but the mutation bypassed the explicit admin gate and could redirect later session traffic. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, do not issue write-only Gateway credentials to clients that can call keyed sessions.create.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:22Z",
+      "updated": "2026-09-11T00:58:22Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-j4mm-p864-vx7f"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-j4mm-p864-vx7f",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "anagnorisis2peripeteia"
+      ],
+      "aliases": [
+        "GHSA-j4mm-p864-vx7f"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-hpg5-cq3m-phqp",
+      "ghsa_id": "GHSA-hpg5-cq3m-phqp",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "Agent cron tool could reach operator command jobs",
+      "description": "Summary Agent cron tool could reach operator command jobs. In affected versions, a model-visible agent caller could read and force-run ownerless command cron jobs routed to the same agent even though command cron was reserved for operator administration. This advisory is scoped to the model-tool versus operator-admin boundary. It does not claim arbitrary command construction: the affected caller could inspect or replay an existing operator-authored command job. Impact A lower-trust message capable of steering an agent with the cron tool could read a matching command job's stored environment and force-run that job while disabled or before it was due. Practical impact depended on the secrets and commands the operator had placed in existing jobs. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, remove the cron tool from lower-trust agents and avoid storing sensitive environment values in ownerless command jobs.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:20Z",
+      "updated": "2026-09-11T00:58:20Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-hpg5-cq3m-phqp"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-hpg5-cq3m-phqp",
+      "nvd_url": null,
+      "cvss_score": 8.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
+      "cwe_ids": [
+        "CWE-200",
+        "CWE-862"
+      ],
+      "credits": [
+        "whyiug"
+      ],
+      "aliases": [
+        "GHSA-hpg5-cq3m-phqp"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-hgv5-f2r3-6v9r",
+      "ghsa_id": "GHSA-hgv5-f2r3-6v9r",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-178",
+      "title": "Matrix authorization could conflate case-distinct user IDs",
+      "description": "Summary Matrix authorization lowercased complete user IDs, including historical localparts and the case-sensitive server-name portion. Distinct authenticated Matrix accounts could therefore normalize to the same OpenClaw authorization identity. Impact A Matrix participant with a colliding account identifier could inherit allowlist, owner-command, exec-approval, or plugin-approval authority configured for another account. Exploitation required a protocol-valid pair of identifiers that differed only by characters OpenClaw folded. Display-name matching was not required. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade @openclaw/matrix to 2026.8.1 or later. Until upgraded, avoid authorization entries whose complete Matrix IDs differ only by case or Unicode folding, and review configured allowlists and approver identities for possible collisions.",
+      "affected": [
+        "@openclaw/matrix@>= 2026.2.2, < 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/matrix@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:19Z",
+      "updated": "2026-09-11T00:58:19Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-hgv5-f2r3-6v9r"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-hgv5-f2r3-6v9r",
+      "nvd_url": null,
+      "cvss_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-178",
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-hgv5-f2r3-6v9r"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-h9jh-75j7-7hhx",
+      "ghsa_id": "GHSA-h9jh-75j7-7hhx",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Feishu unpin could miss cross-context policy",
+      "description": "Summary Feishu unpin could miss cross-context policy. In affected versions, the native chatId parameter was not declared as a delivery target, so unpin could avoid the shared same-provider target check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When tools.message.crossContext.allowWithinProvider was disabled, an admitted sender could remove a pin from another Feishu group that the sender and configured account were otherwise permitted to access. Feishu membership and group authorization still applied, and the demonstrated issue was limited to message mutation policy. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable Feishu pin-management actions for lower-trust senders.",
+      "affected": [
+        "openclaw@>= 2026.6.9, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:17Z",
+      "updated": "2026-09-11T00:58:17Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-h9jh-75j7-7hhx"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-h9jh-75j7-7hhx",
+      "nvd_url": null,
+      "cvss_score": 4.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "andrewCantina"
+      ],
+      "aliases": [
+        "GHSA-h9jh-75j7-7hhx"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-h2qg-fxpv-82v6",
+      "ghsa_id": "GHSA-h2qg-fxpv-82v6",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Feishu tools could use disabled default accounts",
+      "description": "Summary Feishu model tools could select a configured default account without checking whether that account was disabled. In a multi-account setup, an enabled sibling could keep a tool family available while an invocation used the disabled default account's retained credentials. Impact A model tool call could read or modify Feishu resources through an identity the operator intended to revoke. The available actions depended on the disabled app's scopes and enabled tool families. Exploitation required the specific disabled-default and enabled-sibling configuration. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade @openclaw/feishu to 2026.8.1 or later. Until upgraded, remove credentials from disabled accounts, change defaultAccount to an enabled eligible account, and restart OpenClaw after disabling a Feishu identity.",
+      "affected": [
+        "@openclaw/feishu@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/feishu@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:16Z",
+      "updated": "2026-09-11T00:58:16Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-h2qg-fxpv-82v6"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-h2qg-fxpv-82v6",
+      "nvd_url": null,
+      "cvss_score": 6.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-h2qg-fxpv-82v6"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-ghpx-6xwq-2w4w",
+      "ghsa_id": "GHSA-ghpx-6xwq-2w4w",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-88",
+      "title": "Exec wrapper allowlists could trust arbitrary inner commands",
+      "description": "Summary Exec approval policy could trust a command-running wrapper without inspecting the command carried in its arguments. After an operator allowlisted or permanently approved a benign wrapper invocation, a later agent turn could substitute an arbitrary inner command without another prompt. Impact Affected deployments could execute commands with the OpenClaw process's host privileges outside the operator's reviewed approval. Exploitation required the relevant wrapper to resolve on the host and a prior operator decision allowing that wrapper. Transparent shell carriers and opaque utilities such as process monitors or tracing wrappers were affected through related trust-resolution gaps. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, remove standing approvals for command-running wrappers, avoid allowlisting wrapper executables for arbitrary arguments, and require per-invocation approval for commands using shell carriers, monitors, tracers, namespace tools, or proxy wrappers.",
+      "affected": [
+        "openclaw@>= 2026.3.22, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:15Z",
+      "updated": "2026-09-11T00:58:15Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-ghpx-6xwq-2w4w"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-ghpx-6xwq-2w4w",
+      "nvd_url": null,
+      "cvss_score": 8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-88",
+        "CWE-863"
+      ],
+      "credits": [
+        "anagnorisis2peripeteia"
+      ],
+      "aliases": [
+        "GHSA-ghpx-6xwq-2w4w"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-gcm4-fmcp-2f9r",
+      "ghsa_id": "GHSA-gcm4-fmcp-2f9r",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-312",
+      "title": "iOS Share Extension stored Gateway credentials outside Keychain",
+      "description": "Summary The iOS Share Extension stored Gateway credentials outside Keychain. In affected versions, the app stored the Share relay token and password as cleartext JSON in App Group UserDefaults. This created a second credential copy outside the device-bound Keychain storage used elsewhere in the app. Affected configurations This affects iOS installations with a configured Share relay when an attacker obtains an unencrypted Finder/iTunes backup or extracts the App Group container from a jailbroken or forensically imaged device. Impact An attacker with one of these artifacts could recover a still-valid Gateway token or password and authenticate with its operator authority. The issue required prior access to a backup or extracted device container; it did not expose credentials remotely from a healthy device. Patched Versions The first stable patched iOS version is 2026.8.11. Mitigations Upgrade OpenClaw for iOS to 2026.8.11 or later. Before upgrading, avoid unencrypted device backups and rotate Gateway credentials if an affected backup or device image may have left your control.",
+      "affected": [
+        "OpenClaw iOS@< 2026.8.11"
+      ],
+      "patched": [
+        "OpenClaw iOS@2026.8.11"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:13Z",
+      "updated": "2026-09-11T00:58:13Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-gcm4-fmcp-2f9r"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-gcm4-fmcp-2f9r",
+      "nvd_url": null,
+      "cvss_score": 5.5,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-312",
+        "CWE-522"
+      ],
+      "credits": [
+        "yetval"
+      ],
+      "aliases": [
+        "GHSA-gcm4-fmcp-2f9r"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-g7fw-3gjp-g5hf",
+      "ghsa_id": "GHSA-g7fw-3gjp-g5hf",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Channel read actions could skip target allowlists",
+      "description": "Summary Channel read actions could skip target allowlists. In affected versions, explicit read targets in Microsoft Teams, Feishu, Matrix, and Google Chat could reach channels or rooms outside the configured read policy. This advisory is scoped to caller-supplied targets for message, reaction, pin, member, and related metadata reads in the named plugins. It does not change OpenClaw's trusted-operator model or create per-user isolation within one Gateway. Impact A lower-trust sender or steered agent with access to a channel read action could retrieve content or metadata from a target excluded by the operator's channel allowlist. Practical impact depends on the bot account's platform permissions. Patched Versions The first stable patched version is 2026.8.1. Mitigations upgrade each affected channel plugin to 2026.8.1 or later. Before upgrading, disable explicit-target read actions or limit the connected bot account to allowed channels at the platform level.",
+      "affected": [
+        "@openclaw/msteams@< 2026.8.1",
+        "@openclaw/feishu@< 2026.8.1",
+        "@openclaw/matrix@< 2026.8.1",
+        "@openclaw/googlechat@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/msteams@2026.8.1",
+        "@openclaw/feishu@2026.8.1",
+        "@openclaw/matrix@2026.8.1",
+        "@openclaw/googlechat@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:12Z",
+      "updated": "2026-09-11T00:58:12Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-g7fw-3gjp-g5hf"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-g7fw-3gjp-g5hf",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "qc9c"
+      ],
+      "aliases": [
+        "GHSA-g7fw-3gjp-g5hf"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-g697-vv6h-r8hv",
+      "ghsa_id": "GHSA-g697-vv6h-r8hv",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-613",
+      "title": "Revoked Canvas capability could remain active during disconnect",
+      "description": "Summary Revoked Canvas capability could remain active during disconnect. In affected versions, node revocation invalidated the WebSocket client but Canvas HTTP authorization continued accepting and renewing its capability until close cleanup finished. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact A revoked paired node could continue using its previously granted Canvas capability during the WebSocket close grace period. Practical impact was limited to the capability's configured routes and the short interval before connection cleanup, but revocation did not take effect at the owner-held invalidation point. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, restart the Gateway after revoking a node with Canvas access.",
+      "affected": [
+        "openclaw@>= 2026.5.12, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:10Z",
+      "updated": "2026-09-11T00:58:10Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-g697-vv6h-r8hv"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-g697-vv6h-r8hv",
+      "nvd_url": null,
+      "cvss_score": 4.2,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-613"
+      ],
+      "credits": [
+        "andrewCantina"
+      ],
+      "aliases": [
+        "GHSA-g697-vv6h-r8hv"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-g24w-m94m-59qc",
+      "ghsa_id": "GHSA-g24w-m94m-59qc",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "low",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-639",
+      "title": "Webhook TaskFlow cancellation could target unrelated sessions",
+      "description": "Summary A webhook TaskFlow route could accept and store an arbitrary child session key, then use that key during cancellation without confirming that the child belonged to the route's configured parent session. Impact A holder of one webhook route secret who knew another live child session key could stop unrelated ACP or subagent work outside that route's authority. The demonstrated effect was session cancellation and associated task-state change; it did not grant access to the cancelled session's content. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, disable webhook TaskFlow cancellation on routes available to lower-trust callers, rotate exposed route secrets, and avoid accepting remote child-session identifiers unless their ownership is independently verified.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:09Z",
+      "updated": "2026-09-11T00:58:09Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-g24w-m94m-59qc"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-g24w-m94m-59qc",
+      "nvd_url": null,
+      "cvss_score": 3.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:L",
+      "cwe_ids": [
+        "CWE-639",
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-g24w-m94m-59qc"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-fw6q-2frm-jxxr",
+      "ghsa_id": "GHSA-fw6q-2frm-jxxr",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "Synology pre-auth limits could lock out valid webhooks",
+      "description": "Summary Synology pre-auth limits could lock out valid webhooks. In affected versions, invalid-token throttling ran before authentication and identified requests by the raw proxy socket address. Affected configurations This affected Synology Chat webhooks behind a trusted reverse proxy or tunnel where multiple external clients shared one socket address at OpenClaw. Impact An unauthenticated sender could consume the shared invalid-token budget and cause later valid Synology Chat callbacks to be rejected until the rate-limit window cleared. The attacker could not obtain a valid token or access message data; impact was temporary channel availability loss. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, avoid placing untrusted traffic and Synology callbacks behind the same proxy source address, or enforce per-client limits at the proxy.",
+      "affected": [
+        "openclaw@>= 2026.3.25, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:07Z",
+      "updated": "2026-09-11T00:58:07Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-fw6q-2frm-jxxr"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-fw6q-2frm-jxxr",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+      "cwe_ids": [
+        "CWE-400"
+      ],
+      "credits": [
+        "harjothkhara"
+      ],
+      "aliases": [
+        "GHSA-fw6q-2frm-jxxr"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-fvxr-9g24-x3hf",
+      "ghsa_id": "GHSA-fvxr-9g24-x3hf",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "Video asset downloads could reach private destinations",
+      "description": "Summary Video asset downloads could reach private destinations. In affected versions, the OpenClaw CLI fetched a provider-returned video asset URL without applying the network destination checks used for untrusted remote URLs. This advisory is scoped to video-generation providers that return a remote asset URL. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact A malicious or compromised provider could return a private or loopback URL after an operator requested video generation, causing the CLI to make a server-side request. Practical impact depends on the services reachable from the OpenClaw host. Patched Versions The first stable patched version is 2026.8.1. Mitigations upgrade to openclaw@2026.8.1 or later. Before upgrading, disable video generation from providers that are not fully trusted.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:06Z",
+      "updated": "2026-09-11T00:58:06Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-fvxr-9g24-x3hf"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-fvxr-9g24-x3hf",
+      "nvd_url": null,
+      "cvss_score": 6.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:L",
+      "cwe_ids": [
+        "CWE-918"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-fvxr-9g24-x3hf"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-fphf-69cp-h5xw",
+      "ghsa_id": "GHSA-fphf-69cp-h5xw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "Structured attachments could hide unvalidated host paths",
+      "description": "Summary Structured message attachments accepted several equivalent source fields, but sandbox validation stopped after the first populated field. Telegram later processed every populated source, allowing an out-of-sandbox host path to be hidden behind an allowed attachment source. Impact A sandboxed model could cause Telegram delivery to read and send a known host file that OpenClaw's sandbox media policy would reject on its own. Exploitation required a useful host path and an allowed Telegram delivery target. The issue bypassed path validation; it did not provide general filesystem listing. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, deny Telegram attachment actions to sandboxed or lower-trust agents and reject structured attachments containing more than one source field before delivery.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:04Z",
+      "updated": "2026-09-11T00:58:04Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-fphf-69cp-h5xw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-fphf-69cp-h5xw",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-22",
+        "CWE-180"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-fphf-69cp-h5xw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-fgwg-c3wv-8f45",
+      "ghsa_id": "GHSA-fgwg-c3wv-8f45",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "LINE group allowlist could inherit DM access",
+      "description": "Summary LINE group allowlist could inherit DM access. In affected versions, an account using groupPolicy: \"allowlist\" without groupAllowFrom silently reused the account's DM allowFrom values for group admission. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When DM access was broader than intended group access, including open DMs with allowFrom: [\"\"], a group participant could trigger the agent despite the configured group allowlist mode. Practical impact depended on the tools and conversation data exposed to that LINE account. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to @openclaw/line@2026.8.1 or later. Before upgrading, set an explicit finite groupAllowFrom for every account using group allowlist mode.",
+      "affected": [
+        "@openclaw/line@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/line@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:03Z",
+      "updated": "2026-09-11T00:58:03Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-fgwg-c3wv-8f45"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-fgwg-c3wv-8f45",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "edenfunf"
+      ],
+      "aliases": [
+        "GHSA-fgwg-c3wv-8f45"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-crg9-c62w-j2p5",
+      "ghsa_id": "GHSA-crg9-c62w-j2p5",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-367",
+      "title": "OpenShell filesystem mutations could race path validation",
+      "description": "Summary OpenShell filesystem mutations could race path validation. In affected versions, remove, mkdir, or rename could act on a different filesystem target after OpenClaw completed its sandbox path-safety check. This advisory is scoped to OpenShell local mirror mutations during a concurrent path change. It does not rely on an operator intentionally granting host filesystem access outside the sandbox. Impact An attacker able to win the filesystem race could cause a sandboxed operation to mutate a host path outside the intended mirror root. Practical impact could include unauthorized deletion, directory creation, or rename operations with the OpenClaw process user's permissions. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable OpenShell filesystem mutation operations for lower-trust workloads and avoid concurrent changes to mirror paths.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:01Z",
+      "updated": "2026-09-11T00:58:01Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-crg9-c62w-j2p5"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-crg9-c62w-j2p5",
+      "nvd_url": null,
+      "cvss_score": 7.8,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-367"
+      ],
+      "credits": [
+        "gal1ium",
+        "chluo1997"
+      ],
+      "aliases": [
+        "GHSA-crg9-c62w-j2p5"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-chr6-w4m5-57fv",
+      "ghsa_id": "GHSA-chr6-w4m5-57fv",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "low",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Memory tools could retain revoked access",
+      "description": "Summary Existing memorysearch and memoryget tools could continue using an enabled configuration captured at creation after an operator hot-disabled memory. The execution-time resolver treated explicit disablement like an unavailable snapshot and restored stale authority. Impact During an already-running agent turn, the model could continue searching or reading durable memory after the operator revoked that access. The exposure lasted for the remainder of the affected run and required memory to be disabled while a previously created tool remained active. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, restart active agent runs after disabling memory, and stop or restart the Gateway when immediate revocation is required rather than relying only on hot configuration reload.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:58:00Z",
+      "updated": "2026-09-11T00:58:00Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-chr6-w4m5-57fv"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-chr6-w4m5-57fv",
+      "nvd_url": null,
+      "cvss_score": 2.6,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:L/I:N/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-chr6-w4m5-57fv"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-cf95-m4jv-59rc",
+      "ghsa_id": "GHSA-cf95-m4jv-59rc",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "Synology file delivery could lose DNS pinning",
+      "description": "Summary Synology file delivery could lose DNS pinning. In affected versions, the Gateway validated one DNS result for a file URL but passed the original hostname to the NAS, where it could resolve to a different destination. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When Synology Chat attachment delivery accepted a remotely influenced hostname, DNS rebinding could make the NAS fetch a private or otherwise policy-denied resource and return it to the addressed conversation. Practical impact depended on NAS routing, resolver behavior, and the response available at the private destination. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable remote URL attachment forwarding in Synology Chat.",
+      "affected": [
+        "openclaw@>= 2026.7.1, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:58Z",
+      "updated": "2026-09-11T00:57:58Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-cf95-m4jv-59rc"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-cf95-m4jv-59rc",
+      "nvd_url": null,
+      "cvss_score": 7.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:H/I:L/A:N",
+      "cwe_ids": [
+        "CWE-918"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-cf95-m4jv-59rc"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-9x88-f7rh-4c83",
+      "ghsa_id": "GHSA-9x88-f7rh-4c83",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Browser node targets could bypass sandbox host control",
+      "description": "Summary Browser node targets could bypass sandbox host control. In affected versions, a sandboxed browser tool could select a paired node and reach host browser actions despite allowHostControl=false. This advisory is scoped to sandboxed sessions using the browser tool with a node target. It does not change OpenClaw's trusted-node model; the failed boundary is the operator's explicit sandbox decision to deny host control from that session. Impact A lower-trust input able to steer the sandboxed agent could inspect or manipulate a browser on a paired node. Practical impact depends on the connected browser profile, signed-in state, and actions exposed by the browser plugin. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, remove browser tools and paired-node targets from sandboxed agents configured with host control disabled.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:57Z",
+      "updated": "2026-09-11T00:57:57Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-9x88-f7rh-4c83"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9x88-f7rh-4c83",
+      "nvd_url": null,
+      "cvss_score": 8.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "wwwvwwvwwwwwvwwvw"
+      ],
+      "aliases": [
+        "GHSA-9x88-f7rh-4c83"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-9p6m-2872-xm7x",
+      "ghsa_id": "GHSA-9p6m-2872-xm7x",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-269",
+      "title": "Codex bind could omit owner authorization",
+      "description": "Summary Codex bind could omit owner authorization. In affected versions, an authorized non-owner channel sender could create a native Codex conversation binding and start host-capable Codex turns. This advisory is scoped to the Codex plugin's native binding controls. It does not change OpenClaw's trusted-plugin model: Codex remains trusted once an owner authorizes its use, while creating or changing a native binding requires owner or administrator authority. Impact A non-owner sender with command access could bind a conversation to the native Codex runtime and reach the files, tools, and processes available to that runtime. Practical impact depends on the configured Codex permissions and host environment. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable Codex bind commands in channels with non-owner participants and remove unintended native bindings.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:55Z",
+      "updated": "2026-09-11T00:57:55Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-9p6m-2872-xm7x"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9p6m-2872-xm7x",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-269",
+        "CWE-862"
+      ],
+      "credits": [
+        "wwwvwwvwwwwwvwwvw"
+      ],
+      "aliases": [
+        "GHSA-9p6m-2872-xm7x"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-9m4p-cqp4-jppq",
+      "ghsa_id": "GHSA-9m4p-cqp4-jppq",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "WhatsApp login tool could reach non-owner turns",
+      "description": "Summary The WhatsApp login tool could be exposed through the generic channel-tool path without preserving the originating sender's owner status. An admitted non-owner turn could request a forced login and receive a new QR code for a configured account. Impact A non-owner sender able to steer the tool could disconnect or replace the Gateway's WhatsApp account, causing loss of availability and unauthorized account relinking. Successful takeover required scanning the returned QR code with another phone. The issue affected the owner-only tool boundary rather than WhatsApp transport authentication. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade @openclaw/whatsapp to 2026.8.1 or later. Until upgraded, disable the WhatsApp login tool after setup, restrict agent access to owner-controlled conversations, and avoid exposing tool-capable agents to non-owner senders.",
+      "affected": [
+        "@openclaw/whatsapp@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/whatsapp@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:53Z",
+      "updated": "2026-09-11T00:57:53Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-9m4p-cqp4-jppq"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9m4p-cqp4-jppq",
+      "nvd_url": null,
+      "cvss_score": 8.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+      "cwe_ids": [
+        "CWE-862"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-9m4p-cqp4-jppq"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-9f86-pvv5-rxfw",
+      "ghsa_id": "GHSA-9f86-pvv5-rxfw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "Escaped newlines could confuse exec allowlist parsing",
+      "description": "Summary Escaped newlines could confuse exec allowlist parsing. In affected versions, the command parser could describe and authorize one visible shell word sequence while execution included an additional command hidden by newline parsing. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When exec allowlist or approval policy trusted the parsed command, lower-trust model input could cause an additional command to execute without the expected prompt. Practical impact depended on the exec host, sandbox mode, process permissions, and the commands available to the agent. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable exec for lower-trust agents or require review outside the affected parser path for every command.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:52Z",
+      "updated": "2026-09-11T00:57:52Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-9f86-pvv5-rxfw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-9f86-pvv5-rxfw",
+      "nvd_url": null,
+      "cvss_score": 8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-78",
+        "CWE-863"
+      ],
+      "credits": [
+        "tdjackey"
+      ],
+      "aliases": [
+        "GHSA-9f86-pvv5-rxfw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-8xxh-v4vc-qvm4",
+      "ghsa_id": "GHSA-8xxh-v4vc-qvm4",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-178",
+      "title": "Cron tool could accept mixed-case command payloads",
+      "description": "Summary Cron tool could accept mixed-case command payloads. In affected versions, a mixed-case payload kind could pass the agent-facing shell-execution guard and later normalize into a command job. This advisory is scoped to cron jobs created or edited through the model-facing cron tool. Direct CLI and authorized Gateway scheduling surfaces remain trusted operator controls. Impact An actor able to steer a tool-enabled agent could create a persistent cron job that executed attacker-selected commands with the OpenClaw process user's privileges. Practical impact includes access to host files, credentials, and scheduled service availability. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, remove the cron tool from agents exposed to lower-trust content and inspect scheduled jobs for command payloads.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:50Z",
+      "updated": "2026-09-11T00:57:50Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-8xxh-v4vc-qvm4"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-8xxh-v4vc-qvm4",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-178",
+        "CWE-863"
+      ],
+      "credits": [
+        "shayd-versa"
+      ],
+      "aliases": [
+        "GHSA-8xxh-v4vc-qvm4"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-89cw-7452-cfrf",
+      "ghsa_id": "GHSA-89cw-7452-cfrf",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "Trajectory export could omit owner authorization",
+      "description": "Summary Trajectory export could omit owner authorization. In affected versions, an authorized non-owner sender in a direct conversation could request, approve, and receive an owner-only trajectory bundle. This advisory is scoped to /export-trajectory, which is documented as an owner command. It does not change the intentionally broader authorization contract of /export-session or create per-user isolation within a shared Gateway. Impact A non-owner sender could receive prompts, model messages, tool schemas and results, runtime events, and local path metadata from the affected session. Practical impact depends on the contents recorded in that trajectory. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable trajectory export commands in channels with non-owner participants and remove unexpected exported bundles.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:49Z",
+      "updated": "2026-09-11T00:57:49Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-89cw-7452-cfrf"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-89cw-7452-cfrf",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-200",
+        "CWE-862"
+      ],
+      "credits": [
+        "yetval"
+      ],
+      "aliases": [
+        "GHSA-89cw-7452-cfrf"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-8938-r7c6-54vq",
+      "ghsa_id": "GHSA-8938-r7c6-54vq",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Microsoft Teams access-group failures could admit unlisted senders",
+      "description": "Summary Microsoft Teams access-group failures could admit unlisted senders. In affected versions, missing or unsupported configured access groups produced denied results that were not rejected by the final message-admission check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When groupPolicy was set to allowlist with an affected access-group entry, an unlisted Teams member could trigger the configured agent despite the administrator's group boundary. Practical impact depended on the conversations, tools, and data available to that agent. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, avoid unresolved access-group entries and use explicit supported sender or conversation allowlists.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:47Z",
+      "updated": "2026-09-11T00:57:47Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-8938-r7c6-54vq"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-8938-r7c6-54vq",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-8938-r7c6-54vq"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-7jfq-rmfm-29wp",
+      "ghsa_id": "GHSA-7jfq-rmfm-29wp",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "File-transfer approvals could widen durable authority",
+      "description": "Summary File-transfer allow-always approvals could preserve more authority than the operator reviewed. Literal path characters could later be interpreted as glob syntax, and node-specific grants could be reused by another node with the same display name. Impact After an operator approved one file-transfer request, a later agent request could reuse that standing grant for a sibling path or a different node that was not shown in the approval. Depending on the original operation, this could broaden durable read or write access. Exploitation still required a prior operator approval and a matching widened target. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, avoid allow-always for file-transfer requests containing glob metacharacters and use unique node display names. Remove and recreate existing standing file-transfer grants after upgrading.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:46Z",
+      "updated": "2026-09-11T00:57:46Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7jfq-rmfm-29wp"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-7jfq-rmfm-29wp",
+      "nvd_url": null,
+      "cvss_score": 6.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:H/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-7jfq-rmfm-29wp"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-7cp7-87pj-p32v",
+      "ghsa_id": "GHSA-7cp7-87pj-p32v",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Skill tool dispatch could skip owner-only policy",
+      "description": "Summary Skill tool dispatch could skip owner-only policy. In affected versions, an allowlisted non-owner invoking a skill-backed command could reach owner-only tools because the dispatch path did not carry the sender's owner status or apply the owner-only tool filter. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact A non-owner sender authorized to invoke the affected skill command could access tools backed by server credentials and capabilities that OpenClaw reserves for owners. Practical impact depended on which owner-only command tool the installed skill exposed. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable skill tool dispatch for non-owner senders and audit skills that map commands to owner-only tools.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:44Z",
+      "updated": "2026-09-11T00:57:44Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-7cp7-87pj-p32v"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-7cp7-87pj-p32v",
+      "nvd_url": null,
+      "cvss_score": 8.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "SEORY0"
+      ],
+      "aliases": [
+        "GHSA-7cp7-87pj-p32v"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-74gc-hg2m-79p9",
+      "ghsa_id": "GHSA-74gc-hg2m-79p9",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Reusable exec approvals could authorize changed arguments",
+      "description": "Summary Reusable exec approvals could authorize changed arguments. In affected versions on macOS and Linux, selecting Allow Always for one exact command persisted a path-only grant. Later uses of the same executable with different arguments could therefore run without a new prompt. This advisory is scoped to generated Allow Always entries. It does not treat operator-authored path-only allowlist rules as exact-argument grants; the failed boundary was OpenClaw broadening an exact command approved by the operator when it persisted that grant. Impact After an operator approved a benign command, later untrusted content that influenced the agent could reuse its executable with different target or output arguments. Depending on the tool, this could send local files, overwrite user-writable files, or reach internal services without showing another approval prompt. Exploitation requires a prior persistent approval for the same executable. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, use one-time approval for commands whose arguments select network targets, input files, or output paths, and remove generated broad Allow Always entries.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:42Z",
+      "updated": "2026-09-11T00:57:43Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-74gc-hg2m-79p9"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-74gc-hg2m-79p9",
+      "nvd_url": null,
+      "cvss_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "anagnorisis2peripeteia"
+      ],
+      "aliases": [
+        "GHSA-74gc-hg2m-79p9"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-72p2-79fg-pvph",
+      "ghsa_id": "GHSA-72p2-79fg-pvph",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "Trusted-host DNS checks could admit unspecified addresses",
+      "description": "Summary Trusted-host DNS checks could admit unspecified addresses. In affected versions, a trusted hostname that resolved to 0.0.0.0 or :: could connect to a loopback service despite OpenClaw's SSRF destination checks. This advisory is scoped to fetches that use the trusted-host DNS recheck. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When an attacker could influence DNS for an allowed hostname, a guarded fetch could reach a service bound only to loopback and disclose its response. Practical impact depends on the reachable service and the data it returns. Patched Versions The first stable patched version is 2026.8.1. Mitigations upgrade to openclaw@2026.8.1 or later. Before upgrading, avoid trusting hostnames whose DNS answers are outside the operator's control.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:41Z",
+      "updated": "2026-09-11T00:57:41Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-72p2-79fg-pvph"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-72p2-79fg-pvph",
+      "nvd_url": null,
+      "cvss_score": 5.9,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-918"
+      ],
+      "credits": [
+        "qc9c"
+      ],
+      "aliases": [
+        "GHSA-72p2-79fg-pvph"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-6xpv-wwr5-265h",
+      "ghsa_id": "GHSA-6xpv-wwr5-265h",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "low",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "Truncated tar listings could bypass extraction limits",
+      "description": "Summary The tar.bz2 skill installer treated bounded command-output suffixes as complete archive listings. A crafted archive could push prohibited entries out of both retained listings, pass entry and size checks, and then be extracted in full. Impact After an operator approved installation of a malicious or compromised skill archive, over-limit files or entry counts could be persisted in the skill tools directory and consume disk space or inodes. The demonstrated issue bypassed OpenClaw's explicit extraction budgets; it did not execute archive contents by itself. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, avoid installing .tar.bz2 or .tbz2 skills from untrusted sources and inspect or extract such archives with an independently bounded tool before installation.",
+      "affected": [
+        "openclaw@>= 2026.5.28, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:39Z",
+      "updated": "2026-09-11T00:57:39Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-6xpv-wwr5-265h"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-6xpv-wwr5-265h",
+      "nvd_url": null,
+      "cvss_score": 3.1,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:L",
+      "cwe_ids": [
+        "CWE-400"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-6xpv-wwr5-265h"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-66hm-hxq3-5pfh",
+      "ghsa_id": "GHSA-66hm-hxq3-5pfh",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "Embedding fallback could forward a provider key across vendors",
+      "description": "Summary Embedding fallback could forward a provider key across vendors. In affected versions, memory embedding failover could reuse the primary provider's configured API key while sending the request to a different fallback provider. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When remote embedding fallback was configured and the primary provider failed, a credential intended for one vendor could be sent as a bearer token to another vendor. Practical impact depended on the configured providers, whether failover occurred, and the privileges attached to the primary provider key. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable cross-provider embedding fallback or configure providers with separate narrowly scoped credentials.",
+      "affected": [
+        "openclaw@>= 2026.3.28, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:37Z",
+      "updated": "2026-09-11T00:57:37Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-66hm-hxq3-5pfh"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-66hm-hxq3-5pfh",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-200"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-66hm-hxq3-5pfh"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-62qm-6fjj-6g23",
+      "ghsa_id": "GHSA-62qm-6fjj-6g23",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Dreaming could widen restricted sender authority",
+      "description": "Summary Session-derived memory could lose the originating requester's restrictions before later dreaming runs processed it. Text from an admitted sender with limited tools could be persisted without its untrusted provenance, then supplied to an unattended agent with broader file and command capabilities. Impact In deployments with session-memory capture and dreaming enabled, a restricted external sender could place instructions that a later background model might follow with authority unavailable to the original turn. Successful exploitation required the content to be captured, selected for later processing, and followed by the model. Resulting actions could affect files, commands, or services available to the dreaming agent. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, disable dreaming for agents that accept restricted external senders, disable session-memory capture for those conversations, or run background memory processing without mutation and command tools.",
+      "affected": [
+        "openclaw@>= 2026.4.5, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:36Z",
+      "updated": "2026-09-11T00:57:36Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-62qm-6fjj-6g23"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-62qm-6fjj-6g23",
+      "nvd_url": null,
+      "cvss_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-62qm-6fjj-6g23"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5x6q-wg56-rxg8",
+      "ghsa_id": "GHSA-5x6q-wg56-rxg8",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-362",
+      "title": "Discord realtime transcripts could inherit another speaker's owner status",
+      "description": "Summary Discord realtime transcripts could inherit another speaker's owner status. In affected versions, concurrent control-classified voice transcripts could consume speaker context belonging to another participant after an asynchronous control check. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact In Discord agent-proxy voice sessions using the affected realtime control path, a non-owner utterance could reach the downstream agent boundary marked as owner. This could apply owner-sensitive behavior to the wrong speaker. Practical impact depended on concurrent transcript timing and the tools and commands available to that agent. Patched Versions The first stable patched version is 2026.9.2. Mitigations Upgrade to openclaw@2026.9.2 or later. Before upgrading, disable Discord realtime voice for agents that distinguish owner and non-owner senders.",
+      "affected": [
+        "openclaw@>= 2026.7.2, < 2026.9.2"
+      ],
+      "patched": [
+        "openclaw@2026.9.2"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:34Z",
+      "updated": "2026-09-11T00:57:34Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5x6q-wg56-rxg8"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5x6q-wg56-rxg8",
+      "nvd_url": null,
+      "cvss_score": 6.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:H/A:L",
+      "cwe_ids": [
+        "CWE-362",
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-5x6q-wg56-rxg8"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5rx7-34fw-64qg",
+      "ghsa_id": "GHSA-5rx7-34fw-64qg",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "Unicode fallback could escape workspaceOnly roots",
+      "description": "Summary When tools.fs.workspaceOnly was enabled, Unicode filename fallback could normalize already-validated parent directory components. On filesystems where canonically equivalent sibling directories coexist, a missing path inside the workspace could be retried against a sibling outside it. Impact An admitted requester could cause a tool-enabled agent to read a known file outside its configured workspace boundary. Exploitation required a filesystem layout with distinct canonically equivalent parent directory names and knowledge of a useful target path. It did not rely on symlinks or hardlinks. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw to 2026.8.1 or later. Until upgraded, avoid workspace paths with canonically equivalent Unicode sibling names and deny filesystem read tools to lower-trust senders on affected hosts.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:33Z",
+      "updated": "2026-09-11T00:57:33Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5rx7-34fw-64qg"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5rx7-34fw-64qg",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-22",
+        "CWE-180"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-5rx7-34fw-64qg"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5mrc-77hj-xjxv",
+      "ghsa_id": "GHSA-5mrc-77hj-xjxv",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-88",
+      "title": "Workspace Cloud SDK arguments could execute code during Gmail setup",
+      "description": "Summary Workspace Cloud SDK arguments could execute code during Gmail setup. In affected versions, an untrusted workspace .env could set CLOUDSDKPYTHONARGS. Gmail setup inherited that value when starting gcloud, whose launcher passed it as arguments to Python. This advisory is scoped to operators who started OpenClaw in attacker-controlled workspace content and then invoked the Gmail setup flow. Impact A crafted CLOUDSDKPYTHONARGS value could make the trusted Python interpreter execute attacker-supplied code when Gmail setup ran gcloud. The code ran with the OpenClaw host user's permissions and could read credentials, modify files, or start other processes. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, run Gmail setup only from trusted workspaces and clear inherited CLOUDSDK variables before invoking it.",
+      "affected": [
+        "openclaw@>= 2026.3.28, < 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:31Z",
+      "updated": "2026-09-11T00:57:31Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5mrc-77hj-xjxv"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5mrc-77hj-xjxv",
+      "nvd_url": null,
+      "cvss_score": 7.8,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-88",
+        "CWE-94"
+      ],
+      "credits": [
+        "qc9c"
+      ],
+      "aliases": [
+        "GHSA-5mrc-77hj-xjxv"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5m4g-88rg-69pj",
+      "ghsa_id": "GHSA-5m4g-88rg-69pj",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "low",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "MCP loopback could omit sandbox tool deny policy",
+      "description": "Summary MCP loopback could omit sandbox tool deny policy. In affected versions, a sandboxed coding-agent session could list and invoke tools explicitly denied by sandbox.tools.deny. This advisory is scoped to the bundled MCP loopback used by sandboxed coding-agent sessions. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When MCP loopback is enabled for a sandboxed session, the session could reach a denied tool and access data or actions that the operator intended to exclude. Practical impact depends on the denied tools and their granted capabilities. Patched Versions The first stable patched version is 2026.8.1. Mitigations upgrade to openclaw@2026.8.1 or later. Until upgraded, disable MCP loopback for sandboxed coding agents or remove sensitive tools from the Gateway inventory.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:30Z",
+      "updated": "2026-09-11T00:57:30Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5m4g-88rg-69pj"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5m4g-88rg-69pj",
+      "nvd_url": null,
+      "cvss_score": 3.3,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "qc9c"
+      ],
+      "aliases": [
+        "GHSA-5m4g-88rg-69pj"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5j57-84cx-r295",
+      "ghsa_id": "GHSA-5j57-84cx-r295",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-532",
+      "title": "iOS deep-link logs could expose unattended credentials",
+      "description": "Summary OpenClaw for iOS logged the complete unattended-agent deep-link URL as public diagnostic data. The URL could contain a persistent bearer key together with message and delivery parameters, leaving the credential available in copied unified logs or diagnostic archives. Impact A party that obtained affected logs could reuse an unrotated key in a forged deep link to submit attacker-chosen agent requests without the normal local confirmation. Exploitation also required a legitimate keyed link to have been processed and a way to invoke the custom URL scheme on the connected device. Invalid or absent keys still required confirmation. Patched Versions The first stable patched version is 2026.8.11. Mitigations Upgrade OpenClaw for iOS to 2026.8.11 or later. Rotate unattended deep-link keys that may appear in affected diagnostics, remove retained diagnostic archives containing those links, and avoid sharing device logs from affected versions.",
+      "affected": [
+        "OpenClaw iOS@< 2026.8.11"
+      ],
+      "patched": [
+        "OpenClaw iOS@2026.8.11"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:28Z",
+      "updated": "2026-09-11T00:57:28Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5j57-84cx-r295"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5j57-84cx-r295",
+      "nvd_url": null,
+      "cvss_score": 6.3,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:N",
+      "cwe_ids": [
+        "CWE-532"
+      ],
+      "credits": [
+        "jason-allen-oneal"
+      ],
+      "aliases": [
+        "GHSA-5j57-84cx-r295"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5j27-v2pw-cj9m",
+      "ghsa_id": "GHSA-5j27-v2pw-cj9m",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Talk Voice changes could omit admin authorization",
+      "description": "Summary Talk Voice changes could omit admin authorization. In affected versions, an authorized non-owner external-channel sender could use /voice set to persist the Gateway's configured Talk voice. This advisory is scoped to the mutating Talk Voice command. Read-only voice status remains available according to normal channel policy, while persistent Gateway configuration changes require owner or administrator authority. Impact A non-owner sender with command access could change the voice used by Talk responses for the configured provider. This affects configuration integrity and future voice output but does not by itself expose credentials or grant additional host capabilities. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable /voice set in external channels or limit channel command access to owners.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:27Z",
+      "updated": "2026-09-11T00:57:27Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5j27-v2pw-cj9m"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5j27-v2pw-cj9m",
+      "nvd_url": null,
+      "cvss_score": 4.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "rexpository"
+      ],
+      "aliases": [
+        "GHSA-5j27-v2pw-cj9m"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-5fwv-rrvp-8xvr",
+      "ghsa_id": "GHSA-5fwv-rrvp-8xvr",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Session filename generation could regain denied tools",
+      "description": "Summary Session filename generation could regain denied tools. In affected versions, session-memory filename generation created an embedded helper with tools that the originating sender's policy had removed. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When session-memory filename generation was enabled for an agent reachable by lower-trust senders, model-mediated instructions could invoke tools outside that sender's effective policy. Demonstrated impact included creating persistent scheduled work. Practical impact depended on the model following the injected instruction and on which tools the helper exposed. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, disable session-memory filename generation for agents reachable by lower-trust senders.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:25Z",
+      "updated": "2026-09-11T00:57:25Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-5fwv-rrvp-8xvr"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-5fwv-rrvp-8xvr",
+      "nvd_url": null,
+      "cvss_score": 5.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-5fwv-rrvp-8xvr"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-58qx-6m8p-wh2j",
+      "ghsa_id": "GHSA-58qx-6m8p-wh2j",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Slack group DMs could skip sender allowlists",
+      "description": "Summary Slack group DMs could skip sender allowlists. In affected versions, a sender in a multi-person direct message could trigger an OpenClaw agent even when the configured Slack group sender policy did not allow that sender. This advisory is scoped to Slack multi-person direct messages and their message, command, and interaction ingress. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When a Slack agent was present in a group DM, a disallowed participant could trigger the agent within the tools and data already granted to that agent. Practical impact depends on the agent's tool policy and channel configuration. Patched Versions The first stable patched version is 2026.8.1. Mitigations upgrade to @openclaw/slack@2026.8.1 or later. Until upgraded, do not add tool-enabled agents to multi-person direct messages containing untrusted participants.",
+      "affected": [
+        "@openclaw/slack@< 2026.8.1"
+      ],
+      "patched": [
+        "@openclaw/slack@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:24Z",
+      "updated": "2026-09-11T00:57:24Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-58qx-6m8p-wh2j"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-58qx-6m8p-wh2j",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-58qx-6m8p-wh2j"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-4wvr-f35r-f8w4",
+      "ghsa_id": "GHSA-4wvr-f35r-f8w4",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-639",
+      "title": "message.action could trust spoofed requester provenance",
+      "description": "Summary message.action could trust spoofed requester provenance. In affected versions, a write-scoped caller in an identity-bearing Gateway deployment could supply another sender's identifier to channel authorization checks. This advisory is scoped to Gateway authentication modes that honor caller identity and narrower operator scopes. Shared-secret token and password callers are full trusted operators under OpenClaw's security model. Impact A write-scoped caller could invoke a channel action under spoofed requester identity and reach operations that the channel adapter would have denied to the real caller. Practical impact depends on the enabled channel, action, and target account permissions. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, restrict message.action access to administrators in identity-bearing deployments and disable sensitive channel actions that rely on requester identity.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:22Z",
+      "updated": "2026-09-11T00:57:22Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4wvr-f35r-f8w4"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4wvr-f35r-f8w4",
+      "nvd_url": null,
+      "cvss_score": 7.6,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:L",
+      "cwe_ids": [
+        "CWE-639",
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-4wvr-f35r-f8w4"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-4r25-35qc-fr6j",
+      "ghsa_id": "GHSA-4r25-35qc-fr6j",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "Gateway upgrade-like requests could retain unauthenticated sockets",
+      "description": "Summary Gateway upgrade-like requests could retain unauthenticated sockets. In affected versions, an HTTP request carrying a WebSocket upgrade header without the matching connection semantics was routed to the ordinary handler, which returned without ending the response. This advisory is scoped to the named Gateway listener. It does not change OpenClaw's trusted-operator model or recommend exposing the Gateway publicly; the issue affected any lower-trust client that could reach the configured listener. Impact An unauthenticated client could hold response sockets and associated request state open without consuming the WebSocket pre-auth connection budget. Repeated requests could exhaust listener resources. Confidentiality and integrity were not affected, and practical impact depended on listener reachability and host limits. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, keep the Gateway loopback-only or behind a proxy that rejects malformed upgrade requests and enforces connection limits.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:21Z",
+      "updated": "2026-09-11T00:57:21Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4r25-35qc-fr6j"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4r25-35qc-fr6j",
+      "nvd_url": null,
+      "cvss_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+      "cwe_ids": [
+        "CWE-400",
+        "CWE-404"
+      ],
+      "credits": [
+        "BrandonChoKR"
+      ],
+      "aliases": [
+        "GHSA-4r25-35qc-fr6j"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-4hwv-rj92-h7rp",
+      "ghsa_id": "GHSA-4hwv-rj92-h7rp",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "Diagnostics export could omit owner authorization",
+      "description": "Summary Diagnostics export could omit owner authorization. In affected versions, an authorized non-owner channel sender could request and receive an owner-only host diagnostics bundle. This advisory is scoped to the /diagnostics command and the data intentionally collected by that export. It does not change OpenClaw's trusted-operator model or imply that ordinary authorized senders have a general host-file boundary. Impact A non-owner sender could receive diagnostic details about the OpenClaw host, configuration, runtime, and connected services that were intended for the owner. Practical confidentiality impact depends on the enabled integrations and the contents captured in the bundle. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable diagnostics commands in channels with non-owner participants and delete any unexpectedly shared diagnostic bundles.",
+      "affected": [
+        "openclaw@< 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:19Z",
+      "updated": "2026-09-11T00:57:19Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4hwv-rj92-h7rp"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4hwv-rj92-h7rp",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-200",
+        "CWE-862"
+      ],
+      "credits": [
+        "yetval"
+      ],
+      "aliases": [
+        "GHSA-4hwv-rj92-h7rp"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-4g58-43jr-6738",
+      "ghsa_id": "GHSA-4g58-43jr-6738",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "Browser wait predicates could reach blocked destinations",
+      "description": "Summary Browser wait predicates could reach blocked destinations. In affected versions, wait --fn against an existing browser session could cause requests to loopback or private destinations without the navigation checks applied to other browser actions. This advisory is scoped to predicate waits on an already-open browser session. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When lower-trust input could steer a browser-enabled agent and an existing session was available, the browser could request a destination that OpenClaw's browser SSRF policy would otherwise reject. Practical impact depends on the reachable service and browser state. Patched Versions The first stable patched version is 2026.8.1. Mitigations upgrade to openclaw@2026.8.1 or later. Before upgrading, disable browser predicate evaluation for sessions exposed to lower-trust content.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:18Z",
+      "updated": "2026-09-11T00:57:18Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-4g58-43jr-6738"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-4g58-43jr-6738",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-918"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-4g58-43jr-6738"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-3mq7-q27j-mq7q",
+      "ghsa_id": "GHSA-3mq7-q27j-mq7q",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Exec approvals could outlive their reviewed working directory",
+      "description": "Summary Reusable exec approvals matched a command's arguments without binding the working directory. The same approved command could therefore run later in a different directory against files or repositories the operator had not reviewed. Impact An agent that obtained one allow-always approval could reuse it where the same command had materially different read or write effects. Impact depended on the approved command and contents of the second directory. The issue did not remove the need for the operator's initial approval. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade openclaw and any paired native execution clients to 2026.8.1 or later. Until upgraded, avoid reusable exec approvals for commands whose behavior depends on cwd. Review and remove existing standing approvals, then approve future commands separately in each intended directory.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:16Z",
+      "updated": "2026-09-11T00:57:16Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-3mq7-q27j-mq7q"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-3mq7-q27j-mq7q",
+      "nvd_url": null,
+      "cvss_score": 7.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:N",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-3mq7-q27j-mq7q"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-39hf-qg99-f4qv",
+      "ghsa_id": "GHSA-39hf-qg99-f4qv",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-1236",
+      "title": "Google Meet attendance CSV could interpret names as formulas",
+      "description": "Summary Google Meet attendance CSV could interpret names as formulas. In affected versions, participant display names were quoted for CSV output but leading spreadsheet formula characters were not neutralized. This advisory is scoped to the exported artifact and the spreadsheet application used to open it. OpenClaw did not evaluate the formula itself, and impact required an operator to open the attendance export in software with formula evaluation enabled. Impact A meeting participant who controlled their display name could place a formula-like cell in attendance.csv. Opening that export in an affected spreadsheet could evaluate the cell with the spreadsheet user's permissions. Practical impact depended on spreadsheet security settings and supported formula behavior. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, import attendance exports as plain text or inspect formula-leading participant cells before opening them in a spreadsheet.",
+      "affected": [
+        "openclaw@< 2026.8.1"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:14Z",
+      "updated": "2026-09-11T00:57:15Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-39hf-qg99-f4qv"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-39hf-qg99-f4qv",
+      "nvd_url": null,
+      "cvss_score": 5.4,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+      "cwe_ids": [
+        "CWE-1236"
+      ],
+      "credits": [
+        "anagnorisis2peripeteia"
+      ],
+      "aliases": [
+        "GHSA-39hf-qg99-f4qv"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-35wj-hm2r-ghgw",
+      "ghsa_id": "GHSA-35wj-hm2r-ghgw",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Discord guild reads could skip target allowlists",
+      "description": "Summary Discord guild reads could skip target allowlists. In affected versions, guild metadata actions could read information from a server or channel outside the configured Discord read-target policy. This advisory is scoped to explicit guild metadata reads in the Discord plugin. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact A lower-trust sender or steered agent with access to Discord read actions could retrieve guild metadata excluded by the operator's channel allowlist. Practical impact depends on the Discord bot account's platform permissions and accessible servers. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to @openclaw/discord@2026.7.1 or later. Before upgrading, disable Discord guild metadata actions or restrict the bot account to allowed servers and channels.",
+      "affected": [
+        "@openclaw/discord@< 2026.7.1"
+      ],
+      "patched": [
+        "@openclaw/discord@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:13Z",
+      "updated": "2026-09-11T00:57:13Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-35wj-hm2r-ghgw"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-35wj-hm2r-ghgw",
+      "nvd_url": null,
+      "cvss_score": 4.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:N/A:N",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "qc9c"
+      ],
+      "aliases": [
+        "GHSA-35wj-hm2r-ghgw"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-356g-m7rx-7pm3",
+      "ghsa_id": "GHSA-356g-m7rx-7pm3",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-180",
+      "title": "ACP file URLs could skip out-of-cwd read approval",
+      "description": "Summary ACP file URLs could skip out-of-cwd read approval. In affected versions, alternate but valid file: URL spellings were treated as relative paths and incorrectly classified as reads scoped to the session working directory. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact When an operator connected openclaw acp client to an untrusted or compromised ACP peer, the peer could request a read outside the session working directory without showing the approval prompt required for that path. The demonstrated impact was file confidentiality; mutating and command-capable tool classes were not included. Patched Versions The first stable patched version is 2026.8.1. Mitigations Upgrade to openclaw@2026.8.1 or later. Before upgrading, connect the ACP client only to trusted peers and avoid granting it access to sensitive host files.",
+      "affected": [
+        "openclaw@= 2026.7.1-2"
+      ],
+      "patched": [
+        "openclaw@2026.8.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:12Z",
+      "updated": "2026-09-11T00:57:12Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-356g-m7rx-7pm3"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-356g-m7rx-7pm3",
+      "nvd_url": null,
+      "cvss_score": 5.5,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-180",
+        "CWE-863"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-356g-m7rx-7pm3"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-22v4-33m3-8p7m",
+      "ghsa_id": "GHSA-22v4-33m3-8p7m",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "Memory dreaming changes could omit owner checks",
+      "description": "Summary Memory dreaming changes could omit owner checks. In affected versions, an authorized non-owner external-channel sender could enable or disable the Gateway's persistent Memory Core dreaming behavior. This advisory is scoped to persistent /dreaming on and /dreaming off mutations. Read-only status and help remain governed by normal command policy, and OpenClaw does not treat one shared Gateway as adversarial multi-tenant isolation. Impact A non-owner sender could disable background memory processing or re-enable durable memory promotion where the owner expected it to remain disabled. Practical confidentiality, integrity, and availability impact depends on stored conversation material and subsequent memory use. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, disable dreaming commands in external channels or restrict channel command access to owners.",
+      "affected": [
+        "openclaw@>= 2026.4.10 < 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:57:10Z",
+      "updated": "2026-09-11T00:57:10Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-22v4-33m3-8p7m"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-22v4-33m3-8p7m",
+      "nvd_url": null,
+      "cvss_score": 6.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+      "cwe_ids": [
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "rexpository"
+      ],
+      "aliases": [
+        "GHSA-22v4-33m3-8p7m"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-224w-vfr9-h35c",
+      "ghsa_id": "GHSA-224w-vfr9-h35c",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "Google Meet node commands could skip exec approvals",
+      "description": "Summary Google Meet node commands could skip exec approvals. In affected versions, googlemeet.chrome accepted caller-supplied audio command arrays and executed them on a paired node outside the normal system.run approval path. This advisory is scoped to deployments with the Google Meet plugin enabled, a paired Chrome node, and the node command allowed. Pairing a node remains an operator-level trust decision; the failed boundary is the configured exec approval path for model-triggered commands. Impact A tool-enabled agent able to invoke the allowed Google Meet node command could execute attacker-selected processes on the paired node. This could affect files, credentials, browser profiles, and availability on that node. Patched Versions The first stable patched version is 2026.7.1. Mitigations upgrade to openclaw@2026.7.1 or later. Before upgrading, remove googlemeet.chrome from allowed node commands or disable the Google Meet plugin.",
+      "affected": [
+        "openclaw@>= 2026.5.1 < 2026.7.1"
+      ],
+      "patched": [
+        "openclaw@2026.7.1"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-09-11T00:56:59Z",
+      "updated": "2026-09-11T00:56:59Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-224w-vfr9-h35c"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-224w-vfr9-h35c",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-78",
+        "CWE-862",
+        "CWE-863"
+      ],
+      "credits": [
+        "wwwvwwvwwwwwvwwvw"
+      ],
+      "aliases": [
+        "GHSA-224w-vfr9-h35c"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
     {
       "id": "CVE-2026-85107",
       "severity": "medium",
