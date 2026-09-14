@@ -29,6 +29,7 @@
 - [Security](security.md)
 
 ## Operations
+- [Multi-Harness Suite Design (Proposed)](multi-harness-suite-design.md)
 - [Security Signing Runbook](security-signing-runbook.md)
 - [Signed Feed Migration Plan](migration-signed-feed.md)
 - [Platform Verification Checklist](platform-verification.md)
@@ -54,6 +55,7 @@
 - [Generation Metadata](GENERATION.md)
 
 ## Update Notes
+- 2026-07-22: Added the proposed multi-harness core, suite, guardian, private-candidate lifecycle, distribution, migration, and sub-agent implementation design.
 - 2026-05-04: Added runtime traffic guardian baseline module and platform-specific skill scaffolds for OpenClaw, Hermes, NanoClaw, and Picoclaw.
 - 2026-04-26: Split Picoclaw self-pen-testing into standalone `picoclaw-self-pen-testing`; updated Picoclaw module docs and references.
 - 2026-04-25: Added Picoclaw Security Guardian module for advisory awareness, config drift detection, and chain-of-supply verification.
@@ -85,4 +87,5 @@
 - wiki/modules/picoclaw-security-guardian.md
 - wiki/modules/picoclaw-self-pen-testing.md
 - wiki/modules/runtime-traffic-guardian-baseline.md
+- wiki/multi-harness-suite-design.md
 - .github/workflows/ci.yml
