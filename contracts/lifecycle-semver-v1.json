@@ -1,0 +1,63 @@
+{
+  "contract": "clawsec.lifecycle-semver/v1",
+  "contract_version": 1,
+  "purpose": "Define strict SemVer syntax, package-qualified tags, lifecycle version classes, and publication eligibility without performing release or catalog writes.",
+  "semver": {
+    "standard": "Semantic Versioning 2.0.0",
+    "strict_input": true,
+    "numeric_representation": "unbounded decimal string",
+    "build_metadata_is_valid_syntax": true,
+    "build_metadata_affects_precedence": false,
+    "build_metadata_allowed_for_clawsec_publication_identity": false
+  },
+  "package_tag": {
+    "grammar": "<lowercase-kebab-package>-v<semver>",
+    "delimiter_rule": "Use the terminal -v suffix whose remainder is a valid SemVer version.",
+    "example": "clawsec-core-openclaw-v0.1.0"
+  },
+  "version_classes": {
+    "beta": "An exact -beta.N prerelease, where N is a canonical non-negative decimal identifier.",
+    "rc": "An exact -rc.N prerelease, where N is a canonical non-negative decimal identifier.",
+    "final": "A SemVer version with no prerelease identifiers; this does not itself prove stable status.",
+    "legacy_prerelease": "Any other valid SemVer prerelease, including beta5, rc1, alpha, and preview forms."
+  },
+  "lifecycle_stages": {
+    "beta": {
+      "artifact_version_class": "beta",
+      "distribution": "authenticated private lab only",
+      "active_catalog_authorized": false
+    },
+    "rc": {
+      "artifact_version_class": "rc",
+      "distribution": "authenticated private lab only",
+      "active_catalog_authorized": false
+    },
+    "stable_intent": {
+      "artifact_version_class": "final",
+      "artifact_version_equals_intended_version": true,
+      "distribution": "authenticated private lab only",
+      "active_catalog_authorized": false
+    },
+    "stable": {
+      "artifact_version_class": "final",
+      "artifact_version_equals_intended_version": true,
+      "requires_active_signed_catalog_authorization": true
+    }
+  },
+  "publication_policy": {
+    "syntactic_validity_implies_publication_eligibility": false,
+    "eligible_version_class": "final",
+    "eligibility_is_stable_authorization": false,
+    "reason_codes": [
+      "final_version_eligible_not_authorized",
+      "candidate_prerelease_lab_only",
+      "legacy_prerelease_non_authorized",
+      "build_metadata_disallowed"
+    ]
+  },
+  "security_boundaries": [
+    "This contract performs no signature, catalog, cutover-policy, release, store, tag, or discovery verification.",
+    "A stable assertion requires an authorization decision supplied by a future verified active-catalog implementation.",
+    "A final-version artifact may be publication-eligible while remaining published-but-not-authorized and therefore not stable."
+  ]
+}
