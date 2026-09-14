@@ -2,6 +2,9 @@
 """
 Skill Checksums Generator - Generates checksums.json for a skill
 
+These utilities are repo-scoped: the skill path must reside inside this
+repository's skills/ directory. External skill directories are not supported.
+
 Usage:
     python utils/package_skill.py <path/to/skill-folder> [output-directory]
 
@@ -17,7 +20,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
-from validate_skill import validate_skill
+from validate_skill import SkillPathError, _resolve_skill_path, validate_skill
 
 _TEST_PATH_RE = re.compile(r"(^|/)(test|tests)/", re.IGNORECASE)
 
@@ -77,7 +80,11 @@ def package_skill(skill_path: str, output_dir: str = None) -> tuple[Path | None,
     Returns:
         Tuple of (None, checksums_file_path) or (None, None) on error
     """
-    skill_path = Path(skill_path).resolve()
+    try:
+        skill_path = _resolve_skill_path(skill_path)
+    except SkillPathError as e:
+        print(f"Error: {e}")
+        return None, None
 
     # Validate skill first
     print("Validating skill...")
