@@ -112,7 +112,7 @@ jobs:
       # read as legacy GitHub PATs -- but a range scan sees only the diff, so an
       # ordinary PR reports 0.
       - name: TruffleHog
-        uses: trufflesecurity/trufflehog@cc1fe982afc515d2991365ce8d4d0dd07170fcad # v3.97.2
+        uses: trufflesecurity/trufflehog@363923b901c911a9164f50b6c423f47c15372b1c # v3.97.4
         with:
           extra_args: --results=verified,unknown,unverified
       # Private keys and other deterministic patterns. TruffleHog only emits a
