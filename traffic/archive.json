@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-09-19T03:30:31.305Z",
+  "updated_at": "2026-09-20T03:32:24.628Z",
   "daily": {
     "views": [
       {
@@ -579,6 +579,11 @@
         "timestamp": "2026-09-17T00:00:00Z",
         "count": 38,
         "uniques": 24
+      },
+      {
+        "timestamp": "2026-09-18T00:00:00Z",
+        "count": 33,
+        "uniques": 21
       }
     ],
     "clones": [
@@ -1156,6 +1161,11 @@
         "timestamp": "2026-09-17T00:00:00Z",
         "count": 369,
         "uniques": 106
+      },
+      {
+        "timestamp": "2026-09-18T00:00:00Z",
+        "count": 89,
+        "uniques": 44
       }
     ]
   },
@@ -6812,6 +6822,62 @@
           },
           {
             "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-09-20T03:32:24.628Z",
+        "date": "2026-09-20",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 116,
+            "uniques": 53
+          },
+          {
+            "referrer": "Google",
+            "count": 60,
+            "uniques": 40
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 28,
+            "uniques": 15
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "instagram.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "lm.facebook.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "reddit.com",
             "count": 1,
             "uniques": 1
           }
@@ -13484,6 +13550,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-09-20T03:32:24.628Z",
+        "date": "2026-09-20",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 306,
+            "uniques": 192
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 24,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 13,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 13,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 11,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 11,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 9,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/issues/created_by/closing_references",
+            "title": "/issues/created_by/closing_references",
+            "count": 4,
+            "uniques": 1
+          }
+        ]
       }
     ]
   },
@@ -14697,6 +14829,18 @@
       },
       "clones_window": {
         "count": 3314,
+        "uniques": 971
+      }
+    },
+    {
+      "captured_at": "2026-09-20T03:32:24.628Z",
+      "date": "2026-09-20",
+      "views_window": {
+        "count": 608,
+        "uniques": 224
+      },
+      "clones_window": {
+        "count": 3325,
         "uniques": 971
       }
     }
