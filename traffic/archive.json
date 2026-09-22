@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-09-21T03:35:03.790Z",
+  "updated_at": "2026-09-22T03:32:52.067Z",
   "daily": {
     "views": [
       {
@@ -589,6 +589,11 @@
         "timestamp": "2026-09-19T00:00:00Z",
         "count": 36,
         "uniques": 17
+      },
+      {
+        "timestamp": "2026-09-20T00:00:00Z",
+        "count": 32,
+        "uniques": 16
       }
     ],
     "clones": [
@@ -1176,6 +1181,11 @@
         "timestamp": "2026-09-19T00:00:00Z",
         "count": 61,
         "uniques": 41
+      },
+      {
+        "timestamp": "2026-09-20T00:00:00Z",
+        "count": 71,
+        "uniques": 47
       }
     ]
   },
@@ -6944,6 +6954,62 @@
           },
           {
             "referrer": "teams.public.onecdn.static.microsoft",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-09-22T03:32:52.067Z",
+        "date": "2026-09-22",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 116,
+            "uniques": 52
+          },
+          {
+            "referrer": "Google",
+            "count": 61,
+            "uniques": 41
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 28,
+            "uniques": 15
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 3,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "lm.facebook.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "perplexity.ai",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "reddit.com",
             "count": 1,
             "uniques": 1
           }
@@ -13748,6 +13814,72 @@
             "uniques": 1
           }
         ]
+      },
+      {
+        "captured_at": "2026-09-22T03:32:52.067Z",
+        "date": "2026-09-22",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 316,
+            "uniques": 201
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 26,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 13,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 13,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 12,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 10,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 10,
+            "uniques": 9
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main",
+            "title": "/tree/main",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/HEAD/wiki/exploitability-scoring.md",
+            "title": "/blob/HEAD/wiki/exploitability-scoring.md",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/clawsec-signing-public.pem",
+            "title": "/blob/main/clawsec-signing-public.pem",
+            "count": 3,
+            "uniques": 2
+          }
+        ]
       }
     ]
   },
@@ -14986,6 +15118,18 @@
       "clones_window": {
         "count": 3315,
         "uniques": 966
+      }
+    },
+    {
+      "captured_at": "2026-09-22T03:32:52.067Z",
+      "date": "2026-09-22",
+      "views_window": {
+        "count": 589,
+        "uniques": 233
+      },
+      "clones_window": {
+        "count": 3299,
+        "uniques": 967
       }
     }
   ]
