@@ -50,6 +50,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a
+          # cache into that trust path. The input defaults to true.
+          package-manager-cache: false
 
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
@@ -293,6 +296,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a
+          # cache into that trust path. The input defaults to true.
+          package-manager-cache: false
 
       - name: Install SkillSpector
         run: |
@@ -1027,6 +1033,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a
+          # cache into that trust path. The input defaults to true.
+          package-manager-cache: false
 
       - name: Install SkillSpector
         run: |
@@ -1180,6 +1189,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a
+          # cache into that trust path. The input defaults to true.
+          package-manager-cache: false
 
       - name: Detect publishability and install defaults
         id: publishable
@@ -1750,16 +1762,39 @@ jobs:
           '
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
-        with:
-          name: "${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}"
-          tag_name: ${{ github.ref_name }}
-          files: release-assets/*
-          body_path: ${{ runner.temp }}/skill-release-body.md
-          draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          RELEASE_TITLE: ${{ steps.parse.outputs.skill_name }} ${{ steps.parse.outputs.version }}
+          PRERELEASE: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+        run: |
+          set -euo pipefail
+
+          BODY_FILE="${RUNNER_TEMP}/skill-release-body.md"
+          shopt -s nullglob
+          ASSETS=(release-assets/*)
+          if [ "${#ASSETS[@]}" -eq 0 ]; then
+            echo "::error::No release assets found in release-assets/"
+            exit 1
+          fi
+
+          # Re-pushing a tag re-runs this job, so upsert rather than create.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # Assets before metadata: if an upload fails, the release must not
+            # already be advertising notes for an asset set that never landed.
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+            gh release edit "$TAG" \
+              --title "$RELEASE_TITLE" \
+              --notes-file "$BODY_FILE" \
+              --draft=false \
+              --prerelease="$PRERELEASE"
+          else
+            gh release create "$TAG" \
+              --title "$RELEASE_TITLE" \
+              --notes-file "$BODY_FILE" \
+              --prerelease="$PRERELEASE" \
+              "${ASSETS[@]}"
+          fi
 
       - name: Delete superseded releases
         run: |
@@ -1827,6 +1862,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a
+          # cache into that trust path. The input defaults to true.
+          package-manager-cache: false
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
@@ -2069,6 +2107,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
+          # This workflow signs and publishes releases; never restore a
+          # cache into that trust path. The input defaults to true.
+          package-manager-cache: false
 
       - name: Check if publishable
         id: publishable
