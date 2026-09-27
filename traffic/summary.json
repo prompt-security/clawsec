@@ -1,9 +1,9 @@
 {
   "version": 1,
   "repository": "prompt-security/clawsec",
-  "generated_at": "2026-09-26T03:31:32.903Z",
+  "generated_at": "2026-09-27T03:34:25.357Z",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-09-26T03:31:32.903Z",
+  "updated_at": "2026-09-27T03:34:25.357Z",
   "source": {
     "api": "GitHub REST repository traffic endpoints",
     "retention_limit": "GitHub exposes roughly the last 14 days; this archive keeps daily snapshots long term.",
@@ -13,26 +13,26 @@
     "views": {
       "last_14_days": {
         "days": 14,
-        "count": 387,
-        "sum_daily_uniques": 248,
+        "count": 348,
+        "sum_daily_uniques": 225,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-09-13",
+        "first_date": "2026-09-14",
         "last_date": "2026-09-23"
       },
       "last_30_days": {
         "days": 30,
-        "count": 1174,
-        "sum_daily_uniques": 577,
+        "count": 1126,
+        "sum_daily_uniques": 561,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-08-28",
+        "first_date": "2026-08-29",
         "last_date": "2026-09-23"
       },
       "last_90_days": {
         "days": 90,
-        "count": 3498,
-        "sum_daily_uniques": 2076,
+        "count": 3438,
+        "sum_daily_uniques": 2040,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-06-29",
+        "first_date": "2026-06-30",
         "last_date": "2026-09-23"
       },
       "last_365_days": {
@@ -54,26 +54,26 @@
     "clones": {
       "last_14_days": {
         "days": 14,
-        "count": 1515,
-        "sum_daily_uniques": 588,
+        "count": 1424,
+        "sum_daily_uniques": 529,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-09-13",
+        "first_date": "2026-09-14",
         "last_date": "2026-09-23"
       },
       "last_30_days": {
         "days": 30,
-        "count": 5570,
-        "sum_daily_uniques": 1948,
+        "count": 5486,
+        "sum_daily_uniques": 1899,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-08-28",
+        "first_date": "2026-08-29",
         "last_date": "2026-09-23"
       },
       "last_90_days": {
         "days": 90,
-        "count": 17566,
-        "sum_daily_uniques": 5288,
+        "count": 17013,
+        "sum_daily_uniques": 5194,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-06-29",
+        "first_date": "2026-06-30",
         "last_date": "2026-09-23"
       },
       "last_365_days": {
@@ -1311,8 +1311,8 @@
   },
   "latest_snapshots": {
     "referrers": {
-      "captured_at": "2026-09-26T03:31:32.903Z",
-      "date": "2026-09-26",
+      "captured_at": "2026-09-27T03:34:25.357Z",
+      "date": "2026-09-27",
       "entries": [
         {
           "referrer": "github.com",
@@ -1367,8 +1367,8 @@
       ]
     },
     "paths": {
-      "captured_at": "2026-09-26T03:31:32.903Z",
-      "date": "2026-09-26",
+      "captured_at": "2026-09-27T03:34:25.357Z",
+      "date": "2026-09-27",
       "entries": [
         {
           "path": "/prompt-security/clawsec",
@@ -1434,8 +1434,8 @@
     }
   },
   "snapshot_counts": {
-    "referrers": 108,
-    "paths": 108,
-    "captures": 108
+    "referrers": 109,
+    "paths": 109,
+    "captures": 109
   }
 }
