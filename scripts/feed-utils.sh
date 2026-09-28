@@ -38,6 +38,8 @@ sync_feed_to_mirrors() {
 }
 
 nvd_query_specs() {
+  # Keyword searches are discovery-only. Publication requires an allowlisted CPE
+  # with an explicit version scope in scripts/nvd-advisory-transform.jq.
   cat <<'EOF'
 keyword|OpenClaw
 keyword|clawdbot
@@ -48,25 +50,22 @@ keyword|baileys
 keyword|hermes workflow
 keyword|hermes-agent
 keyword|Picoclaw
+keyword|NemoClaw
+keyword|NVIDIA OpenShell
+virtualMatchString|cpe:2.3:a:openclaw:openclaw
+virtualMatchString|cpe:2.3:a:nanoco:nanoclaw
+virtualMatchString|cpe:2.3:a:qwibitai:nanoclaw
 virtualMatchString|cpe:2.3:a:software-metadata.pub:hermes
+virtualMatchString|cpe:2.3:a:nousresearch:hermes_agent
 virtualMatchString|cpe:2.3:a:picoclaw:picoclaw
+virtualMatchString|cpe:2.3:a:sipeed:picoclaw
+virtualMatchString|cpe:2.3:a:nvidia:nemoclaw
+virtualMatchString|cpe:2.3:a:nvidia:openshell
 EOF
 }
 
 nvd_summary_keywords() {
-  echo 'openclaw, nanoclaw, hermes, picoclaw'
-}
-
-nvd_keyword_pattern() {
-  echo 'OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys|HERMES workflow|hermes-agent|software publication with rich metadata|Picoclaw|picoclaw'
-}
-
-nvd_github_ref_pattern() {
-  echo 'github\.com/openclaw/openclaw|github\.com/qwibitai/nanoclaw|github\.com/softwarepub/hermes|github\.com/nousresearch/hermes-agent|github\.com/[^/]+/picoclaw'
-}
-
-nvd_cpe_pattern() {
-  echo 'cpe:2\.3:a:software-metadata\.pub:hermes(?::|$)|cpe:2\.3:[aho]:[^:]*:picoclaw(?::|$)'
+  echo 'openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell'
 }
 
 nvd_query_slug() {

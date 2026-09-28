@@ -1,6 +1,6 @@
 ---
 name: clawsec-suite
-version: 0.1.16
+version: 0.1.17
 description: ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.
 homepage: https://clawsec.prompt.security
 clawdis:
@@ -209,7 +209,7 @@ This enforces:
 The embedded feed logic uses these defaults:
 
 - Remote consolidated feed URL: `https://clawsec.prompt.security/advisories/feed.json`
-- Feed contents: NVD CVEs, approved community advisories, and provisional GHSA-without-CVE advisories.
+- Feed contents: NVD CVEs, approved community advisories, and GHSAs. A matured GHSA is retained as an alias of its canonical CVE.
 - Remote feed signature URL: `${CLAWSEC_FEED_URL}.sig` (override with `CLAWSEC_FEED_SIG_URL`)
 - Remote checksums manifest URL: sibling `checksums.json` (override with `CLAWSEC_FEED_CHECKSUMS_URL`)
 - Local seed fallback: `~/.openclaw/skills/clawsec-suite/advisories/feed.json`
@@ -225,13 +225,30 @@ The embedded feed logic uses these defaults:
 
 ```bash
 FEED_URL="${CLAWSEC_FEED_URL:-https://clawsec.prompt.security/advisories/feed.json}"
+FEED_SIG_URL="${CLAWSEC_FEED_SIG_URL:-${FEED_URL}.sig}"
+FEED_PUBLIC_KEY="${CLAWSEC_FEED_PUBLIC_KEY:-$HOME/.openclaw/skills/clawsec-suite/advisories/feed-signing-public.pem}"
 STATE_FILE="${CLAWSEC_SUITE_STATE_FILE:-$HOME/.openclaw/clawsec-suite-feed-state.json}"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-if ! curl -fsSLo "$TMP/feed.json" "$FEED_URL"; then
-  echo "ERROR: Failed to fetch advisory feed"
+if ! curl -fsSLo "$TMP/feed.json" "$FEED_URL" \
+  || ! curl -fsSLo "$TMP/feed.json.sig" "$FEED_SIG_URL"; then
+  echo "ERROR: Failed to fetch advisory feed and signature"
+  exit 1
+fi
+
+if [ ! -f "$FEED_PUBLIC_KEY" ]; then
+  echo "ERROR: Pinned feed public key not found: $FEED_PUBLIC_KEY"
+  exit 1
+fi
+
+if ! openssl base64 -d -A -in "$TMP/feed.json.sig" -out "$TMP/feed.json.sig.bin" \
+  || ! openssl pkeyutl -verify -rawin -pubin \
+    -inkey "$FEED_PUBLIC_KEY" \
+    -sigfile "$TMP/feed.json.sig.bin" \
+    -in "$TMP/feed.json" >/dev/null 2>&1; then
+  echo "ERROR: Advisory feed signature verification failed"
   exit 1
 fi
 
@@ -247,7 +264,17 @@ if [ ! -f "$STATE_FILE" ]; then
 fi
 
 NEW_IDS_FILE="$TMP/new_ids.txt"
-jq -r --argfile state "$STATE_FILE" '($state.known_advisories // []) as $known | [.advisories[]?.id | select(. != null and ($known | index(.) | not))] | .[]?' "$TMP/feed.json" > "$NEW_IDS_FILE"
+jq -r --argfile state "$STATE_FILE" '
+  def identifiers:
+    ([.id, .cve_id, .ghsa_id] + (.ghsa_ids // []) + (.aliases // []))
+    | map(select(type == "string" and length > 0))
+    | unique;
+  ($state.known_advisories // []) as $known
+  | [.advisories[]?
+     | select(any(identifiers[]; . as $identifier | $known | index($identifier)) | not)
+     | .id]
+  | .[]?
+' "$TMP/feed.json" > "$NEW_IDS_FILE"
 
 if [ -s "$NEW_IDS_FILE" ]; then
   echo "New advisories detected:"
@@ -284,6 +311,7 @@ It handles:
 - feed polling,
 - new-advisory detection,
 - affected-skill cross-referencing,
+- explicit indeterminate reporting when protected runtime or infrastructure versions cannot be inventoried,
 - approval-gated response guidance for malicious/removal advisories,
 - and persistent state updates.
 

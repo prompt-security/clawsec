@@ -141,9 +141,10 @@ assert.deepEqual(
   ghsaFeed.advisories.map((entry) => [entry.id, entry.status, entry.cve_id]),
   [
     ['GHSA-actv-1111-2222', 'active', null],
+    ['GHSA-cvea-1111-2222', 'matured', 'CVE-2026-2222'],
     ['GHSA-matd-1111-2222', 'matured', 'CVE-2026-1111'],
   ],
-  'GHSA dry run should retain active GHSA-only advisories and mature tracked GHSAs',
+  'GHSA dry run should retain active advisories and every CVE-backed advisory needed for enrichment',
 );
 
 const consolidatedFeed = buildConsolidatedAdvisoryFeed({
@@ -157,6 +158,10 @@ assert.deepEqual(
   'Consolidated feed should include NVD CVEs plus active GHSA-only advisories without duplicate matured GHSAs',
 );
 assert.equal(consolidatedFeed.advisories[1].source_feed, 'ghsa-without-cve');
+const enrichedCve = consolidatedFeed.advisories.find((entry) => entry.id === 'CVE-2026-2222');
+assert.equal(enrichedCve.ghsa_id, 'GHSA-cvea-1111-2222');
+assert.deepEqual(enrichedCve.aliases, ['CVE-2026-2222', 'GHSA-cvea-1111-2222']);
+assert.ok(enrichedCve.patched.includes('openclaw@2026.5.21'));
 assert.equal(consolidatedFeed.updated, nvdPollResultFeed.updated);
 
 await writeJson(canonicalFeedPath, consolidatedFeed);

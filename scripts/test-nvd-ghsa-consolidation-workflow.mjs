@@ -136,6 +136,46 @@ assert.match(
   'CI must run the deterministic NVD + GHSA pipeline dry run before merge',
 );
 assert.match(
+  ciWorkflow,
+  /name: NVD Product Scoping Tests[\s\S]*node scripts\/test-nvd-product-scoping\.mjs/,
+  'CI must run strict NVD product/version scoping tests before merge',
+);
+assert.match(
+  workflow,
+  /name: Update feed\.json\n\s+if: inputs\.force_full_scan == true/,
+  'A validated full scan must replace stale CVE state even when there are no delta changes',
+);
+assert.match(
+  workflow,
+  /Refusing full rebuild: strict NVD scoping produced zero advisories/,
+  'A zero-result full scan must fail instead of deleting the existing CVE set',
+);
+assert.match(
+  workflow,
+  /name: Set safe NVD overlap window[\s\S]*120 days ago/,
+  'Incremental polling must use a safe NVD overlap window instead of the consolidated feed timestamp',
+);
+assert.doesNotMatch(
+  workflow,
+  /LAST_UPDATED=\$\(jq -r '\.updated \/\/ empty' "\$FEED_PATH"\)/,
+  'Community or GHSA feed timestamps must not advance the NVD cursor',
+);
+assert.match(
+  workflow,
+  /Incremental mode: paginating the rolling NVD modification window/,
+  'Incremental NVD fetches must paginate',
+);
+assert.match(
+  workflow,
+  /NVD returned an empty page before all results/,
+  'NVD pagination must fail closed on incomplete result sets',
+);
+assert.match(
+  workflow,
+  /NVD totalResults changed during pagination/,
+  'NVD pagination must verify advertised result counts remain stable',
+);
+assert.match(
   codeqlWorkflow,
   /if: github\.event_name != 'pull_request' \|\| !startsWith\(github\.head_ref, 'automated\/nvd-cve-update'\)/,
   'PR-triggered CodeQL must skip generated NVD advisory PRs because poll-nvd-cves dispatches CodeQL explicitly',
@@ -145,6 +185,10 @@ const updateFeedIndex = requiredIndex('name: Update feed.json', 'NVD workflow mu
 const pollGhsaIndex = requiredIndex(
   'name: Poll GHSA without CVE and consolidate feed',
   'NVD workflow must poll GHSA before signing',
+);
+const validateFeedIndex = requiredIndex(
+  'node scripts/ci/validate_advisory_feed.mjs "$FEED_PATH"',
+  'NVD workflow must validate the consolidated feed before signing',
 );
 const detectChangesIndex = requiredIndex(
   'name: Detect advisory feed changes',
@@ -170,6 +214,10 @@ assert.ok(
 assert.ok(
   pollGhsaIndex < detectChangesIndex,
   'Combined feed change detection must run after GHSA consolidation',
+);
+assert.ok(
+  pollGhsaIndex < validateFeedIndex && validateFeedIndex < detectChangesIndex,
+  'Consolidated feed validation must run after GHSA merge and before change detection/signing',
 );
 assert.ok(detectChangesIndex < signGhsaIndex, 'GHSA signing must run after change detection');
 assert.ok(detectChangesIndex < signAgentIndex, 'Agent feed signing must run after change detection');

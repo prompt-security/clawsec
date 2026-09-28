@@ -47,25 +47,16 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Get last poll date from feed
+      - name: Set safe NVD overlap window
         id: last_poll
         run: |
-          if [ -f "$FEED_PATH" ]; then
-            LAST_UPDATED=$(jq -r '.updated // empty' "$FEED_PATH")
-            if [ -n "$LAST_UPDATED" ] && [ "${{ inputs.force_full_scan }}" != "true" ]; then
-              echo "last_date=$LAST_UPDATED" >> $GITHUB_OUTPUT
-              echo "Found last updated: $LAST_UPDATED"
-            else
-              # Default to 120 days ago if no date found or force scan
-              LAST_UPDATED=$(date -u -d '120 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-120d +%Y-%m-%dT%H:%M:%S.000Z)
-              echo "last_date=$LAST_UPDATED" >> $GITHUB_OUTPUT
-              echo "Using default date: $LAST_UPDATED"
-            fi
-          else
-            LAST_UPDATED=$(date -u -d '120 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-120d +%Y-%m-%dT%H:%M:%S.000Z)
-            echo "last_date=$LAST_UPDATED" >> $GITHUB_OUTPUT
-            echo "No feed found, using default: $LAST_UPDATED"
-          fi
+          # The consolidated feed timestamp also advances for community and
+          # GHSA-only changes, so it is not a valid NVD cursor. Re-read the
+          # maximum NVD modification window on every incremental run. NVD
+          # records are deduplicated by CVE ID later in the job.
+          LAST_UPDATED=$(date -u -d '120 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-120d +%Y-%m-%dT%H:%M:%S.000Z)
+          echo "last_date=$LAST_UPDATED" >> "$GITHUB_OUTPUT"
+          echo "Using rolling NVD overlap start: $LAST_UPDATED"
 
       - name: Set date window
         id: dates
@@ -122,80 +113,46 @@ jobs:
 
             keyword_ok=false
             last_http_code=""
+            echo '{"vulnerabilities":[]}' > "tmp/nvd_${QUERY_SLUG}.json"
+            START_INDEX=0
+            RESULTS_PER_PAGE=2000
+            EXPECTED_TOTAL=-1
 
             if [ "$FORCE_FULL_SCAN" = "true" ]; then
               echo "Full scan mode enabled: paginating complete NVD history for '$QUERY_KIND:$QUERY_VALUE'"
-              echo '{"vulnerabilities":[]}' > "tmp/nvd_${QUERY_SLUG}.json"
-              START_INDEX=0
-              RESULTS_PER_PAGE=2000
-
-              while true; do
-                URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}")"
-                PAGE_FILE="tmp/nvd_${QUERY_SLUG}_${START_INDEX}.json"
-                echo "URL: $URL"
-
-                page_ok=false
-                for i in 1 2 3; do
-                  HTTP_CODE=$(curl -sS -w "%{http_code}" -o "$PAGE_FILE" "$URL" || true)
-                  if [ -z "$HTTP_CODE" ]; then
-                    HTTP_CODE="000"
-                  fi
-                  last_http_code="$HTTP_CODE"
-                  if [ "$HTTP_CODE" = "200" ]; then
-                    if jq -e . "$PAGE_FILE" >/dev/null 2>&1; then
-                      page_ok=true
-                      break
-                    fi
-                    echo "Invalid JSON for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
-                    sleep 5
-                  elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
-                    echo "Rate limited, waiting 30s before retry $i..."
-                    sleep 30
-                  else
-                    echo "HTTP $HTTP_CODE for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
-                    sleep 5
-                  fi
-                done
-
-                if [ "$page_ok" != "true" ]; then
-                  break
-                fi
-
-                jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
-                  "tmp/nvd_${QUERY_SLUG}.json" "$PAGE_FILE" > "tmp/nvd_${QUERY_SLUG}_merged.json"
-                mv "tmp/nvd_${QUERY_SLUG}_merged.json" "tmp/nvd_${QUERY_SLUG}.json"
-
-                PAGE_COUNT=$(jq '.vulnerabilities | length' "$PAGE_FILE")
-                TOTAL_RESULTS=$(jq '.totalResults // 0' "$PAGE_FILE")
-                echo "Fetched $PAGE_COUNT results at startIndex=$START_INDEX (totalResults=$TOTAL_RESULTS)"
-
-                START_INDEX=$((START_INDEX + RESULTS_PER_PAGE))
-                if [ "$START_INDEX" -ge "$TOTAL_RESULTS" ] || [ "$PAGE_COUNT" -eq 0 ]; then
-                  keyword_ok=true
-                  break
-                fi
-
-                # NVD recommends 6 second delay between requests
-                sleep 6
-              done
             else
-              URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}")"
+              echo "Incremental mode: paginating the rolling NVD modification window for '$QUERY_KIND:$QUERY_VALUE'"
+            fi
+
+            while true; do
+              if [ "$FORCE_FULL_SCAN" = "true" ]; then
+                QUERY_SUFFIX="&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}"
+              else
+                QUERY_SUFFIX="&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}"
+              fi
+              URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "$QUERY_SUFFIX")"
+              PAGE_FILE="tmp/nvd_${QUERY_SLUG}_${START_INDEX}.json"
               echo "URL: $URL"
 
-              # Fetch with retry logic
+              page_ok=false
               for i in 1 2 3; do
-                HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${QUERY_SLUG}.json" "$URL" || true)
+                HTTP_CODE=$(curl -sS -w "%{http_code}" -o "$PAGE_FILE" "$URL" || true)
                 if [ -z "$HTTP_CODE" ]; then
                   HTTP_CODE="000"
                 fi
                 last_http_code="$HTTP_CODE"
                 if [ "$HTTP_CODE" = "200" ]; then
-                  if jq -e . "tmp/nvd_${QUERY_SLUG}.json" >/dev/null 2>&1; then
-                    echo "Success for $QUERY_KIND:$QUERY_VALUE"
-                    keyword_ok=true
+                  if jq -e '
+                    (.vulnerabilities | type == "array") and
+                    (.totalResults | type == "number" and . >= 0 and . == floor) and
+                    (.startIndex | type == "number" and . >= 0 and . == floor) and
+                    (.resultsPerPage | type == "number" and . >= 0 and . == floor) and
+                    ([.vulnerabilities[]? | .cve.id | type == "string"] | all)
+                  ' "$PAGE_FILE" >/dev/null 2>&1; then
+                    page_ok=true
                     break
                   fi
-                  echo "Invalid JSON for $QUERY_KIND:$QUERY_VALUE, retry $i..."
+                  echo "Invalid or incomplete NVD JSON for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
                   sleep 5
                 elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
                   echo "Rate limited, waiting 30s before retry $i..."
@@ -205,7 +162,48 @@ jobs:
                   sleep 5
                 fi
               done
-            fi
+
+              if [ "$page_ok" != "true" ]; then
+                break
+              fi
+
+              RESPONSE_START=$(jq -r '.startIndex' "$PAGE_FILE")
+              PAGE_COUNT=$(jq '.vulnerabilities | length' "$PAGE_FILE")
+              TOTAL_RESULTS=$(jq '.totalResults' "$PAGE_FILE")
+              if [ "$RESPONSE_START" -ne "$START_INDEX" ]; then
+                echo "::error::NVD startIndex mismatch for '$QUERY_KIND:$QUERY_VALUE': requested $START_INDEX, received $RESPONSE_START"
+                break
+              fi
+              if [ "$EXPECTED_TOTAL" -eq -1 ]; then
+                EXPECTED_TOTAL="$TOTAL_RESULTS"
+              elif [ "$TOTAL_RESULTS" -ne "$EXPECTED_TOTAL" ]; then
+                echo "::error::NVD totalResults changed during pagination for '$QUERY_KIND:$QUERY_VALUE': $EXPECTED_TOTAL to $TOTAL_RESULTS"
+                break
+              fi
+              if [ "$PAGE_COUNT" -eq 0 ] && [ "$START_INDEX" -lt "$EXPECTED_TOTAL" ]; then
+                echo "::error::NVD returned an empty page before all results for '$QUERY_KIND:$QUERY_VALUE'"
+                break
+              fi
+
+              jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
+                "tmp/nvd_${QUERY_SLUG}.json" "$PAGE_FILE" > "tmp/nvd_${QUERY_SLUG}_merged.json"
+              mv "tmp/nvd_${QUERY_SLUG}_merged.json" "tmp/nvd_${QUERY_SLUG}.json"
+
+              MERGED_COUNT=$(jq '.vulnerabilities | length' "tmp/nvd_${QUERY_SLUG}.json")
+              echo "Fetched $PAGE_COUNT results at startIndex=$START_INDEX ($MERGED_COUNT/$EXPECTED_TOTAL complete)"
+              if [ "$MERGED_COUNT" -eq "$EXPECTED_TOTAL" ]; then
+                keyword_ok=true
+                break
+              fi
+              if [ "$MERGED_COUNT" -gt "$EXPECTED_TOTAL" ]; then
+                echo "::error::NVD returned more rows than totalResults for '$QUERY_KIND:$QUERY_VALUE'"
+                break
+              fi
+
+              START_INDEX=$((START_INDEX + PAGE_COUNT))
+              # NVD recommends 6 second delay between requests
+              sleep 6
+            done
 
             if [ "$keyword_ok" != "true" ]; then
               echo "::error::Failed to fetch valid NVD response for '$QUERY_KIND:$QUERY_VALUE' (last HTTP code: ${last_http_code:-unknown})."
@@ -229,9 +227,6 @@ jobs:
         run: |
           source scripts/feed-utils.sh
           NVD_QUERY_SPECS="$(nvd_query_specs)"
-          KEYWORDS_PATTERN="$(nvd_keyword_pattern)"
-          GITHUB_PATTERN="$(nvd_github_ref_pattern)"
-          CPE_PATTERN="$(nvd_cpe_pattern)"
           # Export concise project keyword groups for PR body + workflow summary steps
           KEYWORDS="$(nvd_summary_keywords)"
           echo "KEYWORDS=$KEYWORDS" >> "$GITHUB_ENV"
@@ -262,24 +257,25 @@ jobs:
           TOTAL=$(jq 'length' tmp/unique_cves.json)
           echo "Total unique CVEs from NVD: $TOTAL"
           
-          # Post-filter: keep only CVEs where description contains keywords OR references contain github pattern
-          jq --arg kw "$KEYWORDS_PATTERN" --arg gh "$GITHUB_PATTERN" --arg cpe "$CPE_PATTERN" '
-            [.[] | select(
-              # Check if any description contains keywords (case insensitive)
-              (.cve.descriptions[]? | select(.lang == "en") | .value | test($kw; "i"))
-              or
-              # Check if any reference URL contains the github pattern
-              (.cve.references[]? | .url | test($gh; "i"))
-              or
-              # Check if any CPE criteria contain the Hermes product identifier
-              ([.cve.configurations[]? | .. | objects | .criteria? | strings | test($cpe; "i")] | any)
-            )]
+          # Discovery queries are broad. Publication requires an allowlisted
+          # product CPE and an explicit machine-readable affected version scope.
+          jq -L scripts '
+            include "nvd-advisory-transform";
+            [.[] | select(has_supported_scoped_target)]
           ' tmp/unique_cves.json > tmp/filtered_cves.json
           
           FILTERED=$(jq 'length' tmp/filtered_cves.json)
           echo "Filtered CVEs (matching criteria): $FILTERED"
           echo "filtered_count=$FILTERED" >> $GITHUB_OUTPUT
           echo "nvd_filtered_count=$FILTERED" >> $GITHUB_OUTPUT
+
+          # A complete rebuild with no publishable NVD record is indistinguishable
+          # from a bad/empty upstream snapshot. Never use it to erase the existing
+          # CVE set. Incremental windows may legitimately contain zero matches.
+          if [ "${{ inputs.force_full_scan }}" = "true" ] && [ "$FILTERED" -eq 0 ]; then
+            echo "::error::Refusing full rebuild: strict NVD scoping produced zero advisories."
+            exit 1
+          fi
 
       - name: Get existing advisories
         id: existing
@@ -312,173 +308,9 @@ jobs:
           # Compare existing CVE advisories against NVD data for changes
           # Only check advisories that start with "CVE-" (NVD-sourced)
 
-          jq '
-            def map_severity:
-              if . == null then "medium"
-              elif . >= 9.0 then "critical"
-              elif . >= 7.0 then "high"
-              elif . >= 4.0 then "medium"
-              else "low"
-              end;
-
-            def get_cvss_score:
-              .cve.metrics.cvssMetricV31[0]?.cvssData.baseScore //
-              .cve.metrics.cvssMetricV30[0]?.cvssData.baseScore //
-              .cve.metrics.cvssMetricV2[0]?.cvssData.baseScore //
-              null;
-
-            def nvd_category_raw:
-              (
-                [.cve.weaknesses[]?.description[]? | select(.lang == "en") | .value | strings | select(length > 0)]
-                | unique
-                | map(select(. != "NVD-CWE-noinfo" and . != "NVD-CWE-Other"))
-                | .[0]
-              );
-
-            def cwe_id:
-              (
-                nvd_category_raw
-                | if . == null then null
-                  else (try (capture("^CWE-(?<id>[0-9]+)$").id) catch null)
-                  end
-              );
-
-            def cwe_name_map($id):
-              ({
-                "20": "improper_input_validation",
-                "22": "path_traversal",
-                "77": "command_injection",
-                "78": "os_command_injection",
-                "79": "cross_site_scripting",
-                "89": "sql_injection",
-                "94": "code_injection",
-                "119": "memory_buffer_bounds_violation",
-                "120": "classic_buffer_overflow",
-                "125": "out_of_bounds_read",
-                "134": "format_string_vulnerability",
-                "200": "exposure_of_sensitive_information",
-                "250": "execution_with_unnecessary_privileges",
-                "269": "improper_privilege_management",
-                "284": "improper_access_control",
-                "285": "improper_authorization",
-                "287": "improper_authentication",
-                "295": "improper_certificate_validation",
-                "306": "missing_authentication_for_critical_function",
-                "319": "cleartext_transmission_of_sensitive_information",
-                "326": "inadequate_encryption_strength",
-                "327": "risky_cryptographic_algorithm",
-                "352": "cross_site_request_forgery",
-                "362": "race_condition",
-                "400": "uncontrolled_resource_consumption",
-                "416": "use_after_free",
-                "434": "unrestricted_file_upload",
-                "502": "deserialization_of_untrusted_data",
-                "601": "open_redirect",
-                "611": "xml_external_entity_injection",
-                "639": "insecure_direct_object_reference",
-                "668": "exposure_of_resource_to_wrong_sphere",
-                "669": "incorrect_resource_transfer_between_spheres",
-                "732": "incorrect_permission_assignment",
-                "787": "out_of_bounds_write",
-                "798": "hard_coded_credentials",
-                "862": "missing_authorization",
-                "863": "incorrect_authorization",
-                "918": "server_side_request_forgery",
-                "922": "insecure_storage_of_sensitive_information"
-              }[$id]);
-
-            def nvd_category_name:
-              (
-                cwe_id as $id
-                | if $id == null then "unspecified_weakness"
-                  else (cwe_name_map($id) // ("unknown_cwe_" + $id))
-                  end
-              );
-
-            def cpe_criteria:
-              (
-                [.cve.configurations[]? | .. | objects | .criteria? | strings | select(startswith("cpe:2.3:"))]
-                | unique
-              );
-
-            def detection_blob:
-              (
-                [
-                  (.cve.descriptions[]? | select(.lang == "en") | .value),
-                  (.cve.references[]?.url // empty),
-                  (.cve.configurations[]? | .. | objects | .criteria? // empty)
-                ]
-                | map(strings | ascii_downcase)
-                | join(" ")
-              );
-
-            def inferred_targets:
-              (
-                detection_blob as $blob
-                | (
-                    (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
-                    + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
-                    + (if ($blob | test("github\\.com/softwarepub/hermes|github\\.com/nousresearch/hermes-agent|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|\\bhermes-agent\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
-                    + (if ($blob | test("github\\.com/[^/]+/picoclaw|\\bpicoclaw\\b|cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)")) then ["picoclaw@*"] else [] end)
-                  )
-              );
-
-            def matched_targets:
-              (
-                (cpe_criteria + inferred_targets)
-                | unique
-                | .[0:5]
-              );
-
-            def platforms_from_targets($targets):
-              (
-                [
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("openclaw@") or test("^cpe:2\\.3:[aho]:openclaw:openclaw(?::|$)"))) | length > 0) then "openclaw" else empty end),
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("nanoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:nanoclaw(?::|$)"))) | length > 0) then "nanoclaw" else empty end),
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("hermes@") or test("^cpe:2\\.3:[aho]:software-metadata\\.pub:hermes(?::|$)"))) | length > 0) then "hermes" else empty end),
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("picoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)"))) | length > 0) then "picoclaw" else empty end)
-                ]
-              );
-
-            def normalized_affected:
-              (
-                matched_targets
-                | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*", "picoclaw@*"] else . end
-              );
-
-            def normalized_platforms:
-              (
-                inferred_targets as $inferred
-                | platforms_from_targets($inferred) as $from_inferred
-                | if ($from_inferred | length) > 0 then $from_inferred
-                  else
-                    matched_targets as $targets
-                    | platforms_from_targets($targets) as $from_targets
-                    | if ($from_targets | length) > 0 then $from_targets else ["openclaw", "nanoclaw", "hermes", "picoclaw"] end
-                  end
-              );
-
-            def preferred_description:
-              (
-                (.cve.descriptions[]? | select(.lang == "en") | .value)
-                // .cve.descriptions[0]?.value
-                // "No description provided by NVD."
-              );
-
-            [.[] | {
-              id: .cve.id,
-              severity: (get_cvss_score | map_severity),
-              type: nvd_category_name,
-              nvd_category_id: nvd_category_raw,
-              cvss_score: get_cvss_score,
-              description: preferred_description,
-              title: (preferred_description | .[0:100] + (if length > 100 then "..." else "" end)),
-              affected: normalized_affected,
-              platforms: normalized_platforms,
-              references: [.cve.references[]?.url // empty] | unique | .[0:3],
-              exploitability_score: null,
-              exploitability_rationale: null
-            }]
+          jq -L scripts '
+            include "nvd-advisory-transform";
+            [.[] | nvd_advisory_current_state]
           ' tmp/filtered_cves.json > tmp/nvd_current_state.json
 
           # Find updates: existing CVE advisories where NVD data differs
@@ -499,7 +331,9 @@ jobs:
                    ($existing_entry.cvss_score != $nvd_entry.cvss_score) or
                    ($existing_entry.affected != $nvd_entry.affected) or
                    ($existing_entry.platforms != $nvd_entry.platforms) or
-                   ($existing_entry.description != $nvd_entry.description) then
+                   ($existing_entry.description != $nvd_entry.description) or
+                   ($existing_entry.title != $nvd_entry.title) or
+                   ($existing_entry.references != $nvd_entry.references) then
                   {
                     id: $nvd_entry.id,
                     changes: (
@@ -511,6 +345,8 @@ jobs:
                       + (if $existing_entry.affected != $nvd_entry.affected then ["affected targets updated"] else [] end)
                       + (if $existing_entry.platforms != $nvd_entry.platforms then ["platforms updated"] else [] end)
                       + (if $existing_entry.description != $nvd_entry.description then ["description updated"] else [] end)
+                      + (if $existing_entry.title != $nvd_entry.title then ["title updated"] else [] end)
+                      + (if $existing_entry.references != $nvd_entry.references then ["references updated"] else [] end)
                     ),
                     updated_fields: {
                       severity: $nvd_entry.severity,
@@ -565,178 +401,11 @@ jobs:
           fi
           
           # Transform NVD CVEs to our advisory format
-          jq --slurpfile existing tmp/existing_ids.json '
-            def map_severity:
-              if . == null then "medium"
-              elif . >= 9.0 then "critical"
-              elif . >= 7.0 then "high"
-              elif . >= 4.0 then "medium"
-              else "low"
-              end;
-            
-            def get_cvss_score:
-              .cve.metrics.cvssMetricV31[0]?.cvssData.baseScore //
-              .cve.metrics.cvssMetricV30[0]?.cvssData.baseScore //
-              .cve.metrics.cvssMetricV2[0]?.cvssData.baseScore //
-              null;
-
-            def nvd_category_raw:
-              (
-                [.cve.weaknesses[]?.description[]? | select(.lang == "en") | .value | strings | select(length > 0)]
-                | unique
-                | map(select(. != "NVD-CWE-noinfo" and . != "NVD-CWE-Other"))
-                | .[0]
-              );
-
-            def cwe_id:
-              (
-                nvd_category_raw
-                | if . == null then null
-                  else (try (capture("^CWE-(?<id>[0-9]+)$").id) catch null)
-                  end
-              );
-
-            def cwe_name_map($id):
-              ({
-                "20": "improper_input_validation",
-                "22": "path_traversal",
-                "77": "command_injection",
-                "78": "os_command_injection",
-                "79": "cross_site_scripting",
-                "89": "sql_injection",
-                "94": "code_injection",
-                "119": "memory_buffer_bounds_violation",
-                "120": "classic_buffer_overflow",
-                "125": "out_of_bounds_read",
-                "134": "format_string_vulnerability",
-                "200": "exposure_of_sensitive_information",
-                "250": "execution_with_unnecessary_privileges",
-                "269": "improper_privilege_management",
-                "284": "improper_access_control",
-                "285": "improper_authorization",
-                "287": "improper_authentication",
-                "295": "improper_certificate_validation",
-                "306": "missing_authentication_for_critical_function",
-                "319": "cleartext_transmission_of_sensitive_information",
-                "326": "inadequate_encryption_strength",
-                "327": "risky_cryptographic_algorithm",
-                "352": "cross_site_request_forgery",
-                "362": "race_condition",
-                "400": "uncontrolled_resource_consumption",
-                "416": "use_after_free",
-                "434": "unrestricted_file_upload",
-                "502": "deserialization_of_untrusted_data",
-                "601": "open_redirect",
-                "611": "xml_external_entity_injection",
-                "639": "insecure_direct_object_reference",
-                "668": "exposure_of_resource_to_wrong_sphere",
-                "669": "incorrect_resource_transfer_between_spheres",
-                "732": "incorrect_permission_assignment",
-                "787": "out_of_bounds_write",
-                "798": "hard_coded_credentials",
-                "862": "missing_authorization",
-                "863": "incorrect_authorization",
-                "918": "server_side_request_forgery",
-                "922": "insecure_storage_of_sensitive_information"
-              }[$id]);
-
-            def nvd_category_name:
-              (
-                cwe_id as $id
-                | if $id == null then "unspecified_weakness"
-                  else (cwe_name_map($id) // ("unknown_cwe_" + $id))
-                  end
-              );
-
-            def cpe_criteria:
-              (
-                [.cve.configurations[]? | .. | objects | .criteria? | strings | select(startswith("cpe:2.3:"))]
-                | unique
-              );
-
-            def detection_blob:
-              (
-                [
-                  (.cve.descriptions[]? | select(.lang == "en") | .value),
-                  (.cve.references[]?.url // empty),
-                  (.cve.configurations[]? | .. | objects | .criteria? // empty)
-                ]
-                | map(strings | ascii_downcase)
-                | join(" ")
-              );
-
-            def inferred_targets:
-              (
-                detection_blob as $blob
-                | (
-                    (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then ["openclaw@*"] else [] end)
-                    + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
-                    + (if ($blob | test("github\\.com/softwarepub/hermes|github\\.com/nousresearch/hermes-agent|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|\\bhermes-agent\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
-                    + (if ($blob | test("github\\.com/[^/]+/picoclaw|\\bpicoclaw\\b|cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)")) then ["picoclaw@*"] else [] end)
-                  )
-              );
-
-            def matched_targets:
-              (
-                (cpe_criteria + inferred_targets)
-                | unique
-                | .[0:5]
-              );
-
-            def platforms_from_targets($targets):
-              (
-                [
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("openclaw@") or test("^cpe:2\\.3:[aho]:openclaw:openclaw(?::|$)"))) | length > 0) then "openclaw" else empty end),
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("nanoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:nanoclaw(?::|$)"))) | length > 0) then "nanoclaw" else empty end),
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("hermes@") or test("^cpe:2\\.3:[aho]:software-metadata\\.pub:hermes(?::|$)"))) | length > 0) then "hermes" else empty end),
-                  (if ($targets | map(strings | ascii_downcase | select(startswith("picoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)"))) | length > 0) then "picoclaw" else empty end)
-                ]
-              );
-
-            def normalized_affected:
-              (
-                matched_targets
-                | if length == 0 then ["openclaw@*", "nanoclaw@*", "hermes@*", "picoclaw@*"] else . end
-              );
-
-            def normalized_platforms:
-              (
-                inferred_targets as $inferred
-                | platforms_from_targets($inferred) as $from_inferred
-                | if ($from_inferred | length) > 0 then $from_inferred
-                  else
-                    matched_targets as $targets
-                    | platforms_from_targets($targets) as $from_targets
-                    | if ($from_targets | length) > 0 then $from_targets else ["openclaw", "nanoclaw", "hermes", "picoclaw"] end
-                  end
-              );
-
-            def preferred_description:
-              (
-                (.cve.descriptions[]? | select(.lang == "en") | .value)
-                // .cve.descriptions[0]?.value
-                // "No description provided by NVD."
-              );
-            
+          jq -L scripts --slurpfile existing tmp/existing_ids.json '
+            include "nvd-advisory-transform";
             [.[] |
               select(.cve.id as $id | (($existing[0] // []) | index($id) | not)) |
-              {
-                id: .cve.id,
-                severity: (get_cvss_score | map_severity),
-                type: nvd_category_name,
-                nvd_category_id: nvd_category_raw,
-                title: (preferred_description | .[0:100] + (if length > 100 then "..." else "" end)),
-                description: preferred_description,
-                affected: normalized_affected,
-                platforms: normalized_platforms,
-                action: "Review and update affected components. See NVD for remediation details.",
-                published: .cve.published,
-                references: [.cve.references[]?.url // empty] | unique | .[0:3],
-                cvss_score: get_cvss_score,
-                nvd_url: ("https://nvd.nist.gov/vuln/detail/" + .cve.id),
-                exploitability_score: null,
-                exploitability_rationale: null
-              }
+              nvd_advisory
             ]
           ' tmp/filtered_cves.json > tmp/new_advisories.json
           
@@ -784,6 +453,7 @@ jobs:
             [.[] | {
               id: .cve.id,
               cvss_vector: (
+                .cve.metrics.cvssMetricV40[0]?.cvssData.vectorString //
                 .cve.metrics.cvssMetricV31[0]?.cvssData.vectorString //
                 .cve.metrics.cvssMetricV30[0]?.cvssData.vectorString //
                 .cve.metrics.cvssMetricV2[0]?.vectorString //
@@ -837,7 +507,7 @@ jobs:
           echo "nvd_updated_count=$UPDATE_COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Update feed.json
-        if: steps.transform.outputs.new_count != '0' || steps.nvd_counts.outputs.update_count != '0'
+        if: inputs.force_full_scan == true || steps.transform.outputs.new_count != '0' || steps.nvd_counts.outputs.update_count != '0'
         run: |
           NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
@@ -920,6 +590,8 @@ jobs:
           cp "$FEED_PATH" "$SKILL_FEED_PATH"
           mkdir -p "$(dirname "$SUITE_FEED_PATH")"
           cp "$FEED_PATH" "$SUITE_FEED_PATH"
+
+          node scripts/ci/validate_advisory_feed.mjs "$FEED_PATH"
 
       - name: Detect advisory feed changes
         id: feed_changes

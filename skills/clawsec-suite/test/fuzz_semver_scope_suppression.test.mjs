@@ -19,8 +19,8 @@ const semverCoreArb = fc.tuple(
 );
 
 const semverArb = semverCoreArb.map(([major, minor, patch]) => `${major}.${minor}.${patch}`);
-const idArb = fc.string({ minLength: 1, maxLength: 24 });
-const skillArb = fc.string({ minLength: 1, maxLength: 24 });
+const idArb = fc.string({ minLength: 1, maxLength: 24 }).filter((value) => value.trim() !== "");
+const skillArb = fc.string({ minLength: 1, maxLength: 24 }).filter((value) => value.trim() !== "");
 
 function runSemverProperties() {
   fc.assert(
@@ -107,7 +107,7 @@ function runSuppressionProperties() {
       };
       const suppressions = [
         {
-          checkId: id,
+          checkId: id.trim(),
           skill: skill.toLowerCase(),
           reason: "fuzz",
           suppressedAt: "2026-02-25",

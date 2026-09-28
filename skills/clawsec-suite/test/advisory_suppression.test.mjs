@@ -4,7 +4,8 @@
  * Advisory suppression tests for clawsec-suite.
  *
  * Tests cover:
- * - isAdvisorySuppressed matching logic (exact checkId + normalized skill name)
+ * - isAdvisorySuppressed matching logic (canonical/alias checkId + normalized skill name)
+ * - notification deduplication across GHSA-to-CVE canonical migration
  * - Partial matches do not suppress (checkId only, skill only)
  * - Empty suppressions never suppress
  * - loadAdvisorySuppression sentinel gating (enabledFor: ["advisory"])
@@ -25,12 +26,23 @@ const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardi
 const { isAdvisorySuppressed, loadAdvisorySuppression } = await import(
   `${LIB_PATH}/suppression.mjs`
 );
+const {
+  affectedSpecifierMatchesSkill,
+  buildAlertMessage,
+  matchKeys,
+  recordMatchNotification,
+} = await import(`${LIB_PATH}/matching.ts`);
 
 let tempDir;
 
-function makeMatch(advisoryId, skillName, version = "1.0.0") {
+function makeMatch(advisoryId, skillName, version = "1.0.0", advisoryFields = {}) {
   return {
-    advisory: { id: advisoryId, severity: "high", title: `Advisory ${advisoryId}` },
+    advisory: {
+      id: advisoryId,
+      severity: "high",
+      title: `Advisory ${advisoryId}`,
+      ...advisoryFields,
+    },
     skill: { name: skillName, dirName: skillName, version },
     matchedAffected: [`${skillName}@<=${version}`],
   };
@@ -73,6 +85,117 @@ async function testCaseInsensitiveSkillMatch() {
       pass(testName);
     } else {
       fail(testName, "Expected case-insensitive match to suppress");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testAlternateIdentifiersMatch() {
+  const testName = "isAdvisorySuppressed: cve_id, ghsa_id, and aliases suppress canonical advisory";
+  try {
+    const match = makeMatch("CLAW-2026-0001", "clawsec-suite", "1.0.0", {
+      cve_id: "CVE-2026-25593",
+      ghsa_id: "GHSA-aaaa-bbbb-cccc",
+      ghsa_ids: ["GHSA-gggg-hhhh-iiii"],
+      aliases: ["GHSA-dddd-eeee-ffff"],
+    });
+    const alternateIds = [
+      "CVE-2026-25593",
+      "GHSA-aaaa-bbbb-cccc",
+      "GHSA-dddd-eeee-ffff",
+      "GHSA-gggg-hhhh-iiii",
+    ];
+    const allSuppressed = alternateIds.every((checkId) =>
+      isAdvisorySuppressed(match, makeRules([[checkId, "clawsec-suite"]])),
+    );
+
+    if (allSuppressed) {
+      pass(testName);
+    } else {
+      fail(testName, "Expected every alternate identifier to match the suppression rule");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testNotificationDedupeAcrossCanonicalMigration() {
+  const testName = "notification state: GHSA notification deduplicates CVE canonical migration";
+  try {
+    const match = makeMatch("CVE-2026-25593", "ClawSec-Suite", "1.0.0", {
+      cve_id: "CVE-2026-25593",
+      ghsa_id: "GHSA-aaaa-bbbb-cccc",
+      aliases: ["GHSA-aaaa-bbbb-cccc"],
+    });
+    const keys = matchKeys(match);
+    const previousTimestamp = "2026-02-15T00:00:00.000Z";
+    const currentTimestamp = "2026-09-28T00:00:00.000Z";
+    const notifiedMatches = {
+      "GHSA-aaaa-bbbb-cccc::clawsec-suite@1.0.0": previousTimestamp,
+    };
+
+    const isNew = recordMatchNotification(match, notifiedMatches, currentTimestamp);
+    const allKeysBackfilled = keys.every((key) => notifiedMatches[key] === previousTimestamp);
+    if (isNew === false && allKeysBackfilled) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected existing GHSA timestamp to deduplicate and backfill all keys: ${JSON.stringify(notifiedMatches)}`,
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testNewNotificationRecordsAllIdentifiers() {
+  const testName = "notification state: new alert records canonical and alias keys";
+  try {
+    const match = makeMatch("CVE-2026-25593", "clawsec-suite", "1.0.0", {
+      aliases: ["GHSA-aaaa-bbbb-cccc"],
+    });
+    const timestamp = "2026-09-28T00:00:00.000Z";
+    const notifiedMatches = {};
+    const isNew = recordMatchNotification(match, notifiedMatches, timestamp);
+    const allKeysRecorded = matchKeys(match).every((key) => notifiedMatches[key] === timestamp);
+
+    if (isNew === true && allKeysRecorded) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected canonical and alias keys to be recorded: ${JSON.stringify(notifiedMatches)}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testUnknownInstalledVersionIsIndeterminate() {
+  const testName = "matching: unknown installed version is surfaced as indeterminate";
+  try {
+    const skill = { name: "helper-plus", dirName: "helper-plus", version: "unknown" };
+    const match = makeMatch("CVE-2026-25593", "helper-plus", "unknown", {
+      action: "Upgrade helper-plus.",
+    });
+    match.matchedAffected = ["helper-plus@<2.0.0"];
+
+    const candidateMatch = affectedSpecifierMatchesSkill("helper-plus@<2.0.0", skill);
+    const knownSafeDoesNotMatch = affectedSpecifierMatchesSkill(
+      "helper-plus@<2.0.0",
+      { ...skill, version: "2.0.0" },
+    ) === false;
+    const alert = buildAlertMessage([match], "/tmp/skills");
+
+    if (
+      candidateMatch
+      && knownSafeDoesNotMatch
+      && alert.includes("INDETERMINATE: installed version unknown")
+      && alert.includes("Version confirmation needed")
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected an explicit indeterminate alert, got: ${alert}`);
     }
   } catch (error) {
     fail(testName, error);
@@ -373,6 +496,10 @@ async function runAllTests() {
     // isAdvisorySuppressed tests
     await testExactMatch();
     await testCaseInsensitiveSkillMatch();
+    await testAlternateIdentifiersMatch();
+    await testNotificationDedupeAcrossCanonicalMigration();
+    await testNewNotificationRecordsAllIdentifiers();
+    await testUnknownInstalledVersionIsIndeterminate();
     await testCheckIdMismatch();
     await testSkillMismatch();
     await testEmptySuppressions();

@@ -30,8 +30,32 @@ export type AdvisoryType =
 
 export const CORE_PLATFORM_SLUGS = ['openclaw', 'nanoclaw', 'hermes', 'picoclaw'] as const;
 export type CorePlatformSlug = (typeof CORE_PLATFORM_SLUGS)[number];
-export type AdvisoryPlatformSlug = CorePlatformSlug | (string & {});
-export type AdvisoryPlatformFilter = 'all' | CorePlatformSlug | 'other';
+
+/**
+ * Security-relevant infrastructure that can be affected independently of the
+ * agent runtime it contains. Keep this separate from CORE_PLATFORM_SLUGS:
+ * those values also drive skill installation and release metadata, while
+ * these components are advisory targets only.
+ */
+export const INFRASTRUCTURE_COMPONENT_SLUGS = ['openshell', 'nemoclaw'] as const;
+export type InfrastructureComponentSlug = (typeof INFRASTRUCTURE_COMPONENT_SLUGS)[number];
+
+export const PROTECTED_COMPONENT_SLUGS = [
+  ...CORE_PLATFORM_SLUGS,
+  ...INFRASTRUCTURE_COMPONENT_SLUGS,
+] as const;
+export type ProtectedComponentSlug = (typeof PROTECTED_COMPONENT_SLUGS)[number];
+export type ProtectedComponentKind =
+  | 'agent-runtime'
+  | 'sandbox-runtime'
+  | 'agent-stack'
+  | 'skill-package';
+
+// `platforms` is the legacy feed field name. It now identifies every protected
+// component layer, not only top-level agent runtimes.
+export type AdvisoryPlatformSlug = ProtectedComponentSlug | (string & {});
+export type AdvisoryPlatformFilter = 'all' | ProtectedComponentSlug | 'other';
+export type SkillPlatformFilter = 'all' | CorePlatformSlug | 'other';
 
 export type AdvisoryLifecycleStatus = 'active' | 'matured' | 'stale' | (string & {});
 
@@ -39,7 +63,9 @@ export type AdvisoryLifecycleStatus = 'active' | 'matured' | 'stale' | (string &
 export interface Advisory {
   id: string;
   ghsa_id?: string;
+  ghsa_ids?: string[];
   cve_id?: string | null;
+  aliases?: string[];
   status?: AdvisoryLifecycleStatus;
   stale?: boolean;
   source_feed?: string;
@@ -48,11 +74,16 @@ export interface Advisory {
   title: string;
   description: string;
   affected?: string[];
+  patched?: string[];
   action: string;
   published: string;
   references?: string[];
   cvss_score?: number | null;
   cvss_vector?: string | null;
+  ghsa_cvss_score?: number | null;
+  ghsa_cvss_vector?: string | null;
+  cwe_ids?: string[];
+  credits?: string[];
   nvd_url?: string;
   github_advisory_url?: string;
   platforms?: AdvisoryPlatformSlug[];
