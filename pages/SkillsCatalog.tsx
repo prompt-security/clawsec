@@ -3,8 +3,8 @@ import { Search as _Search, Filter as _Filter, Package, Sparkles, FileText, GitF
 import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
 import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
-import type { AdvisoryPlatformFilter, SkillMetadata, SkillsIndex } from '../types';
-import { hasNonCorePlatform, matchesPlatformFilter, readPlatformSlugs } from '../utils/advisoryPlatforms';
+import type { SkillMetadata, SkillPlatformFilter, SkillsIndex } from '../types';
+import { hasNonCorePlatform, matchesPlatformFilter } from '../utils/advisoryPlatforms';
 
 const SKILLS_INDEX_PATH = '/skills/index.json';
 
@@ -33,7 +33,7 @@ export const SkillsCatalog: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, _setSearchTerm] = useState('');
   const [categoryFilter, _setCategoryFilter] = useState<string>('all');
-  const [selectedPlatform, setSelectedPlatform] = useState<AdvisoryPlatformFilter>('all');
+  const [selectedPlatform, setSelectedPlatform] = useState<SkillPlatformFilter>('all');
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -96,7 +96,8 @@ export const SkillsCatalog: React.FC = () => {
       result = result.filter((skill) => skill.category === categoryFilter);
     }
 
-    // Apply harness filter — same predicate the advisory feed uses
+    // Apply the skill-installation harness filter. Advisory infrastructure
+    // components such as OpenShell and NemoClaw are intentionally separate.
     if (selectedPlatform !== 'all') {
       result = result.filter((skill) => matchesPlatformFilter(skill.platforms, selectedPlatform));
     }
@@ -104,17 +105,10 @@ export const SkillsCatalog: React.FC = () => {
     return result;
   }, [searchTerm, categoryFilter, selectedPlatform, skills]);
 
-  // NemoClaw and OpenShell are advisory feeds without skill packages. Keep the
-  // existing harness tabs, and add an advisory platform only when a skill declares it.
-  const platformTabs = useMemo<ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>>(() => {
-    const present = new Set(skills.flatMap((skill) => readPlatformSlugs(skill.platforms)));
+  // "Other" only earns a tab once a skill actually targets a non-core harness
+  const platformTabs = useMemo<ReadonlyArray<FilterTabOption<SkillPlatformFilter>>>(() => {
     const hasNonCore = skills.some((skill) => hasNonCorePlatform(skill.platforms));
-    return PLATFORM_TABS.filter((tab) => {
-      if (tab.value === 'all') return true;
-      if (tab.value === 'other') return hasNonCore;
-      if (tab.value === 'nemoclaw' || tab.value === 'openshell') return present.has(tab.value);
-      return true;
-    });
+    return hasNonCore ? PLATFORM_TABS : PLATFORM_TABS.filter((tab) => tab.value !== 'other');
   }, [skills]);
 
   // Get unique categories from skills (used in commented filter UI)

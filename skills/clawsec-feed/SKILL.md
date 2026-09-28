@@ -1,20 +1,20 @@
 ---
 name: clawsec-feed
-version: 0.0.11
+version: 0.0.12
 description: Security advisory feed package for OpenClaw-related threats and vulnerabilities. The upstream feed is updated daily; local automation is handled by clawsec-suite or the operator.
 homepage: https://clawsec.prompt.security
 metadata: {"openclaw":{"emoji":"📡","category":"security"}}
 clawdis:
   emoji: "📡"
   requires:
-    bins: [bash, curl, jq, shasum, unzip]
+    bins: [bash, curl, jq, openssl, shasum, unzip]
 ---
 
 # ClawSec Feed 📡
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
-The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and provisional GitHub Security Advisories that do not have CVE IDs yet.
+The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and GitHub Security Advisories. When a GHSA matures into a CVE, the CVE becomes canonical and the GHSA remains in `aliases`; treat either identifier as the same advisory. A stale GHSA remains enforceable: `stale` describes identifier age, not risk expiration.
 
 ## Vercel Skills Installation
 
@@ -26,7 +26,7 @@ npx skills add prompt-security/clawsec --skill clawsec-feed -a openclaw -y
 
 ## Operational Notes
 
-- Required runtime for standalone installation: `bash`, `curl`, `jq`, `shasum`, `unzip`
+- Required runtime for standalone installation: `bash`, `curl`, `jq`, `openssl`, `shasum`, `unzip`
 - Side effects: standalone install only writes local skill files
 - Network behavior: downloads release metadata/artifacts and, if you choose to poll manually, fetches the advisory feed
 - Trust model: this package does not itself create cron jobs or submit data externally; automation is delegated to `clawsec-suite` or your own scheduler
@@ -96,7 +96,7 @@ For standalone installs, verify the signed release manifest before trusting `SKI
 set -euo pipefail
 
 SKILL_NAME="clawsec-feed"
-VERSION="0.0.11"
+VERSION="0.0.12"
 REPO="prompt-security/clawsec"
 TAG="${SKILL_NAME}-v${VERSION}"
 BASE="https://github.com/${REPO}/releases/download/${TAG}"
@@ -355,9 +355,11 @@ Add ClawSec Feed to your heartbeat routine:
 
 ```markdown
 ## ClawSec Feed (every heartbeat)
-1. Check advisory feed for new security alerts
-2. Cross-reference with installed skills
-3. Notify user if action is required
+1. Verify and check the advisory feed for new security alerts.
+2. Inventory installed skill versions and protected runtime/infrastructure versions: OpenClaw, NanoClaw, Hermes, Picoclaw, OpenShell, and NemoClaw.
+3. Match the exact installed product and version against each `affected` selector.
+4. Report matches, and report an installed product with an unknown version as indeterminate instead of safe.
+5. Notify the user if action or version confirmation is required.
 ```
 
 ### Step 4: Confirm deployment
@@ -381,6 +383,7 @@ Subscribes to the community advisory feed for:
 - **Known malicious skills/plugins** - Skills that have been identified as harmful
 - **Prompt injection patterns** - Attack patterns observed in the wild
 - **Vulnerable skill versions** - Skills with known security flaws
+- **Vulnerable runtimes and infrastructure** - Agent runtimes, OpenShell sandboxes, and NemoClaw stacks with known security flaws
 - **Security best practice updates** - New recommendations for agent safety
 
 When a relevant advisory is published, your agent will notify you.
@@ -390,12 +393,10 @@ When a relevant advisory is published, your agent will notify you.
 ## Checking the Advisory Feed
 
 ```bash
-# Use environment variable if set, otherwise use raw GitHub feed (always up-to-date)
-DEFAULT_FEED_URL="https://raw.githubusercontent.com/prompt-security/ClawSec/main/advisories/feed.json"
-FEED_URL="${CLAWSEC_FEED_URL:-$DEFAULT_FEED_URL}"
-
-# Fetch with error handling and retry logic
-curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL"
+# Download, authenticate, validate, and print the current feed.
+# CLAWSEC_FEED_URL and CLAWSEC_FEED_SIG_URL may override the default endpoints;
+# the signer must still match the pinned key shipped with this skill.
+./scripts/fetch_verified_feed.sh
 ```
 
 **Feed structure:**
@@ -428,15 +429,11 @@ curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL"
 ### Get advisory count
 
 ```bash
-# Use environment variable if set, otherwise use raw GitHub feed (always up-to-date)
-DEFAULT_FEED_URL="https://raw.githubusercontent.com/prompt-security/ClawSec/main/advisories/feed.json"
-FEED_URL="${CLAWSEC_FEED_URL:-$DEFAULT_FEED_URL}"
-
 TEMP_FEED=$(mktemp)
 trap "rm -f '$TEMP_FEED'" EXIT
 
-if ! curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL" -o "$TEMP_FEED"; then
-  echo "Error: Failed to fetch advisory feed"
+if ! ./scripts/fetch_verified_feed.sh > "$TEMP_FEED"; then
+  echo "Error: Failed to fetch and verify advisory feed"
   exit 1
 fi
 
@@ -492,15 +489,23 @@ Shared exploitability prioritization guidance is maintained in:
 ### Get exploitability context for an advisory
 
 ```bash
-# Show exploitability details for a specific CVE
-CVE_ID="CVE-2026-27488"
-echo "$FEED" | jq --arg cve "$CVE_ID" '.advisories[] | select(.id == $cve) | {
+# Show exploitability details by canonical CVE or GHSA alias
+ADVISORY_ID="CVE-2026-27488"
+echo "$FEED" | jq --arg identifier "$ADVISORY_ID" '
+  .advisories[]
+  | select(
+      ([.id, .cve_id, .ghsa_id] + (.ghsa_ids // []) + (.aliases // []))
+      | map(select(type == "string") | ascii_upcase)
+      | index($identifier | ascii_upcase)
+    )
+  | {
   id: .id,
+  aliases: (.aliases // []),
   severity: .severity,
   exploitability_score: .exploitability_score,
   exploitability_rationale: .exploitability_rationale,
   title: .title
-}'
+  }'
 ```
 
 ### Prioritize advisories by exploitability
@@ -520,6 +525,19 @@ echo "$FEED" | jq '[.advisories[] | select(.exploitability_score != null)] |
 
 ---
 
+## Decide Whether This Environment Is Affected
+
+Use a read-only environment inventory before making an impact claim.
+
+1. Inventory installed skill/package versions and the versions of OpenClaw, NanoClaw, Hermes, Picoclaw, OpenShell, and NemoClaw. Use trustworthy local evidence such as package manifests, lockfiles, deployment configuration, image labels/digests, or the component's own version command.
+2. Read `affected` as exact `product@version-scope` selectors. Split on the final `@` so scoped package names remain intact. `platforms` routes an advisory to a protected component family; it is not proof that the component is installed.
+3. Report **affected** only when the exact product is present and its version matches the selector. Report **not affected** when the product is absent or its known version is outside every selector.
+4. If the product is present but its version cannot be established, report **indeterminate / possibly affected** and ask the user for the missing deployment detail. Never silently treat an unknown version as safe.
+5. Treat `id`, `cve_id`, `ghsa_id`, `ghsa_ids`, and `aliases` as one stable advisory identity for state, suppression, links, and notifications. Do not re-alert solely because a GHSA became a CVE.
+6. Keep stale GHSA records enforceable. ClawHub is a distribution channel, not a protected runtime or infrastructure component.
+
+The standalone package cannot reliably discover every container, remote host, or custom installation. When the local inventory is incomplete, surface that limitation to the user instead of guessing.
+
 ## Cross-Reference Installed Skills
 
 Check if any of your installed skills are affected by advisories:
@@ -528,15 +546,11 @@ Check if any of your installed skills are affected by advisories:
 # List your installed skills (adjust path for your platform)
 INSTALL_DIR="${CLAWSEC_INSTALL_DIR:-$HOME/.openclaw/skills}"
 
-# Use environment variable if set, otherwise use raw GitHub feed (always up-to-date)
-DEFAULT_FEED_URL="https://raw.githubusercontent.com/prompt-security/ClawSec/main/advisories/feed.json"
-FEED_URL="${CLAWSEC_FEED_URL:-$DEFAULT_FEED_URL}"
-
 TEMP_FEED=$(mktemp)
 trap "rm -f '$TEMP_FEED'" EXIT
 
-if ! curl -sSL --fail --show-error --retry 3 --retry-delay 1 "$FEED_URL" -o "$TEMP_FEED"; then
-  echo "Error: Failed to fetch advisory feed"
+if ! ./scripts/fetch_verified_feed.sh > "$TEMP_FEED"; then
+  echo "Error: Failed to fetch and verify advisory feed"
   exit 1
 fi
 
@@ -547,7 +561,12 @@ if ! jq empty "$TEMP_FEED" 2>/dev/null; then
 fi
 
 FEED=$(cat "$TEMP_FEED")
-AFFECTED=$(echo "$FEED" | jq -r '.advisories[].affected[]?' 2>/dev/null | sort -u)
+AFFECTED=$(echo "$FEED" | jq -r '
+  .advisories[].affected[]?
+  | select(type == "string")
+  | (rindex("@") // -1) as $separator
+  | if $separator > 0 then .[0:$separator] else . end
+' 2>/dev/null | sort -u)
 if [ $? -ne 0 ]; then
   echo "Error: Failed to parse affected skills from feed"
   exit 1
@@ -567,22 +586,30 @@ while IFS= read -r -d '' skill_path; do
   fi
 done < <(find "$INSTALL_DIR" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
 
-# Check each validated skill against affected list
-# Use grep -qF for fixed string matching (prevents regex injection)
+# Candidate-name scan only. Resolve the installed version and evaluate the
+# advisory's version scope before declaring the skill affected.
+# Use exact fixed-string matching (prevents regex injection and substring collisions)
 for skill in "${VALIDATED_SKILLS[@]}"; do
   # At this point, $skill is guaranteed to match ^[a-zA-Z0-9_-]+$
-  if echo "$AFFECTED" | grep -qF "$skill"; then
-    echo "WARNING: Installed skill '$skill' has a security advisory!"
-    # Get advisory details for this skill
-    echo "$FEED" | jq --arg s "$skill" '.advisories[] | select(.affected[] | contains($s))'
+  if echo "$AFFECTED" | grep -qxF "$skill"; then
+    echo "REVIEW: Installed skill '$skill' is named by an advisory; evaluate its version scope."
+    # Get candidate advisory details for this skill
+    echo "$FEED" | jq --arg s "$skill" '
+      .advisories[]
+      | select(any(.affected[]?;
+          (rindex("@") // -1) as $separator
+          | (if $separator > 0 then .[0:$separator] else . end) == $s
+        ))
+    '
   fi
 done
 ```
 
-**If you find affected skills:**
-1. Check the advisory for details and severity
-2. Notify your user immediately for critical/high severity
-3. Include the recommended action from the advisory
+**If you find candidate skills:**
+1. Resolve the installed version and evaluate the advisory range.
+2. Check the advisory details and severity.
+3. Notify your user immediately for confirmed critical/high matches.
+4. Include the recommended action from the advisory.
 
 ---
 
@@ -708,6 +735,8 @@ FEED_OK - Advisory feed checked, no new alerts. 📡
 ## State Tracking
 
 Track the last feed check to identify new advisories:
+
+For each advisory, store every stable identifier from `id`, `cve_id`, `ghsa_id`, `ghsa_ids`, and `aliases`. Consider the advisory already known when any identifier is known, then backfill the rest. This prevents a GHSA-to-CVE transition from creating a duplicate alert.
 
 ```json
 {

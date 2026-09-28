@@ -21,6 +21,11 @@ function extractStepOneScript(markdown) {
   return match ? match[1] : "";
 }
 
+function extractStepThreeScript(markdown) {
+  const match = markdown.match(/## Step 3[^\n]*\n\n```bash\n([\s\S]*?)\n```/);
+  return match ? match[1] : "";
+}
+
 function runShellScript(script, env = {}) {
   return new Promise((resolve) => {
     const proc = spawn("bash", ["-lc", `set -euo pipefail\n${script}`], {
@@ -224,9 +229,30 @@ async function testHeartbeatVersionCheckFallbackDoesNotFalseAlert() {
   }
 }
 
+async function testHeartbeatFeedCheckVerifiesSignature() {
+  const testName = "heartbeat step 3: verifies remote and fallback feed signatures";
+  try {
+    const markdown = await fs.readFile(HEARTBEAT_PATH, "utf8");
+    const stepScript = extractStepThreeScript(markdown);
+    if (
+      stepScript.includes('curl -fsSLo "$FEED_SIG_TMP" "$FEED_SIG_URL"')
+      && stepScript.includes('openssl pkeyutl -verify -rawin -pubin')
+      && stepScript.includes('cp "$LOCAL_FEED_SIG" "$FEED_SIG_TMP"')
+      && stepScript.includes("Advisory feed signature verification failed")
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, "Step 3 must fail closed unless the downloaded or fallback feed signature verifies");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
 async function runTests() {
   await testHeartbeatVersionCheckUsesSuiteVersion();
   await testHeartbeatVersionCheckFallbackDoesNotFalseAlert();
+  await testHeartbeatFeedCheckVerifiesSignature();
   report();
   exitWithResults();
 }

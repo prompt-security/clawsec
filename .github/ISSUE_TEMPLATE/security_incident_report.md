@@ -64,16 +64,20 @@ labels: security, needs-triage
 
 ## Affected
 
-### Skill Name
-<!-- Name of the affected skill (if applicable) -->
+### Component or Skill Name
+<!-- Required. Exact protected runtime, infrastructure component, or skill package name. -->
 
-### Skill Version
-<!-- Version number (if known) -->
+### Affected Version Scope
+<!-- Required. Exact version or range, for example: 1.2.3, <1.2.3, or >=1.0.0 <1.2.3. Do not enter "unknown" or "*". -->
 
-### Platforms
+### Protected Components
 <!-- Check all that apply: -->
-- [ ] OpenClaw
-- [ ] Other: <!-- specify -->
+- [ ] OpenClaw (agent runtime)
+- [ ] NanoClaw (agent runtime)
+- [ ] Hermes (agent runtime)
+- [ ] Picoclaw (agent runtime)
+- [ ] OpenShell (sandbox runtime)
+- [ ] NemoClaw (agent stack)
 
 ---
 

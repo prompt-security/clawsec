@@ -103,43 +103,13 @@ jobs:
           fi
           echo "Description: ${DESCRIPTION:0:100}..."
 
-          # Parse skill name and version
-          SKILL_NAME=$(echo "$ISSUE_BODY" | sed -n '/^### Skill Name/,/^### /p' | grep -v '^### ' | grep -v '^<!--' | grep -v '^\s*$' | head -1 | xargs)
-          SKILL_VERSION=$(echo "$ISSUE_BODY" | sed -n '/^### Skill Version/,/^### /p' | grep -v '^### ' | grep -v '^<!--' | grep -v '^\s*$' | head -1 | xargs)
-
-          # Build affected array
-          AFFECTED="[]"
-          if [ -n "$SKILL_NAME" ] && [ -n "$SKILL_VERSION" ]; then
-            AFFECTED=$(jq -n --arg name "$SKILL_NAME" --arg ver "$SKILL_VERSION" '[$name + "@" + $ver]')
-          elif [ -n "$SKILL_NAME" ]; then
-            AFFECTED=$(jq -n --arg name "$SKILL_NAME" '[$name]')
-          fi
+          # Parse and validate affected product, version scope, and protected
+          # component identities. Unscoped reports stay in issue triage instead
+          # of being published as wildcard advisories.
+          SCOPE_JSON=$(node scripts/ci/community_advisory_scope.mjs)
+          AFFECTED=$(jq -c '.affected' <<< "$SCOPE_JSON")
+          PLATFORMS=$(jq -c '.platforms' <<< "$SCOPE_JSON")
           echo "Affected: $AFFECTED"
-
-          # Build platforms array
-          OPENCLAW_SELECTED="false"
-          if echo "$ISSUE_BODY" | grep -qi '^[[:space:]]*-[[:space:]]*\[[xX]\][[:space:]]*OpenClaw'; then
-            OPENCLAW_SELECTED="true"
-          fi
-
-          OTHER_PLATFORM_RAW=$(echo "$ISSUE_BODY" | sed -n 's/^[[:space:]]*-[[:space:]]*\[[xX]\][[:space:]]*Other:[[:space:]]*\(.*\)$/\1/p' | head -1 | xargs)
-          OTHER_PLATFORM=""
-          if [ -n "$OTHER_PLATFORM_RAW" ]; then
-            OTHER_PLATFORM=$(echo "$OTHER_PLATFORM_RAW" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9._-]+/-/g; s/^-+//; s/-+$//')
-            if echo "$OTHER_PLATFORM" | grep -q 'nanoclaw'; then
-              OTHER_PLATFORM="nanoclaw"
-            fi
-          fi
-
-          PLATFORMS=$(jq -n --arg open "$OPENCLAW_SELECTED" --arg other "$OTHER_PLATFORM" '
-            [
-              (if $open == "true" then "openclaw" else empty end),
-              (if ($other | length) > 0 then $other else empty end)
-            ] | unique
-          ')
-          if [ "$PLATFORMS" = "[]" ]; then
-            PLATFORMS='["openclaw","nanoclaw"]'
-          fi
           echo "Platforms: $PLATFORMS"
 
           # Parse recommended action
@@ -230,6 +200,7 @@ jobs:
 
           # Validate JSON
           if jq empty tmp_feed.json 2>/dev/null; then
+            node scripts/ci/validate_advisory_feed.mjs tmp_feed.json
             echo "Feed JSON is valid"
             mv tmp_feed.json "$FEED_PATH"
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.17] - 2026-09-28
+
+### Security
+
+- Matched advisory suppressions and notification state across canonical CVE and GHSA aliases.
+- Prevented duplicate alerts when a GHSA later matures into a CVE.
+- Surfaced installed products with unknown versions as indeterminate instead of silently treating them as safe.
+- Required the portable heartbeat to verify the detached feed signature for both remote and fallback feeds.
+
+### Changed
+
+- Added the advisory identity helper to the packaged runtime manifest.
+- Made heartbeat state track canonical and alias identifiers together.
+
 ## [0.1.16] - 2026-07-14
 
 ### Fixed

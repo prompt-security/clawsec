@@ -1,0 +1,130 @@
+[
+  {
+    "cve": {
+      "id": "CVE-TEST-OPEN-SHELL",
+      "published": "2026-08-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "NVIDIA OpenShell vulnerability."}],
+      "references": [{"url": "https://nvidia.custhelp.com/app/answers/detail/a_id/5872"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "versionEndIncluding": "0.0.33"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NEMO-CLAW",
+      "published": "2026-04-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "NVIDIA NemoClaw vulnerability."}],
+      "references": [{"url": "https://github.com/NVIDIA/NemoClaw/security"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "versionStartIncluding": "0.0.10",
+        "versionEndExcluding": "0.0.18"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-OPENSHELL-FEATURE",
+      "published": "2026-03-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw OpenShell filesystem bridge vulnerability."}],
+      "references": [{"url": "https://github.com/openclaw/openclaw/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "versionStartIncluding": "2026.1.0",
+        "versionEndExcluding": "2026.1.5"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NANOCLAW",
+      "published": "2026-02-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "NanoClaw vulnerability."}],
+      "references": [{"url": "https://github.com/qwibitai/nanoclaw/security"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nanoco:nanoclaw:1.2.0:*:*:*:*:*:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-CPE-ALIAS",
+      "published": "2026-02-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nousresearch:hermes_agent:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "3.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-TRUSTED-REF-UNRELATED-CPE",
+      "published": "2026-02-03T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "An unrelated product links to a trusted repository."}],
+      "references": [{"url": "https://github.com/openclaw/openclaw/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:example:unrelated:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "9.9.9"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-CLAWHUB-BACKEND",
+      "published": "2026-07-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "ClawHub backend issue. The OpenClaw runtime is not affected."}],
+      "references": [{"url": "https://github.com/openclaw/clawhub/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:clawhub:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "2.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NEMOCLAW-IN-FREE-TEXT",
+      "published": "2026-06-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "A project mentions NemoClaw but is not NemoClaw."}],
+      "references": [{"url": "https://example.invalid/advisory"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:example:unrelated:4.2.0:*:*:*:*:*:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-UNKNOWN-CPE",
+      "published": "2026-05-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Unknown agent runtime vulnerability."}],
+      "references": [{"url": "https://example.invalid/unknown"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:unknown:agent:3.0.0:*:*:*:*:*:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-NO-VERSION-SCOPE",
+      "published": "2026-05-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw issue without an explicit affected version scope."}],
+      "references": [{"url": "https://github.com/openclaw/openclaw/security/advisories/no-scope"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*"
+      }]}]}]
+    }
+  }
+]

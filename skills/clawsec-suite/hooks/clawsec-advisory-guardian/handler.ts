@@ -3,9 +3,15 @@ import os from "node:os";
 import path from "node:path";
 import { uniqueStrings, resolveConfiguredPath } from "./lib/utils.mjs";
 import { defaultChecksumsUrl, loadLocalFeed, loadRemoteFeed } from "./lib/feed.mjs";
+import { advisoryIdentifiers } from "./lib/advisory_identity.mjs";
 import type { HookEvent, FeedPayload, AdvisoryMatch } from "./lib/types.ts";
 import { loadState, persistState } from "./lib/state.ts";
-import { discoverInstalledSkills, findMatches, matchKey, buildAlertMessage } from "./lib/matching.ts";
+import {
+  discoverInstalledSkills,
+  findMatches,
+  recordMatchNotification,
+  buildAlertMessage,
+} from "./lib/matching.ts";
 import { loadAdvisorySuppression, isAdvisorySuppressed } from "./lib/suppression.mjs";
 
 const DEFAULT_FEED_URL =
@@ -194,9 +200,7 @@ const handler = async (event: HookEvent): Promise<void> => {
     state.last_feed_updated = feed.updated;
   }
 
-  const advisoryIds = feed.advisories
-    .map((advisory) => advisory.id)
-    .filter((id): id is string => typeof id === "string" && id.trim() !== "");
+  const advisoryIds = feed.advisories.flatMap((advisory) => advisoryIdentifiers(advisory));
   state.known_advisories = uniqueStrings([...state.known_advisories, ...advisoryIds]);
 
   const installedSkills = await discoverInstalledSkills(installRoot);
@@ -229,12 +233,10 @@ const handler = async (event: HookEvent): Promise<void> => {
 
   const unseenMatches: AdvisoryMatch[] = [];
   for (const match of matches) {
-    const key = matchKey(match);
-    if (state.notified_matches[key]) {
+    if (!recordMatchNotification(match, state.notified_matches, nowIso)) {
       continue;
     }
     unseenMatches.push(match);
-    state.notified_matches[key] = nowIso;
   }
 
   if (unseenMatches.length > 0 && Array.isArray(event.messages)) {

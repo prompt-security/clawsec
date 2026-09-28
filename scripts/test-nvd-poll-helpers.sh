@@ -282,14 +282,30 @@ test_connection_error_and_invalid_json() {
   assert_eq "$(joined_sleeps)" "10 30" "000 and invalid JSON use the transient backoff"
 }
 
+# One NVD page body. ids is a space-separated CVE ID list (may be empty).
+nvd_page() {
+  local start_index="$1"
+  local total_results="$2"
+  local ids="${3:-}"
+  local vulnerabilities
+
+  # shellcheck disable=SC2086 # word splitting turns the list into jq arguments
+  vulnerabilities="$(jq -nc '[$ARGS.positional[] | {cve: {id: .}}]' --args $ids)"
+  jq -nc \
+    --argjson start "$start_index" \
+    --argjson total "$total_results" \
+    --argjson vulnerabilities "$vulnerabilities" \
+    '{resultsPerPage: ($vulnerabilities | length), startIndex: $start, totalResults: $total, vulnerabilities: $vulnerabilities}'
+}
+
 test_pagination() {
   local outfile="$WORKDIR/pages.json"
   local suffix="&lastModStartDate=2026-10-28T06%3A07%3A13.000Z&lastModEndDate=2026-11-16T06%3A07%3A43.000Z"
   reset_transport
   NVD_API_KEY="nvd-test-key-5941-do-not-log"
-  queue_response "200" '{"vulnerabilities":[{"cve":{"id":"CVE-1"}}],"totalResults":4000}'
+  queue_response "200" "$(nvd_page 0 2 "CVE-1")"
   queue_response "503" "unavailable"
-  queue_response "200" '{"vulnerabilities":[{"cve":{"id":"CVE-2"}}],"totalResults":4000}'
+  queue_response "200" "$(nvd_page 1 2 "CVE-2")"
 
   if nvd_fetch_query_pages "keyword" "OpenClaw" "$outfile" "$suffix"; then
     pass "paginated fetch recovers a transient failure on a later page"
@@ -304,19 +320,82 @@ test_pagination() {
   else
     fail "first page URL missing pagination or date window: ${REQUEST_URLS[0]}"
   fi
-  if [[ "${REQUEST_URLS[2]}" == *"startIndex=2000"* ]]; then
-    pass "the follow-up page advances startIndex"
+  if [[ "${REQUEST_URLS[2]}" == *"startIndex=1&"* ]]; then
+    pass "the follow-up page advances startIndex by the rows received"
   else
     fail "follow-up page did not advance startIndex: ${REQUEST_URLS[2]}"
   fi
 
   reset_transport
-  queue_response "200" '{"vulnerabilities":[],"totalResults":10}'
-  if nvd_fetch_query_pages "keyword" "OpenClaw" "$outfile" "$suffix"; then
+  queue_response "200" "$(nvd_page 0 10 "")"
+  if nvd_fetch_query_pages "keyword" "OpenClaw" "$outfile" "$suffix" 2>/dev/null; then
     fail "an empty page before totalResults must fail the query"
   else
     pass "an empty page before totalResults fails the query"
   fi
+}
+
+# A full rebuild replaces the CVE set with whatever was fetched, so every
+# disagreement with NVD's own pagination bookkeeping has to fail the query.
+test_pagination_fails_closed() {
+  local outfile="$WORKDIR/strict-pages.json"
+  local stderr="$WORKDIR/strict-pages.err"
+  local label
+
+  expect_page_failure() {
+    label="$1"
+    local expected_message="$2"
+    if nvd_fetch_query_pages "keyword" "OpenClaw" "$outfile" "" 2>"$stderr"; then
+      fail "${label} must fail the query"
+    elif grep -F -q -- "$expected_message" "$stderr"; then
+      pass "${label} fails the query"
+    else
+      fail "${label} failed without the expected message: $(cat "$stderr")"
+    fi
+  }
+
+  NVD_API_KEY="nvd-test-key-5941-do-not-log"
+
+  reset_transport
+  queue_response "200" "$(nvd_page 0 3 "CVE-1")"
+  queue_response "200" "$(nvd_page 1 2 "CVE-2")"
+  expect_page_failure "a totalResults change between pages" "NVD totalResults changed during pagination"
+
+  reset_transport
+  queue_response "200" "$(nvd_page 0 2 "CVE-1")"
+  queue_response "200" "$(nvd_page 0 2 "CVE-2")"
+  expect_page_failure "a page that answers a different startIndex" "NVD startIndex mismatch"
+
+  reset_transport
+  queue_response "200" "$(nvd_page 0 3 "CVE-1")"
+  queue_response "200" "$(nvd_page 1 3 "CVE-1")"
+  expect_page_failure "a CVE ID repeated across pages" "NVD returned duplicate CVE IDs"
+
+  reset_transport
+  queue_response "200" "$(nvd_page 0 1 "CVE-1 CVE-2")"
+  expect_page_failure "more rows than totalResults" "NVD returned more rows than totalResults"
+
+  reset_transport
+  queue_response "200" "$(nvd_page 0 2 "CVE-1")"
+  queue_response "200" "$(nvd_page 1 2 "")"
+  expect_page_failure "a short result set" "NVD returned an empty page before all results"
+
+  reset_transport
+  queue_response "200" '{"vulnerabilities":[{"cve":{"id":"CVE-1"}}],"totalResults":1}'
+  expect_page_failure "a page without pagination fields" "Invalid or incomplete NVD JSON"
+
+  reset_transport
+  queue_response "200" '{"resultsPerPage":1,"startIndex":0,"totalResults":1,"vulnerabilities":[{"cve":{}}]}'
+  expect_page_failure "a record without a CVE ID" "Invalid or incomplete NVD JSON"
+
+  reset_transport
+  queue_response "200" "$(nvd_page 0 0 "")"
+  if nvd_fetch_query_pages "keyword" "OpenClaw" "$outfile" "" 2>"$stderr"; then
+    pass "an empty result set with totalResults=0 succeeds"
+  else
+    fail "an empty result set with totalResults=0 should succeed: $(cat "$stderr")"
+  fi
+  assert_eq "${#REQUEST_URLS[@]}" "1" "an empty result set needs one request"
 }
 
 test_retry_pass() {
@@ -328,8 +407,8 @@ test_retry_pass() {
     queue_response "503" "unavailable"
     n=$((n + 1))
   done
-  queue_response "200" '{"vulnerabilities":[],"totalResults":0}'
-  queue_response "200" '{"vulnerabilities":[{"cve":{"id":"CVE-9"}}],"totalResults":1}'
+  queue_response "200" "$(nvd_page 0 0 "")"
+  queue_response "200" "$(nvd_page 0 1 "CVE-9")"
 
   if nvd_fetch_all_queries $'keyword|OpenClaw\nkeyword|clawdbot\n' "$dest" "&lastModStartDate=2026-10-28T00%3A00%3A00.000Z&lastModEndDate=2026-11-16T00%3A00%3A00.000Z"; then
     pass "a later retry pass recovers a query that failed the first pass"
@@ -591,14 +670,9 @@ EOF
 }
 
 test_nvidia_query_coverage() {
-  local specs keywords pattern github_pattern cpe_pattern
-  local repo_root
-  repo_root="$(cd "$SCRIPT_DIR/.." && pwd)"
+  local specs keywords
   specs="$(nvd_query_specs)"
   keywords="$(nvd_summary_keywords)"
-  pattern="$(nvd_keyword_pattern)"
-  github_pattern="$(nvd_github_ref_pattern)"
-  cpe_pattern="$(nvd_cpe_pattern)"
 
   for expected in \
     'keyword|NemoClaw' \
@@ -619,94 +693,12 @@ test_nvidia_query_coverage() {
     pass "NVD queries do not use a bare OpenShell keyword"
   fi
 
-  if printf '%s' "$pattern" | tr '|' '\n' | grep -E -i -x -q 'openshell'; then
-    fail "post-filter keyword pattern contains a bare OpenShell alternative"
-  else
-    pass "post-filter keyword pattern has no bare OpenShell alternative"
-  fi
-
   assert_eq "$keywords" "openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell" "summary keywords include NVIDIA projects"
 
-  local kept
-  kept="$(jq -nc \
-    --arg kw "$pattern" \
-    --arg gh "$github_pattern" \
-    --arg cpe "$cpe_pattern" \
-    '
-      def cve($id; $description; $url; $criteria): {
-        cve: {
-          id: $id,
-          descriptions: [{lang: "en", value: $description}],
-          references: (if $url == "" then [] else [{url: $url}] end),
-          configurations: [{nodes: [{cpeMatch: [{criteria: $criteria}]}]}]
-        }
-      };
-      [
-        cve("CVE-NEMO"; "NVIDIA NeMoClaw contains a vulnerability in sandbox initialization."; ""; "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*"),
-        cve("CVE-SHELL"; "NVIDIA OpenShell for Linux contains a vulnerability in its sandbox provisioning API."; "https://github.com/NVIDIA/product-security/tree/main/2026/5872"; "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*"),
-        cve("CVE-SHELL-REF"; "Sandbox policy bypass."; "https://github.com/NVIDIA/OpenShell/security/advisories/GHSA-test"; ""),
-        cve("CVE-OPENCLAW-SHELL"; "OpenClaw before 2026.4.22 contains a race in the OpenShell filesystem bridge."; "https://github.com/openclaw/openclaw/security/advisories/GHSA-test"; ""),
-        cve("CVE-SAP-SHELL"; "Kubernetes and OpenShell deployments are not affected because the relevant backend is unused."; "https://github.com/SAP/astonish/security/advisories/GHSA-test"; ""),
-        cve("CVE-BARE-SHELL"; "OpenShell sandbox escape."; ""; "")
-      ]
-      | map(select(
-          (.cve.descriptions[]? | select(.lang == "en") | .value | test($kw; "i"))
-          or (.cve.references[]? | .url | test($gh; "i"))
-          or ([.cve.configurations[]? | .. | objects | .criteria? | strings | test($cpe; "i")] | any)
-        ) | .cve.id)
-    ')"
-
-  assert_eq "$kept" '["CVE-NEMO","CVE-SHELL","CVE-SHELL-REF","CVE-OPENCLAW-SHELL"]' "post-filter keeps NVIDIA records and drops unrelated OpenShell mentions"
-
-  # Source files store the jq string escapes. The classifier below uses the
-  # regex jq actually evaluates.
-  local nemoclaw_source='github\\.com/nvidia/nemoclaw|\\bnemoclaw\\b|cpe:2\\.3:a:nvidia:nemoclaw(?::|$)'
-  local openshell_source='github\\.com/nvidia/openshell|nvidia openshell|cpe:2\\.3:a:nvidia:openshell(?::|$)'
-  local nemoclaw_pattern='github\.com/nvidia/nemoclaw|\bnemoclaw\b|cpe:2\.3:a:nvidia:nemoclaw(?::|$)'
-  local openshell_pattern='github\.com/nvidia/openshell|nvidia openshell|cpe:2\.3:a:nvidia:openshell(?::|$)'
-  local source_file
-  for source_file in \
-    "$repo_root/.github/workflows/poll-nvd-cves.yml" \
-    "$repo_root/scripts/populate-local-feed.sh"
-  do
-    if grep -F -q -- "$nemoclaw_source" "$source_file" && grep -F -q -- "$openshell_source" "$source_file"; then
-      pass "platform tagging in ${source_file##*/} names NemoClaw and NVIDIA OpenShell"
-    else
-      fail "platform tagging in ${source_file##*/} is missing an NVIDIA pattern"
-    fi
-    if grep -F -q '\bopenshell\b' "$source_file"; then
-      fail "${source_file##*/} uses a bare OpenShell word match"
-    else
-      pass "${source_file##*/} does not use a bare OpenShell word match"
-    fi
-  done
-
-  local workflow_hits
-  workflow_hits="$(grep -F -c -- "$openshell_source" "$repo_root/.github/workflows/poll-nvd-cves.yml")"
-  assert_eq "$workflow_hits" "2" "NVD workflow tags OpenShell in both transform copies"
-
-  local classified
-  classified="$(jq -nc \
-    --arg nemoclaw "$nemoclaw_pattern" \
-    --arg openshell "$openshell_pattern" \
-    '
-      def platforms($blob):
-        [
-          (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then "openclaw" else empty end),
-          (if ($blob | test($nemoclaw)) then "nemoclaw" else empty end),
-          (if ($blob | test($openshell)) then "openshell" else empty end)
-        ];
-      {
-        nemoclaw: platforms("nvidia nemoclaw sandbox cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*"),
-        openshell: platforms("nvidia openshell for linux cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:* cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*"),
-        openclaw_shell: platforms("openclaw before 2026.4.22 openshell filesystem bridge github.com/openclaw/openclaw"),
-        sap: platforms("kubernetes and openshell deployments are not affected")
-      }
-    ')"
-  assert_eq "$(jq -c .nemoclaw <<<"$classified")" '["nemoclaw"]' "NeMoClaw text and CPE map only to nemoclaw"
-  assert_eq "$(jq -c .openshell <<<"$classified")" '["openshell"]' "NVIDIA OpenShell text and CPE map only to openshell"
-  assert_eq "$(jq -c .openclaw_shell <<<"$classified")" '["openclaw"]' "OpenClaw OpenShell text stays on openclaw"
-  assert_eq "$(jq -c .sap <<<"$classified")" '[]' "an unrelated OpenShell mention maps to no NVIDIA platform"
+  # Discovery queries no longer decide publication or platform tagging. That is
+  # scripts/nvd-advisory-transform.jq, which requires an allowlisted CPE with an
+  # explicit version scope; the NVD product scoping tests cover the NVIDIA
+  # records, the OpenClaw OpenShell-bridge record and the free-text mentions.
 }
 
 test_nvidia_query_coverage
@@ -717,6 +709,7 @@ test_authenticated_retry_and_header
 test_rate_limit_and_permanent_errors
 test_connection_error_and_invalid_json
 test_pagination
+test_pagination_fails_closed
 test_retry_pass
 test_unauthenticated_pace
 test_xtrace_does_not_print_the_key

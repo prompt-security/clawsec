@@ -6,7 +6,9 @@ export type HookEvent = {
 
 export type Advisory = {
   id?: string;
+  aliases?: string[];
   ghsa_id?: string;
+  ghsa_ids?: string[];
   cve_id?: string | null;
   status?: string;
   stale?: boolean;

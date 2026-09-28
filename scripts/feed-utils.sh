@@ -38,6 +38,8 @@ sync_feed_to_mirrors() {
 }
 
 nvd_query_specs() {
+  # Keyword searches are discovery-only. Publication requires an allowlisted CPE
+  # with an explicit version scope in scripts/nvd-advisory-transform.jq.
   cat <<'EOF'
 keyword|OpenClaw
 keyword|clawdbot
@@ -50,8 +52,13 @@ keyword|hermes-agent
 keyword|Picoclaw
 keyword|NemoClaw
 keyword|NVIDIA OpenShell
+virtualMatchString|cpe:2.3:a:openclaw:openclaw
+virtualMatchString|cpe:2.3:a:nanoco:nanoclaw
+virtualMatchString|cpe:2.3:a:qwibitai:nanoclaw
 virtualMatchString|cpe:2.3:a:software-metadata.pub:hermes
+virtualMatchString|cpe:2.3:a:nousresearch:hermes_agent
 virtualMatchString|cpe:2.3:a:picoclaw:picoclaw
+virtualMatchString|cpe:2.3:a:sipeed:picoclaw
 virtualMatchString|cpe:2.3:a:nvidia:nemoclaw
 virtualMatchString|cpe:2.3:a:nvidia:openshell
 EOF
@@ -59,18 +66,6 @@ EOF
 
 nvd_summary_keywords() {
   echo 'openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell'
-}
-
-nvd_keyword_pattern() {
-  echo 'OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys|HERMES workflow|hermes-agent|software publication with rich metadata|Picoclaw|picoclaw|NemoClaw|nemoclaw|NVIDIA OpenShell'
-}
-
-nvd_github_ref_pattern() {
-  echo 'github\.com/openclaw/openclaw|github\.com/qwibitai/nanoclaw|github\.com/softwarepub/hermes|github\.com/nousresearch/hermes-agent|github\.com/[^/]+/picoclaw|github\.com/nvidia/nemoclaw|github\.com/nvidia/openshell'
-}
-
-nvd_cpe_pattern() {
-  echo 'cpe:2\.3:a:software-metadata\.pub:hermes(?::|$)|cpe:2\.3:[aho]:[^:]*:picoclaw(?::|$)|cpe:2\.3:a:nvidia:nemoclaw(?::|$)|cpe:2\.3:a:nvidia:openshell(?::|$)'
 }
 
 nvd_query_slug() {
@@ -470,8 +465,26 @@ nvd_http_get() {
   return 1
 }
 
+# Succeeds when a page carries the fields NVD pagination is checked against.
+nvd_page_is_complete_shape() {
+  local page_file="$1"
+
+  jq -e '
+    (.vulnerabilities | type == "array") and
+    (.totalResults | type == "number" and . >= 0 and . == floor) and
+    (.startIndex | type == "number" and . >= 0 and . == floor) and
+    (.resultsPerPage | type == "number" and . >= 0 and . == floor) and
+    ([.vulnerabilities[]? | .cve.id | type == "string"] | all)
+  ' "$page_file" >/dev/null 2>&1
+}
+
 # Download every page of one query into outfile. extra_suffix is appended
 # before startIndex/resultsPerPage (empty for a full-history scan).
+#
+# A full rebuild replaces every CVE advisory with the fetched set, so the query
+# only succeeds when the merged rows match NVD's own bookkeeping exactly. A
+# shifted, short, duplicated or re-counted page fails the query instead of
+# silently shrinking the feed.
 nvd_fetch_query_pages() {
   local kind="$1"
   local value="$2"
@@ -481,7 +494,10 @@ nvd_fetch_query_pages() {
   local page_file="${outfile}.page"
   local page_count=0
   local total_results=0
-  local next_index=0
+  local expected_total=-1
+  local response_start=0
+  local merged_count=0
+  local unique_merged_count=0
   local url=""
 
   printf '%s\n' '{"vulnerabilities":[]}' >"$outfile"
@@ -494,29 +510,56 @@ nvd_fetch_query_pages() {
       return 1
     fi
 
-    jq -s '.[0].vulnerabilities += (.[1].vulnerabilities // []) | .[0]' \
+    if ! nvd_page_is_complete_shape "$page_file"; then
+      echo "Invalid or incomplete NVD JSON for '${kind}:${value}' at startIndex=${start_index}." >&2
+      rm -f "$page_file"
+      return 1
+    fi
+
+    response_start="$(jq -r '.startIndex' "$page_file")"
+    page_count="$(jq '.vulnerabilities | length' "$page_file")"
+    total_results="$(jq '.totalResults' "$page_file")"
+
+    if [ "$response_start" -ne "$start_index" ]; then
+      echo "NVD startIndex mismatch for '${kind}:${value}': requested ${start_index}, received ${response_start}." >&2
+      rm -f "$page_file"
+      return 1
+    fi
+    if [ "$expected_total" -eq -1 ]; then
+      expected_total="$total_results"
+    elif [ "$total_results" -ne "$expected_total" ]; then
+      echo "NVD totalResults changed during pagination for '${kind}:${value}': ${expected_total} to ${total_results}." >&2
+      rm -f "$page_file"
+      return 1
+    fi
+    if [ "$page_count" -eq 0 ] && [ "$start_index" -lt "$expected_total" ]; then
+      echo "NVD returned an empty page before all results for '${kind}:${value}' (startIndex=${start_index}, totalResults=${expected_total})." >&2
+      rm -f "$page_file"
+      return 1
+    fi
+
+    jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
       "$outfile" "$page_file" >"${outfile}.merged"
     mv "${outfile}.merged" "$outfile"
-
-    page_count="$(jq '.vulnerabilities | length' "$page_file")"
-    total_results="$(jq '(.totalResults // 0) | floor' "$page_file")"
-    echo "Fetched ${page_count} results at startIndex=${start_index} (totalResults=${total_results})"
     rm -f "$page_file"
 
-    if [ "$page_count" -eq 0 ]; then
-      if [ "$start_index" -lt "$total_results" ]; then
-        echo "NVD returned an empty page at startIndex=${start_index} before totalResults=${total_results}." >&2
-        return 1
-      fi
+    merged_count="$(jq '.vulnerabilities | length' "$outfile")"
+    unique_merged_count="$(jq '[.vulnerabilities[].cve.id] | unique | length' "$outfile")"
+    echo "Fetched ${page_count} results at startIndex=${start_index} (${merged_count}/${expected_total} complete)"
+
+    if [ "$unique_merged_count" -ne "$merged_count" ]; then
+      echo "NVD returned duplicate CVE IDs while paginating '${kind}:${value}'." >&2
+      return 1
+    fi
+    if [ "$merged_count" -eq "$expected_total" ]; then
       return 0
     fi
-
-    next_index=$((start_index + NVD_RESULTS_PER_PAGE))
-    if [ "$next_index" -ge "$total_results" ]; then
-      return 0
+    if [ "$merged_count" -gt "$expected_total" ]; then
+      echo "NVD returned more rows than totalResults for '${kind}:${value}'." >&2
+      return 1
     fi
 
-    start_index="$next_index"
+    start_index=$((start_index + page_count))
     nvd_inter_request_sleep
   done
 }
