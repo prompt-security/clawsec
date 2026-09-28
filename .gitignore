@@ -26,6 +26,7 @@ dist-ssr
 public/advisories
 public/skills
 public/wiki/
+public/llms.txt
 
 # Python bytecode
 __pycache__/

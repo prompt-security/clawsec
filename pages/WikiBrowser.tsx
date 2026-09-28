@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { BookOpenText, ExternalLink, FileText } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import Markdown from 'react-markdown';
@@ -185,6 +185,24 @@ export const WikiBrowser: React.FC = () => {
         ),
       }));
   }, []);
+
+  // llms.txt v2 discovery: advertise the markdown alternate for the page being viewed, so
+  // an agent that lands on the rendered HTML can find the LLM-friendly version. Kept in
+  // sync with the route rather than rendered once, because this is a single-page app.
+  const markdownAlternateSlug = selectedDoc?.slug.toLowerCase();
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const link = document.createElement('link');
+    link.rel = 'alternate';
+    link.type = 'text/markdown';
+    link.href = markdownAlternateSlug ? `/wiki/${markdownAlternateSlug}.md` : '/wiki/llms.txt';
+    document.head.appendChild(link);
+
+    return () => {
+      link.remove();
+    };
+  }, [markdownAlternateSlug]);
 
   if (!selectedDoc) {
     return (
