@@ -32,7 +32,9 @@ for (const [jobName, resolverStep] of [
   const job = workflow.slice(jobStart + 1).split(/\n {2}[\w-]+:\n/)[0];
   assert.match(
     job,
-    new RegExp(`      - name: Setup Node\n        uses: actions/setup-node@[^\n]+\n        with:\n          node-version: 24\n\n      - name: ${resolverStep}\n`),
+    // Extra `with:` keys and their comments may sit between node-version and
+    // the next step -- this workflow also sets package-manager-cache.
+    new RegExp(`      - name: Setup Node\n        uses: actions/setup-node@[^\n]+\n        with:\n          node-version: 24\n(?:          [^\n]*\n)*\n      - name: ${resolverStep}\n`),
     `${jobName}: ${resolverStep} must run after Setup Node selects Node 24`,
   );
 }
@@ -249,11 +251,33 @@ assert.match(
   'GitHub release notes must load the generated SkillSpector report content into the release body file',
 );
 
+// Splits the "Create GitHub Release" upsert into its two arms so each can be
+// asserted on independently.
+function releaseUpsertBranches() {
+  const step = workflow.slice(workflow.indexOf('      - name: Create GitHub Release'));
+  const body = step.slice(step.indexOf('if gh release view'));
+  const elseAt = body.indexOf('\n          else\n');
+  const fiAt = body.indexOf('\n          fi\n');
+  assert.ok(elseAt !== -1 && fiAt > elseAt, 'the release step must upsert via if/else');
+  return { edit: body.slice(0, elseAt), create: body.slice(elseAt, fiAt) };
+}
+
 assert.match(
   workflow,
-  /body_path: \$\{\{ runner\.temp \}\}\/skill-release-body\.md/,
-  'GitHub release creation must use body_path for the generated release body file',
+  /BODY_FILE="\$\{RUNNER_TEMP\}\/skill-release-body\.md"/,
+  'GitHub release creation must derive the release body path from RUNNER_TEMP',
 );
+
+// Assert each arm separately. A global count is satisfied by two matches in one
+// arm and none in the other -- which would let brand-new releases, the create
+// path, ship with no notes at all.
+for (const [branch, block] of Object.entries(releaseUpsertBranches())) {
+  assert.match(
+    block,
+    /--notes-file "\$BODY_FILE"/,
+    `the release ${branch} arm must take its body from the generated file`,
+  );
+}
 
 assert.doesNotMatch(
   workflow,
