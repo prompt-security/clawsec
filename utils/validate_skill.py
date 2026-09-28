@@ -2,6 +2,9 @@
 """
 Skill Validator - Validates a skill folder against the skill.json schema
 
+These utilities are repo-scoped: the skill path must reside inside this
+repository's skills/ directory. External skill directories are not supported.
+
 Usage:
     python utils/validate_skill.py <path/to/skill-folder>
 
@@ -14,17 +17,39 @@ import sys
 from pathlib import Path
 
 
+class SkillPathError(ValueError):
+    """Raised when a skill_path resolves outside the allowed skills/ directory."""
+
+
+def _resolve_skill_path(skill_path: str) -> Path:
+    """Resolve skill_path and assert it stays within skills/.
+
+    Follows symlinks before checking containment, so symlink escapes are also caught.
+    Raises SkillPathError if the resolved path is outside the skills/ boundary.
+    """
+    base_dir = (Path(__file__).parent.parent / "skills").resolve()
+    resolved = Path(skill_path).resolve()
+    if not resolved.is_relative_to(base_dir):
+        raise SkillPathError(
+            f"skill path must be within the 'skills' directory ({base_dir}); got {resolved}"
+        )
+    return resolved
+
+
 def validate_skill(skill_path: str) -> tuple[bool, str]:
     """
     Validate a skill folder.
 
     Args:
-        skill_path: Path to the skill folder
+        skill_path: Path to the skill folder (must be inside skills/)
 
     Returns:
         Tuple of (is_valid, message)
+
+    Raises:
+        SkillPathError: if skill_path resolves outside the skills/ directory
     """
-    skill_path = Path(skill_path).resolve()
+    skill_path = _resolve_skill_path(skill_path)
 
     # Check skill folder exists
     if not skill_path.exists():
@@ -131,6 +156,13 @@ def main():
         sys.exit(1)
 
     skill_path = sys.argv[1]
+
+    try:
+        _resolve_skill_path(skill_path)
+    except SkillPathError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
     print(f"Validating skill: {skill_path}")
     print()
 
