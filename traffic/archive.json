@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-09-30T03:35:57.664Z",
+  "updated_at": "2026-10-01T03:40:26.110Z",
   "daily": {
     "views": [
       {
@@ -634,6 +634,11 @@
         "timestamp": "2026-09-28T00:00:00Z",
         "count": 36,
         "uniques": 17
+      },
+      {
+        "timestamp": "2026-09-29T00:00:00Z",
+        "count": 56,
+        "uniques": 19
       }
     ],
     "clones": [
@@ -1266,6 +1271,11 @@
         "timestamp": "2026-09-28T00:00:00Z",
         "count": 161,
         "uniques": 66
+      },
+      {
+        "timestamp": "2026-09-29T00:00:00Z",
+        "count": 139,
+        "uniques": 62
       }
     ]
   },
@@ -7505,6 +7515,62 @@
             "referrer": "prompt.security",
             "count": 10,
             "uniques": 10
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 3,
+            "uniques": 2
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "growthexe.substack.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "my.feishu.cn",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "perplexity.ai",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-10-01T03:40:26.110Z",
+        "date": "2026-10-01",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 74,
+            "uniques": 57
+          },
+          {
+            "referrer": "Google",
+            "count": 42,
+            "uniques": 33
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 9,
+            "uniques": 9
           },
           {
             "referrer": "search.brave.com",
@@ -14936,6 +15002,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-10-01T03:40:26.110Z",
+        "date": "2026-10-01",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 293,
+            "uniques": 184
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 18,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 14,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 13,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 12,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 7,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "title": "/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "count": 6,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/wiki/skill-feature-matrix.md",
+            "title": "/blob/main/wiki/skill-feature-matrix.md",
+            "count": 5,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/hermes-attestation-guardian",
+            "title": "/blob/main/skills/hermes-attestation-guardian",
+            "count": 3,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -16282,6 +16414,18 @@
       "clones_window": {
         "count": 1914,
         "uniques": 649
+      }
+    },
+    {
+      "captured_at": "2026-10-01T03:40:26.110Z",
+      "date": "2026-10-01",
+      "views_window": {
+        "count": 514,
+        "uniques": 235
+      },
+      "clones_window": {
+        "count": 1982,
+        "uniques": 654
       }
     }
   ]
