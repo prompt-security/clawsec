@@ -44,7 +44,7 @@
   "overrides": {
     "ajv": "6.14.0",
     "balanced-match": "4.0.3",
-    "brace-expansion": "5.0.9",
+    "brace-expansion": "5.0.12",
     "browserslist": "4.28.8",
     "js-yaml": "4.3.2",
     "minimatch": "10.2.5",
