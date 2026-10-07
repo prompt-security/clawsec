@@ -22,7 +22,17 @@ export type Advisory = {
   published?: string;
   updated?: string;
   affected?: string[];
+  authoritative_ghsa_affected?: string[];
+  authoritative_nvd_affected?: string[];
+  synthesized_from_ghsa?: boolean;
+  authoritative_canonical_patched?: string[];
+  authoritative_ghsa_patched?: string[];
   platforms?: string[];
+  authoritative_canonical_platforms?: string[];
+  authoritative_ghsa_platforms?: string[];
+  cwe_ids?: string[];
+  authoritative_canonical_cwe_ids?: string[];
+  authoritative_ghsa_cwe_ids?: string[];
   references?: string[];
   nvd_url?: string | null;
   github_advisory_url?: string;

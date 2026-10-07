@@ -670,9 +670,9 @@ EOF
 }
 
 test_nvidia_query_coverage() {
-  local specs keywords
+  local specs components
   specs="$(nvd_query_specs)"
-  keywords="$(nvd_summary_keywords)"
+  components="$(nvd_summary_components)"
 
   for expected in \
     'keyword|NemoClaw' \
@@ -693,7 +693,7 @@ test_nvidia_query_coverage() {
     pass "NVD queries do not use a bare OpenShell keyword"
   fi
 
-  assert_eq "$keywords" "openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell" "summary keywords include NVIDIA projects"
+  assert_eq "$components" "openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell" "summary components include NVIDIA projects"
 
   # Discovery queries no longer decide publication or platform tagging. That is
   # scripts/nvd-advisory-transform.jq, which requires an allowlisted CPE with an

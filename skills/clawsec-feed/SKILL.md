@@ -14,7 +14,7 @@ clawdis:
 
 Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence and stay informed about emerging threats.
 
-The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and GitHub Security Advisories. When a GHSA matures into a CVE, the CVE becomes canonical and the GHSA remains in `aliases`; treat either identifier as the same advisory. A stale GHSA remains enforceable: `stale` describes identifier age, not risk expiration.
+The default `feed.json` is the consolidated agent feed. It includes NVD CVEs, approved community advisories, and GitHub Security Advisories. When a GHSA receives a CVE identifier, keep the GHSA as the primary record until a non-rejected NVD-backed CVE record is present. The CVE is still an alias during that publication delay. Once NVD confirms it, the CVE becomes canonical and the GHSA remains in `aliases`; treat either identifier as the same advisory. A stale GHSA remains enforceable: `stale` describes identifier age, not risk expiration.
 
 ## Vercel Skills Installation
 

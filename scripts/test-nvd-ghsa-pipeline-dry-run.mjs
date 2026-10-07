@@ -1,16 +1,40 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { generateKeyPairSync, sign, verify } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   buildConsolidatedAdvisoryFeed,
   buildGhsaWithoutCveFeed,
   normalizeGhsaAdvisory,
 } from './ghsa-without-cve-feed.mjs';
+import { validateAdvisoryFeed } from './ci/validate_advisory_feed.mjs';
 
 const now = '2026-05-24T00:00:00Z';
+const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
+const backfillScript = await readFile(new URL('./backfill-exploitability.sh', import.meta.url), 'utf8');
+
+const backfillValidationIndex = backfillScript.indexOf(
+  'node "$PROJECT_ROOT/scripts/ci/validate_advisory_feed.mjs" "$TEMP_DIR/feed_final.json"',
+);
+const backfillReplacementIndex = backfillScript.indexOf('cp "$TEMP_DIR/feed_final.json" "$FEED_PATH"');
+const backfillSigningIndex = backfillScript.indexOf(
+  'sign_and_verify_feed_signature "$TEMP_DIR/feed_final.json" "$CANDIDATE_SIGNATURE"',
+);
+const backfillPublicationIndex = backfillScript.indexOf(
+  'publish_feed_transaction "$TEMP_DIR/feed_final.json" "$CANDIDATE_SIGNATURE"',
+);
+assert.ok(
+  backfillValidationIndex !== -1 && backfillReplacementIndex === -1,
+  'Exploitability backfill must strictly validate its complete candidate before replacing the existing feed',
+);
+assert.ok(
+  backfillValidationIndex < backfillSigningIndex && backfillSigningIndex < backfillPublicationIndex,
+  'Exploitability backfill must sign and verify validated candidate bytes before transactional publication',
+);
 
 function cveAdvisory(overrides = {}) {
   return {
@@ -25,6 +49,8 @@ function cveAdvisory(overrides = {}) {
     action: 'Update OpenClaw and verify guarded workspace execution.',
     published: '2026-05-01T00:00:00Z',
     updated: '2026-05-01T00:00:00Z',
+    authoritative_nvd_affected: ['openclaw@<2026.5.20'],
+    synthesized_from_ghsa: false,
     references: ['https://nvd.nist.gov/vuln/detail/CVE-2026-1111'],
     nvd_url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-1111',
     ...overrides,
@@ -32,13 +58,16 @@ function cveAdvisory(overrides = {}) {
 }
 
 function ghsaAdvisory(overrides = {}) {
+  const ghsaId = overrides.ghsa_id || 'GHSA-actv-1111-2222';
   return {
-    ghsa_id: 'GHSA-actv-1111-2222',
+    ghsa_id: ghsaId,
     cve_id: null,
-    html_url: 'https://github.com/openclaw/openclaw/security/advisories/GHSA-actv-1111-2222',
+    html_url: `https://github.com/openclaw/openclaw/security/advisories/${ghsaId}`,
     summary: 'OpenClaw advisory without CVE',
     description: 'OpenClaw published a public GitHub advisory before CVE assignment.',
     severity: 'high',
+    state: 'published',
+    withdrawn_at: null,
     published_at: '2026-05-20T00:00:00Z',
     updated_at: '2026-05-21T00:00:00Z',
     vulnerabilities: [
@@ -126,9 +155,58 @@ const fetchedGhsaAdvisories = [
       ghsaAdvisory({ ghsa_id: 'GHSA-actv-1111-2222' }),
       ghsaAdvisory({ ghsa_id: 'GHSA-matd-1111-2222' }),
       ghsaAdvisory({ ghsa_id: 'GHSA-cvea-1111-2222', cve_id: 'CVE-2026-2222' }),
+      ghsaAdvisory({ ghsa_id: 'GHSA-lagd-1111-2222', cve_id: 'CVE-2026-4444' }),
+      ghsaAdvisory({ ghsa_id: 'GHSA-rjct-1111-2222', cve_id: 'CVE-2026-3333' }),
     ],
   },
 ];
+
+const rejectedNvdRecords = [
+  {
+    cve: {
+      id: 'CVE-2026-3333',
+      vulnStatus: 'Rejected',
+      published: '2026-05-22T00:00:00Z',
+      descriptions: [{ lang: 'en', value: 'Rejected upstream CVE.' }],
+      references: [],
+      metrics: {},
+      configurations: [
+        {
+          nodes: [
+            {
+              cpeMatch: [
+                {
+                  vulnerable: true,
+                  criteria: 'cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:*:*:*',
+                  versionEndExcluding: '2026.5.21',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+const transformedRejectedRecords = JSON.parse(
+  execFileSync(
+    'jq',
+    ['-L', scriptsDir, 'include "nvd-advisory-transform"; [.[] | nvd_advisory]'],
+    { encoding: 'utf8', input: JSON.stringify(rejectedNvdRecords) },
+  ),
+);
+assert.deepEqual(
+  transformedRejectedRecords,
+  [],
+  'Rejected NVD records must be excluded from canonical advisory transformation',
+);
+const rejectedCveIds = JSON.parse(
+  execFileSync(
+    'jq',
+    ['-L', scriptsDir, 'include "nvd-advisory-transform"; [.[] | select(is_rejected) | .cve.id]'],
+    { encoding: 'utf8', input: JSON.stringify(rejectedNvdRecords) },
+  ),
+);
 
 const ghsaFeed = buildGhsaWithoutCveFeed({
   fetched: fetchedGhsaAdvisories,
@@ -142,7 +220,9 @@ assert.deepEqual(
   [
     ['GHSA-actv-1111-2222', 'active', null],
     ['GHSA-cvea-1111-2222', 'matured', 'CVE-2026-2222'],
+    ['GHSA-lagd-1111-2222', 'matured', 'CVE-2026-4444'],
     ['GHSA-matd-1111-2222', 'matured', 'CVE-2026-1111'],
+    ['GHSA-rjct-1111-2222', 'matured', 'CVE-2026-3333'],
   ],
   'GHSA dry run should retain active advisories and every CVE-backed advisory needed for enrichment',
 );
@@ -150,13 +230,52 @@ assert.deepEqual(
 const consolidatedFeed = buildConsolidatedAdvisoryFeed({
   canonicalFeed: nvdPollResultFeed,
   ghsaFeed,
+  rejectedCveIds,
   now,
 });
 assert.deepEqual(
   consolidatedFeed.advisories.map((entry) => entry.id),
-  ['CVE-2026-2222', 'GHSA-actv-1111-2222', 'CVE-2026-1111'],
-  'Consolidated feed should include NVD CVEs plus active GHSA-only advisories without duplicate matured GHSAs',
+  [
+    'CVE-2026-2222',
+    'GHSA-actv-1111-2222',
+    'GHSA-lagd-1111-2222',
+    'GHSA-rjct-1111-2222',
+    'CVE-2026-1111',
+  ],
+  'Consolidation must retain valid GHSAs through NVD delay or rejection without synthesizing CVE identities',
 );
+assert.equal('rejected_cve_ids' in consolidatedFeed, false, 'The signed feed must not publish a global rejection inventory');
+assert.equal(
+  consolidatedFeed.advisories.some((entry) => entry.id === 'CVE-2026-3333'),
+  false,
+  'Rejected CVEs must stay absent after GHSA consolidation',
+);
+assert.equal(
+  consolidatedFeed.advisories.some((entry) => entry.id === 'CVE-2026-4444'),
+  false,
+  'A GHSA CVE alias must not become canonical before a non-rejected NVD record is observed',
+);
+assert.ok(consolidatedFeed.advisories.some((entry) => entry.id === 'GHSA-lagd-1111-2222'));
+assert.deepEqual(
+  consolidatedFeed.advisories.find((entry) => entry.id === 'GHSA-rjct-1111-2222')?.aliases,
+  ['GHSA-rjct-1111-2222', 'CVE-2026-3333'],
+  'The retained GHSA may preserve the rejected CVE as a non-canonical alias',
+);
+const followupConsolidatedFeed = buildConsolidatedAdvisoryFeed({
+  canonicalFeed: consolidatedFeed,
+  ghsaFeed,
+  now: '2026-05-25T00:00:00Z',
+});
+assert.equal(
+  followupConsolidatedFeed.advisories.some((entry) => entry.id === 'CVE-2026-3333'),
+  false,
+  'A later GHSA-only run must not synthesize a CVE without an NVD-backed canonical record',
+);
+assert.ok(
+  followupConsolidatedFeed.advisories.some((entry) => entry.id === 'GHSA-rjct-1111-2222'),
+  'A later GHSA-only run must continue to retain the valid GHSA identity',
+);
+assert.equal(validateAdvisoryFeed(consolidatedFeed), consolidatedFeed);
 assert.equal(consolidatedFeed.advisories[1].source_feed, 'ghsa-without-cve');
 const enrichedCve = consolidatedFeed.advisories.find((entry) => entry.id === 'CVE-2026-2222');
 assert.equal(enrichedCve.ghsa_id, 'GHSA-cvea-1111-2222');

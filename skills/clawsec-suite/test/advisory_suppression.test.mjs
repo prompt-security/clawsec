@@ -172,25 +172,36 @@ async function testNewNotificationRecordsAllIdentifiers() {
 }
 
 async function testUnknownInstalledVersionIsIndeterminate() {
-  const testName = "matching: unknown installed version is surfaced as indeterminate";
+  const testName = "matching: missing, unknown, or unparseable installed version is surfaced accurately";
   try {
     const skill = { name: "helper-plus", dirName: "helper-plus", version: "unknown" };
-    const match = makeMatch("CVE-2026-25593", "helper-plus", "unknown", {
+    const unparseableMatch = makeMatch("CVE-2026-25593", "helper-plus", "dev", {
       action: "Upgrade helper-plus.",
     });
-    match.matchedAffected = ["helper-plus@<2.0.0"];
+    unparseableMatch.matchedAffected = ["helper-plus@<2.0.0"];
+    const unknownMatch = makeMatch("CVE-2026-25594", "helper-plus", "unknown");
+    unknownMatch.matchedAffected = ["helper-plus@<2.0.0"];
+    const missingMatch = makeMatch("CVE-2026-25595", "helper-plus", null);
+    missingMatch.matchedAffected = ["helper-plus@<2.0.0"];
 
     const candidateMatch = affectedSpecifierMatchesSkill("helper-plus@<2.0.0", skill);
+    const unparseableCandidateMatch = affectedSpecifierMatchesSkill(
+      "helper-plus@<2.0.0",
+      { ...skill, version: "dev" },
+    );
     const knownSafeDoesNotMatch = affectedSpecifierMatchesSkill(
       "helper-plus@<2.0.0",
       { ...skill, version: "2.0.0" },
     ) === false;
-    const alert = buildAlertMessage([match], "/tmp/skills");
+    const alert = buildAlertMessage([unparseableMatch, unknownMatch, missingMatch], "/tmp/skills");
 
     if (
       candidateMatch
+      && unparseableCandidateMatch
       && knownSafeDoesNotMatch
+      && alert.includes("INDETERMINATE: installed version unparseable")
       && alert.includes("INDETERMINATE: installed version unknown")
+      && alert.includes("INDETERMINATE: installed version missing")
       && alert.includes("Version confirmation needed")
     ) {
       pass(testName);

@@ -36,7 +36,9 @@ function stepBody(source, name) {
 
 function assertProductionOrdering(source, workflowName) {
   const setupNodeIndex = stepIndex(source, "Setup Node.js");
+  const validateFeedIndex = stepIndex(source, "Validate advisory feed before signing");
   const signFeedIndex = stepIndex(source, "Sign advisory feed and verify");
+  const validateGhsaIndex = stepIndex(source, "Validate provisional GHSA feed before signing");
   const signGhsaIndex = stepIndex(source, "Sign provisional GHSA feed and verify");
   const generateChecksumsIndex = stepIndex(source, "Generate advisory checksums manifest");
   const signChecksumsIndex = stepIndex(source, "Sign checksums and verify");
@@ -45,6 +47,8 @@ function assertProductionOrdering(source, workflowName) {
   const smokeIndex = stepIndex(source, "Smoke-test built advisory endpoints");
 
   assert.ok(setupNodeIndex < generateChecksumsIndex, `${workflowName} must pin Node before running the artifact helper`);
+  assert.ok(validateFeedIndex < signFeedIndex, `${workflowName} must validate feed.json before signing it`);
+  assert.ok(validateGhsaIndex < signGhsaIndex, `${workflowName} must validate the provisional GHSA feed before signing it`);
   assert.ok(signFeedIndex < generateChecksumsIndex, `${workflowName} must checksum feed.json.sig`);
   assert.ok(signGhsaIndex < generateChecksumsIndex, `${workflowName} must checksum the provisional feed signature`);
   assert.ok(generateChecksumsIndex < signChecksumsIndex, `${workflowName} must sign the refreshed checksum manifest`);
@@ -52,6 +56,43 @@ function assertProductionOrdering(source, workflowName) {
   assert.ok(aliasesIndex < buildIndex, `${workflowName} must publish aliases before Vite copies public assets`);
   assert.ok(buildIndex < smokeIndex, `${workflowName} must smoke-test endpoints after the Vite build`);
 
+  const validateFeedBody = stepBody(source, "Validate advisory feed before signing");
+  const validateGhsaBody = stepBody(source, "Validate provisional GHSA feed before signing");
+  if (workflowName === "Pages Verify") {
+    const detectChangesIndex = stepIndex(source, "Detect advisory feed changes");
+    assert.ok(detectChangesIndex < validateFeedIndex, "Pages Verify must detect exact feed-byte changes before validation");
+    assert.match(
+      source,
+      /name: Checkout[\s\S]*fetch-depth: 0[\s\S]*name: Detect advisory feed changes/,
+      "Pages Verify must fetch enough history to compare the PR feed bytes",
+    );
+    assert.match(
+      stepBody(source, "Detect advisory feed changes"),
+      /git diff --quiet "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" -- advisories\/feed\.json[\s\S]*git diff --quiet "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" -- advisories\/ghsa-without-cve\.json/,
+      "Pages Verify must compare both advisory source artifacts against the PR base",
+    );
+    assert.match(
+      validateFeedBody,
+      /FEED_CHANGED: \$\{\{ steps\.advisory_changes\.outputs\.canonical_changed \}\}[\s\S]*if \[ "\$FEED_CHANGED" = "true" \]; then[\s\S]*validate_advisory_feed\.mjs public\/advisories\/feed\.json[\s\S]*strict validation is deferred for the legacy baseline/,
+      "Pages Verify must validate changed canonical bytes while allowing the unchanged legacy baseline during rollout",
+    );
+    assert.match(
+      validateGhsaBody,
+      /FEED_CHANGED: \$\{\{ steps\.advisory_changes\.outputs\.ghsa_changed \}\}[\s\S]*if \[ "\$FEED_CHANGED" = "true" \]; then[\s\S]*validate_advisory_feed\.mjs public\/advisories\/ghsa-without-cve\.json/,
+      "Pages Verify must validate changed provisional GHSA bytes",
+    );
+  } else {
+    assert.match(
+      validateFeedBody,
+      /node scripts\/ci\/validate_advisory_feed\.mjs public\/advisories\/feed\.json/,
+      `${workflowName} must run strict advisory validation on the canonical feed`,
+    );
+    assert.match(
+      validateGhsaBody,
+      /if: hashFiles\('public\/advisories\/ghsa-without-cve\.json'\) != ''[\s\S]*node scripts\/ci\/validate_advisory_feed\.mjs public\/advisories\/ghsa-without-cve\.json/,
+      `${workflowName} must run strict advisory validation on the provisional GHSA feed when present`,
+    );
+  }
   assert.match(
     stepBody(source, "Generate advisory checksums manifest"),
     /node scripts\/ci\/advisory_pages_artifacts\.mjs generate/,

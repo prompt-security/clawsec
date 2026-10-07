@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { nextSimulatedReleaseVersion } from "./semver_increment.mjs";
 import { isTestReleasePath } from "./release_path_policy.mjs";
+import { validateAdvisoryFeed } from "./validate_advisory_feed.mjs";
 
 const TRUST_ARTIFACTS = [
   "skill-card.md",
@@ -31,6 +32,7 @@ function usage() {
     "  --repository <owner/repo>       Source repository used in release metadata",
     "  --source-ref <ref>              Source ref used in npx skills examples",
     "  --skillspector-bin <path>       SkillSpector executable to run",
+    "  --validate-advisory-feed        Strictly validate an embedded feed before test signing",
   ].join("\n");
 }
 
@@ -40,6 +42,7 @@ function parseArgs(argv) {
     repository: "prompt-security/clawsec",
     sourceRef: "main",
     skillspectorBin: "skillspector",
+    validateAdvisoryFeed: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -50,6 +53,8 @@ function parseArgs(argv) {
       options.sourceRef = argv[++i];
     } else if (token === "--skillspector-bin") {
       options.skillspectorBin = argv[++i];
+    } else if (token === "--validate-advisory-feed") {
+      options.validateAdvisoryFeed = true;
     } else if (token === "--help" || token === "-h") {
       console.log(usage());
       process.exit(0);
@@ -220,11 +225,20 @@ async function createSigningKeyPair(tempRoot) {
   return { privateKeyPath, publicKeyPath };
 }
 
-async function signAdvisoryArtifacts(skillDir, tempRoot, signingKeys) {
+async function signAdvisoryArtifacts(skillDir, tempRoot, signingKeys, { validateFeed = false } = {}) {
   const advisoryDir = path.join(skillDir, "advisories");
   const feedPath = path.join(advisoryDir, "feed.json");
   if (!existsSync(feedPath)) {
     return;
+  }
+
+  if (validateFeed) {
+    validateAdvisoryFeed(JSON.parse(await readFile(feedPath, "utf8")));
+    console.log(`Strict advisory feed validation passed: ${feedPath}`);
+  } else {
+    console.log(
+      `Advisory feed validation deferred for unchanged legacy bytes in PR simulation: ${feedPath}`,
+    );
   }
 
   const { privateKeyPath, publicKeyPath } = signingKeys;
@@ -380,7 +394,9 @@ async function main() {
       replaceSkillMarkdownVersion(await readFile(skillMdPath, "utf8"), simulatedVersion),
     );
     await addSimulatedChangelogEntry(tempSkillDir, simulatedVersion);
-    await signAdvisoryArtifacts(tempSkillDir, tempRoot, signingKeys);
+    await signAdvisoryArtifacts(tempSkillDir, tempRoot, signingKeys, {
+      validateFeed: args.validateAdvisoryFeed,
+    });
 
     if (!skill.sbom || !Array.isArray(skill.sbom.files)) {
       throw new Error(`skill.json missing required release field: sbom.files`);

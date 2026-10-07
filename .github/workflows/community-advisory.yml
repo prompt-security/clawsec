@@ -35,7 +35,6 @@ jobs:
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_CREATED_AT: ${{ github.event.issue.created_at }}
         run: |
           # Generate advisory ID: CLAW-YYYY-{issue_number padded to 4 digits}
@@ -55,75 +54,28 @@ jobs:
           fi
           echo "already_exists=false" >> $GITHUB_OUTPUT
 
-          # Parse opener type (human vs agent)
-          if echo "$ISSUE_BODY" | grep -q '\[x\] Agent'; then
-            OPENER_TYPE="agent"
-          else
-            OPENER_TYPE="human"
-          fi
+          # Parse all security-relevant form fields from exact, sanitized
+          # sections. Invalid, missing, duplicated, or multiply selected fields
+          # fail closed before an advisory can be generated.
+          FORM_JSON=$(node scripts/ci/community_advisory_scope.mjs)
+          OPENER_TYPE=$(jq -r '.openerType' <<< "$FORM_JSON")
+          REPORT_TYPE=$(jq -r '.reportType' <<< "$FORM_JSON")
+          SEVERITY=$(jq -r '.severity' <<< "$FORM_JSON")
+          TITLE=$(jq -r '.title' <<< "$FORM_JSON")
+          DESCRIPTION=$(jq -r '.description' <<< "$FORM_JSON")
+          ACTION=$(jq -r '.action' <<< "$FORM_JSON")
+          REPORTER_NAME=$(jq -r '.reporterName' <<< "$FORM_JSON")
+          AFFECTED=$(jq -c '.affected' <<< "$FORM_JSON")
+          PLATFORMS=$(jq -c '.platforms' <<< "$FORM_JSON")
+
           echo "Opener type: $OPENER_TYPE"
-
-          # Parse report type
-          if echo "$ISSUE_BODY" | grep -q '\[x\] Malicious Prompt'; then
-            REPORT_TYPE="prompt_injection"
-          elif echo "$ISSUE_BODY" | grep -q '\[x\] Vulnerable Skill'; then
-            REPORT_TYPE="vulnerable_skill"
-          elif echo "$ISSUE_BODY" | grep -q '\[x\] Tampering Attempt'; then
-            REPORT_TYPE="tampering_attempt"
-          else
-            REPORT_TYPE="unknown"
-          fi
           echo "Report type: $REPORT_TYPE"
-
-          # Parse severity
-          if echo "$ISSUE_BODY" | grep -q '\[x\] Critical'; then
-            SEVERITY="critical"
-          elif echo "$ISSUE_BODY" | grep -q '\[x\] High'; then
-            SEVERITY="high"
-          elif echo "$ISSUE_BODY" | grep -q '\[x\] Medium'; then
-            SEVERITY="medium"
-          elif echo "$ISSUE_BODY" | grep -q '\[x\] Low'; then
-            SEVERITY="low"
-          else
-            SEVERITY="medium"
-          fi
           echo "Severity: $SEVERITY"
-
-          # Parse title (between ## Title and ## Description)
-          TITLE=$(echo "$ISSUE_BODY" | sed -n '/^## Title/,/^## Description/p' | grep -v '^## ' | grep -v '^<!--' | grep -v '^\s*$' | head -1 | xargs)
-          if [ -z "$TITLE" ]; then
-            TITLE="$ISSUE_TITLE"
-          fi
           echo "Title: $TITLE"
-
-          # Parse description (between ## Description and ---)
-          DESCRIPTION=$(echo "$ISSUE_BODY" | sed -n '/^## Description/,/^---/p' | grep -v '^## Description' | grep -v '^---' | grep -v '^<!--' | sed '/^\s*$/d' | tr '\n' ' ' | xargs)
-          if [ -z "$DESCRIPTION" ]; then
-            DESCRIPTION="See issue for details."
-          fi
           echo "Description: ${DESCRIPTION:0:100}..."
-
-          # Parse and validate affected product, version scope, and protected
-          # component identities. Unscoped reports stay in issue triage instead
-          # of being published as wildcard advisories.
-          SCOPE_JSON=$(node scripts/ci/community_advisory_scope.mjs)
-          AFFECTED=$(jq -c '.affected' <<< "$SCOPE_JSON")
-          PLATFORMS=$(jq -c '.platforms' <<< "$SCOPE_JSON")
           echo "Affected: $AFFECTED"
           echo "Platforms: $PLATFORMS"
-
-          # Parse recommended action
-          ACTION=$(echo "$ISSUE_BODY" | sed -n '/^## Recommended Action/,/^---/p' | grep -v '^## Recommended Action' | grep -v '^---' | grep -v '^<!--' | sed '/^\s*$/d' | tr '\n' ' ' | xargs)
-          if [ -z "$ACTION" ]; then
-            ACTION="Review the advisory details and take appropriate action."
-          fi
           echo "Action: ${ACTION:0:100}..."
-
-          # Parse reporter name
-          REPORTER_NAME=$(echo "$ISSUE_BODY" | grep -A1 '\*\*Agent/User Name:\*\*' | tail -1 | sed 's/\*\*Contact:\*\*.*//' | xargs)
-          if [ -z "$REPORTER_NAME" ]; then
-            REPORTER_NAME=$(echo "$ISSUE_BODY" | sed -n 's/.*\*\*Agent\/User Name:\*\*\s*\(.*\)/\1/p' | xargs)
-          fi
           echo "Reporter: $REPORTER_NAME"
 
           # Get current timestamp
@@ -154,6 +106,7 @@ jobs:
               platforms: $platforms,
               action: $action,
               published: $published,
+              updated: $published,
               references: [],
               source: $source,
               github_issue_url: $issue_url,

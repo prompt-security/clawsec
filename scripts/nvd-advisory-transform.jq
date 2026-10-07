@@ -19,6 +19,21 @@ def get_cvss_score:
   .cve.metrics.cvssMetricV2[0]?.cvssData.baseScore //
   null;
 
+def get_cvss_vector:
+  .cve.metrics.cvssMetricV40[0]?.cvssData.vectorString //
+  .cve.metrics.cvssMetricV31[0]?.cvssData.vectorString //
+  .cve.metrics.cvssMetricV30[0]?.cvssData.vectorString //
+  .cve.metrics.cvssMetricV2[0]?.cvssData.vectorString //
+  .cve.metrics.cvssMetricV2[0]?.vectorString //
+  null;
+
+def nvd_last_modified:
+  .cve.lastModified as $updated
+  | if (($updated | type) == "string") and (($updated | length) > 0)
+    then $updated
+    else error("NVD record " + (.cve.id // "unknown") + " is missing a valid lastModified timestamp")
+    end;
+
 def nvd_category_raw:
   (
     [.cve.weaknesses[]?.description[]? | select(.lang == "en") | .value | strings | select(length > 0)]
@@ -109,18 +124,47 @@ def supported_component_for_cpe($criteria):
   cpe_fields($criteria) as $cpe
   | if $cpe == null or $cpe.part != "a" then null
     elif $cpe.vendor == "openclaw" and $cpe.product == "openclaw" then "openclaw"
-    elif (($cpe.vendor == "nanoco" or $cpe.vendor == "qwibitai") and $cpe.product == "nanoclaw") then "nanoclaw"
-    elif $cpe.vendor == "software-metadata.pub" and $cpe.product == "hermes" then "hermes"
-    elif $cpe.vendor == "nousresearch" and $cpe.product == "hermes_agent" then "hermes"
-    elif (($cpe.vendor == "sipeed" or $cpe.vendor == "picoclaw") and $cpe.product == "picoclaw") then "picoclaw"
+    elif $cpe.vendor == "nanoco" and $cpe.product == "nanoclaw" then "nanoclaw"
+    # Hermes remains discoverable by keyword, but is not NVD-publishable until
+    # NVD defines an authoritative product CPE with machine-readable scope.
+    elif $cpe.vendor == "sipeed" and $cpe.product == "picoclaw" then "picoclaw"
     elif $cpe.vendor == "nvidia" and $cpe.product == "nemoclaw" then "nemoclaw"
     elif $cpe.vendor == "nvidia" and $cpe.product == "openshell" then "openshell"
     else null
     end;
 
+# The feed can represent a product and version range, but it cannot preserve
+# Boolean environment constraints from advanced NVD applicability trees. Keep
+# selectors only from configuration trees whose declared logic is simple OR.
+def uses_only_simple_or_logic:
+  (
+    [
+      ..
+      | objects
+      | select(
+          (
+            has("negate")
+            and (
+              ((.negate | type) != "boolean")
+              or (.negate == true)
+            )
+          )
+          or (
+            has("operator")
+            and (
+              ((.operator | type) != "string")
+              or ((.operator | ascii_upcase) != "OR")
+            )
+          )
+        )
+    ]
+    | length
+  ) == 0;
+
 def vulnerable_application_cpe_matches:
   [
     .cve.configurations[]?
+    | select(uses_only_simple_or_logic)
     | ..
     | objects
     | select(.vulnerable == true)
@@ -176,8 +220,11 @@ def supported_scoped_targets:
     | sort_by(.component, .selector)
   );
 
+def is_rejected:
+  ((.cve.vulnStatus // "") | ascii_downcase) == "rejected";
+
 def has_supported_scoped_target:
-  (supported_scoped_targets | length) > 0;
+  (is_rejected | not) and ((supported_scoped_targets | length) > 0);
 
 def preferred_description:
   (
@@ -188,20 +235,28 @@ def preferred_description:
 
 def nvd_advisory:
   supported_scoped_targets as $targets
-  | select(($targets | length) > 0)
+  | select((is_rejected | not) and (($targets | length) > 0))
+  | nvd_category_raw as $nvd_category
   | {
       id: .cve.id,
       severity: (get_cvss_score | map_severity),
       type: nvd_category_name,
-      nvd_category_id: nvd_category_raw,
+      nvd_category_id: $nvd_category,
+      cwe_ids: (if $nvd_category == null then [] else [$nvd_category] end),
+      authoritative_canonical_cwe_ids: (if $nvd_category == null then [] else [$nvd_category] end),
       title: (preferred_description | .[0:100] + (if length > 100 then "..." else "" end)),
       description: preferred_description,
       affected: ($targets | map(.selector)),
+      authoritative_nvd_affected: ($targets | map(.selector)),
+      synthesized_from_ghsa: false,
       platforms: ($targets | map(.component) | unique),
+      authoritative_canonical_platforms: ($targets | map(.component) | unique),
       action: "Review and update affected components. See NVD for remediation details.",
       published: .cve.published,
+      updated: nvd_last_modified,
       references: ([.cve.references[]?.url // empty] | unique),
       cvss_score: get_cvss_score,
+      cvss_vector: get_cvss_vector,
       nvd_url: ("https://nvd.nist.gov/vuln/detail/" + .cve.id),
       exploitability_score: null,
       exploitability_rationale: null
@@ -214,11 +269,19 @@ def nvd_advisory_current_state:
       severity,
       type,
       nvd_category_id,
+      cwe_ids,
+      authoritative_canonical_cwe_ids,
       cvss_score,
+      cvss_vector,
       description,
       title,
+      published,
+      updated,
       affected,
+      authoritative_nvd_affected,
+      synthesized_from_ghsa,
       platforms,
+      authoritative_canonical_platforms,
       references,
       exploitability_score,
       exploitability_rationale
