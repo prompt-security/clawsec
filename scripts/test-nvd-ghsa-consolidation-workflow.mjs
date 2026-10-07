@@ -26,13 +26,28 @@ assert.match(
 );
 assert.match(
   workflow,
-  /node scripts\/ghsa-without-cve-feed\.mjs[\s\S]*--output "\$GHSA_FEED_PATH"[\s\S]*--consolidated-feed "\$FEED_PATH"[\s\S]*--existing-feed "\$GHSA_FEED_PATH"[\s\S]*--nvd-feed "\$FEED_PATH"/,
+  /node scripts\/ghsa-without-cve-feed\.mjs[\s\S]*--output "\$GHSA_FEED_PATH"[\s\S]*--consolidated-feed "\$FEED_PATH"[\s\S]*--existing-feed "\$GHSA_FEED_PATH"[\s\S]*--nvd-feed "\$FEED_PATH"[\s\S]*--rejected-cve-ids "tmp\/rejected_cve_ids\.json"/,
   'NVD workflow must merge GHSA advisories into the signed agent feed',
+);
+assert.match(
+  workflow,
+  /ALLOW_LARGE_REBUILD_DROP: \$\{\{ inputs\.allow_large_rebuild_drop \|\| false \}\}[\s\S]*GHSA_DROP_ARGS=\(\)[\s\S]*GHSA_DROP_ARGS\+=\(--allow-large-drop\)[\s\S]*"\$\{GHSA_DROP_ARGS\[@\]\}"/,
+  'NVD workflow must pass the reviewed NVD drop override through GHSA consolidation while scheduled runs default false',
+);
+assert.match(
+  workflow,
+  /select\(is_rejected\)[\s\S]*fetched_rejected_cve_ids\.json[\s\S]*existing_cve_ids[\s\S]*index\(\$id\)[\s\S]*rejected_cve_ids\.json/,
+  'NVD workflow must carry only rejected existing canonical CVEs into GHSA consolidation',
 );
 assert.match(
   workflow,
   /id: feed_changes[\s\S]*ghsa_changed=\$GHSA_CHANGED[\s\S]*agent_changed=\$AGENT_CHANGED[\s\S]*changed=true/,
   'NVD workflow must detect GHSA and consolidated agent feed changes separately',
+);
+assert.match(
+  workflow,
+  /name: Validate GHSA source feed before signing\n\s+if: steps\.feed_changes\.outputs\.ghsa_changed == 'true'\n\s+run: node scripts\/ci\/validate_advisory_feed\.mjs "\$GHSA_FEED_PATH"[\s\S]*name: Sign GHSA feed and verify/,
+  'NVD workflow must validate the exact provisional GHSA feed bytes before signing them',
 );
 assert.match(
   workflow,
@@ -112,8 +127,8 @@ assert.match(
 );
 assert.match(
   workflow,
-  /TITLE="chore: update NVD\/GHSA advisories - \$\{STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT\} NVD new, \$\{STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT\} NVD updated, \$\{STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT\} GHSA active added"/,
-  'Generated PR titles must include net-new NVD, updated NVD, and GHSA-only addition counts',
+  /TITLE="chore: update NVD\/GHSA advisories - \$\{STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT\} NVD new, \$\{STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT\} NVD updated, \$\{STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT\} NVD retracted, \$\{STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT\} GHSA active added"/,
+  'Generated PR titles must include net-new, updated, and retracted NVD counts plus GHSA-only additions',
 );
 assert.match(
   workflow,
@@ -137,7 +152,7 @@ assert.match(
 );
 assert.match(
   ciWorkflow,
-  /name: NVD Product Scoping Tests[\s\S]*node scripts\/test-nvd-product-scoping\.mjs/,
+  /name: NVD Product Scoping Tests[\s\S]*node scripts\/nvd-product-scoping\.test\.mjs/,
   'CI must run strict NVD product/version scoping tests before merge',
 );
 assert.match(
@@ -152,7 +167,17 @@ assert.match(
 );
 assert.match(
   workflow,
-  /name: Set safe NVD overlap window[\s\S]*120 days ago/,
+  /allow_large_rebuild_drop:[\s\S]*Full rebuild identity safety check:[^\n]+25%[\s\S]*Refusing full rebuild:[^\n]+allow_large_rebuild_drop=true/,
+  'A material full-rebuild identity deletion must require explicit operator confirmation',
+);
+assert.match(
+  workflow,
+  /retracted_advisory_ids\.json[\s\S]*Retracted NVD advisories/,
+  'Incremental generation must report and remove CVEs that lose publishable scope',
+);
+assert.match(
+  workflow,
+  /name: Set safe NVD overlap window[\s\S]*119 days ago/,
   'Incremental polling must use a safe NVD overlap window instead of the consolidated feed timestamp',
 );
 assert.doesNotMatch(
@@ -162,8 +187,13 @@ assert.doesNotMatch(
 );
 assert.match(
   workflow,
-  /Incremental mode: paginating the rolling NVD modification window/,
-  'Incremental NVD fetches must paginate',
+  /Incremental mode: paginating the broad rolling NVD modification inventory/,
+  'Incremental NVD fetches must paginate an unfiltered modified-CVE inventory',
+);
+assert.match(
+  workflow,
+  /Refusing incremental update:[^\n]+review threshold:[^\n]+25%[^\n]+allow_large_rebuild_drop=true/,
+  'Incremental mass retractions must require explicit operator confirmation',
 );
 assert.match(
   workflow,
@@ -174,6 +204,11 @@ assert.match(
   workflow,
   /NVD totalResults changed during pagination/,
   'NVD pagination must verify advertised result counts remain stable',
+);
+assert.match(
+  workflow,
+  /NVD returned duplicate CVE IDs while paginating/,
+  'NVD pagination must reject duplicate rows that could hide a missing CVE',
 );
 assert.match(
   codeqlWorkflow,

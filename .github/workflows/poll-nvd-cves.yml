@@ -11,6 +11,11 @@ on:
         required: false
         default: 'false'
         type: boolean
+      allow_large_rebuild_drop:
+        description: 'Allow a reviewed material full-rebuild drop or incremental retraction set'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: read
@@ -54,7 +59,9 @@ jobs:
           # GHSA-only changes, so it is not a valid NVD cursor. Re-read the
           # maximum NVD modification window on every incremental run. NVD
           # records are deduplicated by CVE ID later in the job.
-          LAST_UPDATED=$(date -u -d '120 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-120d +%Y-%m-%dT%H:%M:%S.000Z)
+          # Stay below NVD's 120-day maximum even though this timestamp and the
+          # end timestamp are captured in separate workflow steps.
+          LAST_UPDATED=$(date -u -d '119 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-119d +%Y-%m-%dT%H:%M:%S.000Z)
           echo "last_date=$LAST_UPDATED" >> "$GITHUB_OUTPUT"
           echo "Using rolling NVD overlap start: $LAST_UPDATED"
 
@@ -92,7 +99,7 @@ jobs:
           source scripts/feed-utils.sh
           mkdir -p tmp
           FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
-          NVD_QUERY_SPECS="$(nvd_query_specs)"
+          NVD_QUERY_SPECS="$(nvd_query_specs_for_scan "$FORCE_FULL_SCAN")"
           
           START_DATE="${STEPS_DATES_OUTPUTS_START_DATE}"
           END_DATE="${STEPS_DATES_OUTPUTS_END_DATE}"
@@ -121,7 +128,7 @@ jobs:
             if [ "$FORCE_FULL_SCAN" = "true" ]; then
               echo "Full scan mode enabled: paginating complete NVD history for '$QUERY_KIND:$QUERY_VALUE'"
             else
-              echo "Incremental mode: paginating the rolling NVD modification window for '$QUERY_KIND:$QUERY_VALUE'"
+              echo "Incremental mode: paginating the broad rolling NVD modification inventory"
             fi
 
             while true; do
@@ -190,7 +197,12 @@ jobs:
               mv "tmp/nvd_${QUERY_SLUG}_merged.json" "tmp/nvd_${QUERY_SLUG}.json"
 
               MERGED_COUNT=$(jq '.vulnerabilities | length' "tmp/nvd_${QUERY_SLUG}.json")
+              UNIQUE_MERGED_COUNT=$(jq '[.vulnerabilities[].cve.id] | unique | length' "tmp/nvd_${QUERY_SLUG}.json")
               echo "Fetched $PAGE_COUNT results at startIndex=$START_INDEX ($MERGED_COUNT/$EXPECTED_TOTAL complete)"
+              if [ "$UNIQUE_MERGED_COUNT" -ne "$MERGED_COUNT" ]; then
+                echo "::error::NVD returned duplicate CVE IDs while paginating '$QUERY_KIND:$QUERY_VALUE'"
+                break
+              fi
               if [ "$MERGED_COUNT" -eq "$EXPECTED_TOTAL" ]; then
                 keyword_ok=true
                 break
@@ -225,11 +237,13 @@ jobs:
       - name: Merge and filter CVEs
         id: process
         run: |
+          set -euo pipefail
           source scripts/feed-utils.sh
-          NVD_QUERY_SPECS="$(nvd_query_specs)"
-          # Export concise project keyword groups for PR body + workflow summary steps
-          KEYWORDS="$(nvd_summary_keywords)"
-          echo "KEYWORDS=$KEYWORDS" >> "$GITHUB_ENV"
+          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
+          NVD_QUERY_SPECS="$(nvd_query_specs_for_scan "$FORCE_FULL_SCAN")"
+          # Export the protected component set for PR body + workflow summary steps.
+          PROTECTED_COMPONENTS="$(nvd_summary_components)"
+          echo "PROTECTED_COMPONENTS=$PROTECTED_COMPONENTS" >> "$GITHUB_ENV"
 
           # Combine all fetched CVEs
           echo '{"vulnerabilities":[]}' > tmp/combined.json
@@ -242,7 +256,7 @@ jobs:
               # Check if file has vulnerabilities array
               if jq -e '.vulnerabilities' "$FILE" > /dev/null 2>&1; then
                 COUNT=$(jq '.vulnerabilities | length' "$FILE")
-                echo "Found $COUNT CVEs for keyword search"
+                echo "Found $COUNT CVEs for NVD query '$QUERY_KIND:$QUERY_VALUE'"
                 
                 # Merge into combined
                 jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
@@ -252,10 +266,23 @@ jobs:
             fi
           done <<< "$NVD_QUERY_SPECS"
           
-          # Deduplicate by CVE ID
+          # Exact duplicates are expected across overlapping discovery queries.
+          # Different snapshots for one ID mean NVD changed mid-scan; fail rather
+          # than choosing an arbitrary stale or pre-rejection record.
+          nvd_assert_no_conflicting_duplicates tmp/combined.json
+
+          # Deduplicate identical CVE payloads by ID.
           jq '.vulnerabilities | unique_by(.cve.id)' tmp/combined.json > tmp/unique_cves.json
           TOTAL=$(jq 'length' tmp/unique_cves.json)
           echo "Total unique CVEs from NVD: $TOTAL"
+
+          # Rejected identifiers must survive the transform boundary long enough
+          # to remove any existing canonical CVE. A provisional GHSA remains
+          # publishable under its own identity.
+          jq -L scripts '
+            include "nvd-advisory-transform";
+            [.[] | select(is_rejected) | .cve.id] | unique | sort
+          ' tmp/unique_cves.json > tmp/fetched_rejected_cve_ids.json
           
           # Discovery queries are broad. Publication requires an allowlisted
           # product CPE and an explicit machine-readable affected version scope.
@@ -280,14 +307,42 @@ jobs:
       - name: Get existing advisories
         id: existing
         run: |
+          set -euo pipefail
+          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
           if [ -f "$FEED_PATH" ]; then
+            if ! jq -e 'type == "object" and (.advisories | type == "array" and length > 0)' "$FEED_PATH" >/dev/null; then
+              echo "::error::Existing advisory feed is malformed or empty: $FEED_PATH"
+              exit 1
+            fi
             jq -r '.advisories[]?.id // empty' "$FEED_PATH" | sort -u > tmp/existing_ids.txt
             # Also extract full existing advisories for update comparison
             jq '.advisories // []' "$FEED_PATH" > tmp/existing_advisories.json
           else
+            if [ "$FORCE_FULL_SCAN" != "true" ]; then
+              echo "::error::Canonical advisory feed is missing. Incremental generation cannot safely reconstruct history; rerun with force_full_scan=true only for an intentional bootstrap."
+              exit 1
+            fi
+            echo "Explicit full-scan bootstrap: no existing canonical feed found."
             touch tmp/existing_ids.txt
             echo '[]' > tmp/existing_advisories.json
           fi
+
+          # Only existing canonical CVEs need explicit rejection state. A GHSA
+          # with no NVD-backed canonical record remains under its GHSA identity,
+          # so the signed feed never accumulates a global rejection inventory.
+          jq -n \
+            --slurpfile existing tmp/existing_advisories.json \
+            --slurpfile rejected tmp/fetched_rejected_cve_ids.json '
+            ($existing[0]
+              | map(select((.id // "") | startswith("CVE-")))
+              | map(.id)
+              | unique
+            ) as $existing_cve_ids |
+            [
+              $rejected[0][] |
+              select(. as $id | ($existing_cve_ids | index($id)) != null)
+            ] | unique | sort
+          ' > tmp/rejected_cve_ids.json
 
           EXISTING_COUNT=$(wc -l < tmp/existing_ids.txt | tr -d ' ')
           echo "Existing advisories: $EXISTING_COUNT"
@@ -296,12 +351,18 @@ jobs:
       - name: Check for updates to existing advisories
         id: updates
         run: |
+          set -euo pipefail
+          source scripts/feed-utils.sh
+
           if [ "${{ inputs.force_full_scan }}" = "true" ]; then
             echo "Full scan mode enabled: skipping delta update detection."
             echo '[]' > tmp/updated_advisories.json
+            echo '[]' > tmp/retracted_advisory_ids.json
             echo "Advisories to update: 0"
             echo "update_count=0" >> $GITHUB_OUTPUT
             echo "nvd_updated_count=0" >> $GITHUB_OUTPUT
+            echo "retracted_count=0" >> $GITHUB_OUTPUT
+            echo "nvd_retracted_count=0" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -329,8 +390,13 @@ jobs:
                    ($existing_entry.type != $nvd_entry.type) or
                    ($existing_entry.nvd_category_id != $nvd_entry.nvd_category_id) or
                    ($existing_entry.cvss_score != $nvd_entry.cvss_score) or
-                   ($existing_entry.affected != $nvd_entry.affected) or
-                   ($existing_entry.platforms != $nvd_entry.platforms) or
+                   ($existing_entry.cvss_vector != $nvd_entry.cvss_vector) or
+                   ($existing_entry.published != $nvd_entry.published) or
+                   ($existing_entry.updated != $nvd_entry.updated) or
+                   ($existing_entry.authoritative_nvd_affected != $nvd_entry.authoritative_nvd_affected) or
+                   ($existing_entry.synthesized_from_ghsa != $nvd_entry.synthesized_from_ghsa) or
+                   ($existing_entry.authoritative_canonical_platforms != $nvd_entry.authoritative_canonical_platforms) or
+                   ($existing_entry.authoritative_canonical_cwe_ids != $nvd_entry.authoritative_canonical_cwe_ids) or
                    ($existing_entry.description != $nvd_entry.description) or
                    ($existing_entry.title != $nvd_entry.title) or
                    ($existing_entry.references != $nvd_entry.references) then
@@ -342,8 +408,13 @@ jobs:
                       + (if $existing_entry.type != $nvd_entry.type then ["type: \($existing_entry.type // "null") → \($nvd_entry.type // "null")"] else [] end)
                       + (if $existing_entry.nvd_category_id != $nvd_entry.nvd_category_id then ["nvd_category_id: \($existing_entry.nvd_category_id // "null") → \($nvd_entry.nvd_category_id // "null")"] else [] end)
                       + (if $existing_entry.cvss_score != $nvd_entry.cvss_score then ["cvss_score: \($existing_entry.cvss_score // "null") → \($nvd_entry.cvss_score // "null")"] else [] end)
-                      + (if $existing_entry.affected != $nvd_entry.affected then ["affected targets updated"] else [] end)
-                      + (if $existing_entry.platforms != $nvd_entry.platforms then ["platforms updated"] else [] end)
+                      + (if $existing_entry.cvss_vector != $nvd_entry.cvss_vector then ["CVSS vector updated"] else [] end)
+                      + (if $existing_entry.published != $nvd_entry.published then ["NVD publication timestamp updated"] else [] end)
+                      + (if $existing_entry.updated != $nvd_entry.updated then ["NVD last-modified timestamp updated"] else [] end)
+                      + (if $existing_entry.authoritative_nvd_affected != $nvd_entry.authoritative_nvd_affected then ["NVD affected targets updated"] else [] end)
+                      + (if $existing_entry.synthesized_from_ghsa != $nvd_entry.synthesized_from_ghsa then ["NVD scope provenance established"] else [] end)
+                      + (if $existing_entry.authoritative_canonical_platforms != $nvd_entry.authoritative_canonical_platforms then ["NVD platforms updated"] else [] end)
+                      + (if $existing_entry.authoritative_canonical_cwe_ids != $nvd_entry.authoritative_canonical_cwe_ids then ["NVD CWE identifiers updated"] else [] end)
                       + (if $existing_entry.description != $nvd_entry.description then ["description updated"] else [] end)
                       + (if $existing_entry.title != $nvd_entry.title then ["title updated"] else [] end)
                       + (if $existing_entry.references != $nvd_entry.references then ["references updated"] else [] end)
@@ -353,8 +424,16 @@ jobs:
                       type: $nvd_entry.type,
                       nvd_category_id: $nvd_entry.nvd_category_id,
                       cvss_score: $nvd_entry.cvss_score,
+                      cvss_vector: $nvd_entry.cvss_vector,
+                      published: $nvd_entry.published,
+                      updated: $nvd_entry.updated,
                       affected: $nvd_entry.affected,
+                      authoritative_nvd_affected: $nvd_entry.authoritative_nvd_affected,
+                      synthesized_from_ghsa: $nvd_entry.synthesized_from_ghsa,
                       platforms: $nvd_entry.platforms,
+                      authoritative_canonical_platforms: $nvd_entry.authoritative_canonical_platforms,
+                      cwe_ids: $nvd_entry.cwe_ids,
+                      authoritative_canonical_cwe_ids: $nvd_entry.authoritative_canonical_cwe_ids,
                       description: $nvd_entry.description,
                       title: $nvd_entry.title,
                       references: $nvd_entry.references
@@ -369,6 +448,26 @@ jobs:
             ]
           ' > tmp/updated_advisories.json
 
+          # If NVD returned an existing CVE in the overlap window but its
+          # current record no longer has an allowlisted product+version scope,
+          # stop publishing that stale record. GHSA consolidation may restore
+          # it later in the job when authoritative GHSA scope still exists.
+          jq -n \
+            --slurpfile existing tmp/existing_advisories.json \
+            --slurpfile fetched tmp/unique_cves.json \
+            --slurpfile scoped tmp/filtered_cves.json '
+            ($fetched[0] | map(.cve.id) | unique) as $fetched_ids |
+            ($scoped[0] | map(.cve.id) | unique) as $scoped_ids |
+            [
+              $existing[0][] |
+              select((.id // "") | startswith("CVE-")) |
+              .id as $id |
+              select(($fetched_ids | index($id)) != null) |
+              select(($scoped_ids | index($id)) == null) |
+              $id
+            ] | unique
+          ' > tmp/retracted_advisory_ids.json
+
           node scripts/ci/repair_stale_exploitability.mjs \
             --feed "$FEED_PATH" \
             --updates tmp/updated_advisories.json \
@@ -376,13 +475,29 @@ jobs:
             --nvd-json tmp/filtered_cves.json
 
           UPDATE_COUNT=$(jq 'length' tmp/updated_advisories.json)
+          RETRACTED_COUNT=$(jq 'length' tmp/retracted_advisory_ids.json)
+          EXISTING_CVE_COUNT=$(jq '[.[] | select((.id // "") | startswith("CVE-"))] | length' tmp/existing_advisories.json)
           echo "Advisories to update: $UPDATE_COUNT"
+          echo "Advisories no longer carrying publishable NVD scope: $RETRACTED_COUNT"
+          RETRACTION_LIMIT="$(nvd_drop_review_limit)"
+          echo "Incremental retraction safety check: $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs (review at $RETRACTION_LIMIT records or 25% of the current CVE feed)"
+          if nvd_is_material_drop "$RETRACTED_COUNT" "$EXISTING_CVE_COUNT" && [ "${{ inputs.allow_large_rebuild_drop }}" != "true" ]; then
+            echo "::error::Refusing incremental update: $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs would be retracted (review threshold: $RETRACTION_LIMIT records or 25% of the current CVE feed). Review the broad NVD inventory, then rerun with allow_large_rebuild_drop=true if intentional."
+            exit 1
+          fi
           echo "update_count=$UPDATE_COUNT" >> $GITHUB_OUTPUT
           echo "nvd_updated_count=$UPDATE_COUNT" >> $GITHUB_OUTPUT
+          echo "retracted_count=$RETRACTED_COUNT" >> $GITHUB_OUTPUT
+          echo "nvd_retracted_count=$RETRACTED_COUNT" >> $GITHUB_OUTPUT
 
           if [ "$UPDATE_COUNT" -gt 0 ]; then
             echo "=== Updated advisories ==="
             jq -r '.[] | "- \(.id): \(.changes | join(", "))"' tmp/updated_advisories.json
+          fi
+
+          if [ "$RETRACTED_COUNT" -gt 0 ]; then
+            echo "=== Retracted advisories ==="
+            jq -r '.[] | "- \(.)"' tmp/retracted_advisory_ids.json
           fi
 
       - name: Transform CVEs to advisories
@@ -390,6 +505,9 @@ jobs:
         env:
           STEPS_PROCESS_OUTPUTS_FILTERED_COUNT: ${{ steps.process.outputs.filtered_count }}
         run: |
+          set -euo pipefail
+          source scripts/feed-utils.sh
+
           # Read existing IDs into jq-friendly files (avoids huge CLI args on full scans).
           jq -R -s 'split("\n") | map(select(length > 0))' < tmp/existing_ids.txt > tmp/existing_ids_from_feed.json
 
@@ -434,6 +552,26 @@ jobs:
               echo "::error::Full scan transform mismatch: filtered CVEs=$FILTERED_COUNT transformed advisories=$NEW_COUNT"
               exit 1
             fi
+
+            jq -n --slurpfile existing tmp/existing_advisories.json --slurpfile rebuilt tmp/new_advisories.json '
+              ($rebuilt[0] | map(.id) | unique) as $rebuilt_ids |
+              [
+                $existing[0][] |
+                select((.id // "") | startswith("CVE-")) |
+                .id as $id |
+                select(($rebuilt_ids | index($id)) == null) |
+                $id
+              ] | unique
+            ' > tmp/full_rebuild_removed_ids.json
+            EXISTING_CVE_COUNT=$(jq '[.[] | select((.id // "") | startswith("CVE-"))] | length' tmp/existing_advisories.json)
+            FULL_REBUILD_REMOVED_COUNT=$(jq 'length' tmp/full_rebuild_removed_ids.json)
+            DROP_REVIEW_LIMIT="$(nvd_drop_review_limit)"
+            echo "Full rebuild identity safety check: $FULL_REBUILD_REMOVED_COUNT of $EXISTING_CVE_COUNT existing CVE IDs absent (review at $DROP_REVIEW_LIMIT records or 25% of the current CVE feed)"
+            if nvd_is_material_drop "$FULL_REBUILD_REMOVED_COUNT" "$EXISTING_CVE_COUNT" && [ "${{ inputs.allow_large_rebuild_drop }}" != "true" ]; then
+              echo "::error::Refusing full rebuild: $FULL_REBUILD_REMOVED_COUNT of $EXISTING_CVE_COUNT existing CVE IDs would be removed (review threshold: $DROP_REVIEW_LIMIT records or 25% of the current CVE feed). Review counts and IDs, then rerun with allow_large_rebuild_drop=true if intentional."
+              jq -r '.[] | "- \(.)"' tmp/full_rebuild_removed_ids.json
+              exit 1
+            fi
           fi
           
           if [ "$NET_NEW_COUNT" -gt 0 ]; then
@@ -456,6 +594,7 @@ jobs:
                 .cve.metrics.cvssMetricV40[0]?.cvssData.vectorString //
                 .cve.metrics.cvssMetricV31[0]?.cvssData.vectorString //
                 .cve.metrics.cvssMetricV30[0]?.cvssData.vectorString //
+                .cve.metrics.cvssMetricV2[0]?.cvssData.vectorString //
                 .cve.metrics.cvssMetricV2[0]?.vectorString //
                 ""
               )
@@ -507,7 +646,7 @@ jobs:
           echo "nvd_updated_count=$UPDATE_COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Update feed.json
-        if: inputs.force_full_scan == true || steps.transform.outputs.new_count != '0' || steps.nvd_counts.outputs.update_count != '0'
+        if: inputs.force_full_scan == true || steps.transform.outputs.new_count != '0' || steps.nvd_counts.outputs.update_count != '0' || steps.updates.outputs.retracted_count != '0'
         run: |
           NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
@@ -525,10 +664,11 @@ jobs:
             ' "$FEED_PATH" > tmp/updated_feed.json
           elif [ -f "$FEED_PATH" ]; then
             # Step 1: Apply updates to existing advisories
-            jq --slurpfile updates tmp/updated_advisories.json '
+            jq --slurpfile updates tmp/updated_advisories.json --slurpfile retracted tmp/retracted_advisory_ids.json '
               .advisories = [
                 .advisories[] |
                 . as $adv |
+                select(($adv.id as $id | (($retracted[0] // []) | index($id))) == null) |
                 ($updates[0] | map(select(.id == $adv.id)) | first) as $update |
                 if $update then
                   # Merge updated fields
@@ -577,14 +717,21 @@ jobs:
       - name: Poll GHSA without CVE and consolidate feed
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          ALLOW_LARGE_REBUILD_DROP: ${{ inputs.allow_large_rebuild_drop || false }}
         run: |
           set -euo pipefail
+          GHSA_DROP_ARGS=()
+          if [ "$ALLOW_LARGE_REBUILD_DROP" = "true" ]; then
+            GHSA_DROP_ARGS+=(--allow-large-drop)
+          fi
           node scripts/ghsa-without-cve-feed.mjs \
             --output "$GHSA_FEED_PATH" \
             --consolidated-feed "$FEED_PATH" \
             --existing-feed "$GHSA_FEED_PATH" \
             --nvd-feed "$FEED_PATH" \
-            --stale-after-days 60
+            --rejected-cve-ids "tmp/rejected_cve_ids.json" \
+            --stale-after-days 60 \
+            "${GHSA_DROP_ARGS[@]}"
 
           mkdir -p "$(dirname "$SKILL_FEED_PATH")"
           cp "$FEED_PATH" "$SKILL_FEED_PATH"
@@ -599,6 +746,7 @@ jobs:
           STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT: ${{ steps.transform.outputs.nvd_rebuilt_count }}
           STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT: ${{ steps.transform.outputs.nvd_new_to_feed_count }}
           STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT: ${{ steps.nvd_counts.outputs.nvd_updated_count }}
+          STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT: ${{ steps.updates.outputs.nvd_retracted_count }}
         run: |
           set -euo pipefail
 
@@ -618,7 +766,7 @@ jobs:
             ' "$FEED_PATH"
           )"
 
-          if [ "${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT}" != "0" ] || [ "${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT}" != "0" ] || [ "${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT}" != "0" ]; then
+          if [ "${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT}" != "0" ] || [ "${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT}" != "0" ] || [ "${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT}" != "0" ] || [ "${STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT}" != "0" ]; then
             NVD_CHANGED=true
           fi
 
@@ -659,6 +807,10 @@ jobs:
             git --no-pager diff -- "${BLOCKED_FILES[@]}" || true
             exit 1
           fi
+
+      - name: Validate GHSA source feed before signing
+        if: steps.feed_changes.outputs.ghsa_changed == 'true'
+        run: node scripts/ci/validate_advisory_feed.mjs "$GHSA_FEED_PATH"
 
       - name: Sign GHSA feed and verify
         if: steps.feed_changes.outputs.ghsa_changed == 'true'
@@ -706,6 +858,7 @@ jobs:
           STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT: ${{ steps.transform.outputs.nvd_rebuilt_count }}
           STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT: ${{ steps.transform.outputs.nvd_new_to_feed_count }}
           STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT: ${{ steps.nvd_counts.outputs.nvd_updated_count }}
+          STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT: ${{ steps.updates.outputs.nvd_retracted_count }}
           STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT: ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }}
           STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED: ${{ steps.feed_changes.outputs.ghsa_changed }}
           STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED: ${{ steps.feed_changes.outputs.agent_changed }}
@@ -714,11 +867,11 @@ jobs:
 
           BRANCH_PREFIX="automated/nvd-cve-update"
           PR_COMMENT="Superseded by newer automated NVD advisory update."
-          TITLE="chore: update NVD/GHSA advisories - ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT} NVD new, ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT} NVD updated, ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT} GHSA active added"
+          TITLE="chore: update NVD/GHSA advisories - ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT} NVD new, ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT} NVD updated, ${STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT} NVD retracted, ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT} GHSA active added"
           COMMIT_SUBJECT="$TITLE"
           # printf, not $'...': ANSI-C quoting does not expand parameters.
-          COMMIT_BODY="$(printf 'Automated update from NVD CVE and GHSA advisory feeds.\nKeywords: %s\nPoll window: %s to %s' \
-            "$KEYWORDS" "$STEPS_DATES_OUTPUTS_START_DATE" "$STEPS_DATES_OUTPUTS_END_DATE")"
+          COMMIT_BODY="$(printf 'Automated update from NVD CVE and GHSA advisory feeds.\nProtected components: %s\nPoll window: %s to %s' \
+            "$PROTECTED_COMPONENTS" "$STEPS_DATES_OUTPUTS_START_DATE" "$STEPS_DATES_OUTPUTS_END_DATE")"
 
           GHSA_TOTAL="$(jq '.advisories | length' "$GHSA_FEED_PATH")"
           GHSA_ACTIVE="$(jq '[.advisories[] | select(.status == "active")] | length' "$GHSA_FEED_PATH")"
@@ -741,12 +894,13 @@ jobs:
           - **Rebuilt NVD advisories:** ${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT}
           - **Net-new NVD advisories:** ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT}
           - **Updated NVD advisories:** ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT}
+          - **Retracted NVD advisories:** ${STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT}
           - **GHSA active advisories added to consolidated feed:** ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT}
           - **GHSA source feed changed:** ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED}
           - **Consolidated agent feed changed:** ${STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED}
           - **GHSA provisional advisories:** ${GHSA_TOTAL} total (${GHSA_ACTIVE} active, ${GHSA_MATURED} matured, ${GHSA_STALE} stale)
           - **Poll window:** ${STEPS_DATES_OUTPUTS_START_DATE} → ${STEPS_DATES_OUTPUTS_END_DATE}
-          - **Keywords:** ${KEYWORDS}
+          - **Protected components:** ${PROTECTED_COMPONENTS}
 
           ---
           *This PR was automatically generated by the NVD CVE polling workflow with GHSA consolidation.*
@@ -881,6 +1035,7 @@ jobs:
           STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT: ${{ steps.transform.outputs.nvd_rebuilt_count }}
           STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT: ${{ steps.transform.outputs.nvd_new_to_feed_count }}
           STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT: ${{ steps.nvd_counts.outputs.nvd_updated_count }}
+          STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT: ${{ steps.updates.outputs.nvd_retracted_count }}
           STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT: ${{ steps.feed_changes.outputs.ghsa_added_to_consolidated_count }}
           STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED: ${{ steps.feed_changes.outputs.ghsa_changed }}
           STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED: ${{ steps.feed_changes.outputs.agent_changed }}
@@ -899,11 +1054,12 @@ jobs:
           echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Mode | $MODE |" >> $GITHUB_STEP_SUMMARY
           echo "| Poll Window | ${STEPS_DATES_OUTPUTS_START_DATE} → ${STEPS_DATES_OUTPUTS_END_DATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Keywords | $KEYWORDS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Protected components | $PROTECTED_COMPONENTS |" >> $GITHUB_STEP_SUMMARY
           echo "| NVD CVEs Found (filtered) | ${STEPS_PROCESS_OUTPUTS_NVD_FILTERED_COUNT} |" >> $GITHUB_STEP_SUMMARY
           echo "| NVD Advisories Rebuilt | ${STEPS_TRANSFORM_OUTPUTS_NVD_REBUILT_COUNT} |" >> $GITHUB_STEP_SUMMARY
           echo "| Net-new NVD Advisories | ${STEPS_TRANSFORM_OUTPUTS_NVD_NEW_TO_FEED_COUNT} |" >> $GITHUB_STEP_SUMMARY
           echo "| Updated NVD Advisories | ${STEPS_NVD_COUNTS_OUTPUTS_NVD_UPDATED_COUNT} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Retracted NVD Advisories | ${STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT} |" >> $GITHUB_STEP_SUMMARY
           echo "| GHSA Active Added | ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_ADDED_TO_CONSOLIDATED_COUNT} |" >> $GITHUB_STEP_SUMMARY
           echo "| GHSA source feed changed | ${STEPS_FEED_CHANGES_OUTPUTS_GHSA_CHANGED} |" >> $GITHUB_STEP_SUMMARY
           echo "| Consolidated agent feed changed | ${STEPS_FEED_CHANGES_OUTPUTS_AGENT_CHANGED} |" >> $GITHUB_STEP_SUMMARY
@@ -921,6 +1077,13 @@ jobs:
             echo "### Updated NVD Advisories" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             jq -r '.[] | "- **\(.id)**: \(.changes | join(", "))"' tmp/updated_advisories.json >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT}" != "0" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Retracted NVD Advisories" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            jq -r '.[] | "- **\(.)**: NVD no longer provides an allowlisted product with explicit affected-version scope"' tmp/retracted_advisory_ids.json >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ "${STEPS_FEED_CHANGES_OUTPUTS_CHANGED}" = "true" ]; then

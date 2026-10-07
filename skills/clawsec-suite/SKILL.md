@@ -209,7 +209,7 @@ This enforces:
 The embedded feed logic uses these defaults:
 
 - Remote consolidated feed URL: `https://clawsec.prompt.security/advisories/feed.json`
-- Feed contents: NVD CVEs, approved community advisories, and GHSAs. A matured GHSA is retained as an alias of its canonical CVE.
+- Feed contents: NVD CVEs, approved community advisories, and GHSAs. A GHSA with a CVE assignment remains primary until a non-rejected NVD-backed CVE record is present; then the CVE becomes canonical and the GHSA remains an alias.
 - Remote feed signature URL: `${CLAWSEC_FEED_URL}.sig` (override with `CLAWSEC_FEED_SIG_URL`)
 - Remote checksums manifest URL: sibling `checksums.json` (override with `CLAWSEC_FEED_CHECKSUMS_URL`)
 - Local seed fallback: `~/.openclaw/skills/clawsec-suite/advisories/feed.json`

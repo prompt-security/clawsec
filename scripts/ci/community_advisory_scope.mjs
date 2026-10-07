@@ -16,6 +16,32 @@ export const PROTECTED_ADVISORY_COMPONENTS = Object.freeze([
 
 const EMPTY_SCOPE_VALUES = new Set(["*", "all", "any", "n/a", "na", "none", "unknown", "unspecified"]);
 const PACKAGE_NAME_PATTERN = /^(?:[a-z0-9][a-z0-9._-]*|@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*)$/;
+const SINGLE_SELECT_FIELDS = Object.freeze({
+  openerType: Object.freeze({
+    heading: "Opener Type",
+    options: Object.freeze([
+      Object.freeze({ label: "Human", value: "human" }),
+      Object.freeze({ label: "Agent", value: "agent" }),
+    ]),
+  }),
+  reportType: Object.freeze({
+    heading: "Report Type",
+    options: Object.freeze([
+      Object.freeze({ label: "Malicious Prompt", value: "prompt_injection" }),
+      Object.freeze({ label: "Vulnerable Skill", value: "vulnerable_skill" }),
+      Object.freeze({ label: "Tampering Attempt", value: "tampering_attempt" }),
+    ]),
+  }),
+  severity: Object.freeze({
+    heading: "Severity",
+    options: Object.freeze([
+      Object.freeze({ label: "Critical", value: "critical" }),
+      Object.freeze({ label: "High", value: "high" }),
+      Object.freeze({ label: "Medium", value: "medium" }),
+      Object.freeze({ label: "Low", value: "low" }),
+    ]),
+  }),
+});
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -23,31 +49,82 @@ function escapeRegExp(value) {
 
 function cleanSectionValue(value) {
   return value
-    .replace(/<!--[\s\S]*?-->/g, "")
     .split("\n")
     .map((line) => line.trim())
     .find(Boolean) || "";
 }
 
-function extractSection(issueBody, headings) {
-  const lines = issueBody.split(/\r?\n/);
+function cleanMultilineSectionValue(value) {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  for (const heading of headings) {
-    const headingPattern = new RegExp(`^###\\s+${escapeRegExp(heading)}\\s*$`, "i");
-    const start = lines.findIndex((line) => headingPattern.test(line.trim()));
-    if (start === -1) continue;
+function stripHtmlComments(value) {
+  return value.replace(/<!--[\s\S]*?(?:-->|$)/g, (comment) => (
+    comment.replace(/[^\r\n]/g, " ")
+  ));
+}
 
-    const sectionLines = [];
-    for (let index = start + 1; index < lines.length; index += 1) {
-      if (/^#{2,3}\s+/.test(lines[index]) || /^---\s*$/.test(lines[index])) break;
-      sectionLines.push(lines[index]);
+function stripNonFormMarkdown(value) {
+  const lines = stripHtmlComments(value).split(/\r?\n/);
+  let fence = null;
+
+  return lines.map((line) => {
+    if (fence) {
+      const closingFence = new RegExp(`^ {0,3}${escapeRegExp(fence.marker)}{${fence.length},}\\s*$`);
+      if (closingFence.test(line)) fence = null;
+      return "";
     }
 
-    const value = cleanSectionValue(sectionLines.join("\n"));
-    if (value) return value;
+    const openingFence = line.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (openingFence) {
+      fence = {
+        marker: openingFence[1][0],
+        length: openingFence[1].length,
+      };
+      return "";
+    }
+
+    if (/^(?: {4,}|\t)/.test(line)) return "";
+    return line;
+  }).join("\n");
+}
+
+function extractSectionBody(issueBody, headings, fieldName = headings[0]?.text) {
+  const lines = issueBody.split(/\r?\n/);
+  const matches = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const candidate = lines[index].trim();
+    if (headings.some(({ level, text }) => (
+      new RegExp(`^#{${level}}\\s+${escapeRegExp(text)}\\s*$`, "i").test(candidate)
+    ))) {
+      matches.push(index);
+    }
   }
 
-  return "";
+  if (matches.length > 1) {
+    throw new Error(`${fieldName} section must appear exactly once`);
+  }
+  if (matches.length === 0) return "";
+
+  const sectionLines = [];
+  for (let index = matches[0] + 1; index < lines.length; index += 1) {
+    const candidateBoundary = lines[index].trim();
+    if (/^#{1,6}\s+/.test(candidateBoundary) || /^---\s*$/.test(candidateBoundary)) break;
+    sectionLines.push(lines[index]);
+  }
+
+  return sectionLines.join("\n");
+}
+
+function extractSection(issueBody, headings, fieldName) {
+  return cleanSectionValue(extractSectionBody(issueBody, headings, fieldName));
 }
 
 function checked(issueBody, label) {
@@ -56,6 +133,79 @@ function checked(issueBody, label) {
     "m",
   );
   return pattern.test(issueBody);
+}
+
+function parseSingleSelect(formBody, { heading, options }) {
+  const sectionBody = extractSectionBody(
+    formBody,
+    [{ level: 2, text: heading }],
+    heading,
+  );
+  if (!sectionBody) {
+    throw new Error(`${heading} section is required`);
+  }
+
+  const checkedLines = sectionBody
+    .split(/\r?\n/)
+    .map((line) => line.match(/^\s*-\s*\[[xX]\]\s*(.*?)\s*$/)?.[1] || null)
+    .filter(Boolean);
+
+  if (checkedLines.length !== 1) {
+    throw new Error(`${heading} must have exactly one checked value`);
+  }
+
+  const selectedLine = checkedLines[0];
+  const selected = options.find(({ label }) => (
+    new RegExp(`^${escapeRegExp(label)}(?:\\s*(?:[-–—]\\s+.+|\\(.+\\)))?$`, "i")
+      .test(selectedLine)
+  ));
+  if (!selected) {
+    throw new Error(`${heading} has an invalid checked value`);
+  }
+  return selected.value;
+}
+
+function requireMeaningfulSection(formBody, heading) {
+  const value = cleanMultilineSectionValue(extractSectionBody(
+    formBody,
+    [{ level: 2, text: heading }],
+    heading,
+  ));
+  if (!/[\p{L}\p{N}]/u.test(value)) {
+    throw new Error(`${heading} is required`);
+  }
+  return value;
+}
+
+function parseReporterName(formBody) {
+  const reporterSection = extractSectionBody(
+    formBody,
+    [{ level: 2, text: "Reporter Information (Optional)" }],
+    "Reporter Information",
+  );
+  if (!reporterSection) return "";
+
+  const lines = reporterSection.split(/\r?\n/);
+  const markerIndexes = lines.flatMap((line, index) => (
+    /^\s*\*\*Agent\/User Name:\*\*/i.test(line) ? [index] : []
+  ));
+  if (markerIndexes.length > 1) {
+    throw new Error("Agent/User Name field must appear at most once");
+  }
+  if (markerIndexes.length === 0) return "";
+
+  const markerIndex = markerIndexes[0];
+  const inlineValue = lines[markerIndex]
+    .replace(/^\s*\*\*Agent\/User Name:\*\*/i, "")
+    .trim();
+  if (inlineValue) return inlineValue;
+
+  for (let index = markerIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (/^\*\*Contact:\*\*/i.test(line)) break;
+    if (line) return line;
+  }
+  return "";
 }
 
 function parseLegacyOtherPlatform(issueBody) {
@@ -100,8 +250,27 @@ export function parseCommunityAdvisoryScope(issueBody) {
     throw new TypeError("Issue body must be a string");
   }
 
-  const rawComponentName = extractSection(issueBody, ["Component or Skill Name", "Skill Name"]);
-  const rawVersionScope = extractSection(issueBody, ["Affected Version Scope", "Skill Version"]);
+  const formBody = stripNonFormMarkdown(issueBody);
+  return parseScopeFromFormBody(formBody);
+}
+
+function parseScopeFromFormBody(formBody) {
+  const rawComponentName = extractSection(
+    formBody,
+    [
+      { level: 3, text: "Component or Skill Name" },
+      { level: 3, text: "Skill Name" },
+    ],
+    "Component or Skill Name",
+  );
+  const rawVersionScope = extractSection(
+    formBody,
+    [
+      { level: 3, text: "Affected Version Scope" },
+      { level: 3, text: "Skill Version" },
+    ],
+    "Affected Version Scope",
+  );
 
   if (!rawComponentName) {
     throw new Error("Component or skill name is required; unscoped advisories must not be published");
@@ -129,10 +298,18 @@ export function parseCommunityAdvisoryScope(issueBody) {
     throw new Error("Component name and version range do not form an unambiguous affected selector");
   }
 
+  const protectedComponentsSection = extractSectionBody(
+    formBody,
+    [
+      { level: 3, text: "Protected Components" },
+      { level: 3, text: "Platforms" },
+    ],
+    "Protected Components",
+  );
   const platforms = PROTECTED_ADVISORY_COMPONENTS
-    .filter(({ label }) => checked(issueBody, label))
+    .filter(({ label }) => checked(protectedComponentsSection, label))
     .map(({ slug }) => slug);
-  const legacyOther = parseLegacyOtherPlatform(issueBody);
+  const legacyOther = parseLegacyOtherPlatform(protectedComponentsSection);
   if (legacyOther) platforms.push(legacyOther);
 
   const uniquePlatforms = [...new Set(platforms)];
@@ -148,13 +325,33 @@ export function parseCommunityAdvisoryScope(issueBody) {
   };
 }
 
+export function parseCommunityAdvisoryForm(issueBody) {
+  if (typeof issueBody !== "string") {
+    throw new TypeError("Issue body must be a string");
+  }
+
+  const formBody = stripNonFormMarkdown(issueBody);
+  const scope = parseScopeFromFormBody(formBody);
+
+  return {
+    openerType: parseSingleSelect(formBody, SINGLE_SELECT_FIELDS.openerType),
+    reportType: parseSingleSelect(formBody, SINGLE_SELECT_FIELDS.reportType),
+    severity: parseSingleSelect(formBody, SINGLE_SELECT_FIELDS.severity),
+    title: requireMeaningfulSection(formBody, "Title"),
+    description: requireMeaningfulSection(formBody, "Description"),
+    action: requireMeaningfulSection(formBody, "Recommended Action"),
+    reporterName: parseReporterName(formBody),
+    ...scope,
+  };
+}
+
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   try {
-    const result = parseCommunityAdvisoryScope(process.env.ISSUE_BODY || "");
+    const result = parseCommunityAdvisoryForm(process.env.ISSUE_BODY || "");
     process.stdout.write(`${JSON.stringify(result)}\n`);
   } catch (error) {
-    console.error(`Community advisory scope invalid: ${error.message}`);
+    console.error(`Community advisory form invalid: ${error.message}`);
     process.exitCode = 1;
   }
 }

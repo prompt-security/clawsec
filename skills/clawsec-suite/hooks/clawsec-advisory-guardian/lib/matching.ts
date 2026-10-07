@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { isObject, normalizeSkillName, uniqueStrings } from "./utils.mjs";
 import { advisoryAppliesToOpenclaw } from "./advisory_scope.mjs";
-import { versionMatches } from "./version.mjs";
+import { parseSemver, versionMatches } from "./version.mjs";
 import { parseAffectedSpecifier } from "./feed.mjs";
 import { advisoryIdentifiers } from "./advisory_identity.mjs";
 import type { Advisory, FeedPayload, InstalledSkill, AdvisoryMatch } from "./types.ts";
@@ -49,6 +49,19 @@ export async function discoverInstalledSkills(installRoot: string): Promise<Inst
   return skills;
 }
 
+export function installedVersionIndeterminateReason(
+  version: string | null,
+): "missing" | "unknown" | "unparseable" | null {
+  const normalized = typeof version === "string" ? version.trim() : "";
+  if (!normalized) return "missing";
+  if (normalized.toLowerCase() === "unknown") return "unknown";
+  return parseSemver(normalized) === null ? "unparseable" : null;
+}
+
+export function installedVersionIsIndeterminate(version: string | null): boolean {
+  return installedVersionIndeterminateReason(version) !== null;
+}
+
 export function affectedSpecifierMatchesSkill(rawSpecifier: string, skill: InstalledSkill): boolean {
   const parsed = parseAffectedSpecifier(rawSpecifier);
   if (!parsed) return false;
@@ -59,7 +72,7 @@ export function affectedSpecifierMatchesSkill(rawSpecifier: string, skill: Insta
 
   // The product is installed, but a missing version cannot prove safety.
   // Surface the advisory as indeterminate so the user can resolve the version.
-  if (!skill.version || String(skill.version).trim().toLowerCase() === "unknown") {
+  if (installedVersionIsIndeterminate(skill.version)) {
     return true;
   }
 
@@ -153,10 +166,10 @@ export function buildAlertMessage(matches: AdvisoryMatch[], installRoot: string)
     const advisoryId = match.advisory.id ?? "unknown-id";
     const version = match.skill.version ?? "unknown";
     const matched = match.matchedAffected.join(", ");
-    const indeterminate = String(version).trim().toLowerCase() === "unknown";
+    const indeterminateReason = installedVersionIndeterminateReason(match.skill.version);
     lines.push(
       `- [${severity}] ${advisoryId} -> ${match.skill.name}@${version}` +
-        (indeterminate ? " [INDETERMINATE: installed version unknown]" : "") +
+        (indeterminateReason ? ` [INDETERMINATE: installed version ${indeterminateReason}]` : "") +
         (matched ? ` (matched: ${matched})` : ""),
     );
     if (match.advisory.action) {
@@ -168,7 +181,7 @@ export function buildAlertMessage(matches: AdvisoryMatch[], installRoot: string)
     lines.push(`- ... ${matches.length - MAX_LISTED} additional match(es) not shown`);
   }
 
-  if (matches.some((entry) => !entry.skill.version || String(entry.skill.version).trim().toLowerCase() === "unknown")) {
+  if (matches.some((entry) => installedVersionIsIndeterminate(entry.skill.version))) {
     lines.push("");
     lines.push("Version confirmation needed: verify each indeterminate installed component before deciding whether it is affected.");
   }
