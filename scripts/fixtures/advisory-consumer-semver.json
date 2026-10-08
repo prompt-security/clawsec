@@ -96,6 +96,90 @@
       "version": "0.3.0",
       "range": "^0.2.3",
       "matches": false
+    },
+    {
+      "id": "hermes-date-build-exact",
+      "version": "2026.5.29.2",
+      "range": "2026.5.29.2",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-explicit-equality",
+      "version": "v2026.5.29.2",
+      "range": "=2026.5.29.2",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-different-build",
+      "version": "2026.5.29.1",
+      "range": "2026.5.29.2",
+      "matches": false
+    },
+    {
+      "id": "hermes-semver-is-not-date-build-alias",
+      "version": "0.15.2",
+      "range": "2026.5.29.2",
+      "matches": false
+    },
+    {
+      "id": "hermes-date-build-leap-day",
+      "version": "2024.2.29.1",
+      "range": "2024.2.29.1",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-1900-is-not-leap-year",
+      "version": "1900.2.29.1",
+      "range": "1900.2.29.1",
+      "matches": false
+    },
+    {
+      "id": "hermes-date-build-2000-is-leap-year",
+      "version": "2000.2.29.1",
+      "range": "2000.2.29.1",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-2100-is-not-leap-year",
+      "version": "2100.2.29.1",
+      "range": "2100.2.29.1",
+      "matches": false
+    },
+    {
+      "id": "hermes-date-build-2400-is-leap-year",
+      "version": "2400.2.29.1",
+      "range": "2400.2.29.1",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-low-year-leap-day",
+      "version": "0096.2.29.1",
+      "range": "0096.2.29.1",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-non-leap-day",
+      "version": "2026.2.29.1",
+      "range": "2026.2.29.1",
+      "matches": false
+    },
+    {
+      "id": "hermes-date-build-impossible-month-day",
+      "version": "2026.4.31.1",
+      "range": "2026.4.31.1",
+      "matches": false
+    },
+    {
+      "id": "hermes-date-build-impossible-month",
+      "version": "2026.13.1.1",
+      "range": "2026.13.1.1",
+      "matches": false
+    },
+    {
+      "id": "three-component-semver-is-not-globally-a-date",
+      "version": "2026.2.30",
+      "range": "2026.2.30",
+      "matches": true
     }
   ]
 }

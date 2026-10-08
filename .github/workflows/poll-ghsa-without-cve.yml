@@ -2,6 +2,12 @@ name: Poll GHSA Without CVE
 
 on:
   workflow_dispatch:
+    inputs:
+      allow_large_rebuild_drop:
+        description: 'Allow a reviewed repository-zero or material GHSA identity drop'
+        required: false
+        default: 'false'
+        type: boolean
 
 permissions:
   contents: read
@@ -39,17 +45,32 @@ jobs:
       - name: Run GHSA feed tests
         run: node scripts/test-ghsa-without-cve-feed.mjs
 
+      - name: Require canonical advisory baseline
+        run: |
+          set -euo pipefail
+          if [ ! -f "$FEED_PATH" ]; then
+            echo "::error::Canonical advisory feed is missing: $FEED_PATH"
+            exit 1
+          fi
+          jq -e 'type == "object" and (.advisories | type == "array" and length > 0)' "$FEED_PATH" >/dev/null
+
       - name: Poll GitHub Security Advisories
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          ALLOW_LARGE_REBUILD_DROP: ${{ inputs.allow_large_rebuild_drop || false }}
         run: |
           set -euo pipefail
+          GHSA_DROP_ARGS=()
+          if [ "$ALLOW_LARGE_REBUILD_DROP" = "true" ]; then
+            GHSA_DROP_ARGS+=(--allow-large-drop)
+          fi
           node scripts/ghsa-without-cve-feed.mjs \
             --output "$GHSA_FEED_PATH" \
             --consolidated-feed "$FEED_PATH" \
             --existing-feed "$GHSA_FEED_PATH" \
             --nvd-feed "$FEED_PATH" \
-            --stale-after-days 60
+            --stale-after-days 60 \
+            "${GHSA_DROP_ARGS[@]}"
 
       - name: Sync consolidated feed to feed consumers
         run: |
@@ -58,6 +79,14 @@ jobs:
           cp "$FEED_PATH" "$SKILL_FEED_PATH"
           mkdir -p "$(dirname "$SUITE_FEED_PATH")"
           cp "$FEED_PATH" "$SUITE_FEED_PATH"
+
+      - name: Validate consolidated advisory feed
+        run: node scripts/ci/validate_advisory_feed.mjs "$FEED_PATH"
+
+      - name: Verify advisory consumer releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/verify_advisory_consumer_releases.mjs "$FEED_PATH"
 
       - name: Detect feed changes
         id: changes
@@ -83,6 +112,10 @@ jobs:
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Validate GHSA source feed before signing
+        if: steps.changes.outputs.ghsa_changed == 'true'
+        run: node scripts/ci/validate_advisory_feed.mjs "$GHSA_FEED_PATH"
 
       - name: Sign GHSA feed and verify
         if: steps.changes.outputs.ghsa_changed == 'true'

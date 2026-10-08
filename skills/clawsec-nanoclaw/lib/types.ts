@@ -44,6 +44,7 @@ export interface AdvisoryMatch {
   advisory: Advisory;
   matchedSpecifier: string;
   isHighRisk: boolean;
+  versionIndeterminate?: boolean;
 }
 
 export interface ReputationResult {

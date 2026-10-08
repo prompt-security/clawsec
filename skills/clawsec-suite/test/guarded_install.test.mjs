@@ -6,6 +6,7 @@
  * Tests cover:
  * - Conservative matching when version is omitted
  * - Precise version matching when version is provided
+ * - Fail-closed Hermes SemVer/date-build identity mismatches
  * - Exit code 42 for advisory match requiring confirmation
  * - High-risk advisory detection
  *
@@ -190,6 +191,74 @@ async function testPreciseVersionMatching() {
     } else {
       fail(testName, `Expected exit 0 without match, got ${result.code}: ${result.stdout}`);
     }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Test: Hermes SemVer/date-build identity mismatches fail closed
+// -----------------------------------------------------------------------------
+async function testHermesIdentityMismatchIsIndeterminate() {
+  const testName = "guarded_install: Hermes identity mismatches are indeterminate and fail closed";
+  try {
+    const keyPair = generateEd25519KeyPair();
+    const cases = [
+      {
+        requestedVersion: "2026.5.29.2",
+        affected: "hermes-agent@<0.16.0",
+      },
+      {
+        requestedVersion: "0.15.2",
+        affected: "hermes-agent@2026.5.29.2",
+      },
+      {
+        requestedVersion: "2026.2.30.1",
+        affected: "hermes-agent@<0.16.0",
+      },
+      {
+        requestedVersion: "2026.13.1.1",
+        affected: "hermes-agent@2026.2.28.1",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const advisoriesDir = await setupSignedFeed(
+        [
+          {
+            id: "TEST-HERMES-IDENTITY",
+            severity: "high",
+            affected: [testCase.affected],
+          },
+        ],
+        keyPair,
+      );
+
+      const result = await runGuardedInstall(
+        ["--skill", "hermes-agent", "--version", testCase.requestedVersion, "--dry-run"],
+        {
+          CLAWSEC_LOCAL_FEED: path.join(advisoriesDir, "feed.json"),
+          CLAWSEC_LOCAL_FEED_SIG: path.join(advisoriesDir, "feed.json.sig"),
+          CLAWSEC_LOCAL_FEED_CHECKSUMS: path.join(advisoriesDir, "checksums.json"),
+          CLAWSEC_LOCAL_FEED_CHECKSUMS_SIG: path.join(advisoriesDir, "checksums.json.sig"),
+          CLAWSEC_FEED_PUBLIC_KEY: path.join(advisoriesDir, "feed-signing-public.pem"),
+          CLAWSEC_FEED_URL: "file:///nonexistent",
+        },
+      );
+
+      const expectedLabel =
+        `INDETERMINATE: Hermes SemVer/date-build identity mismatch for ${testCase.affected}`;
+      if (result.code !== 42 || !result.stdout.includes(expectedLabel)) {
+        fail(
+          testName,
+          `Expected exit 42 with an explicit identity-mismatch label for ${testCase.requestedVersion}; `
+            + `got ${result.code}: ${result.stdout} ${result.stderr}`,
+        );
+        return;
+      }
+    }
+
+    pass(testName);
   } catch (error) {
     fail(testName, error);
   }
@@ -388,6 +457,7 @@ async function runTests() {
   try {
     await testConservativeMatchingWithoutVersion();
     await testPreciseVersionMatching();
+    await testHermesIdentityMismatchIsIndeterminate();
     await testVersionMatchTriggersConfirmation();
     await testConfirmAdvisoryAllowsProceeding();
     await testAllowUnsignedWarning();

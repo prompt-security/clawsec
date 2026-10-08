@@ -42,6 +42,13 @@ async function prereleaseFixture(sourceSkillDir, version, fixtureGroup) {
   return fixtureDir;
 }
 
+async function advisoryValidationFixture(sourceSkillDir, fixtureGroup) {
+  const fixtureDir = path.join(tempRoot, fixtureGroup, path.basename(sourceSkillDir));
+  await cp(sourceSkillDir, fixtureDir, { recursive: true });
+  await cp("advisories/ghsa-without-cve.json", path.join(fixtureDir, "advisories/feed.json"));
+  return fixtureDir;
+}
+
 async function runSimulation({
   skillDir,
   outputDir,
@@ -49,22 +56,25 @@ async function runSimulation({
   expectedSimulated,
   expectedAgent,
   verifyEmbeddedAdvisory = false,
+  validateEmbeddedAdvisory = false,
   expectedPreparationError = null,
   expectedExcludedPaths = [],
 }) {
+  const simulationArgs = [
+    "scripts/ci/simulate_skill_tag_release.mjs",
+    skillDir,
+    outputDir,
+    "--repository",
+    "prompt-security/clawsec",
+    "--source-ref",
+    "pull-request-head",
+    "--skillspector-bin",
+    fakeSkillspector,
+  ];
+  if (validateEmbeddedAdvisory) simulationArgs.push("--validate-advisory-feed");
   const result = spawnSync(
     process.execPath,
-    [
-      "scripts/ci/simulate_skill_tag_release.mjs",
-      skillDir,
-      outputDir,
-      "--repository",
-      "prompt-security/clawsec",
-      "--source-ref",
-      "pull-request-head",
-      "--skillspector-bin",
-      fakeSkillspector,
-    ],
+    simulationArgs,
     { encoding: "utf8" },
   );
 
@@ -73,6 +83,15 @@ async function runSimulation({
     0,
     `tag release simulation failed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
   );
+  if (existsSync(path.join(skillDir, "advisories/feed.json"))) {
+    assert.match(
+      result.stdout,
+      validateEmbeddedAdvisory
+        ? /Strict advisory feed validation passed:/
+        : /Advisory feed validation deferred for unchanged legacy bytes in PR simulation:/,
+      "PR simulation must make its embedded-feed validation decision explicit",
+    );
+  }
 
   const skillName = path.basename(skillDir);
   const expectedTag = `${skillName}-v${expectedSimulated}`;
@@ -211,7 +230,7 @@ async function runSimulation({
       return extracted.stdout;
     };
 
-    const canonicalFeed = await readFile("advisories/feed.json");
+    const canonicalFeed = await readFile(path.join(skillDir, "advisories/feed.json"));
     const canonicalFeedPayload = JSON.parse(canonicalFeed.toString("utf8"));
     const packagedFeed = readArchiveEntry(`${skillName}/advisories/feed.json`);
     const packagedFeedSignature = readArchiveEntry(`${skillName}/advisories/feed.json.sig`);
@@ -430,20 +449,49 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
   );
   await chmod(fakeClawhub, 0o700);
 
+  const validatedSuiteSkillDir = await advisoryValidationFixture(
+    "skills/clawsec-suite",
+    "validated-advisory-fixture",
+  );
   await runSimulation({
-    skillDir: "skills/clawsec-suite",
+    skillDir: validatedSuiteSkillDir,
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.16",
-    expectedSimulated: "0.1.17",
+    expectedOriginal: "0.1.17",
+    expectedSimulated: "0.1.18",
     expectedAgent: "openclaw",
     verifyEmbeddedAdvisory: true,
+    validateEmbeddedAdvisory: true,
   });
+
+  const invalidAdvisorySkillDir = await prereleaseFixture(
+    "skills/clawsec-feed",
+    "0.0.12",
+    "invalid-advisory-fixture",
+  );
+  await writeFile(
+    path.join(invalidAdvisorySkillDir, "advisories/feed.json"),
+    '{"version":"1.0.0","updated":"2026-05-01T00:00:00Z","advisories":[]}\n',
+  );
+  const invalidValidation = spawnSync(
+    process.execPath,
+    [
+      "scripts/ci/simulate_skill_tag_release.mjs",
+      invalidAdvisorySkillDir,
+      path.join(tempRoot, "invalid-advisory-output"),
+      "--skillspector-bin",
+      fakeSkillspector,
+      "--validate-advisory-feed",
+    ],
+    { encoding: "utf8" },
+  );
+  assert.notEqual(invalidValidation.status, 0, "PR simulation must reject changed malformed advisory feeds");
+  assert.match(invalidValidation.stderr, /Advisory feed must contain at least one advisory/);
 
   await runSimulation({
     skillDir: "skills/clawsec-feed",
     outputDir: path.join(tempRoot, "feed-only"),
-    expectedOriginal: "0.0.11",
-    expectedSimulated: "0.0.12",
+    expectedOriginal: "0.0.12",
+    expectedSimulated: "0.0.13",
     expectedAgent: "openclaw",
   });
 

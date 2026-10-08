@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { isObject, normalizeSkillName, resolveUserPath } from "./utils.mjs";
+import { advisoryIdentifiers } from "./advisory_identity.mjs";
 
 const DEFAULT_PRIMARY_PATH = path.join(os.homedir(), ".openclaw", "security-audit.json");
 const DEFAULT_FALLBACK_PATH = ".clawsec/allowlist.json";
@@ -125,20 +126,23 @@ export async function loadAdvisorySuppression(configPath) {
  * Check if an advisory match should be suppressed.
  *
  * Matching requires BOTH:
- *   - advisory.id === rule.checkId (exact)
+ *   - any stable advisory identifier === rule.checkId (exact)
  *   - normalizeSkillName(skill.name) === normalizeSkillName(rule.skill) (case-insensitive)
  *
- * @param {{ advisory: { id?: string }, skill: { name: string } }} match
+ * Stable identifiers include id, cve_id, ghsa_id, ghsa_ids, and aliases. This preserves
+ * suppressions when a GHSA later becomes a CVE-backed canonical advisory.
+ *
+ * @param {{ advisory: { id?: string, cve_id?: string | null, ghsa_id?: string, ghsa_ids?: string[], aliases?: string[] }, skill: { name: string } }} match
  * @param {Array<{ checkId: string, skill: string }>} suppressions
  * @returns {boolean}
  */
 export function isAdvisorySuppressed(match, suppressions) {
   if (!Array.isArray(suppressions) || suppressions.length === 0) return false;
 
-  const advisoryId = match.advisory.id ?? "";
+  const advisoryIds = advisoryIdentifiers(match.advisory);
   const skillName = normalizeSkillName(match.skill.name);
 
   return suppressions.some(
-    (rule) => rule.checkId === advisoryId && normalizeSkillName(rule.skill) === skillName,
+    (rule) => advisoryIds.includes(rule.checkId) && normalizeSkillName(rule.skill) === skillName,
   );
 }

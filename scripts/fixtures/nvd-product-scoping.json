@@ -1,0 +1,433 @@
+[
+  {
+    "cve": {
+      "id": "CVE-TEST-OPEN-SHELL",
+      "published": "2026-08-01T00:00:00.000",
+      "lastModified": "2026-08-02T00:00:00.000",
+      "metrics": {"cvssMetricV31": [{"cvssData": {"baseScore": 7.5, "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"}}]},
+      "descriptions": [{"lang": "en", "value": "NVIDIA OpenShell vulnerability."}],
+      "references": [{"url": "https://nvidia.custhelp.com/app/answers/detail/a_id/5872"}],
+      "configurations": [{"nodes": [{"operator": "OR", "negate": false, "cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "versionEndIncluding": "0.0.33"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NEMO-CLAW",
+      "published": "2026-04-01T00:00:00.000",
+      "lastModified": "2026-04-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "NVIDIA NemoClaw vulnerability."}],
+      "references": [{"url": "https://github.com/NVIDIA/NemoClaw/security"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "versionStartIncluding": "0.0.10",
+        "versionEndExcluding": "0.0.18"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-OPENSHELL-FEATURE",
+      "published": "2026-03-01T00:00:00.000",
+      "lastModified": "2026-03-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw OpenShell filesystem bridge vulnerability."}],
+      "references": [{"url": "https://github.com/openclaw/openclaw/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "versionStartIncluding": "2026.1.0",
+        "versionEndExcluding": "2026.1.5"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NANOCLAW",
+      "published": "2026-02-01T00:00:00.000",
+      "lastModified": "2026-02-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "NanoClaw vulnerability."}],
+      "references": [{"url": "https://github.com/qwibitai/nanoclaw/security"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nanoco:nanoclaw:1.2.0:*:*:*:*:*:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NANOCLAW-UNCONFIRMED-CPE",
+      "published": "2026-02-01T00:00:00.000",
+      "lastModified": "2026-02-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "NanoClaw under an unsupported alias CPE."}],
+      "references": [{"url": "https://github.com/qwibitai/nanoclaw/security"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:qwibitai:nanoclaw:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "2.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-UNCONFIRMED-CPE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-02-02T00:00:00.000",
+      "lastModified": "2026-02-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/example"}],
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unaffected",
+          "versions": [{"version": "0", "lessThan": "3.0.0", "versionType": "semver", "status": "affected"}]
+        }]
+      }],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:nousresearch:hermes_agent:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "3.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-UNRELATED-HERMES-WORKFLOW",
+      "published": "2026-02-02T00:00:00.000",
+      "lastModified": "2026-02-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "An unrelated publishing workflow named Hermes."}],
+      "references": [{"url": "https://github.com/softwarepub/hermes/security/advisories/GHSA-test-1111-2222"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:software-metadata.pub:hermes:*:*:*:*:*:python:*:*",
+        "versionEndExcluding": "1.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-PICOCLAW-UNCONFIRMED-CPE",
+      "published": "2026-02-02T00:00:00.000",
+      "lastModified": "2026-02-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "PicoClaw under an unsupported alias CPE."}],
+      "references": [{"url": "https://github.com/sipeed/picoclaw/security"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:picoclaw:picoclaw:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "2.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-TRUSTED-REF-UNRELATED-CPE",
+      "published": "2026-02-03T00:00:00.000",
+      "lastModified": "2026-02-03T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "An unrelated product links to a trusted repository."}],
+      "references": [{"url": "https://github.com/openclaw/openclaw/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:example:unrelated:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "9.9.9"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-CLAWHUB-BACKEND",
+      "published": "2026-07-01T00:00:00.000",
+      "lastModified": "2026-07-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "ClawHub backend issue. The OpenClaw runtime is not affected."}],
+      "references": [{"url": "https://github.com/openclaw/clawhub/security/advisories/example"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:clawhub:*:*:*:*:*:*:*:*",
+        "versionEndExcluding": "2.0.0"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NEMOCLAW-IN-FREE-TEXT",
+      "published": "2026-06-01T00:00:00.000",
+      "lastModified": "2026-06-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "A project mentions NemoClaw but is not NemoClaw."}],
+      "references": [{"url": "https://example.invalid/advisory"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:example:unrelated:4.2.0:*:*:*:*:*:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-UNKNOWN-CPE",
+      "published": "2026-05-01T00:00:00.000",
+      "lastModified": "2026-05-01T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Unknown agent runtime vulnerability."}],
+      "references": [{"url": "https://example.invalid/unknown"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:unknown:agent:3.0.0:*:*:*:*:*:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-NO-VERSION-SCOPE",
+      "published": "2026-05-02T00:00:00.000",
+      "lastModified": "2026-05-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw issue without an explicit affected version scope."}],
+      "references": [{"url": "https://github.com/openclaw/openclaw/security/advisories/no-scope"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-REJECTED",
+      "vulnStatus": "Rejected",
+      "published": "2026-05-03T00:00:00.000",
+      "lastModified": "2026-05-03T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Rejected OpenClaw CVE."}],
+      "references": [{"url": "https://nvd.nist.gov/vuln/detail/CVE-TEST-OPENCLAW-REJECTED"}],
+      "configurations": [{"nodes": [{"cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "versionEndExcluding": "2026.5.3"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-NEGATED-CONFIG",
+      "published": "2026-05-04T00:00:00.000",
+      "lastModified": "2026-05-04T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Negated OpenClaw applicability tree."}],
+      "references": [{"url": "https://example.invalid/negated"}],
+      "configurations": [{"nodes": [{"operator": "OR", "negate": true, "cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "versionEndExcluding": "2026.5.4"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-AND-CONFIG",
+      "published": "2026-05-05T00:00:00.000",
+      "lastModified": "2026-05-05T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw is vulnerable only with another environmental condition."}],
+      "references": [{"url": "https://example.invalid/and"}],
+      "configurations": [{"nodes": [{"operator": "AND", "negate": false, "cpeMatch": [
+        {
+          "vulnerable": true,
+          "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+          "versionEndExcluding": "2026.5.5"
+        },
+        {
+          "vulnerable": false,
+          "criteria": "cpe:2.3:o:example:conditional_os:*:*:*:*:*:*:*:*"
+        }
+      ]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-UNKNOWN-OPERATOR",
+      "published": "2026-05-06T00:00:00.000",
+      "lastModified": "2026-05-06T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw applicability uses unsupported Boolean logic."}],
+      "references": [{"url": "https://example.invalid/unknown-operator"}],
+      "configurations": [{"nodes": [{"operator": "XOR", "negate": false, "cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "versionEndExcluding": "2026.5.6"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-MALFORMED-NEGATE",
+      "published": "2026-05-07T00:00:00.000",
+      "lastModified": "2026-05-07T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "OpenClaw applicability has a malformed negate value."}],
+      "references": [{"url": "https://example.invalid/malformed-negate"}],
+      "configurations": [{"nodes": [{"operator": "OR", "negate": "false", "cpeMatch": [{
+        "vulnerable": true,
+        "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+        "versionEndExcluding": "2026.5.7"
+      }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-AFFECTED-RANGE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-01T00:00:00.000",
+      "lastModified": "2026-06-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability with a CNA semver range."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/range"}],
+      "configurations": null,
+      "affected": [
+        {
+          "source": "security@nousresearch.com",
+          "affectedData": [{
+            "vendor": "NousResearch",
+            "product": "hermes-agent",
+            "defaultStatus": "unaffected",
+            "repo": "https://github.com/NousResearch/hermes-agent",
+            "packageURL": "pkg:npm/hermes-agent",
+            "versions": [{"version": "0", "lessThan": "0.16.0", "versionType": "semver", "status": "affected"}]
+          }]
+        },
+        {
+          "source": "secondary@example.com",
+          "affectedData": [{
+            "vendor": "NousResearch",
+            "product": "hermes-agent",
+            "versions": [{"version": "99.0.0", "status": "affected"}]
+          }]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-AFFECTED-EXACT",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-03T00:00:00.000",
+      "lastModified": "2026-06-03T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability with enumerated releases."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/exact"}],
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "nousresearch",
+          "product": "HERMES-AGENT",
+          "versions": [
+            {"version": "0.15.2", "status": "affected"},
+            {"version": "2026.5.29.2", "status": "affected"},
+            {"version": "2024.2.29.1", "versionType": "custom", "status": "affected"},
+            {"version": "2026.4.24", "status": "unaffected"},
+            {"version": "2026.4.23", "versionType": "semver", "status": "affected"}
+          ]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-AFFECTED-LTE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-04T00:00:00.000",
+      "lastModified": "2026-06-04T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability with an inclusive upper bound."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/lte"}],
+      "configurations": [],
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unknown",
+          "versions": [{"version": "0.18.2", "lessThanOrEqual": "0.21.0", "versionType": "semver", "status": "affected"}]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-DEFAULT-AFFECTED",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-05T00:00:00.000",
+      "lastModified": "2026-06-05T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent record whose unmatched versions are affected."}],
+      "references": [],
+      "configurations": null,
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "affected",
+          "versions": [{"version": "1.0.0", "status": "affected"}]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-MIXED-UNSUPPORTED-RANGE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-06T00:00:00.000",
+      "lastModified": "2026-06-06T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent record mixing exact and unsupported custom ranges."}],
+      "references": [],
+      "configurations": null,
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unaffected",
+          "versions": [
+            {"version": "1.0.0", "status": "affected"},
+            {"version": "release-a", "lessThan": "release-z", "versionType": "custom", "status": "affected"}
+          ]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-CHANGES",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-07T00:00:00.000",
+      "lastModified": "2026-06-07T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent record with status transitions inside a range."}],
+      "references": [],
+      "configurations": null,
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unaffected",
+          "versions": [{
+            "version": "1.0.0",
+            "lessThan": "2.0.0",
+            "versionType": "semver",
+            "status": "affected",
+            "changes": [{"at": "1.5.0", "status": "unaffected"}]
+          }]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-WRONG-STRUCTURED-IDENTITY",
+      "sourceIdentifier": "security@example.com",
+      "published": "2026-06-08T00:00:00.000",
+      "lastModified": "2026-06-08T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Free text says Hermes Agent but structured identity does not."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent"}],
+      "configurations": null,
+      "affected": [{
+        "source": "security@example.com",
+        "affectedData": [
+          {"vendor": "Example", "product": "hermes-agent", "versions": [{"version": "1.0.0", "status": "affected"}]},
+          {"vendor": "NousResearch", "product": "hermes-workflow", "versions": [{"version": "1.0.0", "status": "affected"}]}
+        ]
+      }]
+    }
+  }
+]

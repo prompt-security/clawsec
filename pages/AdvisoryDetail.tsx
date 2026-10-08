@@ -11,6 +11,14 @@ import {
   LOCAL_FEED_PATH,
 } from '../constants';
 
+const advisoryIdentifiers = (advisory: Advisory): string[] => [
+  advisory.id,
+  advisory.cve_id,
+  advisory.ghsa_id,
+  ...(advisory.ghsa_ids ?? []),
+  ...(advisory.aliases ?? []),
+].filter((identifier): identifier is string => typeof identifier === 'string' && identifier.length > 0);
+
 export const AdvisoryDetail: React.FC = () => {
   const { advisoryId } = useParams<{ advisoryId: string }>();
   const [advisory, setAdvisory] = useState<Advisory | null>(null);
@@ -38,7 +46,10 @@ export const AdvisoryDetail: React.FC = () => {
         }
 
         const feed: AdvisoryFeed = await response.json();
-        const found = feed.advisories.find((a) => a.id === decodeURIComponent(advisoryId));
+        const requestedIdentifier = decodeURIComponent(advisoryId).toUpperCase();
+        const found = feed.advisories.find((candidate) =>
+          advisoryIdentifiers(candidate).some((identifier) => identifier.toUpperCase() === requestedIdentifier),
+        );
 
         if (!found) {
           throw new Error('Advisory not found');
@@ -270,7 +281,7 @@ export const AdvisoryDetail: React.FC = () => {
           </div>
           {advisory.platforms && advisory.platforms.length > 0 && (
             <div className="flex justify-between md:block">
-              <dt className="text-gray-500 mb-1">Platforms</dt>
+              <dt className="text-gray-500 mb-1">Affected Components</dt>
               <dd className="text-white">{advisory.platforms.map((platform) => getPlatformDescriptor(platform).label).join(', ')}</dd>
             </div>
           )}

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.8] - 2026-10-08
+
+### Security
+
+- Matched four-component Hermes release-date builds only by exact equality and kept them separate from the runtime's independent SemVer identity.
+- Rejected impossible Gregorian date-build identities while retaining valid leap-day releases.
+- Treated cross-scheme advisory comparisons as indeterminate and fail-closed, with explicit warnings in guarded verification and scheduled advisory checks.
+
+### Testing
+
+- Added guarded verification and cron coverage for exact release-date matches and indeterminate SemVer-to-date comparisons.
+
 ## [0.1.7] - 2026-07-12
 
 ### Fixed

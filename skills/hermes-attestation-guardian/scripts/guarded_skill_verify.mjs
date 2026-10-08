@@ -2,14 +2,20 @@
 
 import fs from "node:fs";
 import { refreshAdvisoryFeed } from "../lib/feed.mjs";
-import { parseAffectedSpecifier, parseVersionSpec, versionMatches } from "../lib/semver.mjs";
+import {
+  hermesVersionIdentitiesAreIncomparable,
+  isExactDateBuildVersion,
+  parseAffectedSpecifier,
+  parseVersionSpec,
+  versionMatches,
+} from "../lib/semver.mjs";
 
 const EXIT_CONFIRM_REQUIRED = 42;
 
 function usage() {
   process.stdout.write(
     [
-      "Usage: node scripts/guarded_skill_verify.mjs --skill <name> [--version <semver>] [--confirm-advisory] [--allow-unsigned]",
+      "Usage: node scripts/guarded_skill_verify.mjs --skill <name> [--version <semver-or-date-build>] [--confirm-advisory] [--allow-unsigned]",
       "",
       "Verifies advisory feed state using the Hermes feed verification pipeline, then gates",
       "a candidate skill by advisory match before install/verification flows continue.",
@@ -67,8 +73,14 @@ function parseArgs(argv) {
   if (!/^[a-z0-9-]+$/.test(parsed.skill)) {
     throw new Error("Invalid --skill value. Use lowercase letters, digits, and hyphens only.");
   }
-  if (parsed.version && !/^v?\d+\.\d+\.\d+(?:[-+][0-9a-zA-Z.-]+)?$/.test(parsed.version)) {
-    throw new Error("Invalid --version value. Expected semver (for example: 1.2.3).");
+  if (
+    parsed.version
+    && !/^v?\d+\.\d+\.\d+(?:[-+][0-9a-zA-Z.-]+)?$/.test(parsed.version)
+    && !isExactDateBuildVersion(parsed.version)
+  ) {
+    throw new Error(
+      "Invalid --version value. Expected semver or an exact Hermes date build (for example: 2026.5.29.2).",
+    );
   }
 
   return parsed;
@@ -89,6 +101,7 @@ function findAdvisoryMatches(feed, skillName, version = "") {
 
     const matchedAffected = [];
     const unsupportedSpecs = [];
+    const indeterminateSpecs = [];
     for (const specifier of affected) {
       const parsed = parseAffectedSpecifier(specifier);
       if (!parsed) continue;
@@ -105,11 +118,17 @@ function findAdvisoryMatches(feed, skillName, version = "") {
       // Conservative default: if operator did not provide --version, any name match gates.
       if (!version || versionMatches(version, parsed.versionSpec)) {
         matchedAffected.push(specifier);
+      } else if (
+        (targetName === "hermes" || targetName === "hermes-agent")
+        && hermesVersionIdentitiesAreIncomparable(version, parsed.versionSpec)
+      ) {
+        matchedAffected.push(specifier);
+        indeterminateSpecs.push(specifier);
       }
     }
 
     if (matchedAffected.length > 0) {
-      matches.push({ advisory, matchedAffected, unsupportedSpecs });
+      matches.push({ advisory, matchedAffected, unsupportedSpecs, indeterminateSpecs });
     }
   }
 
@@ -131,6 +150,11 @@ function printMatches(matches, args) {
     if (Array.isArray(match.unsupportedSpecs) && match.unsupportedSpecs.length > 0) {
       process.stdout.write(
         `  warning: unsupported advisory version syntax treated as match (fail-closed): ${match.unsupportedSpecs.join(", ")}\n`,
+      );
+    }
+    if (Array.isArray(match.indeterminateSpecs) && match.indeterminateSpecs.length > 0) {
+      process.stdout.write(
+        `  warning: installed and advisory Hermes versions use unmapped identities; treating as indeterminate/possibly affected: ${match.indeterminateSpecs.join(", ")}\n`,
       );
     }
     if (advisory.action) {

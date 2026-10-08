@@ -4,8 +4,8 @@ import { Link } from 'react-router';
 import { Footer } from '../components/Footer';
 import { AdvisoryCard } from '../components/AdvisoryCard';
 import { Advisory, AdvisoryFeed, AdvisoryPlatformFilter } from '../types';
-import { matchesPlatformFilter } from '../utils/advisoryPlatforms';
-import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
+import { matchesAdvisoryComponentFilter } from '../utils/advisoryPlatforms';
+import { ADVISORY_COMPONENT_TABS, FilterTabs, type FilterTabOption } from '../components/FilterTabs';
 import {
   ADVISORY_FEED_URL,
   LEGACY_ADVISORY_FEED_URL,
@@ -75,7 +75,7 @@ export const FeedSetup: React.FC = () => {
         return false;
       }
 
-      return matchesPlatformFilter(a.platforms, selectedPlatform);
+      return matchesAdvisoryComponentFilter(a.platforms, selectedPlatform);
     }),
     [advisories, selectedSeverity, selectedPlatform],
   );
@@ -109,7 +109,8 @@ export const FeedSetup: React.FC = () => {
         <h1 className="text-3xl md:text-4xl text-clawd-800">Security Hardening Feed</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
           A continuous stream of security advisories from NVD CVE data and staff-approved community reports. 
-          This feed is automatically updated with OpenClaw, NanoClaw, Hermes, and Picoclaw-related vulnerabilities and verified security incidents.
+          This feed tracks vulnerabilities and verified security incidents across protected agent runtimes and infrastructure,
+          including OpenClaw, NanoClaw, Hermes, Picoclaw, OpenShell, and NemoClaw.
         </p>
         {lastUpdated && (
           <p className="text-xs text-gray-500">
@@ -129,9 +130,9 @@ export const FeedSetup: React.FC = () => {
           }}
         />
         <FilterTabs
-          tabs={PLATFORM_TABS}
+          tabs={ADVISORY_COMPONENT_TABS}
           selected={selectedPlatform}
-          ariaLabel="Filter advisories by platform"
+          ariaLabel="Filter advisories by affected component"
           onSelect={(value) => {
             setSelectedPlatform(value as AdvisoryPlatformFilter);
             setCurrentPage(1);

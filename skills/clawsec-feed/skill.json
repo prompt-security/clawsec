@@ -1,6 +1,6 @@
 {
   "name": "clawsec-feed",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Security advisory feed monitoring for AI agents. Subscribe to community-driven threat intelligence.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -30,6 +30,21 @@
         "path": "advisories/feed.json",
         "required": true,
         "description": "Community security advisory feed"
+      },
+      {
+        "path": "advisories/feed.json.sig",
+        "required": true,
+        "description": "Detached Ed25519 signature for the bundled advisory feed"
+      },
+      {
+        "path": "advisories/feed-signing-public.pem",
+        "required": true,
+        "description": "Pinned Ed25519 public key for advisory feed verification"
+      },
+      {
+        "path": "scripts/fetch_verified_feed.sh",
+        "required": true,
+        "description": "Fail-closed downloader for the signed advisory feed"
       }
     ]
   },
@@ -42,6 +57,7 @@
         "bash",
         "curl",
         "jq",
+        "openssl",
         "shasum",
         "unzip"
       ]

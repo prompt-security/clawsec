@@ -326,9 +326,19 @@ jobs:
           sign_advisory_artifacts() {
             local skill_dir="$1"
             local advisory_dir="${skill_dir}/advisories"
+            local skill_name
+            local tracked_feed
 
             if [ ! -d "$advisory_dir" ] || [ ! -f "$advisory_dir/feed.json" ]; then
               return 0
+            fi
+
+            skill_name="$(basename "$skill_dir")"
+            tracked_feed="skills/${skill_name}/advisories/feed.json"
+            if ! git diff --quiet "${BASE_SHA}...${HEAD_SHA}" -- "$tracked_feed"; then
+              node scripts/ci/validate_advisory_feed.mjs "$advisory_dir/feed.json"
+            else
+              echo "::notice::${tracked_feed} is unchanged; strict validation is deferred for the legacy baseline until the reviewed full rebuild."
             fi
 
             echo "  [Dry-run] Signing advisory artifacts with test key"
@@ -1045,6 +1055,9 @@ jobs:
         run: node scripts/ci/patch_clawhub_trust_extensions.mjs
 
       - name: Simulate tag release build
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           mkdir -p dist/tag-release-simulation
@@ -1052,12 +1065,21 @@ jobs:
           for skill_json in skills/*/skill.json; do
             skill_dir="${skill_json%/skill.json}"
             skill_name="$(basename "${skill_dir}")"
+            advisory_validation_args=()
+            if [ -f "${skill_dir}/advisories/feed.json" ]; then
+              if ! git diff --quiet "${BASE_SHA}...${HEAD_SHA}" -- "${skill_dir}/advisories/feed.json"; then
+                advisory_validation_args+=(--validate-advisory-feed)
+              else
+                echo "::notice::${skill_dir}/advisories/feed.json is unchanged; strict validation is deferred for the legacy baseline until the reviewed full rebuild."
+              fi
+            fi
             echo "::group::Simulate tag release build for ${skill_name}"
             node scripts/ci/simulate_skill_tag_release.mjs \
               "${skill_dir}" \
               "dist/tag-release-simulation/${skill_name}" \
               --repository "${{ github.repository }}" \
-              --source-ref "${{ github.event.pull_request.head.sha }}"
+              --source-ref "${{ github.event.pull_request.head.sha }}" \
+              "${advisory_validation_args[@]}"
             jq -e '.simulated_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9]+)?$")' \
               "dist/tag-release-simulation/${skill_name}/simulation-summary.json" >/dev/null
             test -s "dist/tag-release-simulation/${skill_name}/release-assets/checksums.json"
@@ -1227,6 +1249,19 @@ jobs:
           make -C /tmp/skillspector install
           echo "/tmp/skillspector-venv/bin" >> "$GITHUB_PATH"
           skillspector --help >/dev/null
+
+      - name: Validate embedded advisory feed before signing
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
+        run: node scripts/ci/validate_advisory_feed.mjs "${STEPS_PARSE_OUTPUTS_SKILL_PATH}/advisories/feed.json"
+        env:
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+
+      - name: Verify embedded advisory consumer releases
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+        run: node scripts/ci/verify_advisory_consumer_releases.mjs "${STEPS_PARSE_OUTPUTS_SKILL_PATH}/advisories/feed.json"
 
       - name: Sign embedded advisory feed and verify
         if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
@@ -1757,11 +1792,12 @@ jobs:
           files: release-assets/*
           body_path: ${{ runner.temp }}/skill-release-body.md
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          prerelease: ${{ contains(steps.parse.outputs.version, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete superseded releases
+        if: ${{ !contains(steps.parse.outputs.version, '-') }}
         run: |
           SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
           CURRENT_VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
@@ -2044,6 +2080,11 @@ jobs:
           cp scripts/ci/clawhub_release_package.mjs "$RUNNER_TEMP/clawhub_release_package.mjs"
           cp scripts/ci/release_path_policy.mjs "$RUNNER_TEMP/release_path_policy.mjs"
           cp scripts/ci/patch_clawhub_trust_extensions.mjs "$RUNNER_TEMP/patch_clawhub_trust_extensions.mjs"
+          mkdir -p "$RUNNER_TEMP/clawsec-current/scripts/ci"
+          mkdir -p "$RUNNER_TEMP/clawsec-current/skills/hermes-attestation-guardian/lib"
+          cp scripts/ci/validate_advisory_feed.mjs "$RUNNER_TEMP/clawsec-current/scripts/ci/validate_advisory_feed.mjs"
+          cp scripts/ci/verify_advisory_consumer_releases.mjs "$RUNNER_TEMP/clawsec-current/scripts/ci/verify_advisory_consumer_releases.mjs"
+          cp skills/hermes-attestation-guardian/lib/semver.mjs "$RUNNER_TEMP/clawsec-current/skills/hermes-attestation-guardian/lib/semver.mjs"
 
       - name: Checkout tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -2138,6 +2179,18 @@ jobs:
         run: node scripts/ci/validate_skill_install_docs.mjs --skills "${STEPS_PARSE_OUTPUTS_SKILL_PATH}"
         env:
           STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+
+      - name: Validate embedded advisory feed before ClawHub republish
+        run: |
+          set -euo pipefail
+          FEED_PATH="${STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH}/advisories/feed.json"
+          if [ -f "$FEED_PATH" ]; then
+            node "$RUNNER_TEMP/clawsec-current/scripts/ci/validate_advisory_feed.mjs" "$FEED_PATH"
+            node "$RUNNER_TEMP/clawsec-current/scripts/ci/verify_advisory_consumer_releases.mjs" "$FEED_PATH"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH: ${{ steps.clawhub-package.outputs.skill_path }}
 
       - name: Install clawhub CLI
         run: bash scripts/ci/install_clawhub_cli.sh
