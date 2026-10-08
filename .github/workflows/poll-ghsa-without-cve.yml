@@ -83,6 +83,11 @@ jobs:
       - name: Validate consolidated advisory feed
         run: node scripts/ci/validate_advisory_feed.mjs "$FEED_PATH"
 
+      - name: Verify advisory consumer releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/verify_advisory_consumer_releases.mjs "$FEED_PATH"
+
       - name: Detect feed changes
         id: changes
         run: |

@@ -193,6 +193,8 @@ jobs:
         run: node --test scripts/community-advisory-scope.test.mjs
       - name: Generated Advisory Feed Validation Tests
         run: node --test scripts/validate-advisory-feed.test.mjs
+      - name: Advisory Consumer Release Gate Tests
+        run: node --test scripts/verify-advisory-consumer-releases.test.mjs
       - name: ClawSec Feed Signature Fetch Tests
         run: node scripts/clawsec-feed-verifier.test.mjs
       - name: Matrix Advisory Consumer Compatibility

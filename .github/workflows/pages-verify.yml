@@ -80,6 +80,12 @@ jobs:
             echo "::notice::Canonical feed bytes are unchanged; strict validation is deferred for the legacy baseline until the reviewed full rebuild."
           fi
 
+      - name: Verify advisory consumer releases
+        if: steps.advisory_changes.outputs.canonical_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/verify_advisory_consumer_releases.mjs public/advisories/feed.json
+
       - name: Sign advisory feed and verify
         uses: $/.github/actions/sign-and-verify
         with:

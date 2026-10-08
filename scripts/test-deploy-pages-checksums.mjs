@@ -58,7 +58,23 @@ function assertProductionOrdering(source, workflowName) {
 
   const validateFeedBody = stepBody(source, "Validate advisory feed before signing");
   const validateGhsaBody = stepBody(source, "Validate provisional GHSA feed before signing");
+  const releaseGateIndex = stepIndex(source, "Verify advisory consumer releases");
+  const releaseGateBody = stepBody(source, "Verify advisory consumer releases");
+  assert.ok(
+    validateFeedIndex < releaseGateIndex && releaseGateIndex < signFeedIndex,
+    `${workflowName} must verify advisory consumer releases after validation and before signing`,
+  );
+  assert.match(
+    releaseGateBody,
+    /GH_TOKEN: \$\{\{ github\.token \}\}[\s\S]*verify_advisory_consumer_releases\.mjs public\/advisories\/feed\.json/,
+    `${workflowName} must authenticate and run the shared advisory consumer release gate`,
+  );
   if (workflowName === "Pages Verify") {
+    assert.match(
+      releaseGateBody,
+      /if: steps\.advisory_changes\.outputs\.canonical_changed == 'true'/,
+      "Pages Verify must gate consumer releases only when the canonical feed bytes changed",
+    );
     const detectChangesIndex = stepIndex(source, "Detect advisory feed changes");
     assert.ok(detectChangesIndex < validateFeedIndex, "Pages Verify must detect exact feed-byte changes before validation");
     assert.match(
@@ -82,6 +98,11 @@ function assertProductionOrdering(source, workflowName) {
       "Pages Verify must validate changed provisional GHSA bytes",
     );
   } else {
+    assert.doesNotMatch(
+      releaseGateBody,
+      /steps\.advisory_changes\.outputs\.canonical_changed/,
+      "Deploy Pages must always verify consumer compatibility before signing production feed bytes",
+    );
     assert.match(
       validateFeedBody,
       /node scripts\/ci\/validate_advisory_feed\.mjs public\/advisories\/feed\.json/,

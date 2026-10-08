@@ -21,6 +21,11 @@ test("community workflow uses strict parsing and validates the complete feed", (
   assert.match(communityWorkflow, /node scripts\/ci\/validate_advisory_feed\.mjs tmp_feed\.json/);
   assert.match(
     communityWorkflow,
+    /GH_TOKEN: \$\{\{ github\.token \}\}[\s\S]*validate_advisory_feed\.mjs tmp_feed\.json\n\s+node scripts\/ci\/verify_advisory_consumer_releases\.mjs tmp_feed\.json[\s\S]*mv tmp_feed\.json "\$FEED_PATH"/,
+    "Community advisories must pass the shared consumer release gate before replacing the canonical feed",
+  );
+  assert.match(
+    communityWorkflow,
     /published: \$published,\n\s+updated: \$published,/,
     "Community advisories must record a valid per-advisory update timestamp before strict validation",
   );

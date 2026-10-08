@@ -156,6 +156,11 @@ assert.match(
   'CI must run strict NVD product/version scoping tests before merge',
 );
 assert.match(
+  ciWorkflow,
+  /name: Advisory Consumer Release Gate Tests[\s\S]*node --test scripts\/verify-advisory-consumer-releases\.test\.mjs/,
+  'CI must exercise the shared advisory consumer release gate before merge',
+);
+assert.match(
   workflow,
   /name: Update feed\.json\n\s+if: inputs\.force_full_scan == true/,
   'A validated full scan must replace stale CVE state even when there are no delta changes',
@@ -225,6 +230,18 @@ const validateFeedIndex = requiredIndex(
   'node scripts/ci/validate_advisory_feed.mjs "$FEED_PATH"',
   'NVD workflow must validate the consolidated feed before signing',
 );
+const consumerReleaseGateIndex = requiredIndex(
+  'name: Verify advisory consumer releases',
+  'NVD workflow must gate exact Hermes date-build selectors on every compatible published consumer',
+);
+const consumerReleaseGateEnd = workflow.indexOf('\n      - name:', consumerReleaseGateIndex + 1);
+assert.notEqual(consumerReleaseGateEnd, -1, 'Advisory consumer release gate must have a bounded workflow body');
+const consumerReleaseGate = workflow.slice(consumerReleaseGateIndex, consumerReleaseGateEnd);
+assert.match(
+  consumerReleaseGate,
+  /GH_TOKEN: \$\{\{ github\.token \}\}[\s\S]*node scripts\/ci\/verify_advisory_consumer_releases\.mjs "\$FEED_PATH"/,
+  'NVD workflow must run the shared authenticated advisory consumer release gate',
+);
 const detectChangesIndex = requiredIndex(
   'name: Detect advisory feed changes',
   'NVD workflow must detect combined feed changes before signing',
@@ -251,9 +268,11 @@ assert.ok(
   'Combined feed change detection must run after GHSA consolidation',
 );
 assert.ok(
-  pollGhsaIndex < validateFeedIndex && validateFeedIndex < detectChangesIndex,
-  'Consolidated feed validation must run after GHSA merge and before change detection/signing',
+  pollGhsaIndex < validateFeedIndex && validateFeedIndex < consumerReleaseGateIndex,
+  'Advisory consumer compatibility must be checked only after final consolidated feed validation',
 );
+assert.ok(consumerReleaseGateIndex < detectChangesIndex, 'Feed change detection must run after the consumer release gate');
 assert.ok(detectChangesIndex < signGhsaIndex, 'GHSA signing must run after change detection');
 assert.ok(detectChangesIndex < signAgentIndex, 'Agent feed signing must run after change detection');
+assert.ok(consumerReleaseGateIndex < signAgentIndex, 'Agent feed signing must not bypass the consumer release gate');
 assert.ok(signAgentIndex < upsertPrIndex, 'The PR must be created after feed signing');
