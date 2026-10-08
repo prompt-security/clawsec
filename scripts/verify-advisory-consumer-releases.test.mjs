@@ -355,10 +355,19 @@ test("release verification audits each required asset for presence, size, and up
 });
 
 test("exact date-build release checks require repository and token context", async () => {
+  let networkCalls = 0;
+  const rejectNetwork = async () => {
+    networkCalls += 1;
+    throw new Error("credential validation must finish before network access");
+  };
+
   await assert.rejects(
     verifyAdvisoryConsumerReleases(feed("hermes-agent@2026.5.29.2"), {
-      repository: undefined,
+      // Empty strings deliberately override any GitHub Actions ambient values;
+      // `undefined` would activate the production environment fallback.
+      repository: "",
       token: "test-token",
+      fetchImpl: rejectNetwork,
     }),
     /GITHUB_REPOSITORY/,
   );
@@ -366,7 +375,9 @@ test("exact date-build release checks require repository and token context", asy
     verifyAdvisoryConsumerReleases(feed("hermes-agent@2026.5.29.2"), {
       repository: "prompt-security/clawsec",
       token: "",
+      fetchImpl: rejectNetwork,
     }),
     /GH_TOKEN or GITHUB_TOKEN/,
   );
+  assert.equal(networkCalls, 0, "missing context must fail before any GitHub API request");
 });
