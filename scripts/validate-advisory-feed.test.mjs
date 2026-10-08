@@ -105,6 +105,18 @@ function hermesGlobalGhsaSourceAdvisory(overrides = {}) {
   });
 }
 
+function reviewedGhsaProvenance(ghsaId, overrides = {}) {
+  return {
+    ghsa_id: ghsaId,
+    source_kind: "global_reviewed_package",
+    repository: "nousresearch/hermes-agent",
+    ecosystem: "pip",
+    package: "hermes-agent",
+    github_reviewed_at: "2026-06-19T14:47:03Z",
+    ...overrides,
+  };
+}
+
 function ghsaSourceFeed({ advisories = [], enrichmentAdvisories = [], excludedIds = [] } = {}) {
   return {
     version: "0.1.0",
@@ -240,6 +252,29 @@ test("rejects empty, duplicate, and unscoped feeds", () => {
   assert.throws(
     () => validateAdvisoryFeed(feed([advisory({ affected: ["openclaw@banana"] })])),
     /unsupported affected version scope/,
+  );
+});
+
+test("validates exact Hermes date builds as Gregorian calendar dates", () => {
+  const exactHermesAdvisory = (version) => nvdAdvisory({
+    affected: [`hermes-agent@${version}`],
+    authoritative_nvd_affected: [`hermes-agent@${version}`],
+    platforms: ["hermes"],
+  });
+
+  assert.equal(
+    validateAdvisoryFeed(feed([exactHermesAdvisory("2024.2.29.1")])).advisories.length,
+    1,
+    "a real leap-day date build must remain publishable",
+  );
+  assert.equal(
+    validateAdvisoryFeed(feed([exactHermesAdvisory("0096.2.29.1")])).advisories.length,
+    1,
+    "low Gregorian years must not be remapped through Date.UTC",
+  );
+  assert.throws(
+    () => validateAdvisoryFeed(feed([exactHermesAdvisory("2026.2.29.1")])),
+    /authoritative NVD scope must contain an explicit version range/,
   );
 });
 
@@ -402,6 +437,101 @@ test("rejects canonical and alias identity collisions", () => {
 test("accepts reviewed global Hermes package provenance", () => {
   const value = ghsaSourceFeed({ advisories: [hermesGlobalGhsaSourceAdvisory()] });
   assert.equal(validateAdvisoryFeed(value), value);
+});
+
+test("accepts deterministic per-GHSA reviewed provenance on a canonical CVE", () => {
+  const firstGhsaId = "GHSA-aaaa-1111-2222";
+  const secondGhsaId = "GHSA-zzzz-1111-2222";
+  const value = feed([nvdAdvisory({
+    cve_id: "CVE-2026-1000",
+    ghsa_id: firstGhsaId,
+    ghsa_ids: [firstGhsaId, secondGhsaId],
+    aliases: ["CVE-2026-1000", firstGhsaId, secondGhsaId],
+    affected: ["hermes-agent@<0.16.0"],
+    authoritative_nvd_affected: ["hermes-agent@<0.16.0"],
+    platforms: ["hermes"],
+    reviewed_ghsa_provenance: [
+      reviewedGhsaProvenance(firstGhsaId),
+      reviewedGhsaProvenance(secondGhsaId, {
+        github_reviewed_at: "2026-06-20T14:47:03Z",
+      }),
+    ],
+  })]);
+
+  assert.equal(validateAdvisoryFeed(value), value);
+});
+
+test("rejects malformed, stale, or nondeterministic reviewed GHSA provenance", () => {
+  const firstGhsaId = "GHSA-aaaa-1111-2222";
+  const secondGhsaId = "GHSA-zzzz-1111-2222";
+  const valid = nvdAdvisory({
+    cve_id: "CVE-2026-1000",
+    ghsa_id: firstGhsaId,
+    ghsa_ids: [firstGhsaId, secondGhsaId],
+    aliases: ["CVE-2026-1000", firstGhsaId, secondGhsaId],
+    affected: ["hermes-agent@<0.16.0"],
+    authoritative_nvd_affected: ["hermes-agent@<0.16.0"],
+    platforms: ["hermes"],
+    reviewed_ghsa_provenance: [
+      reviewedGhsaProvenance(firstGhsaId),
+      reviewedGhsaProvenance(secondGhsaId),
+    ],
+  });
+  const validate = (overrides) => validateAdvisoryFeed(feed([{ ...valid, ...overrides }]));
+
+  for (const [overrides, expected] of [
+    [{ reviewed_ghsa_provenance: [] }, /must be a non-empty array/],
+    [{ reviewed_ghsa_provenance: {} }, /must be a non-empty array/],
+    [{
+      reviewed_ghsa_provenance: [
+        reviewedGhsaProvenance(firstGhsaId),
+        reviewedGhsaProvenance(firstGhsaId),
+      ],
+    }, /must not repeat a GHSA identity/],
+    [{
+      reviewed_ghsa_provenance: [
+        reviewedGhsaProvenance(secondGhsaId),
+        reviewedGhsaProvenance(firstGhsaId),
+      ],
+    }, /must be sorted by ghsa_id/],
+    [{
+      ghsa_ids: [firstGhsaId],
+      reviewed_ghsa_provenance: [reviewedGhsaProvenance(secondGhsaId)],
+    }, /must appear in both ghsa_ids and aliases/],
+    [{
+      reviewed_ghsa_provenance: [reviewedGhsaProvenance(firstGhsaId, {
+        source_kind: "repository",
+      })],
+    }, /source_kind must identify the reviewed global package source/],
+    [{
+      reviewed_ghsa_provenance: [reviewedGhsaProvenance(firstGhsaId, {
+        repository: "openclaw/openclaw",
+      })],
+    }, /repository must be nousresearch\/hermes-agent/],
+    [{
+      reviewed_ghsa_provenance: [reviewedGhsaProvenance(firstGhsaId, {
+        ecosystem: "npm",
+      })],
+    }, /ecosystem must be pip/],
+    [{
+      reviewed_ghsa_provenance: [reviewedGhsaProvenance(firstGhsaId, {
+        package: "hermes",
+      })],
+    }, /package must be hermes-agent/],
+    [{
+      reviewed_ghsa_provenance: [reviewedGhsaProvenance(firstGhsaId, {
+        github_reviewed_at: "not-a-date",
+      })],
+    }, /github_reviewed_at must be a valid date/],
+    [{
+      reviewed_ghsa_provenance: [{
+        ...reviewedGhsaProvenance(firstGhsaId),
+        unexpected: true,
+      }],
+    }, /must contain exactly the reviewed GHSA provenance fields/],
+  ]) {
+    assert.throws(() => validate(overrides), expected);
+  }
 });
 
 test("keeps provisional Hermes repository advisories alongside the reviewed global source", () => {

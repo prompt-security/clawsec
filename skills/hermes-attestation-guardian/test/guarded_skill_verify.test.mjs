@@ -94,6 +94,15 @@ function localFeedEnv({ feedPath, feedSigPath, checksumsPath, checksumsSigPath, 
   };
 }
 
+const impossibleDateBuild = runNode([
+  "--skill",
+  "hermes-agent",
+  "--version",
+  "2026.2.30.1",
+]);
+assert.equal(impossibleDateBuild.status, 1, impossibleDateBuild.stderr);
+assert.ok(impossibleDateBuild.stderr.includes("Invalid --version value"), impossibleDateBuild.stderr);
+
 await withTempDir(async (tempDir) => {
   const keys = crypto.generateKeyPairSync("ed25519");
   const artifacts = await writeFeedArtifacts({
@@ -150,7 +159,7 @@ await withTempDir(async (tempDir) => {
       {
         id: "ADV-HERMES-DATE-BUILD",
         severity: "high",
-        affected: ["hermes-agent@2026.5.29.2"],
+        affected: ["hermes-agent@2026.5.29.2", "hermes-agent@2024.2.29.1"],
       },
     ],
   });
@@ -160,6 +169,12 @@ await withTempDir(async (tempDir) => {
     ...localFeedEnv(artifacts),
   });
   assert.equal(exactResult.status, 42, `exact Hermes date build must gate: ${exactResult.stderr}`);
+
+  const leapDayResult = runNode(["--skill", "hermes-agent", "--version", "2024.2.29.1"], {
+    ...hermesEnv(tempDir),
+    ...localFeedEnv(artifacts),
+  });
+  assert.equal(leapDayResult.status, 42, `valid leap-day Hermes build must gate: ${leapDayResult.stderr}`);
 
   const alternateIdentityResult = runNode(["--skill", "hermes-agent", "--version", "0.15.2"], {
     ...hermesEnv(tempDir),

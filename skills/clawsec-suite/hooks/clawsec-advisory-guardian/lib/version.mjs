@@ -4,6 +4,8 @@ const SEMVER_REGEX = new RegExp(
 );
 const EXACT_DATE_BUILD_PATTERN = String.raw`[vV]?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])\.\d+`;
 const EXACT_DATE_BUILD_REGEX = new RegExp(`^${EXACT_DATE_BUILD_PATTERN}$`);
+const EXACT_DATE_BUILD_PARTS_REGEX = /^[vV]?(\d{4})\.(\d{1,2})\.(\d{1,2})\.(\d+)$/;
+const DATE_BUILD_SHAPE_REGEX = /^[vV]?\d{4}(?:\.\d+){3}$/;
 const EXACT_DATE_BUILD_SPEC_REGEX = new RegExp(`^=\\s*(${EXACT_DATE_BUILD_PATTERN})$`);
 const HERMES_DATE_VERSION_PATTERN = String.raw`[vV]?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])(?:\.\d+)?`;
 const HERMES_DATE_VERSION_REGEX = new RegExp(`^${HERMES_DATE_VERSION_PATTERN}$`);
@@ -41,6 +43,17 @@ function parseSemverDetails(version) {
 function normalizeExactDateBuild(version) {
   const normalized = String(version ?? "").trim();
   if (!EXACT_DATE_BUILD_REGEX.test(normalized)) return null;
+
+  const parts = normalized.match(EXACT_DATE_BUILD_PARTS_REGEX);
+  if (!parts) return null;
+  const year = Number.parseInt(parts[1], 10);
+  const month = Number.parseInt(parts[2], 10);
+  const day = Number.parseInt(parts[3], 10);
+  // Validate numerically so Date.UTC cannot remap years 00-99 to 1900-1999.
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day > daysInMonth[month - 1]) return null;
+
   return normalized.replace(/^v/i, "");
 }
 
@@ -53,7 +66,11 @@ export function isExactDateBuildVersion(version) {
 }
 
 export function isHermesDateVersionIdentity(version) {
-  return HERMES_DATE_VERSION_REGEX.test(String(version ?? "").trim());
+  const normalized = String(version ?? "").trim();
+  if (DATE_BUILD_SHAPE_REGEX.test(normalized)) {
+    return normalizeExactDateBuild(normalized) !== null;
+  }
+  return HERMES_DATE_VERSION_REGEX.test(normalized);
 }
 
 /**
@@ -67,11 +84,16 @@ function exactDateBuildFromSpec(spec) {
 }
 
 export function hermesVersionIdentitiesAreIncomparable(version, rawSpec) {
+  const normalizedVersion = String(version ?? "").trim();
+  if (DATE_BUILD_SHAPE_REGEX.test(normalizedVersion) && !normalizeExactDateBuild(normalizedVersion)) {
+    return true;
+  }
+
   const parsedSpec = parseVersionSpec(rawSpec);
   if (!parsedSpec.supported || parsedSpec.normalized === "*" || versionMatches(version, rawSpec)) {
     return false;
   }
-  const installedUsesDateIdentity = isHermesDateVersionIdentity(version);
+  const installedUsesDateIdentity = isHermesDateVersionIdentity(normalizedVersion);
   const specUsesDateIdentity = HERMES_DATE_VERSION_IN_SPEC_REGEX.test(String(rawSpec ?? ""));
   return installedUsesDateIdentity !== specUsesDateIdentity;
 }

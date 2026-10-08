@@ -56,6 +56,8 @@ assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-RANGE").affected, [
 ]);
 assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-RANGE").platforms, ["hermes"]);
 assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-EXACT").affected, [
+  "hermes-agent@0.15.2",
+  "hermes-agent@2024.2.29.1",
   "hermes-agent@2026.4.23",
   "hermes-agent@2026.5.29.2",
 ]);
@@ -164,6 +166,81 @@ assert.deepEqual(
   transformRecords([hermesWithOrderedDateBuilds]),
   [],
   "Four-part Hermes date builds may be matched exactly but must not gain SemVer ordering",
+);
+
+const hermesWithCustomOrderedDateBuilds = JSON.parse(JSON.stringify(sourceHermesRange));
+hermesWithCustomOrderedDateBuilds.cve.affected[0].affectedData[0].versions[0] = {
+  version: "2026.5.29.0",
+  lessThan: "2026.5.29.3",
+  versionType: "custom",
+  status: "affected",
+};
+assert.deepEqual(
+  transformRecords([hermesWithCustomOrderedDateBuilds]),
+  [],
+  "Custom four-part Hermes date builds must remain exact-only",
+);
+
+const hermesWithCustomInclusiveOrderedDateBuilds = JSON.parse(
+  JSON.stringify(sourceHermesRange),
+);
+hermesWithCustomInclusiveOrderedDateBuilds.cve.affected[0].affectedData[0].versions[0] = {
+  version: "2026.5.29.0",
+  lessThanOrEqual: "2026.5.29.3",
+  versionType: "custom",
+  status: "affected",
+};
+assert.deepEqual(
+  transformRecords([hermesWithCustomInclusiveOrderedDateBuilds]),
+  [],
+  "Custom four-part Hermes date builds must reject inclusive ordered ranges too",
+);
+
+const sourceHermesExact = sourceRecords.find(
+  ({ cve }) => cve.id === "CVE-TEST-HERMES-AFFECTED-EXACT",
+);
+const hermesWithImpossibleDateBuild = JSON.parse(JSON.stringify(sourceHermesExact));
+hermesWithImpossibleDateBuild.cve.affected[0].affectedData[0].versions = [{
+  version: "2026.2.30.1",
+  versionType: "custom",
+  status: "affected",
+}];
+assert.deepEqual(
+  transformRecords([hermesWithImpossibleDateBuild]),
+  [],
+  "Impossible Gregorian date builds must not be published",
+);
+
+for (const [version, publishable] of [
+  ["1900.2.29.1", false],
+  ["2000.2.29.1", true],
+  ["2100.2.29.1", false],
+  ["2400.2.29.1", true],
+]) {
+  const hermesWithCenturyBoundary = JSON.parse(JSON.stringify(sourceHermesExact));
+  hermesWithCenturyBoundary.cve.affected[0].affectedData[0].versions = [{
+    version,
+    versionType: "custom",
+    status: "affected",
+  }];
+  const centuryBoundaryResult = transformRecords([hermesWithCenturyBoundary]);
+  assert.deepEqual(
+    centuryBoundaryResult.flatMap((advisory) => advisory.affected),
+    publishable ? [`hermes-agent@${version}`] : [],
+    `${version} must ${publishable ? "pass" : "fail"} Gregorian century-boundary validation`,
+  );
+}
+
+const hermesWithCustomSemver = JSON.parse(JSON.stringify(sourceHermesExact));
+hermesWithCustomSemver.cve.affected[0].affectedData[0].versions = [{
+  version: "0.15.2",
+  versionType: "custom",
+  status: "affected",
+}];
+assert.deepEqual(
+  transformRecords([hermesWithCustomSemver]),
+  [],
+  "Exact SemVer tokens must remain limited to missing or semver versionType",
 );
 
 const sourceOpenShell = sourceRecords.find(({ cve }) => cve.id === "CVE-TEST-OPEN-SHELL");

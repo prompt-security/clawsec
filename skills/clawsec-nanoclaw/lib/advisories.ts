@@ -22,16 +22,46 @@ import {
 } from './signatures.js';
 
 const DEFAULT_FEED_URL = 'https://clawsec.prompt.security/advisories/feed.json';
-const EXACT_DATE_BUILD_PATTERN = String.raw`v?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])\.\d+`;
-const HERMES_DATE_VERSION_PATTERN = String.raw`v?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])(?:\.\d+)?`;
+const EXACT_DATE_BUILD_PATTERN = String.raw`[vV]?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])\.\d+`;
+const EXACT_DATE_BUILD_REGEX = new RegExp(`^${EXACT_DATE_BUILD_PATTERN}$`);
+const EXACT_DATE_BUILD_PARTS_REGEX = /^[vV]?(\d{4})\.(\d{1,2})\.(\d{1,2})\.(\d+)$/;
+const DATE_BUILD_SHAPE_REGEX = /^[vV]?\d{4}(?:\.\d+){3}$/;
+const HERMES_DATE_VERSION_PATTERN = String.raw`[vV]?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])(?:\.\d+)?`;
 const HERMES_DATE_VERSION_REGEX = new RegExp(`^${HERMES_DATE_VERSION_PATTERN}$`);
 const HERMES_DATE_VERSION_IN_SPEC_REGEX = new RegExp(HERMES_DATE_VERSION_PATTERN);
 
+function normalizeExactDateBuild(version: string): string | null {
+  const normalized = version.trim();
+  if (!EXACT_DATE_BUILD_REGEX.test(normalized)) return null;
+
+  const parts = normalized.match(EXACT_DATE_BUILD_PARTS_REGEX);
+  if (!parts) return null;
+  const year = parseInt(parts[1], 10);
+  const month = parseInt(parts[2], 10);
+  const day = parseInt(parts[3], 10);
+  // Validate numerically so Date.UTC cannot remap years 00-99 to 1900-1999.
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day > daysInMonth[month - 1]) return null;
+
+  return normalized.replace(/^v/i, '');
+}
+
+function hasImpossibleExactDateBuildSpec(versionSpec: string): boolean {
+  const candidate = versionSpec.trim().match(/^=?\s*([vV]?\d{4}(?:\.\d+){3})$/)?.[1];
+  return candidate !== undefined && normalizeExactDateBuild(candidate) === null;
+}
+
 function hermesVersionIdentitiesAreIncomparable(version: string, versionSpec: string): boolean {
+  const normalizedVersion = version.trim();
+  if (DATE_BUILD_SHAPE_REGEX.test(normalizedVersion) && !normalizeExactDateBuild(normalizedVersion)) {
+    return true;
+  }
+
   const normalizedSpec = versionSpec.trim();
   if (normalizedSpec === '' || normalizedSpec === '*') return false;
 
-  return HERMES_DATE_VERSION_REGEX.test(version.trim())
+  return HERMES_DATE_VERSION_REGEX.test(normalizedVersion)
     !== HERMES_DATE_VERSION_IN_SPEC_REGEX.test(normalizedSpec);
 }
 
@@ -52,7 +82,11 @@ export function isValidFeedPayload(raw: unknown): raw is AdvisoryFeed {
     if (typeof adv.id !== 'string' || !adv.id.trim()) return false;
     if (typeof adv.severity !== 'string' || !adv.severity.trim()) return false;
     if (!Array.isArray(adv.affected)) return false;
-    if (!adv.affected.every((entry) => typeof entry === 'string' && entry.trim())) return false;
+    for (const entry of adv.affected) {
+      if (typeof entry !== 'string' || !entry.trim()) return false;
+      const parsed = parseAffectedSpecifier(entry);
+      if (parsed && hasImpossibleExactDateBuildSpec(parsed.versionSpec)) return false;
+    }
   }
 
   return true;
@@ -97,9 +131,10 @@ export function versionMatches(version: string, versionSpec: string): boolean {
   // Hermes also exposes an independent four-component release-date identity.
   // Match explicitly enumerated values only; never order them as SemVer or
   // infer equivalence with the package's separate 0.x version.
-  const exactDateBuildSpec = spec.match(new RegExp(`^=?\\s*(${EXACT_DATE_BUILD_PATTERN})$`))?.[1];
+  const exactDateBuildSpec = spec.match(/^=?\s*([vV]?\d{4}(?:\.\d+){3})$/)?.[1];
   if (exactDateBuildSpec) {
-    return v.replace(/^v/i, '') === exactDateBuildSpec.replace(/^v/i, '');
+    const normalizedSpec = normalizeExactDateBuild(exactDateBuildSpec);
+    return normalizedSpec !== null && normalizeExactDateBuild(v) === normalizedSpec;
   }
 
   // Exact match

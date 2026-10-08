@@ -310,6 +310,10 @@ const retainedHermesGhsa = consolidatedFeed.advisories.find(
 assert.deepEqual(retainedHermesGhsa?.aliases, ['GHSA-hrm1-1111-2222', 'CVE-2026-5555']);
 assert.deepEqual(retainedHermesGhsa?.affected, ['hermes-agent@< 0.16.0']);
 assert.deepEqual(retainedHermesGhsa?.patched, ['hermes-agent@0.16.0']);
+assert.equal(retainedHermesGhsa?.ghsa_source_kind, GLOBAL_REVIEWED_PACKAGE_SOURCE);
+assert.equal(retainedHermesGhsa?.ghsa_source_ecosystem, 'pip');
+assert.equal(retainedHermesGhsa?.ghsa_source_package, 'hermes-agent');
+assert.equal(retainedHermesGhsa?.github_reviewed_at, '2026-05-22T00:00:00Z');
 assert.deepEqual(
   consolidatedFeed.advisories.find((entry) => entry.id === 'GHSA-rjct-1111-2222')?.aliases,
   ['GHSA-rjct-1111-2222', 'CVE-2026-3333'],
@@ -353,6 +357,14 @@ const hermesAfterNvd = buildConsolidatedAdvisoryFeed({
 });
 const canonicalHermes = hermesAfterNvd.advisories.find((entry) => entry.id === 'CVE-2026-5555');
 assert.deepEqual(canonicalHermes?.aliases, ['CVE-2026-5555', 'GHSA-hrm1-1111-2222']);
+assert.deepEqual(canonicalHermes?.reviewed_ghsa_provenance, [{
+  ghsa_id: 'GHSA-hrm1-1111-2222',
+  source_kind: GLOBAL_REVIEWED_PACKAGE_SOURCE,
+  repository: 'nousresearch/hermes-agent',
+  ecosystem: 'pip',
+  package: 'hermes-agent',
+  github_reviewed_at: '2026-05-22T00:00:00Z',
+}]);
 assert.equal(
   hermesAfterNvd.advisories.some((entry) => entry.id === 'GHSA-hrm1-1111-2222'),
   false,
@@ -360,6 +372,7 @@ assert.equal(
 );
 assert.equal(validateAdvisoryFeed(ghsaFeed), ghsaFeed);
 assert.equal(validateAdvisoryFeed(consolidatedFeed), consolidatedFeed);
+assert.equal(validateAdvisoryFeed(hermesAfterNvd), hermesAfterNvd);
 assert.equal(consolidatedFeed.advisories[1].source_feed, 'ghsa-without-cve');
 const enrichedCve = consolidatedFeed.advisories.find((entry) => entry.id === 'CVE-2026-2222');
 assert.equal(enrichedCve.ghsa_id, 'GHSA-cvea-1111-2222');

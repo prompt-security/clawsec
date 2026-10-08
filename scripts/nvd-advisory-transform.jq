@@ -217,11 +217,18 @@ def supported_semver_token:
   and test("^[vV]?[0-9]+(?:\\.[0-9]+){0,2}(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$");
 
 def supported_date_build_token:
+  # Numeric Gregorian validation avoids runtime-specific date parsing quirks.
   (type == "string")
-  and test("^[vV]?[0-9]{4}\\.(?:[1-9]|1[0-2])\\.(?:[1-9]|[12][0-9]|3[01])\\.[0-9]+$");
-
-def supported_exact_version_token:
-  supported_semver_token or supported_date_build_token;
+  and test("^[vV]?[0-9]{4}\\.(?:[1-9]|1[0-2])\\.(?:[1-9]|[12][0-9]|3[01])\\.[0-9]+$")
+  and (
+    capture("^[vV]?(?<year>[0-9]{4})\\.(?<month>[0-9]{1,2})\\.(?<day>[0-9]{1,2})\\.[0-9]+$") as $date
+    | ($date.year | tonumber) as $year
+    | ($date.month | tonumber) as $month
+    | ($date.day | tonumber) as $day
+    | ($year % 4 == 0 and (($year % 100 != 0) or ($year % 400 == 0))) as $leap_year
+    | [31, (if $leap_year then 29 else 28 end), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][$month - 1] as $days_in_month
+    | $day <= $days_in_month
+  );
 
 def valid_nvd_affected_status:
   . == "affected" or . == "unaffected" or . == "unknown";
@@ -262,8 +269,13 @@ def nvd_affected_version_translation:
         }
         else {supported: false, scope: null}
         end
-    elif (((($entry | has("versionType")) | not) or ($entry.versionType == "semver"))
-          and ($entry.version | supported_exact_version_token))
+    elif (
+      ($entry.version | supported_date_build_token)
+      or (
+        ((($entry | has("versionType")) | not) or ($entry.versionType == "semver"))
+        and ($entry.version | supported_semver_token)
+      )
+    )
     then {supported: true, scope: $entry.version}
     else {supported: false, scope: null}
     end;

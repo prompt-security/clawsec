@@ -7,6 +7,7 @@
 - Matched advisory suppressions and notification state across canonical CVE and GHSA aliases.
 - Prevented duplicate alerts when a GHSA later matures into a CVE.
 - Surfaced installed products with unknown versions as indeterminate instead of silently treating them as safe.
+- Matched valid four-component Hermes release-date identities only by exact equality, rejected impossible Gregorian dates, and surfaced incompatible or invalid identities as indeterminate.
 - Required the portable heartbeat to verify the detached feed signature for both remote and fallback feeds.
 
 ### Changed
