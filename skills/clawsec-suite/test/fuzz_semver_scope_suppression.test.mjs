@@ -70,6 +70,12 @@ function runConsolidatedFeedRangeRegressions() {
   assert.equal(versionMatches("1.2.3", ">= 1.0.0 <"), false);
   assert.equal(compareSemver("1.2.3-beta.2", "1.2.3-beta.10"), -1);
   assert.equal(compareSemver("1.2.3", "1.2.3-beta.10"), 1);
+  assert.equal(versionMatches("2026.5.29.2", "2026.5.29.2"), true);
+  assert.equal(versionMatches("v2026.5.29.2", "=2026.5.29.2"), true);
+  assert.equal(versionMatches("2026.5.29.1", "2026.5.29.2"), false);
+  assert.equal(versionMatches("0.15.2", "2026.5.29.2"), false);
+  assert.equal(versionMatches("2026.5.29.2", "<=2026.5.29.2"), false);
+  assert.equal(parseSemver("2026.5.29.2"), null);
 }
 
 function runAdvisoryScopeProperties() {

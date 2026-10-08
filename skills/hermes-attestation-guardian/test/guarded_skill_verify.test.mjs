@@ -148,6 +148,66 @@ await withTempDir(async (tempDir) => {
     keyPair: keys,
     advisories: [
       {
+        id: "ADV-HERMES-DATE-BUILD",
+        severity: "high",
+        affected: ["hermes-agent@2026.5.29.2"],
+      },
+    ],
+  });
+
+  const exactResult = runNode(["--skill", "hermes-agent", "--version", "2026.5.29.2"], {
+    ...hermesEnv(tempDir),
+    ...localFeedEnv(artifacts),
+  });
+  assert.equal(exactResult.status, 42, `exact Hermes date build must gate: ${exactResult.stderr}`);
+
+  const alternateIdentityResult = runNode(["--skill", "hermes-agent", "--version", "0.15.2"], {
+    ...hermesEnv(tempDir),
+    ...localFeedEnv(artifacts),
+  });
+  assert.equal(
+    alternateIdentityResult.status,
+    42,
+    `unmapped Hermes semver/date identity must gate as indeterminate: ${alternateIdentityResult.stderr}`,
+  );
+  assert.ok(
+    alternateIdentityResult.stdout.includes("unmapped identities; treating as indeterminate/possibly affected"),
+    alternateIdentityResult.stdout,
+  );
+});
+
+await withTempDir(async (tempDir) => {
+  const keys = crypto.generateKeyPairSync("ed25519");
+  const artifacts = await writeFeedArtifacts({
+    dir: tempDir,
+    keyPair: keys,
+    advisories: [
+      {
+        id: "ADV-HERMES-SEMVER-RANGE",
+        severity: "high",
+        affected: ["hermes-agent@<0.16.0"],
+      },
+    ],
+  });
+
+  const result = runNode(["--skill", "hermes-agent", "--version", "2026.5.29.2"], {
+    ...hermesEnv(tempDir),
+    ...localFeedEnv(artifacts),
+  });
+  assert.equal(result.status, 42, `unmapped Hermes date/semver identity must gate: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes("unmapped identities; treating as indeterminate/possibly affected"),
+    result.stdout,
+  );
+});
+
+await withTempDir(async (tempDir) => {
+  const keys = crypto.generateKeyPairSync("ed25519");
+  const artifacts = await writeFeedArtifacts({
+    dir: tempDir,
+    keyPair: keys,
+    advisories: [
+      {
         id: "ADV-NONMATCH",
         severity: "medium",
         affected: ["different-skill@>=1.0.0"],

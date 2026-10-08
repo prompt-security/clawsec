@@ -24,8 +24,9 @@ const PROTECTED_CPE_COMPONENTS = new Map([
   // independent CPE identities.
   ["openclaw:openclaw", "openclaw"],
   ["nanoco:nanoclaw", "nanoclaw"],
-  // Hermes has no confirmed NVD product CPE. Its authoritative scoped records
-  // currently enter through the NousResearch/hermes-agent GHSA repository.
+  // Hermes has no confirmed NVD product CPE. Its authoritative scope comes
+  // from exact NVD CNA affected data, repository advisories, or GitHub's
+  // reviewed global pip/hermes-agent advisory index.
   ["sipeed:picoclaw", "picoclaw"],
   ["nvidia:nemoclaw", "nemoclaw"],
   ["nvidia:openshell", "openshell"],
@@ -35,6 +36,10 @@ const SEVERITIES = new Set(["low", "medium", "high", "critical"]);
 const GHSA_IDENTIFIER = /^GHSA-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}$/i;
 const CVE_IDENTIFIER = /^CVE-\d{4}-\d{4,}$/i;
 const GHSA_SOURCE_STATUSES = new Set(["active", "matured", "stale"]);
+const GLOBAL_REVIEWED_PACKAGE_SOURCE = "global_reviewed_package";
+const HERMES_GHSA_REPOSITORY = "nousresearch/hermes-agent";
+const HERMES_GHSA_ECOSYSTEM = "pip";
+const HERMES_GHSA_PACKAGE = "hermes-agent";
 const PROTECTED_GHSA_REPOSITORIES = new Map([
   ["openclaw/openclaw", "openclaw"],
   ["qwibitai/nanoclaw", "nanoclaw"],
@@ -283,6 +288,37 @@ function validateGhsaSourceEntry(advisory, collectionLabel, { enrichment = false
   if (!repositoryPlatform) {
     throw new Error(`${advisoryId}: repository is not an allowlisted protected GHSA source`);
   }
+  const globalSourceFields = [
+    "ghsa_source_kind",
+    "ghsa_source_ecosystem",
+    "ghsa_source_package",
+    "github_reviewed_at",
+  ];
+  const hasGlobalSourceMetadata = globalSourceFields.some((field) => owns(advisory, field));
+  const isHermesRepository = repository.toLowerCase() === HERMES_GHSA_REPOSITORY;
+  const hasGlobalAdvisoryUrl = String(advisory.github_advisory_url ?? "")
+    .startsWith("https://github.com/advisories/");
+  const isHermesGlobalSource = isHermesRepository
+    && (hasGlobalSourceMetadata || hasGlobalAdvisoryUrl);
+  if (isHermesGlobalSource) {
+    if (advisory.ghsa_source_kind !== GLOBAL_REVIEWED_PACKAGE_SOURCE) {
+      throw new Error(`${advisoryId}: Hermes GHSA entries must come from the reviewed global package source`);
+    }
+    if (advisory.ghsa_source_ecosystem !== HERMES_GHSA_ECOSYSTEM) {
+      throw new Error(`${advisoryId}: Hermes GHSA source ecosystem must be pip`);
+    }
+    if (advisory.ghsa_source_package !== HERMES_GHSA_PACKAGE) {
+      throw new Error(`${advisoryId}: Hermes GHSA source package must be hermes-agent`);
+    }
+    if (!Number.isFinite(Date.parse(advisory.github_reviewed_at))) {
+      throw new Error(`${advisoryId}: github_reviewed_at must be a valid date`);
+    }
+    if (advisory.withdrawn_at !== null) {
+      throw new Error(`${advisoryId}: reviewed global package advisory must not be withdrawn`);
+    }
+  } else if (hasGlobalSourceMetadata) {
+    throw new Error(`${advisoryId}: reviewed global package provenance is only allowlisted for Hermes`);
+  }
   const githubAdvisoryUrl = requiredString(
     advisory.github_advisory_url,
     `${advisoryId}: github_advisory_url`,
@@ -292,6 +328,9 @@ function validateGhsaSourceEntry(advisory, collectionLabel, { enrichment = false
     || !githubAdvisoryUrl.toUpperCase().includes(advisoryId.toUpperCase())
   ) {
     throw new Error(`${advisoryId}: github_advisory_url must be a GitHub URL for this GHSA`);
+  }
+  if (isHermesGlobalSource && !githubAdvisoryUrl.startsWith("https://github.com/advisories/")) {
+    throw new Error(`${advisoryId}: reviewed global package advisory must use its global GitHub advisory URL`);
   }
 
   const references = validateOptionalStrings(advisory.references, `${advisoryId}: references`);
@@ -322,6 +361,9 @@ function validateGhsaSourceEntry(advisory, collectionLabel, { enrichment = false
     }
     if (parsed.name.toLowerCase().includes("clawhub")) {
       throw new Error(`${advisoryId}: ClawHub is a distribution channel, not a protected component`);
+    }
+    if (isHermesGlobalSource && parsed.name.toLowerCase() !== HERMES_GHSA_PACKAGE) {
+      throw new Error(`${advisoryId}: reviewed Hermes patched scope must identify hermes-agent`);
     }
   }
   const cweIds = validateOptionalStrings(advisory.cwe_ids, `${advisoryId}: cwe_ids`, {
@@ -362,11 +404,18 @@ function validateGhsaSourceEntry(advisory, collectionLabel, { enrichment = false
   if (enrichment && advisory.affected.length > 0) {
     throw new Error(`${advisoryId}: enrichment advisory must not contain directly publishable scope`);
   }
+  if (isHermesGlobalSource && advisory.affected.length === 0) {
+    throw new Error(`${advisoryId}: reviewed Hermes advisory must contain explicit package scope`);
+  }
   for (const selector of advisory.affected) {
     if (typeof selector !== "string" || selector.trim().length === 0) {
       throw new Error(`${advisoryId}: affected must contain only non-empty strings`);
     }
     validateAffectedSelector(selector, advisoryId, advisory);
+    const parsed = parseAffectedSpecifier(selector);
+    if (isHermesGlobalSource && parsed?.name.toLowerCase() !== HERMES_GHSA_PACKAGE) {
+      throw new Error(`${advisoryId}: reviewed Hermes affected scope must identify hermes-agent`);
+    }
   }
 
   if (!Array.isArray(advisory.platforms)) {

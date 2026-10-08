@@ -53,11 +53,24 @@ function extractFunctionSource(source, functionName) {
 
 function loadNanoClawConsumer() {
   const source = fs.readFileSync(NANOCLAW_ADVISORIES_PATH, "utf8");
-  const functions = ["isValidFeedPayload", "versionMatches"]
+  const versionConstantsStart = source.indexOf("const EXACT_DATE_BUILD_PATTERN");
+  const versionConstantsEnd = source.indexOf("/**\n * Validates", versionConstantsStart);
+  assert.notEqual(versionConstantsStart, -1, "missing NanoClaw version constants");
+  assert.notEqual(versionConstantsEnd, -1, "missing NanoClaw version helper boundary");
+  const versionSupport = source.slice(versionConstantsStart, versionConstantsEnd);
+  const functions = [
+    "isValidFeedPayload",
+    "parseAffectedSpecifier",
+    "normalizeSkillName",
+    "versionMatches",
+    "matchesAffectedSpecifier",
+    "advisoryLooksHighRisk",
+    "findAdvisoryMatches",
+  ]
     .map((name) => extractFunctionSource(source, name))
     .join("\n");
   const transpiled = ts.transpileModule(
-    `${functions}\nglobalThis.consumer = { isValidFeedPayload, versionMatches };`,
+    `${versionSupport}\n${functions}\nglobalThis.consumer = { isValidFeedPayload, versionMatches, matchesAffectedSpecifier, findAdvisoryMatches };`,
     {
       compilerOptions: {
         module: ts.ModuleKind.ESNext,
@@ -97,6 +110,47 @@ function versionProbes(spec) {
 const feed = readJson(FEED_PATH);
 const corpus = readJson(CORPUS_PATH);
 const nanoclaw = loadNanoClawConsumer();
+
+assert.equal(
+  parseVersionSpec("2026.5.29.2").supported,
+  true,
+  "an explicitly enumerated four-part date-build identity must be supported",
+);
+assert.equal(
+  parseVersionSpec("<=2026.5.29.2").supported,
+  false,
+  "a four-part date-build identity must not gain SemVer ordering",
+);
+assert.equal(
+  nanoclaw.matchesAffectedSpecifier("hermes-agent@2026.5.29.2", "hermes-agent", "0.15.2"),
+  true,
+  "NanoClaw must fail closed when Hermes installed and advisory versions use unmapped identities",
+);
+assert.equal(
+  nanoclaw.matchesAffectedSpecifier("hermes-agent@<0.16.0", "hermes-agent", "2026.5.29.2"),
+  true,
+  "NanoClaw must fail closed for the reverse Hermes identity mismatch",
+);
+const [reverseIdentityMatch] = nanoclaw.findAdvisoryMatches({
+  version: "1",
+  updated: "2026-05-29",
+  advisories: [{
+    id: "HERMES-REVERSE-IDENTITY",
+    severity: "high",
+    type: "vulnerable_skill",
+    title: "Hermes advisory",
+    description: "Test advisory",
+    action: "Review before use",
+    published: "2026-05-29",
+    affected: ["hermes-agent@<0.16.0"],
+    references: [],
+  }],
+}, "hermes-agent", "2026.5.29.2");
+assert.equal(
+  reverseIdentityMatch?.versionIndeterminate,
+  true,
+  "NanoClaw must label the reverse Hermes identity mismatch indeterminate",
+);
 
 assert.equal(isValidHermesFeed(feed), true, "Hermes must accept the complete tracked feed");
 assert.equal(isValidSuiteFeed(feed), true, "ClawSec Suite must accept the complete tracked feed");

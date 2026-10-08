@@ -183,7 +183,7 @@ makes outbound network requests.
 - **ESLint:** flat config (`eslint.config.js`), zero warnings policy
 - **Python:** ruff + bandit, configured in `pyproject.toml`, line-length 120
 - **Shell:** shellcheck on `scripts/*.sh`
-- **Tests:** each `.test.mjs` is a standalone Node.js script with its own pass/fail counters and `process.exit(1)` on failure. Tests generate ephemeral Ed25519 keys — they don't use the repo signing keys.
+- **Tests:** each `.test.mjs` is a standalone Node.js script and must exit non-zero on failure. Tests may use `node:test`, uncaught assertions or command failures, or a custom pass/fail counter harness. Custom harnesses that catch failures must call `process.exit(1)` when failures are recorded. Tests generate ephemeral Ed25519 keys — they don't use the repo signing keys.
 - **Secret scanning:** suppress a false positive with the scanner's own mechanism (`trufflehog:ignore` / `gitleaks:allow` on the line), scoped to that value. Never add a custom suppression layer.
 - **Advisory feed:** fail-closed signature verification by default. `CLAWSEC_ALLOW_UNSIGNED_FEED=1` is a temporary migration bypass only.
 - **Hook event model:** hooks mutate `event.messages` array in-place (not return values). Rate-limited to 300s by default (`CLAWSEC_HOOK_INTERVAL_SECONDS`).

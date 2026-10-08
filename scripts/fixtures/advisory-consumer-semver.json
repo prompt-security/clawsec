@@ -96,6 +96,30 @@
       "version": "0.3.0",
       "range": "^0.2.3",
       "matches": false
+    },
+    {
+      "id": "hermes-date-build-exact",
+      "version": "2026.5.29.2",
+      "range": "2026.5.29.2",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-explicit-equality",
+      "version": "v2026.5.29.2",
+      "range": "=2026.5.29.2",
+      "matches": true
+    },
+    {
+      "id": "hermes-date-build-different-build",
+      "version": "2026.5.29.1",
+      "range": "2026.5.29.2",
+      "matches": false
+    },
+    {
+      "id": "hermes-semver-is-not-date-build-alias",
+      "version": "0.15.2",
+      "range": "2026.5.29.2",
+      "matches": false
     }
   ]
 }

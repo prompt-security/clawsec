@@ -29,9 +29,11 @@ const { isAdvisorySuppressed, loadAdvisorySuppression } = await import(
 const {
   affectedSpecifierMatchesSkill,
   buildAlertMessage,
+  installedVersionIndeterminateReason,
   matchKeys,
   recordMatchNotification,
 } = await import(`${LIB_PATH}/matching.ts`);
+const { versionMatches } = await import(`${LIB_PATH}/version.mjs`);
 
 let tempDir;
 
@@ -207,6 +209,64 @@ async function testUnknownInstalledVersionIsIndeterminate() {
       pass(testName);
     } else {
       fail(testName, `Expected an explicit indeterminate alert, got: ${alert}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testHermesDateBuildIdentityMatchesExactly() {
+  const testName = "matching: Hermes date-build identities match exactly without SemVer alias inference";
+  try {
+    const hermes = { name: "hermes-agent", dirName: "hermes-agent", version: "2026.5.29.2" };
+    const exactMatch = affectedSpecifierMatchesSkill("hermes-agent@2026.5.29.2", hermes);
+    const differentBuildDoesNotMatch = affectedSpecifierMatchesSkill(
+      "hermes-agent@2026.5.29.1",
+      hermes,
+    ) === false;
+    const semverAliasIsNotInferred = versionMatches(hermes.version, "0.15.2") === false;
+    const semverIdentityMismatchIsSurfaced = affectedSpecifierMatchesSkill(
+      "hermes-agent@0.15.2",
+      hermes,
+    );
+    const exactIdentityIsKnown = installedVersionIndeterminateReason(
+      hermes.version,
+      hermes.name,
+    ) === null;
+    const dateInstalledAgainstSemverScope = affectedSpecifierMatchesSkill(
+      "hermes-agent@<0.16.0",
+      hermes,
+    );
+    const dateInstalledReason = installedVersionIndeterminateReason(
+      hermes.version,
+      hermes.name,
+      ["hermes-agent@<0.16.0"],
+    );
+    const semverHermes = { name: "hermes-agent", dirName: "hermes-agent", version: "0.15.2" };
+    const semverInstalledAgainstDateScope = affectedSpecifierMatchesSkill(
+      "hermes-agent@2026.5.29.2",
+      semverHermes,
+    );
+    const semverInstalledReason = installedVersionIndeterminateReason(
+      semverHermes.version,
+      semverHermes.name,
+      ["hermes-agent@2026.5.29.2"],
+    );
+
+    if (
+      exactMatch
+      && differentBuildDoesNotMatch
+      && semverAliasIsNotInferred
+      && semverIdentityMismatchIsSurfaced
+      && exactIdentityIsKnown
+      && dateInstalledAgainstSemverScope
+      && dateInstalledReason === "identity-unmapped"
+      && semverInstalledAgainstDateScope
+      && semverInstalledReason === "identity-unmapped"
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, "Expected exact date-build matching with no implicit SemVer alias");
     }
   } catch (error) {
     fail(testName, error);
@@ -511,6 +571,7 @@ async function runAllTests() {
     await testNotificationDedupeAcrossCanonicalMigration();
     await testNewNotificationRecordsAllIdentifiers();
     await testUnknownInstalledVersionIsIndeterminate();
+    await testHermesDateBuildIdentityMatchesExactly();
     await testCheckIdMismatch();
     await testSkillMismatch();
     await testEmptySuppressions();

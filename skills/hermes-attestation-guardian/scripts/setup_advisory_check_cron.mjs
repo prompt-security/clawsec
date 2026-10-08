@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { detectHermesHome } from "../lib/attestation.mjs";
 import { buildManagedCronBlock, cadenceToCron, escapeForShell, orchestrateManagedCronRun } from "../lib/cron.mjs";
+import { isExactDateBuildVersion } from "../lib/semver.mjs";
 
 const MARKER_START = "# >>> hermes-attestation-guardian-advisory-check >>>";
 const MARKER_END = "# <<< hermes-attestation-guardian-advisory-check <<<";
@@ -17,7 +18,7 @@ function usage() {
       "Options:",
       "  --every <Nh|Nd>         Interval cadence (default: 6h)",
       "  --skill <name>          Skill name passed to guarded advisory check (default: hermes-attestation-guardian)",
-      "  --version <semver>      Optional version passed to guarded advisory check",
+      "  --version <version>     Optional semver or exact Hermes date build passed to guarded advisory check",
       "  --allow-unsigned        Pass emergency-only unsigned bypass to guarded advisory check",
       "  --apply                 Apply to current user's schedule table",
       "  --print-only            Print resulting cron block (default)",
@@ -90,8 +91,14 @@ function parseArgs(argv) {
     if (!/^[a-z0-9-]+$/.test(args.skill)) {
       throw new Error("Invalid --skill value. Use lowercase letters, digits, and hyphens only.");
     }
-    if (args.version && !/^v?\d+\.\d+\.\d+(?:[-+][0-9a-zA-Z.-]+)?$/.test(args.version)) {
-      throw new Error("Invalid --version value. Expected semver (for example: 1.2.3).");
+    if (
+      args.version
+      && !/^v?\d+\.\d+\.\d+(?:[-+][0-9a-zA-Z.-]+)?$/.test(args.version)
+      && !isExactDateBuildVersion(args.version)
+    ) {
+      throw new Error(
+        "Invalid --version value. Expected semver or an exact Hermes date build (for example: 2026.5.29.2).",
+      );
     }
   }
 

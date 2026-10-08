@@ -38,9 +38,9 @@ sync_feed_to_mirrors() {
 }
 
 nvd_query_specs() {
-  # Keyword searches are discovery-only. Publication requires an allowlisted CPE
-  # with an explicit version scope in scripts/nvd-advisory-transform.jq.
-  # Hermes Agent stays keyword-only until NVD assigns an authoritative product CPE.
+  # Keyword searches are discovery-only. Publication requires allowlisted,
+  # machine-readable product identity and explicit version scope in
+  # scripts/nvd-advisory-transform.jq.
   cat <<'EOF'
 keyword|OpenClaw
 keyword|clawdbot
@@ -49,6 +49,7 @@ keyword|NanoClaw
 keyword|WhatsApp-bot
 keyword|baileys
 keyword|hermes-agent
+keyword|Hermes Agent
 keyword|Picoclaw
 keyword|NemoClaw
 keyword|NVIDIA OpenShell

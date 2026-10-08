@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  GLOBAL_REVIEWED_PACKAGE_SOURCE,
   buildConsolidatedAdvisoryFeed,
   buildGhsaWithoutCveFeed,
   normalizeGhsaAdvisory,
@@ -87,6 +88,44 @@ function ghsaAdvisory(overrides = {}) {
   };
 }
 
+function globalHermesAdvisory(overrides = {}) {
+  const ghsaId = overrides.ghsa_id || 'GHSA-hrm1-1111-2222';
+  const cveId = overrides.cve_id || 'CVE-2026-5555';
+  return {
+    ghsa_id: ghsaId,
+    cve_id: cveId,
+    html_url: `https://github.com/advisories/${ghsaId}`,
+    summary: 'Reviewed Hermes Agent package advisory',
+    description: 'Hermes Agent versions before 0.16.0 contain a reviewed vulnerability.',
+    severity: 'high',
+    type: 'reviewed',
+    github_reviewed_at: '2026-05-22T00:00:00Z',
+    withdrawn_at: null,
+    published_at: '2026-05-19T00:00:00Z',
+    updated_at: '2026-05-22T00:00:00Z',
+    identifiers: [
+      { type: 'GHSA', value: ghsaId },
+      { type: 'CVE', value: cveId },
+    ],
+    vulnerabilities: [{
+      package: { ecosystem: 'pip', name: 'hermes-agent' },
+      vulnerable_version_range: '< 0.16.0',
+      first_patched_version: '0.16.0',
+    }],
+    cvss: {
+      vector_string: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H',
+      score: 7.5,
+    },
+    cwes: [{ cwe_id: 'CWE-306', name: 'Missing Authentication for Critical Function' }],
+    references: [
+      `https://github.com/advisories/${ghsaId}`,
+      `https://nvd.nist.gov/vuln/detail/${cveId}`,
+    ],
+    credits: [],
+    ...overrides,
+  };
+}
+
 function signBuffer(data, privateKey) {
   return sign(null, data, privateKey).toString('base64');
 }
@@ -159,6 +198,13 @@ const fetchedGhsaAdvisories = [
       ghsaAdvisory({ ghsa_id: 'GHSA-rjct-1111-2222', cve_id: 'CVE-2026-3333' }),
     ],
   },
+  {
+    sourceKind: GLOBAL_REVIEWED_PACKAGE_SOURCE,
+    ecosystem: 'pip',
+    packageName: 'hermes-agent',
+    repository: 'nousresearch/hermes-agent',
+    advisories: [globalHermesAdvisory()],
+  },
 ];
 
 const rejectedNvdRecords = [
@@ -223,6 +269,7 @@ assert.deepEqual(
     ['GHSA-lagd-1111-2222', 'matured', 'CVE-2026-4444'],
     ['GHSA-matd-1111-2222', 'matured', 'CVE-2026-1111'],
     ['GHSA-rjct-1111-2222', 'matured', 'CVE-2026-3333'],
+    ['GHSA-hrm1-1111-2222', 'matured', 'CVE-2026-5555'],
   ],
   'GHSA dry run should retain active advisories and every CVE-backed advisory needed for enrichment',
 );
@@ -240,6 +287,7 @@ assert.deepEqual(
     'GHSA-actv-1111-2222',
     'GHSA-lagd-1111-2222',
     'GHSA-rjct-1111-2222',
+    'GHSA-hrm1-1111-2222',
     'CVE-2026-1111',
   ],
   'Consolidation must retain valid GHSAs through NVD delay or rejection without synthesizing CVE identities',
@@ -256,6 +304,12 @@ assert.equal(
   'A GHSA CVE alias must not become canonical before a non-rejected NVD record is observed',
 );
 assert.ok(consolidatedFeed.advisories.some((entry) => entry.id === 'GHSA-lagd-1111-2222'));
+const retainedHermesGhsa = consolidatedFeed.advisories.find(
+  (entry) => entry.id === 'GHSA-hrm1-1111-2222',
+);
+assert.deepEqual(retainedHermesGhsa?.aliases, ['GHSA-hrm1-1111-2222', 'CVE-2026-5555']);
+assert.deepEqual(retainedHermesGhsa?.affected, ['hermes-agent@< 0.16.0']);
+assert.deepEqual(retainedHermesGhsa?.patched, ['hermes-agent@0.16.0']);
 assert.deepEqual(
   consolidatedFeed.advisories.find((entry) => entry.id === 'GHSA-rjct-1111-2222')?.aliases,
   ['GHSA-rjct-1111-2222', 'CVE-2026-3333'],
@@ -275,6 +329,36 @@ assert.ok(
   followupConsolidatedFeed.advisories.some((entry) => entry.id === 'GHSA-rjct-1111-2222'),
   'A later GHSA-only run must continue to retain the valid GHSA identity',
 );
+const hermesAfterNvd = buildConsolidatedAdvisoryFeed({
+  canonicalFeed: {
+    ...consolidatedFeed,
+    advisories: [
+      cveAdvisory({
+        id: 'CVE-2026-5555',
+        cve_id: 'CVE-2026-5555',
+        aliases: ['CVE-2026-5555'],
+        title: 'NVD-confirmed Hermes Agent advisory',
+        affected: ['hermes-agent@<0.16.0'],
+        authoritative_nvd_affected: ['hermes-agent@<0.16.0'],
+        patched: [],
+        platforms: ['hermes'],
+        references: ['https://nvd.nist.gov/vuln/detail/CVE-2026-5555'],
+        nvd_url: 'https://nvd.nist.gov/vuln/detail/CVE-2026-5555',
+      }),
+      ...consolidatedFeed.advisories,
+    ],
+  },
+  ghsaFeed,
+  now: '2026-05-25T00:00:00Z',
+});
+const canonicalHermes = hermesAfterNvd.advisories.find((entry) => entry.id === 'CVE-2026-5555');
+assert.deepEqual(canonicalHermes?.aliases, ['CVE-2026-5555', 'GHSA-hrm1-1111-2222']);
+assert.equal(
+  hermesAfterNvd.advisories.some((entry) => entry.id === 'GHSA-hrm1-1111-2222'),
+  false,
+  'NVD confirmation must merge Hermes GHSA scope under the canonical CVE identity',
+);
+assert.equal(validateAdvisoryFeed(ghsaFeed), ghsaFeed);
 assert.equal(validateAdvisoryFeed(consolidatedFeed), consolidatedFeed);
 assert.equal(consolidatedFeed.advisories[1].source_feed, 'ghsa-without-cve');
 const enrichedCve = consolidatedFeed.advisories.find((entry) => entry.id === 'CVE-2026-2222');

@@ -75,6 +75,36 @@ function ghsaSourceAdvisory(overrides = {}) {
   };
 }
 
+function hermesGlobalGhsaSourceAdvisory(overrides = {}) {
+  const id = overrides.id || "GHSA-hrm1-1111-2222";
+  const cveId = overrides.cve_id === undefined ? "CVE-2026-53869" : overrides.cve_id;
+  const githubAdvisoryUrl = `https://github.com/advisories/${id}`;
+  return ghsaSourceAdvisory({
+    id,
+    ghsa_id: id,
+    cve_id: cveId,
+    status: cveId ? "matured" : "active",
+    nvd_category_id: "CWE-306",
+    affected: ["hermes-agent@< 0.16.0"],
+    patched: ["hermes-agent@0.16.0"],
+    platforms: ["hermes"],
+    repository: "nousresearch/hermes-agent",
+    github_advisory_url: githubAdvisoryUrl,
+    references: [
+      githubAdvisoryUrl,
+      ...(cveId ? [`https://nvd.nist.gov/vuln/detail/${cveId}`] : []),
+    ],
+    nvd_url: cveId ? `https://nvd.nist.gov/vuln/detail/${cveId}` : null,
+    cwe_ids: ["CWE-306"],
+    aliases: [id, ...(cveId ? [cveId] : [])],
+    ghsa_source_kind: "global_reviewed_package",
+    ghsa_source_ecosystem: "pip",
+    ghsa_source_package: "hermes-agent",
+    github_reviewed_at: "2026-06-19T14:47:03Z",
+    ...overrides,
+  });
+}
+
 function ghsaSourceFeed({ advisories = [], enrichmentAdvisories = [], excludedIds = [] } = {}) {
   return {
     version: "0.1.0",
@@ -366,6 +396,69 @@ test("rejects canonical and alias identity collisions", () => {
       }),
     ])),
     /Stable identifier GHSA-dupe-1111-2222 belongs to both/,
+  );
+});
+
+test("accepts reviewed global Hermes package provenance", () => {
+  const value = ghsaSourceFeed({ advisories: [hermesGlobalGhsaSourceAdvisory()] });
+  assert.equal(validateAdvisoryFeed(value), value);
+});
+
+test("keeps provisional Hermes repository advisories alongside the reviewed global source", () => {
+  const id = "GHSA-hrm2-1111-2222";
+  const githubAdvisoryUrl =
+    `https://github.com/nousresearch/hermes-agent/security/advisories/${id}`;
+  const advisory = ghsaSourceAdvisory({
+    id,
+    ghsa_id: id,
+    affected: ["hermes-agent@<0.20.0"],
+    patched: ["hermes-agent@0.20.0"],
+    platforms: ["hermes"],
+    repository: "nousresearch/hermes-agent",
+    github_advisory_url: githubAdvisoryUrl,
+    references: [githubAdvisoryUrl],
+  });
+  const value = ghsaSourceFeed({ advisories: [advisory] });
+  assert.equal(validateAdvisoryFeed(value), value);
+});
+
+test("rejects forged or unscoped reviewed global Hermes package provenance", () => {
+  const validate = (entry) => validateAdvisoryFeed(ghsaSourceFeed({ advisories: [entry] }));
+  const valid = hermesGlobalGhsaSourceAdvisory();
+
+  for (const [entry, expected] of [
+    [{ ...valid, ghsa_source_kind: undefined }, /must come from the reviewed global package source/],
+    [{ ...valid, ghsa_source_kind: "repository" }, /must come from the reviewed global package source/],
+    [{ ...valid, ghsa_source_ecosystem: "npm" }, /source ecosystem must be pip/],
+    [{ ...valid, ghsa_source_package: "hermes" }, /source package must be hermes-agent/],
+    [{ ...valid, github_reviewed_at: null }, /github_reviewed_at must be a valid date/],
+    [{ ...valid, withdrawn_at: "2026-07-01T00:00:00Z" }, /must not be withdrawn/],
+    [{
+      ...valid,
+      github_advisory_url: `https://github.com/nousresearch/hermes-agent/security/advisories/${valid.id}`,
+      references: [
+        `https://github.com/nousresearch/hermes-agent/security/advisories/${valid.id}`,
+        `https://nvd.nist.gov/vuln/detail/${valid.cve_id}`,
+      ],
+    }, /must use its global GitHub advisory URL/],
+    [{ ...valid, affected: [] }, /must contain (?:explicit package scope|an explicit product and version scope)/],
+    [{ ...valid, affected: ["hermes@<0.16.0"] }, /affected scope must identify hermes-agent/],
+    [{ ...valid, patched: ["hermes@0.16.0"] }, /patched scope must identify hermes-agent/],
+  ]) {
+    assert.throws(() => validate(entry), expected);
+  }
+});
+
+test("rejects global reviewed-package metadata on non-Hermes repository advisories", () => {
+  const value = ghsaSourceAdvisory({
+    ghsa_source_kind: "global_reviewed_package",
+    ghsa_source_ecosystem: "npm",
+    ghsa_source_package: "openclaw",
+    github_reviewed_at: "2026-09-01T00:00:00Z",
+  });
+  assert.throws(
+    () => validateAdvisoryFeed(ghsaSourceFeed({ advisories: [value] })),
+    /reviewed global package provenance is only allowlisted for Hermes/,
   );
 });
 
