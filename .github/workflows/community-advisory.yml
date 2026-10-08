@@ -142,6 +142,8 @@ jobs:
 
       - name: Update feed
         if: steps.parse.outputs.already_exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -154,6 +156,7 @@ jobs:
           # Validate JSON
           if jq empty tmp_feed.json 2>/dev/null; then
             node scripts/ci/validate_advisory_feed.mjs tmp_feed.json
+            node scripts/ci/verify_advisory_consumer_releases.mjs tmp_feed.json
             echo "Feed JSON is valid"
             mv tmp_feed.json "$FEED_PATH"
 

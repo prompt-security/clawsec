@@ -1256,6 +1256,13 @@ jobs:
         env:
           STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
 
+      - name: Verify embedded advisory consumer releases
+        if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STEPS_PARSE_OUTPUTS_SKILL_PATH: ${{ steps.parse.outputs.skill_path }}
+        run: node scripts/ci/verify_advisory_consumer_releases.mjs "${STEPS_PARSE_OUTPUTS_SKILL_PATH}/advisories/feed.json"
+
       - name: Sign embedded advisory feed and verify
         if: hashFiles(format('skills/{0}/advisories/feed.json', steps.parse.outputs.skill_name)) != ''
         uses: $/.github/actions/sign-and-verify
@@ -1785,11 +1792,12 @@ jobs:
           files: release-assets/*
           body_path: ${{ runner.temp }}/skill-release-body.md
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          prerelease: ${{ contains(steps.parse.outputs.version, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete superseded releases
+        if: ${{ !contains(steps.parse.outputs.version, '-') }}
         run: |
           SKILL_NAME="${STEPS_PARSE_OUTPUTS_SKILL_NAME}"
           CURRENT_VERSION="${STEPS_PARSE_OUTPUTS_VERSION}"
@@ -2075,6 +2083,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/clawsec-current/scripts/ci"
           mkdir -p "$RUNNER_TEMP/clawsec-current/skills/hermes-attestation-guardian/lib"
           cp scripts/ci/validate_advisory_feed.mjs "$RUNNER_TEMP/clawsec-current/scripts/ci/validate_advisory_feed.mjs"
+          cp scripts/ci/verify_advisory_consumer_releases.mjs "$RUNNER_TEMP/clawsec-current/scripts/ci/verify_advisory_consumer_releases.mjs"
           cp skills/hermes-attestation-guardian/lib/semver.mjs "$RUNNER_TEMP/clawsec-current/skills/hermes-attestation-guardian/lib/semver.mjs"
 
       - name: Checkout tag
@@ -2177,8 +2186,10 @@ jobs:
           FEED_PATH="${STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH}/advisories/feed.json"
           if [ -f "$FEED_PATH" ]; then
             node "$RUNNER_TEMP/clawsec-current/scripts/ci/validate_advisory_feed.mjs" "$FEED_PATH"
+            node "$RUNNER_TEMP/clawsec-current/scripts/ci/verify_advisory_consumer_releases.mjs" "$FEED_PATH"
           fi
         env:
+          GH_TOKEN: ${{ github.token }}
           STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH: ${{ steps.clawhub-package.outputs.skill_path }}
 
       - name: Install clawhub CLI

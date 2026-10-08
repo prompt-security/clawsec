@@ -53,6 +53,23 @@ assert.match(
 );
 assert.match(
   workflow,
+  /name: Verify advisory consumer releases\n\s+env:\n\s+GH_TOKEN: \$\{\{ github\.token \}\}\n\s+run: node scripts\/ci\/verify_advisory_consumer_releases\.mjs "\$FEED_PATH"/,
+  'GHSA poll workflow must run the shared authenticated advisory consumer release gate',
+);
+const validateIndex = workflow.indexOf('- name: Validate consolidated advisory feed');
+const releaseGateIndex = workflow.indexOf('- name: Verify advisory consumer releases');
+const detectChangesIndex = workflow.indexOf('- name: Detect feed changes');
+const signConsolidatedIndex = workflow.indexOf('- name: Sign consolidated agent feed and verify');
+assert.ok(
+  validateIndex < releaseGateIndex && releaseGateIndex < detectChangesIndex,
+  'GHSA poll workflow must gate consumer releases after validation and before change publication',
+);
+assert.ok(
+  releaseGateIndex < signConsolidatedIndex,
+  'GHSA poll workflow must not sign the consolidated feed before consumer release verification',
+);
+assert.match(
+  workflow,
   /name: Validate GHSA source feed before signing\n\s+if: steps\.changes\.outputs\.ghsa_changed == 'true'\n\s+run: node scripts\/ci\/validate_advisory_feed\.mjs "\$GHSA_FEED_PATH"[\s\S]*name: Sign GHSA feed and verify/,
   'GHSA poll workflow must validate the exact provisional feed bytes before signing them',
 );
