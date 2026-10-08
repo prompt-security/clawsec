@@ -5,6 +5,7 @@
 ### Security
 
 - Matched four-component Hermes release-date builds only by exact equality and kept them separate from the runtime's independent SemVer identity.
+- Rejected impossible Gregorian date-build identities while retaining valid leap-day releases.
 - Treated cross-scheme advisory comparisons as indeterminate and fail-closed, with explicit warnings in guarded verification and scheduled advisory checks.
 
 ### Testing

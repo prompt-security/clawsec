@@ -5,6 +5,7 @@
 ### Security
 
 - Treated Hermes SemVer and release-date versions as separate identities, matching four-component release-date builds only by exact equality and failing closed when the installed version and advisory use different schemes.
+- Rejected impossible Gregorian date-build identities in signed feeds and installed-version checks instead of accepting them as exact matches.
 - Routed active scans and pre-install checks through the shared advisory matcher so indeterminate Hermes version matches are surfaced instead of silently missed.
 
 ### Testing

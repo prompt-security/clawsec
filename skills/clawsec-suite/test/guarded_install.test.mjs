@@ -212,6 +212,14 @@ async function testHermesIdentityMismatchIsIndeterminate() {
         requestedVersion: "0.15.2",
         affected: "hermes-agent@2026.5.29.2",
       },
+      {
+        requestedVersion: "2026.2.30.1",
+        affected: "hermes-agent@<0.16.0",
+      },
+      {
+        requestedVersion: "2026.13.1.1",
+        affected: "hermes-agent@2026.2.28.1",
+      },
     ];
 
     for (const testCase of cases) {

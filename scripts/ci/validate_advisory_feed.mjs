@@ -193,6 +193,75 @@ function validateOptionalStrings(value, label, { allowEmpty = false } = {}) {
   return value.map((entry) => entry.trim());
 }
 
+function validateReviewedGhsaProvenance(value, advisoryId, ghsaIds, aliases) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new Error(`${advisoryId}: reviewed_ghsa_provenance must be a non-empty array when present`);
+  }
+
+  const expectedFields = [
+    "ecosystem",
+    "ghsa_id",
+    "github_reviewed_at",
+    "package",
+    "repository",
+    "source_kind",
+  ];
+  const tiedGhsaIds = new Set(ghsaIds.map((ghsaId) => ghsaId.toUpperCase()));
+  const aliasIds = new Set(aliases.map((alias) => alias.toUpperCase()));
+  const observedGhsaIds = [];
+
+  for (const [index, entry] of value.entries()) {
+    const label = `${advisoryId}: reviewed_ghsa_provenance[${index}]`;
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`${label} must be a JSON object`);
+    }
+    const fields = Object.keys(entry).sort();
+    if (
+      fields.length !== expectedFields.length
+      || fields.some((field, fieldIndex) => field !== expectedFields[fieldIndex])
+    ) {
+      throw new Error(`${label} must contain exactly the reviewed GHSA provenance fields`);
+    }
+
+    const ghsaId = requiredString(entry.ghsa_id, `${label}.ghsa_id`);
+    const normalizedGhsaId = ghsaId.toUpperCase();
+    validateGhsaIdentifier(ghsaId, `${label}.ghsa_id`);
+    if (entry.source_kind !== GLOBAL_REVIEWED_PACKAGE_SOURCE) {
+      throw new Error(`${label}.source_kind must identify the reviewed global package source`);
+    }
+    if (entry.repository !== HERMES_GHSA_REPOSITORY) {
+      throw new Error(`${label}.repository must be ${HERMES_GHSA_REPOSITORY}`);
+    }
+    if (entry.ecosystem !== HERMES_GHSA_ECOSYSTEM) {
+      throw new Error(`${label}.ecosystem must be ${HERMES_GHSA_ECOSYSTEM}`);
+    }
+    if (entry.package !== HERMES_GHSA_PACKAGE) {
+      throw new Error(`${label}.package must be ${HERMES_GHSA_PACKAGE}`);
+    }
+    const githubReviewedAt = requiredString(
+      entry.github_reviewed_at,
+      `${label}.github_reviewed_at`,
+    );
+    if (!Number.isFinite(Date.parse(githubReviewedAt))) {
+      throw new Error(`${label}.github_reviewed_at must be a valid date`);
+    }
+    if (!tiedGhsaIds.has(normalizedGhsaId) || !aliasIds.has(normalizedGhsaId)) {
+      throw new Error(`${label}.ghsa_id must appear in both ghsa_ids and aliases`);
+    }
+    observedGhsaIds.push(normalizedGhsaId);
+  }
+
+  if (new Set(observedGhsaIds).size !== observedGhsaIds.length) {
+    throw new Error(`${advisoryId}: reviewed_ghsa_provenance must not repeat a GHSA identity`);
+  }
+  const sortedGhsaIds = [...observedGhsaIds].sort((left, right) => left.localeCompare(right));
+  if (observedGhsaIds.some((ghsaId, index) => ghsaId !== sortedGhsaIds[index])) {
+    throw new Error(`${advisoryId}: reviewed_ghsa_provenance must be sorted by ghsa_id`);
+  }
+  return value;
+}
+
 function validateGhsaSourceEntry(advisory, collectionLabel, { enrichment = false } = {}) {
   if (!advisory || typeof advisory !== "object" || Array.isArray(advisory)) {
     throw new Error(`${collectionLabel} entries must be JSON objects`);
@@ -540,6 +609,18 @@ export function validateAdvisoryFeed(feed) {
       `${advisoryId}: authoritative_ghsa_cwe_ids`,
       { allowEmpty: true },
     );
+    const reviewedGhsaProvenance = validateReviewedGhsaProvenance(
+      advisory.reviewed_ghsa_provenance,
+      advisoryId,
+      ghsaIds,
+      aliases,
+    );
+    if (reviewedGhsaProvenance.length > 0 && !isCveIdentifier(advisoryId)) {
+      throw new Error(`${advisoryId}: reviewed_ghsa_provenance is only valid on canonical CVEs`);
+    }
+    if (isGhsaSourceState && advisory.reviewed_ghsa_provenance !== undefined) {
+      throw new Error(`${advisoryId}: GHSA source entries must use direct reviewed-source provenance`);
+    }
     if (
       advisory.synthesized_from_ghsa !== undefined
       && typeof advisory.synthesized_from_ghsa !== "boolean"

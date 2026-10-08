@@ -117,6 +117,26 @@ assert.equal(
   "an explicitly enumerated four-part date-build identity must be supported",
 );
 assert.equal(
+  parseVersionSpec("2024.2.29.1").supported,
+  true,
+  "a real Gregorian leap day must be supported",
+);
+assert.equal(
+  parseVersionSpec("0096.2.29.1").supported,
+  true,
+  "Gregorian validation must not inherit Date.UTC's 00-99 year remapping",
+);
+assert.equal(
+  parseVersionSpec("2026.2.29.1").supported,
+  false,
+  "an impossible non-leap-day date build must be rejected",
+);
+assert.equal(
+  parseVersionSpec("2026.2.30").supported,
+  true,
+  "an arbitrary three-component SemVer must not be globally reinterpreted as a Gregorian date",
+);
+assert.equal(
   parseVersionSpec("<=2026.5.29.2").supported,
   false,
   "a four-part date-build identity must not gain SemVer ordering",
@@ -130,6 +150,16 @@ assert.equal(
   nanoclaw.matchesAffectedSpecifier("hermes-agent@<0.16.0", "hermes-agent", "2026.5.29.2"),
   true,
   "NanoClaw must fail closed for the reverse Hermes identity mismatch",
+);
+assert.equal(
+  nanoclaw.versionMatches("2026.2.30.1", "2026.2.30.1"),
+  false,
+  "NanoClaw must not match an impossible exact Gregorian date build",
+);
+assert.equal(
+  nanoclaw.matchesAffectedSpecifier("hermes-agent@<0.16.0", "hermes-agent", "2026.2.30.1"),
+  true,
+  "NanoClaw must still fail closed when an installed Hermes date-build identity is invalid",
 );
 const [reverseIdentityMatch] = nanoclaw.findAdvisoryMatches({
   version: "1",
@@ -151,6 +181,60 @@ assert.equal(
   true,
   "NanoClaw must label the reverse Hermes identity mismatch indeterminate",
 );
+const [invalidDateIdentityMatch] = nanoclaw.findAdvisoryMatches({
+  version: "1",
+  updated: "2026-05-29",
+  advisories: [{
+    id: "HERMES-INVALID-DATE-IDENTITY",
+    severity: "high",
+    type: "vulnerable_skill",
+    title: "Hermes advisory",
+    description: "Test advisory",
+    action: "Review before use",
+    published: "2026-05-29",
+    affected: ["hermes-agent@<0.16.0"],
+    references: [],
+  }],
+}, "hermes-agent", "2026.2.30.1");
+assert.equal(
+  invalidDateIdentityMatch?.versionIndeterminate,
+  true,
+  "NanoClaw must surface an impossible installed Hermes date build as indeterminate",
+);
+assert.equal(
+  nanoclaw.matchesAffectedSpecifier(
+    "hermes-agent@2026.2.28.1",
+    "hermes-agent",
+    "2026.2.30.1",
+  ),
+  true,
+  "NanoClaw must fail closed even when an invalid installed date build and advisory use the same identity scheme",
+);
+
+const validLeapDateFeed = {
+  version: "1",
+  advisories: [{
+    id: "HERMES-VALID-LEAP-DATE",
+    severity: "high",
+    affected: ["hermes-agent@2024.2.29.1"],
+  }],
+};
+const impossibleDateFeed = {
+  version: "1",
+  advisories: [{
+    id: "HERMES-IMPOSSIBLE-DATE",
+    severity: "high",
+    affected: ["hermes-agent@2026.2.30.1"],
+  }],
+};
+for (const [consumer, validateFeed] of [
+  ["Hermes", isValidHermesFeed],
+  ["ClawSec Suite", isValidSuiteFeed],
+  ["NanoClaw", nanoclaw.isValidFeedPayload],
+]) {
+  assert.equal(validateFeed(validLeapDateFeed), true, `${consumer} must accept a valid leap-day date build`);
+  assert.equal(validateFeed(impossibleDateFeed), false, `${consumer} must reject an impossible date build`);
+}
 
 assert.equal(isValidHermesFeed(feed), true, "Hermes must accept the complete tracked feed");
 assert.equal(isValidSuiteFeed(feed), true, "ClawSec Suite must accept the complete tracked feed");

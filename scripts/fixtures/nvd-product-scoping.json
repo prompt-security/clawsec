@@ -313,7 +313,9 @@
           "vendor": "nousresearch",
           "product": "HERMES-AGENT",
           "versions": [
+            {"version": "0.15.2", "status": "affected"},
             {"version": "2026.5.29.2", "status": "affected"},
+            {"version": "2024.2.29.1", "versionType": "custom", "status": "affected"},
             {"version": "2026.4.24", "status": "unaffected"},
             {"version": "2026.4.23", "versionType": "semver", "status": "affected"}
           ]

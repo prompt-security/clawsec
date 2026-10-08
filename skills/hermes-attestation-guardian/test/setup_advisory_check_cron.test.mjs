@@ -28,6 +28,26 @@ const dateBuildPreview = runSetup([
 assert.equal(dateBuildPreview.status, 0, dateBuildPreview.stderr);
 assert.ok(dateBuildPreview.stdout.includes("--version '2026.5.29.2'"), dateBuildPreview.stdout);
 
+const leapDayBuildPreview = runSetup([
+  "--print-only",
+  "--skill",
+  "hermes-agent",
+  "--version",
+  "0096.2.29.1",
+]);
+assert.equal(leapDayBuildPreview.status, 0, leapDayBuildPreview.stderr);
+assert.ok(leapDayBuildPreview.stdout.includes("--version '0096.2.29.1'"), leapDayBuildPreview.stdout);
+
+const impossibleDateBuild = runSetup([
+  "--print-only",
+  "--skill",
+  "hermes-agent",
+  "--version",
+  "2026.2.30.1",
+]);
+assert.equal(impossibleDateBuild.status, 1, impossibleDateBuild.stderr);
+assert.ok(impossibleDateBuild.stderr.includes("Invalid --version value"), impossibleDateBuild.stderr);
+
 async function withTempDir(run) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "hag-advisory-cron-"));
   try {

@@ -3,6 +3,9 @@ import https from "node:https";
 import path from "node:path";
 import { loadTextFile } from "./local_file_io.mjs";
 import { isObject } from "./utils.mjs";
+import { parseVersionSpec } from "./version.mjs";
+
+const EXACT_DATE_BUILD_SPEC_SHAPE_REGEX = /^=?\s*[vV]?\d{4}(?:\.\d+){3}$/;
 
 /**
  * Allowed domains for feed/signature fetching.
@@ -128,7 +131,17 @@ export function isValidFeedPayload(raw) {
     if (typeof advisory.id !== "string" || !advisory.id.trim()) return false;
     if (typeof advisory.severity !== "string" || !advisory.severity.trim()) return false;
     if (!Array.isArray(advisory.affected)) return false;
-    if (!advisory.affected.every((entry) => typeof entry === "string" && entry.trim())) return false;
+    for (const entry of advisory.affected) {
+      if (typeof entry !== "string" || !entry.trim()) return false;
+      const parsed = parseAffectedSpecifier(entry);
+      if (
+        parsed
+        && EXACT_DATE_BUILD_SPEC_SHAPE_REGEX.test(parsed.versionSpec)
+        && !parseVersionSpec(parsed.versionSpec).supported
+      ) {
+        return false;
+      }
+    }
   }
 
   return true;
