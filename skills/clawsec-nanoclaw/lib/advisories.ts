@@ -22,6 +22,18 @@ import {
 } from './signatures.js';
 
 const DEFAULT_FEED_URL = 'https://clawsec.prompt.security/advisories/feed.json';
+const EXACT_DATE_BUILD_PATTERN = String.raw`v?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])\.\d+`;
+const HERMES_DATE_VERSION_PATTERN = String.raw`v?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])(?:\.\d+)?`;
+const HERMES_DATE_VERSION_REGEX = new RegExp(`^${HERMES_DATE_VERSION_PATTERN}$`);
+const HERMES_DATE_VERSION_IN_SPEC_REGEX = new RegExp(HERMES_DATE_VERSION_PATTERN);
+
+function hermesVersionIdentitiesAreIncomparable(version: string, versionSpec: string): boolean {
+  const normalizedSpec = versionSpec.trim();
+  if (normalizedSpec === '' || normalizedSpec === '*') return false;
+
+  return HERMES_DATE_VERSION_REGEX.test(version.trim())
+    !== HERMES_DATE_VERSION_IN_SPEC_REGEX.test(normalizedSpec);
+}
 
 /**
  * Validates that a payload is a valid advisory feed.
@@ -81,6 +93,14 @@ export function versionMatches(version: string, versionSpec: string): boolean {
 
   // Wildcard matches everything
   if (spec === '*' || spec === '') return true;
+
+  // Hermes also exposes an independent four-component release-date identity.
+  // Match explicitly enumerated values only; never order them as SemVer or
+  // infer equivalence with the package's separate 0.x version.
+  const exactDateBuildSpec = spec.match(new RegExp(`^=?\\s*(${EXACT_DATE_BUILD_PATTERN})$`))?.[1];
+  if (exactDateBuildSpec) {
+    return v.replace(/^v/i, '') === exactDateBuildSpec.replace(/^v/i, '');
+  }
 
   // Exact match
   if (v === spec) return true;
@@ -253,7 +273,11 @@ export function matchesAffectedSpecifier(
     return true;
   }
 
-  return versionMatches(skillVersion, parsed.versionSpec);
+  if (versionMatches(skillVersion, parsed.versionSpec)) return true;
+  return (
+    (normalizedTarget === 'hermes' || normalizedTarget === 'hermes-agent')
+    && hermesVersionIdentitiesAreIncomparable(skillVersion, parsed.versionSpec)
+  );
 }
 
 /**
@@ -431,6 +455,7 @@ export function findAdvisoryMatches(
     if (affected.length === 0) continue;
 
     for (const specifier of affected) {
+      const parsed = parseAffectedSpecifier(specifier);
       if (!matchesAffectedSpecifier(specifier, skillName, version)) {
         continue;
       }
@@ -440,6 +465,13 @@ export function findAdvisoryMatches(
         advisory,
         matchedSpecifier: specifier,
         isHighRisk: advisoryLooksHighRisk(advisory),
+        versionIndeterminate: Boolean(
+          version
+          && parsed
+          && (normalizeSkillName(parsed.name) === 'hermes'
+            || normalizeSkillName(parsed.name) === 'hermes-agent')
+          && hermesVersionIdentitiesAreIncomparable(version, parsed.versionSpec),
+        ),
       });
       break; // Only count each advisory once
     }

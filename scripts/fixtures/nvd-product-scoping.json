@@ -74,10 +74,20 @@
   {
     "cve": {
       "id": "CVE-TEST-HERMES-UNCONFIRMED-CPE",
+      "sourceIdentifier": "security@nousresearch.com",
       "published": "2026-02-02T00:00:00.000",
       "lastModified": "2026-02-02T00:00:00.000",
       "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability."}],
       "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/example"}],
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unaffected",
+          "versions": [{"version": "0", "lessThan": "3.0.0", "versionType": "semver", "status": "affected"}]
+        }]
+      }],
       "configurations": [{"nodes": [{"cpeMatch": [{
         "vulnerable": true,
         "criteria": "cpe:2.3:a:nousresearch:hermes_agent:*:*:*:*:*:*:*:*",
@@ -255,6 +265,167 @@
         "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "versionEndExcluding": "2026.5.7"
       }]}]}]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-AFFECTED-RANGE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-01T00:00:00.000",
+      "lastModified": "2026-06-02T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability with a CNA semver range."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/range"}],
+      "configurations": null,
+      "affected": [
+        {
+          "source": "security@nousresearch.com",
+          "affectedData": [{
+            "vendor": "NousResearch",
+            "product": "hermes-agent",
+            "defaultStatus": "unaffected",
+            "repo": "https://github.com/NousResearch/hermes-agent",
+            "packageURL": "pkg:npm/hermes-agent",
+            "versions": [{"version": "0", "lessThan": "0.16.0", "versionType": "semver", "status": "affected"}]
+          }]
+        },
+        {
+          "source": "secondary@example.com",
+          "affectedData": [{
+            "vendor": "NousResearch",
+            "product": "hermes-agent",
+            "versions": [{"version": "99.0.0", "status": "affected"}]
+          }]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-AFFECTED-EXACT",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-03T00:00:00.000",
+      "lastModified": "2026-06-03T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability with enumerated releases."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/exact"}],
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "nousresearch",
+          "product": "HERMES-AGENT",
+          "versions": [
+            {"version": "2026.5.29.2", "status": "affected"},
+            {"version": "2026.4.24", "status": "unaffected"},
+            {"version": "2026.4.23", "versionType": "semver", "status": "affected"}
+          ]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-AFFECTED-LTE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-04T00:00:00.000",
+      "lastModified": "2026-06-04T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent vulnerability with an inclusive upper bound."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent/security/advisories/lte"}],
+      "configurations": [],
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unknown",
+          "versions": [{"version": "0.18.2", "lessThanOrEqual": "0.21.0", "versionType": "semver", "status": "affected"}]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-DEFAULT-AFFECTED",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-05T00:00:00.000",
+      "lastModified": "2026-06-05T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent record whose unmatched versions are affected."}],
+      "references": [],
+      "configurations": null,
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "affected",
+          "versions": [{"version": "1.0.0", "status": "affected"}]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-MIXED-UNSUPPORTED-RANGE",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-06T00:00:00.000",
+      "lastModified": "2026-06-06T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent record mixing exact and unsupported custom ranges."}],
+      "references": [],
+      "configurations": null,
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unaffected",
+          "versions": [
+            {"version": "1.0.0", "status": "affected"},
+            {"version": "release-a", "lessThan": "release-z", "versionType": "custom", "status": "affected"}
+          ]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-CHANGES",
+      "sourceIdentifier": "security@nousresearch.com",
+      "published": "2026-06-07T00:00:00.000",
+      "lastModified": "2026-06-07T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Hermes Agent record with status transitions inside a range."}],
+      "references": [],
+      "configurations": null,
+      "affected": [{
+        "source": "security@nousresearch.com",
+        "affectedData": [{
+          "vendor": "NousResearch",
+          "product": "hermes-agent",
+          "defaultStatus": "unaffected",
+          "versions": [{
+            "version": "1.0.0",
+            "lessThan": "2.0.0",
+            "versionType": "semver",
+            "status": "affected",
+            "changes": [{"at": "1.5.0", "status": "unaffected"}]
+          }]
+        }]
+      }]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-HERMES-WRONG-STRUCTURED-IDENTITY",
+      "sourceIdentifier": "security@example.com",
+      "published": "2026-06-08T00:00:00.000",
+      "lastModified": "2026-06-08T00:00:00.000",
+      "descriptions": [{"lang": "en", "value": "Free text says Hermes Agent but structured identity does not."}],
+      "references": [{"url": "https://github.com/NousResearch/hermes-agent"}],
+      "configurations": null,
+      "affected": [{
+        "source": "security@example.com",
+        "affectedData": [
+          {"vendor": "Example", "product": "hermes-agent", "versions": [{"version": "1.0.0", "status": "affected"}]},
+          {"vendor": "NousResearch", "product": "hermes-workflow", "versions": [{"version": "1.0.0", "status": "affected"}]}
+        ]
+      }]
     }
   }
 ]

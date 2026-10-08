@@ -24,7 +24,7 @@ assert.equal(
 assert.equal(
   byId.has("CVE-TEST-HERMES-UNCONFIRMED-CPE"),
   false,
-  "Hermes NVD publication must wait for an authoritative NVD CPE identity",
+  "Structured Hermes affected data must not override a present, unallowlisted NVD CPE configuration",
 );
 assert.equal(
   byId.has("CVE-TEST-NANOCLAW-UNCONFIRMED-CPE"),
@@ -40,6 +40,9 @@ assert.equal(
 assert.deepEqual(
   [...byId.keys()].sort(),
   [
+    "CVE-TEST-HERMES-AFFECTED-EXACT",
+    "CVE-TEST-HERMES-AFFECTED-LTE",
+    "CVE-TEST-HERMES-AFFECTED-RANGE",
     "CVE-TEST-NANOCLAW",
     "CVE-TEST-NEMO-CLAW",
     "CVE-TEST-OPEN-SHELL",
@@ -47,6 +50,18 @@ assert.deepEqual(
   ],
   "Only allowlisted products with an explicit machine-readable version scope may be published",
 );
+
+assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-RANGE").affected, [
+  "hermes-agent@<0.16.0",
+]);
+assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-RANGE").platforms, ["hermes"]);
+assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-EXACT").affected, [
+  "hermes-agent@2026.4.23",
+  "hermes-agent@2026.5.29.2",
+]);
+assert.deepEqual(byId.get("CVE-TEST-HERMES-AFFECTED-LTE").affected, [
+  "hermes-agent@>=0.18.2 <=0.21.0",
+]);
 
 assert.deepEqual(byId.get("CVE-TEST-OPEN-SHELL").affected, ["openshell@<=0.0.33"]);
 assert.deepEqual(byId.get("CVE-TEST-OPEN-SHELL").platforms, ["openshell"]);
@@ -100,6 +115,10 @@ for (const [id, reason] of [
   ["CVE-TEST-OPENCLAW-AND-CONFIG", "AND-constrained applicability"],
   ["CVE-TEST-OPENCLAW-UNKNOWN-OPERATOR", "unknown Boolean applicability"],
   ["CVE-TEST-OPENCLAW-MALFORMED-NEGATE", "malformed negate applicability"],
+  ["CVE-TEST-HERMES-DEFAULT-AFFECTED", "implicit all-unmatched Hermes versions"],
+  ["CVE-TEST-HERMES-MIXED-UNSUPPORTED-RANGE", "partially representable Hermes affected data"],
+  ["CVE-TEST-HERMES-CHANGES", "Hermes range status transitions"],
+  ["CVE-TEST-HERMES-WRONG-STRUCTURED-IDENTITY", "non-allowlisted structured Hermes identity"],
 ]) {
   assert.equal(
     byId.has(id),
@@ -109,6 +128,44 @@ for (const [id, reason] of [
 }
 
 const sourceRecords = JSON.parse(readFileSync(fixturePath, "utf8"));
+const transformRecords = (records) => JSON.parse(
+  execFileSync("jq", ["-L", scriptsDir, transformProgram], {
+    encoding: "utf8",
+    input: JSON.stringify(records),
+  }),
+);
+const sourceHermesRange = sourceRecords.find(
+  ({ cve }) => cve.id === "CVE-TEST-HERMES-AFFECTED-RANGE",
+);
+const hermesWithoutVersions = JSON.parse(JSON.stringify(sourceHermesRange));
+delete hermesWithoutVersions.cve.affected[0].affectedData[0].versions;
+assert.deepEqual(
+  transformRecords([hermesWithoutVersions]),
+  [],
+  "Hermes affected data without an explicit versions array must fail closed",
+);
+
+const hermesWithAmbiguousUpperBound = JSON.parse(JSON.stringify(sourceHermesRange));
+hermesWithAmbiguousUpperBound.cve.affected[0].affectedData[0].versions[0].lessThanOrEqual = "0.16.0";
+assert.deepEqual(
+  transformRecords([hermesWithAmbiguousUpperBound]),
+  [],
+  "A Hermes range containing both lessThan and lessThanOrEqual must fail closed",
+);
+
+const hermesWithOrderedDateBuilds = JSON.parse(JSON.stringify(sourceHermesRange));
+hermesWithOrderedDateBuilds.cve.affected[0].affectedData[0].versions[0] = {
+  version: "2026.5.29.0",
+  lessThan: "2026.5.29.3",
+  versionType: "semver",
+  status: "affected",
+};
+assert.deepEqual(
+  transformRecords([hermesWithOrderedDateBuilds]),
+  [],
+  "Four-part Hermes date builds may be matched exactly but must not gain SemVer ordering",
+);
+
 const sourceOpenShell = sourceRecords.find(({ cve }) => cve.id === "CVE-TEST-OPEN-SHELL");
 const currentNvdState = (record) => JSON.parse(
   execFileSync(
@@ -160,6 +217,10 @@ const querySpecs = execFileSync(
 assert.ok(querySpecs.includes("virtualMatchString|cpe:2.3:a:nvidia:nemoclaw"));
 assert.ok(querySpecs.includes("virtualMatchString|cpe:2.3:a:nvidia:openshell"));
 assert.ok(querySpecs.includes("keyword|hermes-agent"));
+assert.ok(
+  querySpecs.includes("keyword|Hermes Agent"),
+  "Full discovery must include the spaced product name used by some Hermes Agent CVE descriptions",
+);
 assert.ok(
   !querySpecs.includes("virtualMatchString|cpe:2.3:a:nousresearch:hermes_agent"),
   "Unconfirmed NousResearch CPE must not be queried as an authoritative Hermes identity",

@@ -2,6 +2,12 @@ const SEMVER_PATTERN = String.raw`[vV]?\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z-]+(?:\.[0
 const SEMVER_REGEX = new RegExp(
   String.raw`^[vV]?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`,
 );
+const EXACT_DATE_BUILD_PATTERN = String.raw`[vV]?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])\.\d+`;
+const EXACT_DATE_BUILD_REGEX = new RegExp(`^${EXACT_DATE_BUILD_PATTERN}$`);
+const EXACT_DATE_BUILD_SPEC_REGEX = new RegExp(`^=\\s*(${EXACT_DATE_BUILD_PATTERN})$`);
+const HERMES_DATE_VERSION_PATTERN = String.raw`[vV]?\d{4}\.(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])(?:\.\d+)?`;
+const HERMES_DATE_VERSION_REGEX = new RegExp(`^${HERMES_DATE_VERSION_PATTERN}$`);
+const HERMES_DATE_VERSION_IN_SPEC_REGEX = new RegExp(HERMES_DATE_VERSION_PATTERN);
 
 /**
  * @param {string} version
@@ -22,6 +28,52 @@ function parseSemverDetails(version) {
     core,
     prerelease: match[4] ? match[4].split(".") : [],
   };
+}
+
+/**
+ * Four-component Hermes release-date identities are exact opaque values, not
+ * SemVer. They may be matched for equality, but never ordered or treated as an
+ * alias for the package's independent 0.x SemVer identity.
+ *
+ * @param {string} version
+ * @returns {string | null}
+ */
+function normalizeExactDateBuild(version) {
+  const normalized = String(version ?? "").trim();
+  if (!EXACT_DATE_BUILD_REGEX.test(normalized)) return null;
+  return normalized.replace(/^v/i, "");
+}
+
+/**
+ * @param {string} version
+ * @returns {boolean}
+ */
+export function isExactDateBuildVersion(version) {
+  return normalizeExactDateBuild(version) !== null;
+}
+
+export function isHermesDateVersionIdentity(version) {
+  return HERMES_DATE_VERSION_REGEX.test(String(version ?? "").trim());
+}
+
+/**
+ * @param {string} spec
+ * @returns {string | null}
+ */
+function exactDateBuildFromSpec(spec) {
+  const normalized = String(spec ?? "").trim();
+  const explicitEquality = normalized.match(EXACT_DATE_BUILD_SPEC_REGEX)?.[1];
+  return normalizeExactDateBuild(explicitEquality || normalized);
+}
+
+export function hermesVersionIdentitiesAreIncomparable(version, rawSpec) {
+  const parsedSpec = parseVersionSpec(rawSpec);
+  if (!parsedSpec.supported || parsedSpec.normalized === "*" || versionMatches(version, rawSpec)) {
+    return false;
+  }
+  const installedUsesDateIdentity = isHermesDateVersionIdentity(version);
+  const specUsesDateIdentity = HERMES_DATE_VERSION_IN_SPEC_REGEX.test(String(rawSpec ?? ""));
+  return installedUsesDateIdentity !== specUsesDateIdentity;
 }
 
 /**
@@ -135,6 +187,10 @@ export function parseVersionSpec(rawSpec) {
     return { supported: true, normalized: "*" };
   }
 
+  if (exactDateBuildFromSpec(spec)) {
+    return { supported: true, normalized: spec };
+  }
+
   if (spec.includes("||") || spec.includes("&&") || /\s-\s/.test(spec)) {
     return { supported: false, normalized: spec };
   }
@@ -204,6 +260,11 @@ export function versionMatches(version, rawSpec) {
   const spec = parsedSpec.normalized;
   if (spec === "*") return true;
   if (!version || String(version).trim().toLowerCase() === "unknown") return false;
+
+  const exactDateBuild = exactDateBuildFromSpec(spec);
+  if (exactDateBuild) {
+    return normalizeExactDateBuild(version) === exactDateBuild;
+  }
 
   const normalizedVersion = String(version).trim().replace(/^v/i, "");
 

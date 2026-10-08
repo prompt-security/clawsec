@@ -18,6 +18,16 @@ function runSetup(args = [], env = {}) {
   });
 }
 
+const dateBuildPreview = runSetup([
+  "--print-only",
+  "--skill",
+  "hermes-agent",
+  "--version",
+  "2026.5.29.2",
+]);
+assert.equal(dateBuildPreview.status, 0, dateBuildPreview.stderr);
+assert.ok(dateBuildPreview.stdout.includes("--version '2026.5.29.2'"), dateBuildPreview.stdout);
+
 async function withTempDir(run) {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "hag-advisory-cron-"));
   try {

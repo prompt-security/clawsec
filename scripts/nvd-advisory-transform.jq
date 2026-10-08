@@ -1,8 +1,8 @@
 # Canonical NVD CVE -> ClawSec advisory transform.
 #
 # Publication is deliberately strict: product identity and version scope must
-# come from the same allowlisted vulnerable application CPE match. References
-# and free text are discovery signals only.
+# come from the same allowlisted machine-readable NVD source. References and
+# free text are discovery signals only.
 
 def map_severity:
   if . == null then "medium"
@@ -125,8 +125,6 @@ def supported_component_for_cpe($criteria):
   | if $cpe == null or $cpe.part != "a" then null
     elif $cpe.vendor == "openclaw" and $cpe.product == "openclaw" then "openclaw"
     elif $cpe.vendor == "nanoco" and $cpe.product == "nanoclaw" then "nanoclaw"
-    # Hermes remains discoverable by keyword, but is not NVD-publishable until
-    # NVD defines an authoritative product CPE with machine-readable scope.
     elif $cpe.vendor == "sipeed" and $cpe.product == "picoclaw" then "picoclaw"
     elif $cpe.vendor == "nvidia" and $cpe.product == "nemoclaw" then "nemoclaw"
     elif $cpe.vendor == "nvidia" and $cpe.product == "openshell" then "openshell"
@@ -205,17 +203,131 @@ def explicit_version_scope:
     else cpe_exact_version(.criteria)
     end;
 
+# NVD carries CNA-authored CVE v5 affected data even when NVD has not enriched
+# a CVE with CPE applicability. Use that data only for the exact allowlisted
+# Hermes product and only when the complete affected block can be represented
+# by the feed without widening or guessing.
+def nvd_configurations_absent:
+  (((.cve | has("configurations")) | not)
+   or (.cve.configurations == null)
+   or (((.cve.configurations | type) == "array") and ((.cve.configurations | length) == 0)));
+
+def supported_semver_token:
+  (type == "string")
+  and test("^[vV]?[0-9]+(?:\\.[0-9]+){0,2}(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$");
+
+def supported_date_build_token:
+  (type == "string")
+  and test("^[vV]?[0-9]{4}\\.(?:[1-9]|1[0-2])\\.(?:[1-9]|[12][0-9]|3[01])\\.[0-9]+$");
+
+def supported_exact_version_token:
+  supported_semver_token or supported_date_build_token;
+
+def valid_nvd_affected_status:
+  . == "affected" or . == "unaffected" or . == "unknown";
+
+def nvd_affected_version_translation:
+  . as $entry
+  | if (($entry | type) != "object")
+    then {supported: false, scope: null}
+    elif ((($entry.status? | valid_nvd_affected_status) | not) or ($entry | has("changes")))
+    then {supported: false, scope: null}
+    elif $entry.status != "affected"
+    then {supported: true, scope: null}
+    elif (($entry | has("lessThan")) and ($entry | has("lessThanOrEqual")))
+    then {supported: false, scope: null}
+    elif ($entry | has("lessThan"))
+    then
+      $entry.version as $start
+      | $entry.lessThan as $end
+      | if (($entry.versionType == "semver")
+            and ($start | supported_semver_token)
+            and ($end | supported_semver_token))
+        then {
+          supported: true,
+          scope: (if $start == "0" then "<" + $end else ">=" + $start + " <" + $end end)
+        }
+        else {supported: false, scope: null}
+        end
+    elif ($entry | has("lessThanOrEqual"))
+    then
+      $entry.version as $start
+      | $entry.lessThanOrEqual as $end
+      | if (($entry.versionType == "semver")
+            and ($start | supported_semver_token)
+            and ($end | supported_semver_token))
+        then {
+          supported: true,
+          scope: (if $start == "0" then "<=" + $end else ">=" + $start + " <=" + $end end)
+        }
+        else {supported: false, scope: null}
+        end
+    elif (((($entry | has("versionType")) | not) or ($entry.versionType == "semver"))
+          and ($entry.version | supported_exact_version_token))
+    then {supported: true, scope: $entry.version}
+    else {supported: false, scope: null}
+    end;
+
+def nvd_affected_product_representable:
+  . as $product
+  | (($product | type) == "object")
+    and (((($product | has("defaultStatus")) | not)
+          or ($product.defaultStatus == "unknown")
+          or ($product.defaultStatus == "unaffected")))
+    and (($product.versions? | type) == "array")
+    and (($product.versions | length) > 0)
+    and all($product.versions[]; (nvd_affected_version_translation | .supported == true));
+
+def hermes_nvd_affected_products:
+  . as $record
+  | if (($record | nvd_configurations_absent)
+        and (($record.cve.sourceIdentifier? | type) == "string")
+        and (($record.cve.affected? | type) == "array"))
+    then [
+      $record.cve.affected[]
+      | select((type == "object") and (.source == $record.cve.sourceIdentifier))
+      | select((.affectedData? | type) == "array")
+      | .affectedData[]
+      | select(type == "object")
+      | select(((.vendor? | type) == "string") and ((.product? | type) == "string"))
+      | select(((.vendor | ascii_downcase) == "nousresearch")
+               and ((.product | ascii_downcase) == "hermes-agent"))
+    ]
+    else []
+    end;
+
+def hermes_nvd_affected_targets:
+  hermes_nvd_affected_products as $products
+  | if (($products | length) == 0)
+       or ((all($products[]; nvd_affected_product_representable)) | not)
+    then []
+    else [
+      $products[]
+      | .versions[]
+      | nvd_affected_version_translation
+      | select(.scope != null)
+      | {
+          component: "hermes",
+          selector: ("hermes-agent@" + .scope)
+        }
+    ]
+    | unique_by(.selector)
+    | sort_by(.selector)
+    end;
+
 def supported_scoped_targets:
   (
-    scoped_cpe_matches
-    | map(
-      explicit_version_scope as $scope
-      | select($scope != null and ($scope | length) > 0)
-      | {
-          component,
-          selector: (.component + "@" + $scope)
-        }
-    )
+    (
+      scoped_cpe_matches
+      | map(
+        explicit_version_scope as $scope
+        | select($scope != null and ($scope | length) > 0)
+        | {
+            component,
+            selector: (.component + "@" + $scope)
+          }
+      )
+    ) + hermes_nvd_affected_targets
     | unique_by(.selector)
     | sort_by(.component, .selector)
   );
