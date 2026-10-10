@@ -1,0 +1,444 @@
+{
+  "schema": "clawsec.legacy-prerelease-inventory/v1",
+  "repository": {
+    "slug": "prompt-security/clawsec",
+    "git_remote": "https://github.com/prompt-security/clawsec.git"
+  },
+  "observation": {
+    "observed_at": "2026-07-22T23:32:35Z",
+    "github_releases_api": "https://api.github.com/repos/prompt-security/clawsec/releases?per_page=100",
+    "github_release_objects_observed": 16,
+    "release_pagination": "one_complete_page_16_of_100",
+    "tag_scope": "refs/tags/*-beta*",
+    "tag_advertisement_method": "git_ls_remote_tags_with_peeled_refs",
+    "tag_object_method": "fetched_remote_refs_plus_git_for_each_ref_object_type",
+    "asset_method": "downloaded_bytes_sha256_matched_github_digest"
+  },
+  "policy": {
+    "classification": "frozen_legacy_public_prerelease_history",
+    "retention": "fetchable_history",
+    "historical_fetch_only": true,
+    "authorization_granted": false,
+    "public_write_authorized": false,
+    "tag_creation_permitted": false,
+    "github_release_creation_permitted": false,
+    "store_publication_permitted": false,
+    "catalog_activation_permitted": false,
+    "active_resolution": false,
+    "discovery_publication_permitted": false,
+    "republish_permitted": false,
+    "ref_or_asset_mutation_permitted": false
+  },
+  "counts": {
+    "tags": 15,
+    "releases": 4,
+    "assets": 44
+  },
+  "tags": [
+    {
+      "name": "hermes-traffic-guardian-v0.0.1-beta1",
+      "ref_type": "annotated",
+      "ref_oid": "2763b8214c19ce18c8a1fd8fce7530b0bfeec917",
+      "peeled_commit_oid": "369745821f74f1dc3b196d9df22b643781112052",
+      "release": null
+    },
+    {
+      "name": "hermes-traffic-guardian-v0.0.1-beta2",
+      "ref_type": "annotated",
+      "ref_oid": "7b21b2d90ba771c6a4ffeeda880df7df99c50828",
+      "peeled_commit_oid": "1e48a955ccf7f9a4b5d4aaedfbb9f47779348595",
+      "release": null
+    },
+    {
+      "name": "hermes-traffic-guardian-v0.0.1-beta3",
+      "ref_type": "lightweight",
+      "ref_oid": "1b676fd42cf8683db1677a10f25d697cfd3862cb",
+      "peeled_commit_oid": "1b676fd42cf8683db1677a10f25d697cfd3862cb",
+      "release": null
+    },
+    {
+      "name": "hermes-traffic-guardian-v0.0.1-beta5",
+      "ref_type": "annotated",
+      "ref_oid": "772ab8bad5959c9106357f25417e2efbf70ea162",
+      "peeled_commit_oid": "6573ee9ecfeaacf4b46692d8be02496dcc53af5a",
+      "release": {
+        "id": 343366161,
+        "published_at": "2026-06-23T08:32:34Z",
+        "draft": false,
+        "prerelease": true,
+        "immutable": false,
+        "classification": "legacy_mutable",
+        "assets": [
+          {
+            "id": 455433211,
+            "name": "checksums.json",
+            "size": 2331,
+            "sha256": "915719e61588344e5fe40181064cb2828279874c7fbf922e3d35b1c30788ff2d"
+          },
+          {
+            "id": 455433210,
+            "name": "checksums.sig",
+            "size": 88,
+            "sha256": "69785aaf1eb50e59edbe2a2139f0c7fe02153a1d2d3c04da273eed731e21066b"
+          },
+          {
+            "id": 455433207,
+            "name": "hermes-traffic-guardian-v0.0.1-beta5.zip",
+            "size": 7929,
+            "sha256": "11a8052b37a736f7c78606f7300cb73a0cd406f02ea157064133ded86b7fff57"
+          },
+          {
+            "id": 455433208,
+            "name": "install.md",
+            "size": 967,
+            "sha256": "cd493ac2f7730e52a34b805055c22082d15fd835bd9313f5ed6f2652ab9a3537"
+          },
+          {
+            "id": 455433204,
+            "name": "permissions.json",
+            "size": 1733,
+            "sha256": "e59e333f97bf65c106b94128240e3b654f8627b5df7bb1ac0c32adc511f94551"
+          },
+          {
+            "id": 455433205,
+            "name": "README.md",
+            "size": 921,
+            "sha256": "0f63aaad836292def06ab628686956363f129bdebfd9500c7a13ded0785fbb60"
+          },
+          {
+            "id": 455433202,
+            "name": "signing-public.pem",
+            "size": 113,
+            "sha256": "44b3abba8f2fe5b22a516fe33ca7dbd09f7d1dcf007d6526033b406b1969d958"
+          },
+          {
+            "id": 455433209,
+            "name": "skill-card.md",
+            "size": 2379,
+            "sha256": "d0fce4c2a767278e5149c13aa19bec54c7679acbbea9b5b9c088f8164ceb4ecc"
+          },
+          {
+            "id": 455433206,
+            "name": "skill.json",
+            "size": 3494,
+            "sha256": "eeb72190473c3895a9bb7a32192cc4d9865f6e30fdd084d4e93385ecc48dc971"
+          },
+          {
+            "id": 455433213,
+            "name": "SKILL.md",
+            "size": 5411,
+            "sha256": "51797e7b7ba5377aec3aa679b9cb527391a190c2747ca9433859aa3b9a5a4440"
+          },
+          {
+            "id": 455433203,
+            "name": "skillspector-report.md",
+            "size": 949,
+            "sha256": "ea8cdb468329b24fff05d73147faef827501f74ebe2cf78da59cba7410d12de3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "nanoclaw-traffic-guardian-v0.0.1-beta1",
+      "ref_type": "annotated",
+      "ref_oid": "cc889f55f45fd7f45be914d847acd1f5c53a5d9b",
+      "peeled_commit_oid": "369745821f74f1dc3b196d9df22b643781112052",
+      "release": null
+    },
+    {
+      "name": "nanoclaw-traffic-guardian-v0.0.1-beta2",
+      "ref_type": "annotated",
+      "ref_oid": "0f65f85a383a6c82d52551295ab50443ab81fd38",
+      "peeled_commit_oid": "1e48a955ccf7f9a4b5d4aaedfbb9f47779348595",
+      "release": null
+    },
+    {
+      "name": "nanoclaw-traffic-guardian-v0.0.1-beta5",
+      "ref_type": "annotated",
+      "ref_oid": "e0fdc5c284d1170a6047ef807e2ec6c74a76c49a",
+      "peeled_commit_oid": "6573ee9ecfeaacf4b46692d8be02496dcc53af5a",
+      "release": {
+        "id": 343366965,
+        "published_at": "2026-06-23T08:34:13Z",
+        "draft": false,
+        "prerelease": true,
+        "immutable": false,
+        "classification": "legacy_mutable",
+        "assets": [
+          {
+            "id": 455434931,
+            "name": "checksums.json",
+            "size": 2524,
+            "sha256": "50e1830b44c70cadb676199ed9f344ed4c83c85cacb7fc711362d092ddd3cf1b"
+          },
+          {
+            "id": 455434935,
+            "name": "checksums.sig",
+            "size": 88,
+            "sha256": "104ea8bb7642742a42235ba2203688efa74b99b303bfc79439b93bdfd629f0a9"
+          },
+          {
+            "id": 455434928,
+            "name": "install.md",
+            "size": 977,
+            "sha256": "5331a072b86b031d712c4ea0d0483d12454ca6d1f46cb0bb56df294a33b80c07"
+          },
+          {
+            "id": 455434932,
+            "name": "nanoclaw-traffic-guardian-v0.0.1-beta5.zip",
+            "size": 8567,
+            "sha256": "6758f13c076e796298d39a1104aa9cfa59ab12cc98e3fee75c737a6d0469fb52"
+          },
+          {
+            "id": 455434933,
+            "name": "permissions.json",
+            "size": 1715,
+            "sha256": "d4949dc996a81c1f869e6149bf193109cac26afb09f1f176ff60af692a4ecc32"
+          },
+          {
+            "id": 455434929,
+            "name": "README.md",
+            "size": 954,
+            "sha256": "41f16e1d8bc5a6c7d7d42948af3a1055f78065968b5ac2f53f740a4cf2449a48"
+          },
+          {
+            "id": 455434934,
+            "name": "signing-public.pem",
+            "size": 113,
+            "sha256": "44b3abba8f2fe5b22a516fe33ca7dbd09f7d1dcf007d6526033b406b1969d958"
+          },
+          {
+            "id": 455434930,
+            "name": "skill-card.md",
+            "size": 2387,
+            "sha256": "4ba7abf86718dae88819fe3f68adfe5cc476ad3e5a7280ec98fd8b070d7c69e6"
+          },
+          {
+            "id": 455434938,
+            "name": "skill.json",
+            "size": 3955,
+            "sha256": "30463834d853a17823693b8a4b699d183c844faba587224b9cfd91f62a8df014"
+          },
+          {
+            "id": 455434937,
+            "name": "SKILL.md",
+            "size": 5371,
+            "sha256": "c2a2273bacf812187c4d0106e4aa9d02e5adf93dcc68f101e06e7e90a444fc28"
+          },
+          {
+            "id": 455434927,
+            "name": "skillspector-report.md",
+            "size": 952,
+            "sha256": "d8a030fe80b9efe06f3283a2136f86a7512b16ba2b1d1ce135d03c1df49ffc42"
+          }
+        ]
+      }
+    },
+    {
+      "name": "openclaw-traffic-guardian-v0.0.1-beta1",
+      "ref_type": "lightweight",
+      "ref_oid": "369745821f74f1dc3b196d9df22b643781112052",
+      "peeled_commit_oid": "369745821f74f1dc3b196d9df22b643781112052",
+      "release": null
+    },
+    {
+      "name": "openclaw-traffic-guardian-v0.0.1-beta2",
+      "ref_type": "annotated",
+      "ref_oid": "8d09bbff74aa9ecb16bc034f76f4a0d252930ce7",
+      "peeled_commit_oid": "1e48a955ccf7f9a4b5d4aaedfbb9f47779348595",
+      "release": null
+    },
+    {
+      "name": "openclaw-traffic-guardian-v0.0.1-beta3",
+      "ref_type": "lightweight",
+      "ref_oid": "c1d1824f862ef673829463e67254593cad362937",
+      "peeled_commit_oid": "c1d1824f862ef673829463e67254593cad362937",
+      "release": null
+    },
+    {
+      "name": "openclaw-traffic-guardian-v0.0.1-beta5",
+      "ref_type": "annotated",
+      "ref_oid": "f7280af9066be22766f221bb9551c4ca8ee6707b",
+      "peeled_commit_oid": "6573ee9ecfeaacf4b46692d8be02496dcc53af5a",
+      "release": {
+        "id": 343368509,
+        "published_at": "2026-06-23T08:37:30Z",
+        "draft": false,
+        "prerelease": true,
+        "immutable": false,
+        "classification": "legacy_mutable",
+        "assets": [
+          {
+            "id": 455437485,
+            "name": "checksums.json",
+            "size": 2567,
+            "sha256": "183a5131cbe990e4d25ba8db2b1e4ee4f168107c1fbb953cb7bf08e3d7f6539f"
+          },
+          {
+            "id": 455437481,
+            "name": "checksums.sig",
+            "size": 88,
+            "sha256": "d2d26e6a9be97e2b84c95dcee223e0ded0669c7043145adf3f76666d7025d792"
+          },
+          {
+            "id": 455437477,
+            "name": "install.md",
+            "size": 977,
+            "sha256": "c6212360e7c35a39e766bfe93cf72f3810f49a6c37b8307ccf2673b2a15fc342"
+          },
+          {
+            "id": 455437480,
+            "name": "openclaw-traffic-guardian-v0.0.1-beta5.zip",
+            "size": 9912,
+            "sha256": "3fa263f6014c55540779e3dba254574b69c4012e5eed1fa398d09af93bcef40f"
+          },
+          {
+            "id": 455437482,
+            "name": "permissions.json",
+            "size": 1851,
+            "sha256": "873d1bda40effca524e723925f600d3624b00e337d6ed7019b6d62e2e9e9897b"
+          },
+          {
+            "id": 455437483,
+            "name": "README.md",
+            "size": 988,
+            "sha256": "3e185dea02f351946a10b25513aef57a8792fa313f4df5bc5d2e2e5c267f47e0"
+          },
+          {
+            "id": 455437486,
+            "name": "signing-public.pem",
+            "size": 113,
+            "sha256": "44b3abba8f2fe5b22a516fe33ca7dbd09f7d1dcf007d6526033b406b1969d958"
+          },
+          {
+            "id": 455437478,
+            "name": "skill-card.md",
+            "size": 2428,
+            "sha256": "b870010d27f5292e1fefdc2ec7eefe862c695221ace9916af5c2df17ba1af001"
+          },
+          {
+            "id": 455437476,
+            "name": "skill.json",
+            "size": 3959,
+            "sha256": "f5e5d18068c14041978921c33840f93867a6ef2be8aef021891dede46d838e8d"
+          },
+          {
+            "id": 455437475,
+            "name": "SKILL.md",
+            "size": 6086,
+            "sha256": "75d5d2822c484ea7a6790cfcca21942b96c9b35ceeb04407570317018d031596"
+          },
+          {
+            "id": 455437484,
+            "name": "skillspector-report.md",
+            "size": 1265,
+            "sha256": "1f660100fcf6ece775f39effdf01bcf6460bd812635d3b2185df4ef7d446ab6e"
+          }
+        ]
+      }
+    },
+    {
+      "name": "picoclaw-traffic-guardian-v0.0.1-beta1",
+      "ref_type": "lightweight",
+      "ref_oid": "369745821f74f1dc3b196d9df22b643781112052",
+      "peeled_commit_oid": "369745821f74f1dc3b196d9df22b643781112052",
+      "release": null
+    },
+    {
+      "name": "picoclaw-traffic-guardian-v0.0.1-beta2",
+      "ref_type": "annotated",
+      "ref_oid": "f5cf15c697729237834002f1698830f84ce68c4a",
+      "peeled_commit_oid": "1e48a955ccf7f9a4b5d4aaedfbb9f47779348595",
+      "release": null
+    },
+    {
+      "name": "picoclaw-traffic-guardian-v0.0.1-beta3",
+      "ref_type": "lightweight",
+      "ref_oid": "1b676fd42cf8683db1677a10f25d697cfd3862cb",
+      "peeled_commit_oid": "1b676fd42cf8683db1677a10f25d697cfd3862cb",
+      "release": null
+    },
+    {
+      "name": "picoclaw-traffic-guardian-v0.0.1-beta5",
+      "ref_type": "annotated",
+      "ref_oid": "515bde4587dea5f9144257eaf25b6f40374ba9e8",
+      "peeled_commit_oid": "6573ee9ecfeaacf4b46692d8be02496dcc53af5a",
+      "release": {
+        "id": 343400870,
+        "published_at": "2026-06-23T09:35:29Z",
+        "draft": false,
+        "prerelease": true,
+        "immutable": false,
+        "classification": "legacy_mutable",
+        "assets": [
+          {
+            "id": 455480117,
+            "name": "checksums.json",
+            "size": 2341,
+            "sha256": "b35c6645ced74f125c1fa3ebde63025104b9f524222038f566c780c5bdd1a653"
+          },
+          {
+            "id": 455480116,
+            "name": "checksums.sig",
+            "size": 88,
+            "sha256": "a79bdc731646682c90211f2273f2fbbedd3ac86ca634bd6d5d80c962761bb5f1"
+          },
+          {
+            "id": 455480120,
+            "name": "install.md",
+            "size": 977,
+            "sha256": "68b6b7760f8d69e0f18904cf1df8fdcc9549c7d442586c2c415640f8869026ac"
+          },
+          {
+            "id": 455480123,
+            "name": "permissions.json",
+            "size": 1790,
+            "sha256": "294771acde5b9eb9c0a9a99c5ceb080d7f3008b61422d7d6d3efb50a6d20e50f"
+          },
+          {
+            "id": 455480119,
+            "name": "picoclaw-traffic-guardian-v0.0.1-beta5.zip",
+            "size": 8091,
+            "sha256": "761cec61dae78f43044ff18b21c4f07d7da5645237967c75bd81960bf787ccbc"
+          },
+          {
+            "id": 455480118,
+            "name": "README.md",
+            "size": 950,
+            "sha256": "a0d90c54c14eed2abf1d15430a71e6bdd5a54ae76593b49e7ccd2727215612a9"
+          },
+          {
+            "id": 455480121,
+            "name": "signing-public.pem",
+            "size": 113,
+            "sha256": "44b3abba8f2fe5b22a516fe33ca7dbd09f7d1dcf007d6526033b406b1969d958"
+          },
+          {
+            "id": 455480115,
+            "name": "skill-card.md",
+            "size": 2395,
+            "sha256": "9e8b36c2342c5530c273b45f56c3a2efe45bca67333644f27f50db4d4194a958"
+          },
+          {
+            "id": 455480124,
+            "name": "skill.json",
+            "size": 3562,
+            "sha256": "13c98c3be485c8de7a25c11968edf8754a506ec36d045536b2d16d6278bbf2d1"
+          },
+          {
+            "id": 455480122,
+            "name": "SKILL.md",
+            "size": 5460,
+            "sha256": "ead5771b904a16a634c482622db2fecab11fa1bbbb31e17899b4c02281b05724"
+          },
+          {
+            "id": 455480114,
+            "name": "skillspector-report.md",
+            "size": 953,
+            "sha256": "b22c01eae20d300b6d0c88a9f1770644e464007139eda71d25a6b25cc483f8ce"
+          }
+        ]
+      }
+    }
+  ]
+}
