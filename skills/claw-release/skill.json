@@ -1,24 +1,44 @@
 {
   "name": "claw-release",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Release automation for Claw skills and website. Guides through version bumping, tagging, and release verification.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://clawsec.prompt.security",
-  "keywords": ["release", "versioning", "deployment", "automation", "ci-cd", "skills"],
-
+  "keywords": [
+    "release",
+    "versioning",
+    "deployment",
+    "automation",
+    "ci-cd",
+    "skills"
+  ],
   "sbom": {
     "files": [
-      { "path": "SKILL.md", "required": true, "description": "Release workflow guide" },
-      { "path": "CHANGELOG.md", "required": true, "description": "Version history and release notes" }
+      {
+        "path": "SKILL.md",
+        "required": true,
+        "description": "Release workflow guide"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "required": true,
+        "description": "Version history and release notes"
+      }
     ]
   },
-
   "openclaw": {
     "emoji": "🚀",
     "category": "utility",
     "internal": true,
-    "requires": { "bins": ["bash", "git", "jq", "gh"] },
+    "requires": {
+      "bins": [
+        "bash",
+        "git",
+        "jq",
+        "gh"
+      ]
+    },
     "runtime": {
       "required_env": [
         "GH_TOKEN or existing gh auth"
