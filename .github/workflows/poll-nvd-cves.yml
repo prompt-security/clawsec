@@ -2,8 +2,10 @@ name: Poll NVD CVEs
 
 on:
   schedule:
-    # Run daily at 06:00 UTC
-    - cron: '0 6 * * *'
+    # Incremental poll at 06:00 UTC, Tuesday through Sunday
+    - cron: '0 6 * * 0,2-6'
+    # Full rebuild at 06:00 UTC on Mondays (see "Select scan mode")
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     inputs:
       force_full_scan:
@@ -52,6 +54,24 @@ jobs:
         with:
           python-version: '3.12.15'
 
+      - name: Select scan mode
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          INPUT_FORCE_FULL_SCAN: ${{ inputs.force_full_scan }}
+        run: |
+          set -euo pipefail
+          # Incremental runs only see CVEs that still match a discovery query.
+          # A CVE that NVD rejects, or re-scopes away from every keyword and
+          # CPE, is removed only by a full rebuild, so the Monday schedule
+          # rebuilds from full history.
+          if [ "$INPUT_FORCE_FULL_SCAN" = "true" ] || [ "$EVENT_SCHEDULE" = "0 6 * * 1" ]; then
+            FORCE_FULL_SCAN=true
+          else
+            FORCE_FULL_SCAN=false
+          fi
+          echo "FORCE_FULL_SCAN=$FORCE_FULL_SCAN" >> "$GITHUB_ENV"
+          echo "Full scan: $FORCE_FULL_SCAN"
+
       - name: Set safe NVD overlap window
         id: last_poll
         run: |
@@ -98,7 +118,6 @@ jobs:
           set -euo pipefail
           source scripts/feed-utils.sh
           mkdir -p tmp
-          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
           NVD_QUERY_SPECS="$(nvd_query_specs_for_scan "$FORCE_FULL_SCAN")"
           
           START_DATE="${STEPS_DATES_OUTPUTS_START_DATE}"
@@ -128,7 +147,7 @@ jobs:
             if [ "$FORCE_FULL_SCAN" = "true" ]; then
               echo "Full scan mode enabled: paginating complete NVD history for '$QUERY_KIND:$QUERY_VALUE'"
             else
-              echo "Incremental mode: paginating the broad rolling NVD modification inventory"
+              echo "Incremental mode: paginating '$QUERY_KIND:$QUERY_VALUE' within the rolling NVD modification window"
             fi
 
             while true; do
@@ -239,7 +258,6 @@ jobs:
         run: |
           set -euo pipefail
           source scripts/feed-utils.sh
-          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
           NVD_QUERY_SPECS="$(nvd_query_specs_for_scan "$FORCE_FULL_SCAN")"
           # Export the protected component set for PR body + workflow summary steps.
           PROTECTED_COMPONENTS="$(nvd_summary_components)"
@@ -299,7 +317,7 @@ jobs:
           # A complete rebuild with no publishable NVD record is indistinguishable
           # from a bad/empty upstream snapshot. Never use it to erase the existing
           # CVE set. Incremental windows may legitimately contain zero matches.
-          if [ "${{ inputs.force_full_scan }}" = "true" ] && [ "$FILTERED" -eq 0 ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ] && [ "$FILTERED" -eq 0 ]; then
             echo "::error::Refusing full rebuild: strict NVD scoping produced zero advisories."
             exit 1
           fi
@@ -308,7 +326,6 @@ jobs:
         id: existing
         run: |
           set -euo pipefail
-          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
           if [ -f "$FEED_PATH" ]; then
             if ! jq -e 'type == "object" and (.advisories | type == "array" and length > 0)' "$FEED_PATH" >/dev/null; then
               echo "::error::Existing advisory feed is malformed or empty: $FEED_PATH"
@@ -354,7 +371,7 @@ jobs:
           set -euo pipefail
           source scripts/feed-utils.sh
 
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             echo "Full scan mode enabled: skipping delta update detection."
             echo '[]' > tmp/updated_advisories.json
             echo '[]' > tmp/retracted_advisory_ids.json
@@ -482,7 +499,8 @@ jobs:
           RETRACTION_LIMIT="$(nvd_drop_review_limit)"
           echo "Incremental retraction safety check: $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs (review at $RETRACTION_LIMIT records or 25% of the current CVE feed)"
           if nvd_is_material_drop "$RETRACTED_COUNT" "$EXISTING_CVE_COUNT" && [ "${{ inputs.allow_large_rebuild_drop }}" != "true" ]; then
-            echo "::error::Refusing incremental update: $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs would be retracted (review threshold: $RETRACTION_LIMIT records or 25% of the current CVE feed). Review the broad NVD inventory, then rerun with allow_large_rebuild_drop=true if intentional."
+            echo "::error::Refusing incremental update: $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs would be retracted (review threshold: $RETRACTION_LIMIT records or 25% of the current CVE feed). Review the retracted IDs below, then rerun with allow_large_rebuild_drop=true if intentional."
+            jq -r '.[] | "- \(.)"' tmp/retracted_advisory_ids.json
             exit 1
           fi
           echo "update_count=$UPDATE_COUNT" >> $GITHUB_OUTPUT
@@ -511,7 +529,7 @@ jobs:
           # Read existing IDs into jq-friendly files (avoids huge CLI args on full scans).
           jq -R -s 'split("\n") | map(select(length > 0))' < tmp/existing_ids.txt > tmp/existing_ids_from_feed.json
 
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             echo "Full scan mode enabled: rebuilding CVE advisories from scratch."
             echo '[]' > tmp/existing_ids.json
           else
@@ -533,7 +551,7 @@ jobs:
           ' tmp/new_advisories.json > tmp/net_new_advisories.json
 
           NET_NEW_COUNT=$(jq 'length' tmp/net_new_advisories.json)
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             REBUILT_COUNT="$NEW_COUNT"
           else
             REBUILT_COUNT=0
@@ -546,7 +564,7 @@ jobs:
           echo "nvd_rebuilt_count=$REBUILT_COUNT" >> $GITHUB_OUTPUT
           echo "nvd_new_to_feed_count=$NET_NEW_COUNT" >> $GITHUB_OUTPUT
 
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             FILTERED_COUNT="${STEPS_PROCESS_OUTPUTS_FILTERED_COUNT}"
             if [ "$NEW_COUNT" -ne "$FILTERED_COUNT" ]; then
               echo "::error::Full scan transform mismatch: filtered CVEs=$FILTERED_COUNT transformed advisories=$NEW_COUNT"
@@ -619,7 +637,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             jq -n --slurpfile existing tmp/existing_advisories.json --slurpfile rebuilt tmp/new_advisories.json '
               ($existing[0]
                 | map(select((.id // "") | startswith("CVE-")))
@@ -646,10 +664,9 @@ jobs:
           echo "nvd_updated_count=$UPDATE_COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Update feed.json
-        if: inputs.force_full_scan == true || steps.transform.outputs.new_count != '0' || steps.nvd_counts.outputs.update_count != '0' || steps.updates.outputs.retracted_count != '0'
+        if: env.FORCE_FULL_SCAN == 'true' || steps.transform.outputs.new_count != '0' || steps.nvd_counts.outputs.update_count != '0' || steps.updates.outputs.retracted_count != '0'
         run: |
           NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
 
           if [ -f "$FEED_PATH" ] && [ "$FORCE_FULL_SCAN" = "true" ]; then
             # Full scan mode: replace all CVE advisories with rebuilt set and keep non-CVE entries.
@@ -883,7 +900,7 @@ jobs:
           GHSA_MATURED="$(jq '[.advisories[] | select(.status == "matured")] | length' "$GHSA_FEED_PATH")"
           GHSA_STALE="$(jq '[.advisories[] | select(.status == "stale")] | length' "$GHSA_FEED_PATH")"
 
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             MODE="full-rebuild (ignore feed state)"
           else
             MODE="delta (incremental)"
@@ -1047,7 +1064,7 @@ jobs:
           STEPS_FEED_CHANGES_OUTPUTS_CHANGED: ${{ steps.feed_changes.outputs.changed }}
           STEPS_UPSERT_PR_OUTPUTS_PULL_REQUEST_URL: ${{ steps.upsert-pr.outputs.pull-request-url }}
         run: |
-          if [ "${{ inputs.force_full_scan }}" = "true" ]; then
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
             MODE="full-rebuild (ignore feed state)"
           else
             MODE="delta (incremental)"

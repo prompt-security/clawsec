@@ -364,8 +364,8 @@ const incrementalQuerySpecs = execFileSync(
 ).trim().split("\n");
 assert.deepEqual(
   incrementalQuerySpecs,
-  ["modified|all"],
-  "Incremental polling must inventory every CVE modified in the overlap window without keyword or CPE discovery filters",
+  querySpecs,
+  "Incremental polling must window the allowlisted discovery queries instead of inventorying every modified NVD record",
 );
 
 const scheduledQuerySpecs = execFileSync(
@@ -391,22 +391,39 @@ const fullScanQuerySpecs = execFileSync(
 ).trim().split("\n");
 assert.deepEqual(fullScanQuerySpecs, querySpecs, "Full scans must retain the allowlisted discovery queries");
 
-const incrementalInventoryUrl = execFileSync(
+const incrementalDiscoveryUrl = execFileSync(
   "bash",
   [
     "-c",
-    'source "$1"; nvd_build_url modified all "&lastModStartDate=start&lastModEndDate=end&startIndex=0&resultsPerPage=2000"',
+    'source "$1"; nvd_build_url keyword OpenClaw "&lastModStartDate=start&lastModEndDate=end&startIndex=0&resultsPerPage=2000"',
     "nvd-incremental-url-test",
     resolve(scriptsDir, "feed-utils.sh"),
   ],
   { encoding: "utf8" },
 ).trim();
 assert.equal(
-  incrementalInventoryUrl,
-  "https://services.nvd.nist.gov/rest/json/cves/2.0?lastModStartDate=start&lastModEndDate=end&startIndex=0&resultsPerPage=2000",
-  "The incremental inventory URL must be bounded only by the modification window and pagination",
+  incrementalDiscoveryUrl,
+  "https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=OpenClaw&lastModStartDate=start&lastModEndDate=end&startIndex=0&resultsPerPage=2000",
+  "An incremental URL must keep its discovery filter and add only the modification window and pagination",
 );
-assert.doesNotMatch(incrementalInventoryUrl, /keywordSearch|virtualMatchString/);
+// An unfiltered 119-day modification window held about 388k NVD records
+// (2026-10-13). Paginating it takes most of an hour, and NVD shrinks the
+// window as records are re-modified, which trips the totalResults guard.
+const unfilteredInventory = spawnSync(
+  "bash",
+  [
+    "-c",
+    'source "$1"; nvd_build_url modified all "&lastModStartDate=start&lastModEndDate=end&startIndex=0&resultsPerPage=2000"',
+    "nvd-unfiltered-url-test",
+    resolve(scriptsDir, "feed-utils.sh"),
+  ],
+  { encoding: "utf8" },
+);
+assert.notEqual(
+  unfilteredInventory.status,
+  0,
+  "An unfiltered NVD modification inventory must not be a supported query kind",
+);
 
 const retractionGuardResults = execFileSync(
   "bash",
@@ -474,7 +491,7 @@ assert.match(
 assert.match(
   localGenerator,
   /NVD_QUERY_SPECS="\$\(nvd_query_specs_for_scan "\$FORCE"\)"/,
-  "Local incremental mode must select the broad modified-CVE inventory instead of filtered discovery queries",
+  "Local generation must select its NVD discovery queries through the shared scan-mode helper",
 );
 assert.match(
   localGenerator,
@@ -564,7 +581,7 @@ assert.match(
 assert.match(
   workflow,
   /NVD_QUERY_SPECS="\$\(nvd_query_specs_for_scan "\$FORCE_FULL_SCAN"\)"/,
-  "Workflow incremental mode must select the broad modified-CVE inventory instead of filtered discovery queries",
+  "The workflow must select its NVD discovery queries through the shared scan-mode helper",
 );
 assert.match(
   workflow,

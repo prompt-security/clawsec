@@ -159,7 +159,7 @@ while IFS='|' read -r QUERY_KIND QUERY_VALUE; do
     echo "  Full scan: paginating complete NVD history"
     QUERY_WINDOW_SUFFIX=""
   else
-    echo "  Incremental scan: paginating the broad rolling NVD modification inventory"
+    echo "  Incremental scan: paginating within the rolling NVD modification window"
     QUERY_WINDOW_SUFFIX="&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}"
   fi
 
@@ -402,7 +402,8 @@ if [ "$FORCE" = "false" ]; then
   RETRACTION_LIMIT="$(nvd_drop_review_limit)"
   echo "Incremental retraction safety check: $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs (review at $RETRACTION_LIMIT records or 25% of the current CVE feed)"
   if nvd_is_material_drop "$RETRACTED_COUNT" "$EXISTING_CVE_COUNT" && [ "$ALLOW_LARGE_DROP" != "true" ]; then
-    echo "Error: refusing incremental update because it would retract $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs (review threshold: $RETRACTION_LIMIT records or 25% of the current CVE feed). Review the broad NVD inventory, then rerun with --allow-large-drop if intentional." >&2
+    echo "Error: refusing incremental update because it would retract $RETRACTED_COUNT of $EXISTING_CVE_COUNT existing CVEs (review threshold: $RETRACTION_LIMIT records or 25% of the current CVE feed). Review the retracted IDs below, then rerun with --allow-large-drop if intentional." >&2
+    jq -r '.[] | "- \(.)"' "$TEMP_DIR/retracted_advisory_ids.json" >&2
     exit 1
   fi
 fi

@@ -117,7 +117,7 @@ git config core.hooksPath .githooks         # (re)enable the hook
 | `ci.yml` | PR to main / manual | Lint (TS, Python, shell), Trivy security scan, TruffleHog secret scan, npm audit, tests, build. No `push` trigger, so direct commits to main are not CI-scanned — accepted risk: the only direct-to-main writer is the NVD/GHSA poller, whose input is public advisory data. |
 | `skill-release.yml` | Tag `*-v*.*.*` or PR touching skill files | Sign checksums, publish to GitHub Releases, supersede old versions |
 | `deploy-pages.yml` | After CI or release succeeds | Build web frontend + skills catalog, deploy to GitHub Pages |
-| `poll-nvd-cves.yml` | Daily 06:00 UTC | Poll NVD for CVEs, update `advisories/feed.json` + signature |
+| `poll-nvd-cves.yml` | Daily 06:00 UTC (full rebuild on Mondays) | Poll NVD for CVEs, update `advisories/feed.json` + signature |
 | `community-advisory.yml` | Issue labeled `advisory-approved` | Process community report into `CLAW-YYYY-NNNN` advisory |
 
 ## Secret Scanning

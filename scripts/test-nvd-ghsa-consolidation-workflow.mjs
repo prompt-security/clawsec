@@ -162,8 +162,32 @@ assert.match(
 );
 assert.match(
   workflow,
-  /name: Update feed\.json\n\s+if: inputs\.force_full_scan == true/,
+  /name: Update feed\.json\n\s+if: env\.FORCE_FULL_SCAN == 'true'/,
   'A validated full scan must replace stale CVE state even when there are no delta changes',
+);
+assert.match(
+  workflow,
+  /- cron: '0 6 \* \* 0,2-6'/,
+  'Incremental polling must run on every day without a scheduled full rebuild',
+);
+assert.match(
+  workflow,
+  /- cron: '0 6 \* \* 1'/,
+  'A weekly full rebuild must remove CVEs that no longer match any discovery query',
+);
+assert.match(
+  workflow,
+  /name: Select scan mode[\s\S]*INPUT_FORCE_FULL_SCAN: \$\{\{ inputs\.force_full_scan \}\}[\s\S]*"\$EVENT_SCHEDULE" = "0 6 \* \* 1"[\s\S]*echo "FORCE_FULL_SCAN=\$FORCE_FULL_SCAN" >> "\$GITHUB_ENV"/,
+  'Dispatch input and the weekly schedule must resolve one scan mode for every later step',
+);
+assert.equal(
+  (workflow.match(/inputs\.force_full_scan/g) ?? []).length,
+  1,
+  'Only the scan-mode step may read the dispatch input; later steps must honor the weekly full rebuild',
+);
+assert.ok(
+  workflow.indexOf('name: Select scan mode') < workflow.indexOf('name: Fetch CVEs from NVD'),
+  'The scan mode must be resolved before NVD fetching',
 );
 assert.match(
   workflow,
@@ -192,8 +216,8 @@ assert.doesNotMatch(
 );
 assert.match(
   workflow,
-  /Incremental mode: paginating the broad rolling NVD modification inventory/,
-  'Incremental NVD fetches must paginate an unfiltered modified-CVE inventory',
+  /Incremental mode: paginating '\$QUERY_KIND:\$QUERY_VALUE' within the rolling NVD modification window/,
+  'Incremental NVD fetches must window each discovery query instead of inventorying every modified CVE',
 );
 assert.match(
   workflow,
