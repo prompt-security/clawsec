@@ -1,0 +1,23 @@
+scripts/test-nvd-ghsa-consolidation-workflow.mjs
+  5171b56a6ae9d1cb 73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "d0d81e74b0847310d38702d1ef6cd5c0b8cf32ff",
+  "prompts": {
+    "5171b56a6ae9d1cb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9a28250b-3bfd-447f-bb39-8f11ccf48c2e",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
