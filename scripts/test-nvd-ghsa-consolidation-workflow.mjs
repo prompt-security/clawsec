@@ -31,6 +31,21 @@ assert.match(
 );
 assert.match(
   workflow,
+  /tmp\/unique_cves\.json > tmp\/nvd_alias_snapshot\.json/,
+  'Every fetched NVD record, scoped or not, must be available as GHSA-to-CVE alias evidence',
+);
+assert.match(
+  workflow,
+  /ALIAS_SNAPSHOT_COMPLETE=false\n\s+if \[ "\$FORCE_FULL_SCAN" = "true" \]; then\n\s+ALIAS_SNAPSHOT_COMPLETE=true/,
+  'Only a full scan may mark the NVD alias snapshot complete',
+);
+assert.match(
+  workflow,
+  /node scripts\/ghsa-without-cve-feed\.mjs[\s\S]*--nvd-alias-snapshot "tmp\/nvd_alias_snapshot\.json"/,
+  'GHSA consolidation must receive the NVD alias snapshot',
+);
+assert.match(
+  workflow,
   /ALLOW_LARGE_REBUILD_DROP: \$\{\{ inputs\.allow_large_rebuild_drop \|\| false \}\}[\s\S]*GHSA_DROP_ARGS=\(\)[\s\S]*GHSA_DROP_ARGS\+=\(--allow-large-drop\)[\s\S]*"\$\{GHSA_DROP_ARGS\[@\]\}"/,
   'NVD workflow must pass the reviewed NVD drop override through GHSA consolidation while scheduled runs default false',
 );

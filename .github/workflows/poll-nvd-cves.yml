@@ -294,6 +294,26 @@ jobs:
           TOTAL=$(jq 'length' tmp/unique_cves.json)
           echo "Total unique CVEs from NVD: $TOTAL"
 
+          # Every fetched record is GHSA-to-CVE alias evidence, including records
+          # without publishable scope: their GHSA stays primary with the CVE as
+          # an alias. Only a full scan observes complete discovery history, so
+          # only it may drop an alias that this run did not see.
+          ALIAS_SNAPSHOT_COMPLETE=false
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then
+            ALIAS_SNAPSHOT_COMPLETE=true
+          fi
+          jq -L scripts --argjson complete "$ALIAS_SNAPSHOT_COMPLETE" '
+            include "nvd-advisory-transform";
+            {
+              complete: $complete,
+              records: [.[] | {
+                id: .cve.id,
+                rejected: is_rejected,
+                references: ([.cve.references[]?.url | strings] | unique)
+              }]
+            }
+          ' tmp/unique_cves.json > tmp/nvd_alias_snapshot.json
+
           # Rejected identifiers must survive the transform boundary long enough
           # to remove any existing canonical CVE. A provisional GHSA remains
           # publishable under its own identity.
@@ -747,6 +767,7 @@ jobs:
             --existing-feed "$GHSA_FEED_PATH" \
             --nvd-feed "$FEED_PATH" \
             --rejected-cve-ids "tmp/rejected_cve_ids.json" \
+            --nvd-alias-snapshot "tmp/nvd_alias_snapshot.json" \
             --stale-after-days 60 \
             "${GHSA_DROP_ARGS[@]}"
 
