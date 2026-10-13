@@ -49,7 +49,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 24.21.0
 
       - name: Verify signing key consistency (repo + docs)
         run: ./scripts/ci/verify_signing_key_consistency.sh
@@ -292,7 +292,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 24.21.0
 
       - name: Install SkillSpector
         run: |
@@ -1026,7 +1026,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 24.21.0
 
       - name: Install SkillSpector
         run: |
@@ -1179,7 +1179,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 24.21.0
 
       - name: Detect publishability and install defaults
         id: publishable
@@ -1826,7 +1826,7 @@ jobs:
         if: needs.release-tag.outputs.publish_clawhub == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 24.21.0
 
       - name: Prepare verified ClawHub release package
         id: clawhub-package
@@ -2068,7 +2068,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: 24.21.0
 
       - name: Check if publishable
         id: publishable

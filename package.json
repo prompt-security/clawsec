@@ -21,25 +21,25 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lucide-react": "^0.577.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-markdown": "^10.1.0",
-    "react-router": "^8.4.0",
-    "remark-gfm": "^4.0.1"
+    "lucide-react": "0.577.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "react-router": "8.4.0",
+    "remark-gfm": "4.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "~9.39.5",
-    "@types/node": "^26.4.0",
-    "@typescript-eslint/eslint-plugin": "^8.70.0",
-    "@typescript-eslint/parser": "^8.70.0",
-    "@vitejs/plugin-react": "^6.1.1",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "fast-check": "^4.9.0",
-    "typescript": "~5.9.3",
-    "vite": "^8.2.2"
+    "@eslint/js": "9.39.5",
+    "@types/node": "26.6.5",
+    "@typescript-eslint/eslint-plugin": "8.71.1",
+    "@typescript-eslint/parser": "8.71.1",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "9.39.5",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "fast-check": "4.10.2",
+    "typescript": "5.9.3",
+    "vite": "8.3.4"
   },
   "overrides": {
     "ajv": "6.15.0",
