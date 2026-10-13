@@ -32,7 +32,7 @@ for (const [jobName, resolverStep] of [
   const job = workflow.slice(jobStart + 1).split(/\n {2}[\w-]+:\n/)[0];
   assert.match(
     job,
-    new RegExp(`      - name: Setup Node\n        uses: actions/setup-node@[^\n]+\n        with:\n          node-version: 24\n\n      - name: ${resolverStep}\n`),
+    new RegExp(`      - name: Setup Node\n        uses: actions/setup-node@[^\n]+\n        with:\n          node-version: 24(?:\\.\\d+\\.\\d+)?\n\n      - name: ${resolverStep}\n`),
     `${jobName}: ${resolverStep} must run after Setup Node selects Node 24`,
   );
 }
