@@ -61,22 +61,18 @@ virtualMatchString|cpe:2.3:a:nvidia:openshell
 EOF
 }
 
-nvd_incremental_query_specs() {
-  # Retraction detection must see every NVD record modified in the overlap
-  # window. A record that lost its old keyword and CPE identity will no longer
-  # appear in the allowlisted discovery queries used by full rebuilds.
-  echo 'modified|all'
-}
-
 nvd_query_specs_for_scan() {
   local force_full_scan="$1"
 
+  # Both modes run the same discovery queries; an incremental scan adds a
+  # lastMod window. Inventorying every modified NVD record instead is not
+  # viable: a 119-day window held about 388k records (2026-10-13) and shrinks
+  # while it is paginated. A CVE that leaves every discovery query (rejected,
+  # or re-scoped away from every keyword and CPE) is therefore removed by the
+  # scheduled weekly full rebuild, not by an incremental run.
   case "$force_full_scan" in
-    true)
+    true|false|'')
       nvd_query_specs
-      ;;
-    false|'')
-      nvd_incremental_query_specs
       ;;
     *)
       echo "Error: force_full_scan must be true or false" >&2
@@ -151,13 +147,6 @@ nvd_build_url() {
       ;;
     virtualMatchString)
       printf 'https://services.nvd.nist.gov/rest/json/cves/2.0?virtualMatchString=%s%s' "$encoded" "$suffix"
-      ;;
-    modified)
-      if [ "$value" != "all" ] || [[ "$suffix" != *lastModStartDate=* ]] || [[ "$suffix" != *lastModEndDate=* ]]; then
-        echo "Error: modified NVD inventory requires the all marker and a bounded modification window" >&2
-        return 1
-      fi
-      printf 'https://services.nvd.nist.gov/rest/json/cves/2.0?%s' "${suffix#&}"
       ;;
     *)
       echo "Error: unsupported NVD query kind: $kind" >&2
