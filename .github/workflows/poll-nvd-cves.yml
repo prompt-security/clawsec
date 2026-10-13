@@ -72,6 +72,33 @@ jobs:
           echo "FORCE_FULL_SCAN=$FORCE_FULL_SCAN" >> "$GITHUB_ENV"
           echo "Full scan: $FORCE_FULL_SCAN"
 
+      - name: Check exact date-build consumer releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Exact four-component date-build selectors are withheld, not
+          # rejected, until every direct consumer has a release that can match
+          # them. Failing instead would deadlock the rollout: clawsec-suite
+          # cannot be released until it embeds the strict feed this job builds.
+          if node scripts/ci/verify_advisory_consumer_releases.mjs --check-published; then
+            RELEASE_CHECK_STATUS=0
+          else
+            RELEASE_CHECK_STATUS=$?
+          fi
+          case "$RELEASE_CHECK_STATUS" in
+            0)
+              echo "NVD_EXACT_DATE_BUILDS=true" >> "$GITHUB_ENV"
+              ;;
+            3)
+              echo "::warning::Withholding exact date-build selectors until the advisory consumer releases listed above are published."
+              echo "NVD_EXACT_DATE_BUILDS=false" >> "$GITHUB_ENV"
+              ;;
+            *)
+              exit "$RELEASE_CHECK_STATUS"
+              ;;
+          esac
+
       - name: Set safe NVD overlap window
         id: last_poll
         run: |

@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { createServer } from "node:http";
 import test from "node:test";
 
 import {
   REQUIRED_ADVISORY_CONSUMER_RELEASES,
   findExactDateBuildSelectors,
+  missingAdvisoryConsumerReleases,
   validateRequiredConsumerRelease,
   verifyAdvisoryConsumerReleases,
 } from "./ci/verify_advisory_consumer_releases.mjs";
@@ -380,4 +383,82 @@ test("exact date-build release checks require repository and token context", asy
     /GH_TOKEN or GITHUB_TOKEN/,
   );
   assert.equal(networkCalls, 0, "missing context must fail before any GitHub API request");
+});
+
+test("reports consumers that still lack a compatible published release", async () => {
+  const context = { repository: "prompt-security/clawsec", token: "test-token" };
+  const allReleased = releaseFetch();
+  assert.deepEqual(
+    await missingAdvisoryConsumerReleases({ ...context, fetchImpl: allReleased.fetchImpl }),
+    [],
+  );
+
+  const [suite, ...others] = REQUIRED_ADVISORY_CONSUMER_RELEASES;
+  const suiteMissing = releaseFetch([others.map((requirement) => compatibleRelease(requirement))]);
+  const missing = await missingAdvisoryConsumerReleases({ ...context, fetchImpl: suiteMissing.fetchImpl });
+  assert.equal(missing.length, 1);
+  assert.match(missing[0], new RegExp(`${suite.skill} release has SemVer >= ${suite.minimumVersion}`));
+});
+
+test("a failed release listing is an error, not a missing release", async () => {
+  const unavailable = releaseFetch([{ response: { ok: false, status: 503, json: async () => [] } }]);
+  await assert.rejects(
+    missingAdvisoryConsumerReleases({
+      repository: "prompt-security/clawsec",
+      token: "test-token",
+      fetchImpl: unavailable.fetchImpl,
+    }),
+    /HTTP 503/,
+  );
+  await assert.rejects(
+    missingAdvisoryConsumerReleases({ repository: "prompt-security/clawsec", token: "" }),
+    /GH_TOKEN or GITHUB_TOKEN is required/,
+  );
+});
+
+async function runCheckPublished(respond) {
+  const server = createServer((request, response) => respond(request, response));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const { port } = server.address();
+    return await new Promise((resolve) => {
+      const child = spawn(
+        process.execPath,
+        [new URL("./ci/verify_advisory_consumer_releases.mjs", import.meta.url).pathname, "--check-published"],
+        {
+          env: {
+            ...process.env,
+            GITHUB_API_URL: `http://127.0.0.1:${port}`,
+            GITHUB_REPOSITORY: "prompt-security/clawsec",
+            GH_TOKEN: "test-token",
+          },
+        },
+      );
+      let stderr = "";
+      child.stderr.on("data", (chunk) => { stderr += chunk; });
+      child.on("close", (status) => resolve({ status, stderr }));
+    });
+  } finally {
+    server.close();
+  }
+}
+
+test("--check-published exits 0 when released, 3 when missing, and 1 when it cannot check", async () => {
+  const releases = (list) => (request, response) => {
+    const page = Number(new URL(request.url, "http://localhost").searchParams.get("page"));
+    response.writeHead(200, { "Content-Type": "application/json" });
+    response.end(JSON.stringify(page === 1 ? list : []));
+  };
+  const allReleased = REQUIRED_ADVISORY_CONSUMER_RELEASES.map((requirement) => compatibleRelease(requirement));
+  assert.equal((await runCheckPublished(releases(allReleased))).status, 0);
+
+  const missing = await runCheckPublished(releases(allReleased.slice(1)));
+  assert.equal(missing.status, 3, "A missing consumer release must be distinguishable from a failed check");
+  assert.match(missing.stderr, /clawsec-suite/);
+
+  const failed = await runCheckPublished((request, response) => {
+    response.writeHead(500);
+    response.end("boom");
+  });
+  assert.equal(failed.status, 1, "A failed release listing must not be reported as a missing release");
 });

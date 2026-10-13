@@ -120,6 +120,25 @@ assert.equal(
   "A trusted repository reference must not lend its identity to an unrelated CPE range",
 );
 
+// Until every direct consumer can match exact four-component date builds, the
+// NVD workflow withholds them so the strict feed can be published at all.
+const withheldDateBuilds = JSON.parse(
+  execFileSync("jq", ["-L", scriptsDir, transformProgram, fixturePath], {
+    encoding: "utf8",
+    env: { ...process.env, NVD_EXACT_DATE_BUILDS: "false" },
+  }),
+);
+assert.deepEqual(
+  withheldDateBuilds.map((advisory) => advisory.id).sort(),
+  [...byId.keys()].filter((id) => id !== "CVE-TEST-HERMES-AFFECTED-EXACT").sort(),
+  "A withheld date build must leave its component unrepresentable without changing any other advisory",
+);
+assert.ok(
+  withheldDateBuilds.every((advisory) =>
+    advisory.affected.every((selector) => !/@[vV]?\d{4}\.\d+\.\d+\.\d+$/.test(selector))),
+  "No exact date-build selector may be published while date builds are withheld",
+);
+
 for (const advisory of transformed) {
   assert.ok(advisory.affected.length > 0, `${advisory.id} must have an affected selector`);
   assert.ok(

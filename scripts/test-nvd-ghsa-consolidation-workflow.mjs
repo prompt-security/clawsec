@@ -206,6 +206,15 @@ assert.ok(
 );
 assert.match(
   workflow,
+  /name: Check exact date-build consumer releases[\s\S]*verify_advisory_consumer_releases\.mjs --check-published[\s\S]*0\)\s*\n\s*echo "NVD_EXACT_DATE_BUILDS=true" >> "\$GITHUB_ENV"[\s\S]*3\)[\s\S]*echo "NVD_EXACT_DATE_BUILDS=false" >> "\$GITHUB_ENV"[\s\S]*\*\)\s*\n\s*exit "\$RELEASE_CHECK_STATUS"/,
+  'Missing consumer releases must withhold exact date builds, while a failed release check must fail the run',
+);
+assert.ok(
+  workflow.indexOf('name: Check exact date-build consumer releases') < workflow.indexOf('name: Merge and filter CVEs'),
+  'Date-build withholding must be decided before any NVD record is scoped',
+);
+assert.match(
+  workflow,
   /Refusing full rebuild: strict NVD scoping produced zero advisories/,
   'A zero-result full scan must fail instead of deleting the existing CVE set',
 );
