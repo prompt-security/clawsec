@@ -1,0 +1,25 @@
+scripts/nvd-advisory-transform.jq
+  bafe3cdf8c6fdc99 207-212,296-310,322-324,329-337,342-343,361
+scripts/nvd-product-scoping.test.mjs
+  bafe3cdf8c6fdc99 43,48,51,53,91-116,154-158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "67756b4b6bdd5a75996e160206a2b3f7f3348613",
+  "prompts": {
+    "bafe3cdf8c6fdc99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb9c156d-746e-43ca-80a0-27bf9e213af1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 79,
+      "total_deletions": 25,
+      "accepted_lines": 71,
+      "overriden_lines": 0
+    }
+  }
+}
