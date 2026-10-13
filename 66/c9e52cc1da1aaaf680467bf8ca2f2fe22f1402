@@ -1,0 +1,33 @@
+.github/workflows/poll-nvd-cves.yml
+  bafe3cdf8c6fdc99 5-8,57-74,150,320,374,502-503,532,554,567,640,667,903,1067
+CLAUDE.md
+  bafe3cdf8c6fdc99 120
+scripts/populate-local-feed.sh
+  bafe3cdf8c6fdc99 162,405-406
+scripts/feed-utils.sh
+  bafe3cdf8c6fdc99 67-72,74
+scripts/nvd-product-scoping.test.mjs
+  bafe3cdf8c6fdc99 367-368,394,398,405-425,494,584
+scripts/test-nvd-ghsa-consolidation-workflow.mjs
+  bafe3cdf8c6fdc99 165,168-190,219-220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "66c9e52cc1da1aaaf680467bf8ca2f2fe22f1402",
+  "prompts": {
+    "bafe3cdf8c6fdc99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb9c156d-746e-43ca-80a0-27bf9e213af1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 99,
+      "total_deletions": 51,
+      "accepted_lines": 99,
+      "overriden_lines": 0
+    }
+  }
+}
