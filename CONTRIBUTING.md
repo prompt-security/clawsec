@@ -677,9 +677,24 @@ Once your advisory is published:
 
 ### Maintainer Rollout: Strict Feed Validation
 
-The checked-in legacy feed predates the strict product-and-version scope contract. After merging the pipeline hardening change, Pages deploys, community/GHSA publication, and advisory-bearing skill releases are expected to fail closed until the canonical feed is rebuilt.
+The checked-in legacy feed predates the strict product-and-version scope contract. After merging the pipeline hardening change, the following are expected to fail closed until the canonical feed is rebuilt:
 
-To complete the rollout, manually run **Poll NVD CVEs** with `force_full_scan=true`. Review the replacement PR's advisory IDs, counts, and removals, then rerun with `allow_large_rebuild_drop=true` only when that material change is intentional. Merge the reviewed rebuild before resuming the other publication paths. Do not bypass validation or re-sign the legacy feed.
+- Pages deploys
+- community and GHSA publication
+- advisory-bearing skill releases (`clawsec-suite`, `clawsec-feed`)
+- the scheduled NVD poll, which stops at its retraction check
+
+To complete the rollout:
+
+1. Manually run **Poll NVD CVEs** with `force_full_scan=true` and `allow_large_rebuild_drop=false`. It stops at the full-rebuild identity check and lists every existing CVE ID the rebuild would remove. Review that list.
+2. Rerun with `allow_large_rebuild_drop=true` only when the removals are intentional. The job opens or updates the automated PR from `automated/nvd-cve-update`. Review it and merge it.
+3. Release the advisory consumers from `main`: `clawsec-suite`, `hermes-attestation-guardian`, `clawsec-nanoclaw` and `clawsec-feed`. Their releases validate the embedded rebuilt feed.
+
+Do not bypass validation or re-sign the legacy feed.
+
+Until `clawsec-suite` 0.1.17, `hermes-attestation-guardian` 0.1.8 and `clawsec-nanoclaw` 0.0.11 are published, the poll withholds CVEs whose only scope is an exact four-component date build, and logs a warning. The first poll after those releases publishes them. Withholding instead of failing avoids a deadlock: `clawsec-suite` cannot be released before it embeds the rebuilt feed.
+
+After the rollout, the poll runs incrementally every day except Monday, when it does a full rebuild. The full rebuild removes CVEs that no longer match any discovery query, such as rejected or re-scoped records. If a full rebuild would remove 20 or more CVE IDs, or 25% of the feed, it stops for review. Rerun it by dispatch with the override once the listed removals are confirmed.
 
 ### Questions?
 
