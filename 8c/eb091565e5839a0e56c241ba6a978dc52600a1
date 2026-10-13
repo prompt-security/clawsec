@@ -1,0 +1,29 @@
+scripts/test-nvd-ghsa-consolidation-workflow.mjs
+  bafe3cdf8c6fdc99 34-46
+scripts/test-ghsa-without-cve-feed.mjs
+  bafe3cdf8c6fdc99 14,22
+.github/workflows/poll-nvd-cves.yml
+  bafe3cdf8c6fdc99 297-316,770
+scripts/ghsa-without-cve-feed.mjs
+  bafe3cdf8c6fdc99 34-36,383,423-425,447,489-564,1101,1108-1112,1119-1134,1166-1171,1186,1599,1617-1622,1661-1662,1692-1700,1732
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "8ceb091565e5839a0e56c241ba6a978dc52600a1",
+  "prompts": {
+    "bafe3cdf8c6fdc99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb9c156d-746e-43ca-80a0-27bf9e213af1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 182,
+      "total_deletions": 13,
+      "accepted_lines": 171,
+      "overriden_lines": 0
+    }
+  }
+}
