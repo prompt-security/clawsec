@@ -204,9 +204,12 @@ def explicit_version_scope:
     end;
 
 # NVD carries CNA-authored CVE v5 affected data even when NVD has not enriched
-# a CVE with CPE applicability. Use that data only for the exact allowlisted
-# Hermes product and only when the complete affected block can be represented
-# by the feed without widening or guessing.
+# a CVE with CPE applicability. NVD defers enrichment for most VulnCheck- and
+# VulDB-assigned ecosystem CVEs, so this is often the only machine-readable
+# scope. Use it only when NVD publishes no configuration of its own, only from
+# the assigning CNA, only for an exact allowlisted vendor/product identity, and
+# only when that component's complete affected data can be represented by the
+# feed without widening or guessing.
 def nvd_configurations_absent:
   (((.cve | has("configurations")) | not)
    or (.cve.configurations == null)
@@ -290,7 +293,21 @@ def nvd_affected_product_representable:
     and (($product.versions | length) > 0)
     and all($product.versions[]; (nvd_affected_version_translation | .supported == true));
 
-def hermes_nvd_affected_products:
+# CNA vendor/product strings observed for each protected component. Placeholder
+# vendors ("n/a"), sibling products (OpenClaw Windows Node, OpenClaw iOS,
+# ClawScan), forks, plugins, and ClawHub are deliberately absent.
+def cna_affected_identity($vendor; $product):
+  [($vendor | ascii_downcase), ($product | ascii_downcase)] as $identity
+  | if $identity == ["openclaw", "openclaw"] then {component: "openclaw", package: "openclaw"}
+    elif $identity == ["nousresearch", "hermes-agent"] then {component: "hermes", package: "hermes-agent"}
+    elif $identity == ["sipeed", "picoclaw"] then {component: "picoclaw", package: "picoclaw"}
+    elif $identity == ["nanocoai", "nanoclaw"] then {component: "nanoclaw", package: "nanoclaw"}
+    elif $identity == ["nvidia", "nemoclaw"] then {component: "nemoclaw", package: "nemoclaw"}
+    elif $identity == ["nvidia", "openshell"] then {component: "openshell", package: "openshell"}
+    else null
+    end;
+
+def cna_affected_products:
   . as $record
   | if (($record | nvd_configurations_absent)
         and (($record.cve.sourceIdentifier? | type) == "string")
@@ -302,30 +319,32 @@ def hermes_nvd_affected_products:
       | .affectedData[]
       | select(type == "object")
       | select(((.vendor? | type) == "string") and ((.product? | type) == "string"))
-      | select(((.vendor | ascii_downcase) == "nousresearch")
-               and ((.product | ascii_downcase) == "hermes-agent"))
+      | cna_affected_identity(.vendor; .product) as $identity
+      | select($identity != null)
+      | . + {identity: $identity}
     ]
     else []
     end;
 
-def hermes_nvd_affected_targets:
-  hermes_nvd_affected_products as $products
-  | if (($products | length) == 0)
-       or ((all($products[]; nvd_affected_product_representable)) | not)
-    then []
-    else [
-      $products[]
-      | .versions[]
-      | nvd_affected_version_translation
-      | select(.scope != null)
-      | {
-          component: "hermes",
-          selector: ("hermes-agent@" + .scope)
-        }
-    ]
-    | unique_by(.selector)
-    | sort_by(.selector)
-    end;
+# A component publishes only when every one of its affected blocks is
+# representable, so a partly unrepresentable component is never narrowed.
+def cna_affected_targets:
+  [
+    cna_affected_products
+    | group_by(.identity.component)[]
+    | select(all(.[]; nvd_affected_product_representable))
+    | .[]
+    | .identity as $identity
+    | .versions[]
+    | nvd_affected_version_translation
+    | select(.scope != null)
+    | {
+        component: $identity.component,
+        selector: ($identity.package + "@" + .scope)
+      }
+  ]
+  | unique_by(.selector)
+  | sort_by(.selector);
 
 def supported_scoped_targets:
   (
@@ -339,7 +358,7 @@ def supported_scoped_targets:
             selector: (.component + "@" + $scope)
           }
       )
-    ) + hermes_nvd_affected_targets
+    ) + cna_affected_targets
     | unique_by(.selector)
     | sort_by(.component, .selector)
   );
