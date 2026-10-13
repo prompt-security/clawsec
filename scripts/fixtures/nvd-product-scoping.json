@@ -429,5 +429,423 @@
         ]
       }]
     }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-CNA-RANGE",
+      "sourceIdentifier": "disclosure@vulncheck.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "OpenClaw before 2026.8.2 has a CVE that NVD deferred; only its CNA publishes version scope."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-OPENCLAW-CNA-RANGE"
+        }
+      ],
+      "affected": [
+        {
+          "source": "disclosure@vulncheck.com",
+          "affectedData": [
+            {
+              "vendor": "OpenClaw",
+              "product": "OpenClaw",
+              "defaultStatus": "unaffected",
+              "versions": [
+                {
+                  "version": "0",
+                  "lessThan": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "affected"
+                },
+                {
+                  "version": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "unaffected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-PICOCLAW-VULDB-EXACT",
+      "sourceIdentifier": "cna@vuldb.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "A vulnerability was found in Sipeed PicoClaw up to 0.2.1."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-PICOCLAW-VULDB-EXACT"
+        }
+      ],
+      "affected": [
+        {
+          "source": "cna@vuldb.com",
+          "affectedData": [
+            {
+              "vendor": "Sipeed",
+              "product": "PicoClaw",
+              "versions": [
+                {
+                  "version": "0.2.0",
+                  "status": "affected"
+                },
+                {
+                  "version": "0.2.1",
+                  "status": "affected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-NANOCLAW-VULDB-EXACT",
+      "sourceIdentifier": "cna@vuldb.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "A vulnerability was found in nanocoai NanoClaw up to 2.0.1."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-NANOCLAW-VULDB-EXACT"
+        }
+      ],
+      "affected": [
+        {
+          "source": "cna@vuldb.com",
+          "affectedData": [
+            {
+              "vendor": "nanocoai",
+              "product": "NanoClaw",
+              "versions": [
+                {
+                  "version": "2.0.0",
+                  "status": "affected"
+                },
+                {
+                  "version": "2.0.1",
+                  "status": "affected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-CNA-MIXED-COMPONENTS",
+      "sourceIdentifier": "disclosure@vulncheck.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "One CVE affecting OpenClaw with a representable range and PicoClaw with an implicit all-versions default."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-CNA-MIXED-COMPONENTS"
+        }
+      ],
+      "affected": [
+        {
+          "source": "disclosure@vulncheck.com",
+          "affectedData": [
+            {
+              "vendor": "OpenClaw",
+              "product": "OpenClaw",
+              "defaultStatus": "unaffected",
+              "versions": [
+                {
+                  "version": "0",
+                  "lessThan": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "affected"
+                },
+                {
+                  "version": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "unaffected"
+                }
+              ]
+            },
+            {
+              "vendor": "Sipeed",
+              "product": "PicoClaw",
+              "defaultStatus": "affected",
+              "versions": [
+                {
+                  "version": "0.2.0",
+                  "status": "unaffected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-CNA-PLACEHOLDER-VENDOR",
+      "sourceIdentifier": "cna@vuldb.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "A vulnerability was found in OpenClaw 2026.9.0."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-OPENCLAW-CNA-PLACEHOLDER-VENDOR"
+        }
+      ],
+      "affected": [
+        {
+          "source": "cna@vuldb.com",
+          "affectedData": [
+            {
+              "vendor": "n/a",
+              "product": "OpenClaw",
+              "versions": [
+                {
+                  "version": "2026.9.0",
+                  "status": "affected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-CNA-SIBLING-PRODUCT",
+      "sourceIdentifier": "disclosure@vulncheck.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "OpenClaw Windows Node before 2026.7.2 is a separate product from the openclaw package."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-OPENCLAW-CNA-SIBLING-PRODUCT"
+        }
+      ],
+      "affected": [
+        {
+          "source": "disclosure@vulncheck.com",
+          "affectedData": [
+            {
+              "vendor": "OpenClaw",
+              "product": "OpenClaw Windows Node",
+              "defaultStatus": "unaffected",
+              "versions": [
+                {
+                  "version": "0",
+                  "lessThan": "2026.7.2",
+                  "versionType": "semver",
+                  "status": "affected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-CNA-WITH-NVD-CONFIG",
+      "sourceIdentifier": "disclosure@vulncheck.com",
+      "vulnStatus": "Analyzed",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "OpenClaw before 2026.8.2 on one operating system; NVD analysis constrains it with an AND configuration."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-OPENCLAW-CNA-WITH-NVD-CONFIG"
+        }
+      ],
+      "configurations": [
+        {
+          "operator": "AND",
+          "nodes": [
+            {
+              "operator": "OR",
+              "negate": false,
+              "cpeMatch": [
+                {
+                  "vulnerable": true,
+                  "criteria": "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
+                  "versionEndExcluding": "2026.8.2"
+                }
+              ]
+            },
+            {
+              "operator": "OR",
+              "negate": false,
+              "cpeMatch": [
+                {
+                  "vulnerable": false,
+                  "criteria": "cpe:2.3:o:example:conditional_os:-:*:*:*:*:*:*:*"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "affected": [
+        {
+          "source": "disclosure@vulncheck.com",
+          "affectedData": [
+            {
+              "vendor": "OpenClaw",
+              "product": "OpenClaw",
+              "defaultStatus": "unaffected",
+              "versions": [
+                {
+                  "version": "0",
+                  "lessThan": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "affected"
+                },
+                {
+                  "version": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "unaffected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-OPENCLAW-CNA-ADP-ONLY",
+      "sourceIdentifier": "disclosure@vulncheck.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "OpenClaw scope supplied only by an ADP container, not the assigning CNA."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-OPENCLAW-CNA-ADP-ONLY"
+        }
+      ],
+      "affected": [
+        {
+          "source": "adp@example.com",
+          "affectedData": [
+            {
+              "vendor": "OpenClaw",
+              "product": "OpenClaw",
+              "defaultStatus": "unaffected",
+              "versions": [
+                {
+                  "version": "0",
+                  "lessThan": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "affected"
+                },
+                {
+                  "version": "2026.8.2",
+                  "versionType": "semver",
+                  "status": "unaffected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "cve": {
+      "id": "CVE-TEST-CLAWHUB-CNA",
+      "sourceIdentifier": "disclosure@vulncheck.com",
+      "vulnStatus": "Deferred",
+      "published": "2026-09-11T00:00:00.000",
+      "lastModified": "2026-09-12T00:00:00.000",
+      "descriptions": [
+        {
+          "lang": "en",
+          "value": "ClawHub is a distribution channel, not a protected component."
+        }
+      ],
+      "references": [
+        {
+          "url": "https://example.com/advisories/CVE-TEST-CLAWHUB-CNA"
+        }
+      ],
+      "affected": [
+        {
+          "source": "disclosure@vulncheck.com",
+          "affectedData": [
+            {
+              "vendor": "openclaw",
+              "product": "clawhub",
+              "defaultStatus": "unaffected",
+              "versions": [
+                {
+                  "version": "0",
+                  "lessThan": "1.2.0",
+                  "versionType": "semver",
+                  "status": "affected"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 ]

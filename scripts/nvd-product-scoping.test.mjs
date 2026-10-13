@@ -40,13 +40,17 @@ assert.equal(
 assert.deepEqual(
   [...byId.keys()].sort(),
   [
+    "CVE-TEST-CNA-MIXED-COMPONENTS",
     "CVE-TEST-HERMES-AFFECTED-EXACT",
     "CVE-TEST-HERMES-AFFECTED-LTE",
     "CVE-TEST-HERMES-AFFECTED-RANGE",
     "CVE-TEST-NANOCLAW",
+    "CVE-TEST-NANOCLAW-VULDB-EXACT",
     "CVE-TEST-NEMO-CLAW",
     "CVE-TEST-OPEN-SHELL",
+    "CVE-TEST-OPENCLAW-CNA-RANGE",
     "CVE-TEST-OPENCLAW-OPENSHELL-FEATURE",
+    "CVE-TEST-PICOCLAW-VULDB-EXACT",
   ],
   "Only allowlisted products with an explicit machine-readable version scope may be published",
 );
@@ -83,6 +87,32 @@ assert.deepEqual(byId.get("CVE-TEST-OPENCLAW-OPENSHELL-FEATURE").platforms, ["op
 
 assert.deepEqual(byId.get("CVE-TEST-NANOCLAW").affected, ["nanoclaw@1.2.0"]);
 assert.deepEqual(byId.get("CVE-TEST-NANOCLAW").platforms, ["nanoclaw"]);
+
+// NVD defers enrichment for most VulnCheck- and VulDB-assigned ecosystem CVEs,
+// so their only machine-readable scope is the assigning CNA's affected data.
+assert.deepEqual(
+  byId.get("CVE-TEST-OPENCLAW-CNA-RANGE").affected,
+  ["openclaw@<2026.8.2"],
+  "A CNA semver range must keep a CVE that NVD has not enriched with a CPE",
+);
+assert.deepEqual(byId.get("CVE-TEST-OPENCLAW-CNA-RANGE").platforms, ["openclaw"]);
+assert.deepEqual(
+  byId.get("CVE-TEST-PICOCLAW-VULDB-EXACT").affected,
+  ["picoclaw@0.2.0", "picoclaw@0.2.1"],
+  "VulDB's exact affected versions must keep a PicoClaw CVE without guessing a range",
+);
+assert.deepEqual(byId.get("CVE-TEST-PICOCLAW-VULDB-EXACT").platforms, ["picoclaw"]);
+assert.deepEqual(
+  byId.get("CVE-TEST-NANOCLAW-VULDB-EXACT").affected,
+  ["nanoclaw@2.0.0", "nanoclaw@2.0.1"],
+);
+assert.deepEqual(byId.get("CVE-TEST-NANOCLAW-VULDB-EXACT").platforms, ["nanoclaw"]);
+assert.deepEqual(
+  byId.get("CVE-TEST-CNA-MIXED-COMPONENTS").affected,
+  ["openclaw@<2026.8.2"],
+  "An unrepresentable component must be omitted without discarding a representable sibling component",
+);
+assert.deepEqual(byId.get("CVE-TEST-CNA-MIXED-COMPONENTS").platforms, ["openclaw"]);
 
 assert.equal(
   byId.has("CVE-TEST-TRUSTED-REF-UNRELATED-CPE"),
@@ -121,6 +151,11 @@ for (const [id, reason] of [
   ["CVE-TEST-HERMES-MIXED-UNSUPPORTED-RANGE", "partially representable Hermes affected data"],
   ["CVE-TEST-HERMES-CHANGES", "Hermes range status transitions"],
   ["CVE-TEST-HERMES-WRONG-STRUCTURED-IDENTITY", "non-allowlisted structured Hermes identity"],
+  ["CVE-TEST-OPENCLAW-CNA-PLACEHOLDER-VENDOR", "a placeholder CNA vendor"],
+  ["CVE-TEST-OPENCLAW-CNA-SIBLING-PRODUCT", "a sibling product outside the openclaw package"],
+  ["CVE-TEST-OPENCLAW-CNA-WITH-NVD-CONFIG", "CNA scope that NVD analysis has constrained"],
+  ["CVE-TEST-OPENCLAW-CNA-ADP-ONLY", "affected data from a non-assigning source"],
+  ["CVE-TEST-CLAWHUB-CNA", "a ClawHub CNA identity"],
 ]) {
   assert.equal(
     byId.has(id),
