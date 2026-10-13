@@ -221,6 +221,18 @@ async function fetchPublishedReleases({
   throw new Error(`Advisory consumer release pagination exceeded ${MAX_RELEASE_PAGES} pages`);
 }
 
+function assertReleaseContext({ fetchImpl, repository, token }) {
+  if (typeof repository !== "string" || !/^[^/\s]+\/[^/\s]+$/.test(repository)) {
+    throw new Error("GITHUB_REPOSITORY must identify one owner/repository");
+  }
+  if (typeof token !== "string" || token.trim().length === 0) {
+    throw new Error("GH_TOKEN or GITHUB_TOKEN is required to verify advisory consumer releases");
+  }
+  if (typeof fetchImpl !== "function") {
+    throw new Error("A Fetch-compatible implementation is required to verify advisory consumer releases");
+  }
+}
+
 export async function verifyAdvisoryConsumerReleases(feed, {
   apiUrl = process.env.GITHUB_API_URL || "https://api.github.com",
   fetchImpl = globalThis.fetch,
@@ -232,16 +244,7 @@ export async function verifyAdvisoryConsumerReleases(feed, {
     return { required: false, selectors, releases: [] };
   }
 
-  if (typeof repository !== "string" || !/^[^/\s]+\/[^/\s]+$/.test(repository)) {
-    throw new Error("GITHUB_REPOSITORY must identify one owner/repository");
-  }
-  if (typeof token !== "string" || token.trim().length === 0) {
-    throw new Error("GH_TOKEN or GITHUB_TOKEN is required to verify advisory consumer releases");
-  }
-  if (typeof fetchImpl !== "function") {
-    throw new Error("A Fetch-compatible implementation is required to verify advisory consumer releases");
-  }
-
+  assertReleaseContext({ fetchImpl, repository, token });
   const publishedReleases = await fetchPublishedReleases({
     apiUrl,
     fetchImpl,
@@ -254,8 +257,51 @@ export async function verifyAdvisoryConsumerReleases(feed, {
   return { required: true, selectors, releases };
 }
 
+// Lists the direct consumers that still lack a compatible published release.
+// A failed release listing throws instead, so callers can tell "not released
+// yet" from "could not check".
+export async function missingAdvisoryConsumerReleases({
+  apiUrl = process.env.GITHUB_API_URL || "https://api.github.com",
+  fetchImpl = globalThis.fetch,
+  repository = process.env.GITHUB_REPOSITORY,
+  token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
+} = {}) {
+  assertReleaseContext({ fetchImpl, repository, token });
+  const publishedReleases = await fetchPublishedReleases({
+    apiUrl,
+    fetchImpl,
+    repository,
+    token,
+  });
+  const missing = [];
+  for (const requirement of REQUIRED_ADVISORY_CONSUMER_RELEASES) {
+    try {
+      selectNewestCompatibleRelease(publishedReleases, requirement);
+    } catch (error) {
+      missing.push(error.message);
+    }
+  }
+  return missing;
+}
+
+// Exit status for --check-published when a consumer release is still missing.
+const MISSING_RELEASE_EXIT_CODE = 3;
+
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
-if (isMain) {
+if (isMain && process.argv[2] === "--check-published") {
+  try {
+    const missing = await missingAdvisoryConsumerReleases();
+    if (missing.length === 0) {
+      process.stdout.write("Every advisory consumer has a compatible published release.\n");
+    } else {
+      for (const problem of missing) console.error(problem);
+      process.exitCode = MISSING_RELEASE_EXIT_CODE;
+    }
+  } catch (error) {
+    console.error(`Advisory consumer release check failed: ${error.message}`);
+    process.exitCode = 1;
+  }
+} else if (isMain) {
   try {
     const feedPath = process.argv[2];
     if (!feedPath) {

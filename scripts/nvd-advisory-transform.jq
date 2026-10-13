@@ -233,6 +233,13 @@ def supported_date_build_token:
     | $day <= $days_in_month
   );
 
+# Exact four-component date builds (Hermes release identities) need advisory
+# consumers that can match them. The NVD workflow sets NVD_EXACT_DATE_BUILDS to
+# "false" until those consumer releases are published; a withheld entry leaves
+# its component unrepresentable rather than narrowing its scope.
+def exact_date_builds_enabled:
+  ($ENV.NVD_EXACT_DATE_BUILDS // "true") != "false";
+
 def valid_nvd_affected_status:
   . == "affected" or . == "unaffected" or . == "unknown";
 
@@ -272,12 +279,11 @@ def nvd_affected_version_translation:
         }
         else {supported: false, scope: null}
         end
+    elif ($entry.version | supported_date_build_token)
+    then {supported: exact_date_builds_enabled, scope: (if exact_date_builds_enabled then $entry.version else null end)}
     elif (
-      ($entry.version | supported_date_build_token)
-      or (
-        ((($entry | has("versionType")) | not) or ($entry.versionType == "semver"))
-        and ($entry.version | supported_semver_token)
-      )
+      ((($entry | has("versionType")) | not) or ($entry.versionType == "semver"))
+      and ($entry.version | supported_semver_token)
     )
     then {supported: true, scope: $entry.version}
     else {supported: false, scope: null}
