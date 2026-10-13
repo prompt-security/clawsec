@@ -349,7 +349,10 @@ if [ "$FORCE" = "false" ]; then
           ($existing_entry.authoritative_canonical_cwe_ids != $nvd_entry.authoritative_canonical_cwe_ids) or
           ($existing_entry.description != $nvd_entry.description) or
           ($existing_entry.title != $nvd_entry.title) or
-          ($existing_entry.references != $nvd_entry.references)
+          # GHSA consolidation adds its own references, so only a reference
+          # NVD has and the feed lacks is a change. NVD bumps lastModified on
+          # every edit, so a removed reference still triggers an update.
+          ((($nvd_entry.references // []) - ($existing_entry.references // [])) | length > 0)
         )
       ) |
       {

@@ -270,6 +270,15 @@ printf '200'
   assert.match(publishedOnlyOutput, /Updated advisories: 1/);
   assert.match(publishedOnlyOutput, /Advisories retracted: 0/);
 
+  const unchangedOutput = await runPopulator([
+    nvdRecord(correctedId, { published: correctedPublished }),
+  ]);
+  assert.match(
+    unchangedOutput,
+    /Updated advisories: 0/,
+    'an unchanged NVD record must not re-update an entry whose references also carry GHSA links',
+  );
+
   const retractionOutput = await runPopulator([retractedRecord]);
   const updatedFeed = JSON.parse(await readFile(feedPath, 'utf8'));
 

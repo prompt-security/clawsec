@@ -61,6 +61,11 @@ assert.match(
 );
 assert.match(
   workflow,
+  /id: feed_changes[\s\S]*cmp -s <\(git show "HEAD:\$path" \| jq -S 'del\(\.updated\)'\) <\(jq -S 'del\(\.updated\)' "\$path"\)[\s\S]*git checkout -- "\$path"[\s\S]*cp "\$FEED_PATH" "\$SKILL_FEED_PATH"[\s\S]*GHSA_CHANGED=true/,
+  'A run that rewrites only feed timestamps must restore the committed bytes instead of re-signing them',
+);
+assert.match(
+  workflow,
   /name: Validate GHSA source feed before signing\n\s+if: steps\.feed_changes\.outputs\.ghsa_changed == 'true'\n\s+run: node scripts\/ci\/validate_advisory_feed\.mjs "\$GHSA_FEED_PATH"[\s\S]*name: Sign GHSA feed and verify/,
   'NVD workflow must validate the exact provisional GHSA feed bytes before signing them',
 );

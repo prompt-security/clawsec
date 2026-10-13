@@ -463,7 +463,10 @@ jobs:
                    ($existing_entry.authoritative_canonical_cwe_ids != $nvd_entry.authoritative_canonical_cwe_ids) or
                    ($existing_entry.description != $nvd_entry.description) or
                    ($existing_entry.title != $nvd_entry.title) or
-                   ($existing_entry.references != $nvd_entry.references) then
+                   # GHSA consolidation adds its own references, so only a
+                   # reference NVD has and the feed lacks is a change. NVD bumps
+                   # lastModified on every edit, so removals still update.
+                   ((($nvd_entry.references // []) - ($existing_entry.references // [])) | length > 0) then
                   {
                     id: $nvd_entry.id,
                     changes: (
@@ -481,7 +484,7 @@ jobs:
                       + (if $existing_entry.authoritative_canonical_cwe_ids != $nvd_entry.authoritative_canonical_cwe_ids then ["NVD CWE identifiers updated"] else [] end)
                       + (if $existing_entry.description != $nvd_entry.description then ["description updated"] else [] end)
                       + (if $existing_entry.title != $nvd_entry.title then ["title updated"] else [] end)
-                      + (if $existing_entry.references != $nvd_entry.references then ["references updated"] else [] end)
+                      + (if (($nvd_entry.references // []) - ($existing_entry.references // [])) | length > 0 then ["references updated"] else [] end)
                     ),
                     updated_fields: {
                       severity: $nvd_entry.severity,
@@ -819,6 +822,20 @@ jobs:
           STEPS_UPDATES_OUTPUTS_NVD_RETRACTED_COUNT: ${{ steps.updates.outputs.nvd_retracted_count }}
         run: |
           set -euo pipefail
+
+          # A full rebuild restamps the feed even when no advisory changed.
+          # Keep the committed bytes in that case, so an unchanged run neither
+          # re-signs the feed nor opens a pull request.
+          for path in "$FEED_PATH" "$GHSA_FEED_PATH"; do
+            if git cat-file -e "HEAD:$path" 2>/dev/null \
+              && ! git diff --quiet -- "$path" \
+              && cmp -s <(git show "HEAD:$path" | jq -S 'del(.updated)') <(jq -S 'del(.updated)' "$path"); then
+              echo "Only the timestamp changed in $path; keeping the committed feed."
+              git checkout -- "$path"
+            fi
+          done
+          cp "$FEED_PATH" "$SKILL_FEED_PATH"
+          cp "$FEED_PATH" "$SUITE_FEED_PATH"
 
           NVD_CHANGED=false
           GHSA_CHANGED=false
