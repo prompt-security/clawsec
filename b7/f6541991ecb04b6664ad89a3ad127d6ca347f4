@@ -1,0 +1,31 @@
+scripts/populate-local-feed.test.mjs
+  bafe3cdf8c6fdc99 273-281
+.github/workflows/poll-nvd-cves.yml
+  bafe3cdf8c6fdc99 466-469,487,826-839
+scripts/ghsa-without-cve-feed.mjs
+  bafe3cdf8c6fdc99 919-926
+scripts/test-nvd-ghsa-consolidation-workflow.mjs
+  bafe3cdf8c6fdc99 64-66
+scripts/populate-local-feed.sh
+  bafe3cdf8c6fdc99 352-355
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "b7f6541991ecb04b6664ad89a3ad127d6ca347f4",
+  "prompts": {
+    "bafe3cdf8c6fdc99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb9c156d-746e-43ca-80a0-27bf9e213af1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 9,
+      "accepted_lines": 45,
+      "overriden_lines": 0
+    }
+  }
+}
