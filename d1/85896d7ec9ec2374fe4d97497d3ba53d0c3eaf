@@ -1,0 +1,33 @@
+scripts/nvd-product-scoping.test.mjs
+  bafe3cdf8c6fdc99 123-141
+scripts/nvd-advisory-transform.jq
+  bafe3cdf8c6fdc99 236-242,282-283,285-286
+.github/workflows/poll-nvd-cves.yml
+  bafe3cdf8c6fdc99 75-101
+scripts/test-nvd-ghsa-consolidation-workflow.mjs
+  bafe3cdf8c6fdc99 209-215
+scripts/ci/verify_advisory_consumer_releases.mjs
+  bafe3cdf8c6fdc99 224,233-235,247,260-284,287-289,291-304
+scripts/verify-advisory-consumer-releases.test.mjs
+  bafe3cdf8c6fdc99 2-3,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "2.0.0",
+  "base_commit_sha": "d185896d7ec9ec2374fe4d97497d3ba53d0c3eaf",
+  "prompts": {
+    "bafe3cdf8c6fdc99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb9c156d-746e-43ca-80a0-27bf9e213af1",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "David Abutbul <David.a@prompt.security>",
+      "messages": [],
+      "total_additions": 126,
+      "total_deletions": 16,
+      "accepted_lines": 118,
+      "overriden_lines": 0
+    }
+  }
+}
