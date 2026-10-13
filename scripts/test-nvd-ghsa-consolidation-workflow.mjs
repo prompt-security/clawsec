@@ -85,7 +85,7 @@ const pollSteps = pollJob.split('\n      - ');
 const pythonSetupSteps = pollSteps.filter((step) => /uses: actions\/setup-python@/.test(step));
 assert.equal(pythonSetupSteps.length, 1, 'NVD job must select Python exactly once');
 const pythonSetupStep = pythonSetupSteps[0];
-assert.match(pythonSetupStep, /python-version: '3\.12'/, 'NVD analyzers must use Python 3.12');
+assert.match(pythonSetupStep, /python-version: '3\.12(?:\.\d+)?'/, 'NVD analyzers must use Python 3.12');
 assert.doesNotMatch(pythonSetupStep, /^ {8}if:/m, 'Python setup must also run when there are no new CVEs');
 for (const analyzer of ['repair_stale_exploitability.mjs', 'enrich_exploitability.sh']) {
   const analyzerStepIndex = pollSteps.findIndex((step) => step.includes(analyzer));
