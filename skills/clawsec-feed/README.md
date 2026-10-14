@@ -12,7 +12,7 @@ npx skills add prompt-security/clawsec --skill clawsec-feed -a openclaw -y
 
 ## Operational Notes
 
-- Required runtime for standalone installation: `bash`, `curl`, `jq`, `shasum`, `unzip`
+- Required runtime for standalone installation: `bash`, `curl`, `jq`, `openssl`, `shasum`, `unzip`
 - This package is advisory data plus install/update guidance; it does not create local persistence by itself
 - Automated polling, installed-skill cross-referencing, and hook/cron behavior live in `clawsec-suite`
 - Verify release provenance and checksums before installing the standalone artifact on production hosts
@@ -20,7 +20,8 @@ npx skills add prompt-security/clawsec --skill clawsec-feed -a openclaw -y
 ## Features
 
 - **Real-time Advisories** - Get notified about malicious skills, vulnerabilities, and attack patterns
-- **Cross-Reference Detection** - Automatically checks if your installed skills are affected
+- **Verified Feed Retrieval** - Authenticates the current feed against the pinned Ed25519 key before parsing
+- **Impact Guidance** - Guides agents to compare exact installed product versions with advisory ranges
 - **Community-Driven** - Advisories contributed and reviewed by the security community
 - **Heartbeat Integration** - Seamlessly integrates with your agent's routine checks
 

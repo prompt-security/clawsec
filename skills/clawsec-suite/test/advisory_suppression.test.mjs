@@ -4,7 +4,8 @@
  * Advisory suppression tests for clawsec-suite.
  *
  * Tests cover:
- * - isAdvisorySuppressed matching logic (exact checkId + normalized skill name)
+ * - isAdvisorySuppressed matching logic (canonical/alias checkId + normalized skill name)
+ * - notification deduplication across GHSA-to-CVE canonical migration
  * - Partial matches do not suppress (checkId only, skill only)
  * - Empty suppressions never suppress
  * - loadAdvisorySuppression sentinel gating (enabledFor: ["advisory"])
@@ -25,12 +26,25 @@ const LIB_PATH = path.resolve(__dirname, "..", "hooks", "clawsec-advisory-guardi
 const { isAdvisorySuppressed, loadAdvisorySuppression } = await import(
   `${LIB_PATH}/suppression.mjs`
 );
+const {
+  affectedSpecifierMatchesSkill,
+  buildAlertMessage,
+  installedVersionIndeterminateReason,
+  matchKeys,
+  recordMatchNotification,
+} = await import(`${LIB_PATH}/matching.ts`);
+const { versionMatches } = await import(`${LIB_PATH}/version.mjs`);
 
 let tempDir;
 
-function makeMatch(advisoryId, skillName, version = "1.0.0") {
+function makeMatch(advisoryId, skillName, version = "1.0.0", advisoryFields = {}) {
   return {
-    advisory: { id: advisoryId, severity: "high", title: `Advisory ${advisoryId}` },
+    advisory: {
+      id: advisoryId,
+      severity: "high",
+      title: `Advisory ${advisoryId}`,
+      ...advisoryFields,
+    },
     skill: { name: skillName, dirName: skillName, version },
     matchedAffected: [`${skillName}@<=${version}`],
   };
@@ -73,6 +87,186 @@ async function testCaseInsensitiveSkillMatch() {
       pass(testName);
     } else {
       fail(testName, "Expected case-insensitive match to suppress");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testAlternateIdentifiersMatch() {
+  const testName = "isAdvisorySuppressed: cve_id, ghsa_id, and aliases suppress canonical advisory";
+  try {
+    const match = makeMatch("CLAW-2026-0001", "clawsec-suite", "1.0.0", {
+      cve_id: "CVE-2026-25593",
+      ghsa_id: "GHSA-aaaa-bbbb-cccc",
+      ghsa_ids: ["GHSA-gggg-hhhh-iiii"],
+      aliases: ["GHSA-dddd-eeee-ffff"],
+    });
+    const alternateIds = [
+      "CVE-2026-25593",
+      "GHSA-aaaa-bbbb-cccc",
+      "GHSA-dddd-eeee-ffff",
+      "GHSA-gggg-hhhh-iiii",
+    ];
+    const allSuppressed = alternateIds.every((checkId) =>
+      isAdvisorySuppressed(match, makeRules([[checkId, "clawsec-suite"]])),
+    );
+
+    if (allSuppressed) {
+      pass(testName);
+    } else {
+      fail(testName, "Expected every alternate identifier to match the suppression rule");
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testNotificationDedupeAcrossCanonicalMigration() {
+  const testName = "notification state: GHSA notification deduplicates CVE canonical migration";
+  try {
+    const match = makeMatch("CVE-2026-25593", "ClawSec-Suite", "1.0.0", {
+      cve_id: "CVE-2026-25593",
+      ghsa_id: "GHSA-aaaa-bbbb-cccc",
+      aliases: ["GHSA-aaaa-bbbb-cccc"],
+    });
+    const keys = matchKeys(match);
+    const previousTimestamp = "2026-02-15T00:00:00.000Z";
+    const currentTimestamp = "2026-09-28T00:00:00.000Z";
+    const notifiedMatches = {
+      "GHSA-aaaa-bbbb-cccc::clawsec-suite@1.0.0": previousTimestamp,
+    };
+
+    const isNew = recordMatchNotification(match, notifiedMatches, currentTimestamp);
+    const allKeysBackfilled = keys.every((key) => notifiedMatches[key] === previousTimestamp);
+    if (isNew === false && allKeysBackfilled) {
+      pass(testName);
+    } else {
+      fail(
+        testName,
+        `Expected existing GHSA timestamp to deduplicate and backfill all keys: ${JSON.stringify(notifiedMatches)}`,
+      );
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testNewNotificationRecordsAllIdentifiers() {
+  const testName = "notification state: new alert records canonical and alias keys";
+  try {
+    const match = makeMatch("CVE-2026-25593", "clawsec-suite", "1.0.0", {
+      aliases: ["GHSA-aaaa-bbbb-cccc"],
+    });
+    const timestamp = "2026-09-28T00:00:00.000Z";
+    const notifiedMatches = {};
+    const isNew = recordMatchNotification(match, notifiedMatches, timestamp);
+    const allKeysRecorded = matchKeys(match).every((key) => notifiedMatches[key] === timestamp);
+
+    if (isNew === true && allKeysRecorded) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected canonical and alias keys to be recorded: ${JSON.stringify(notifiedMatches)}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testUnknownInstalledVersionIsIndeterminate() {
+  const testName = "matching: missing, unknown, or unparseable installed version is surfaced accurately";
+  try {
+    const skill = { name: "helper-plus", dirName: "helper-plus", version: "unknown" };
+    const unparseableMatch = makeMatch("CVE-2026-25593", "helper-plus", "dev", {
+      action: "Upgrade helper-plus.",
+    });
+    unparseableMatch.matchedAffected = ["helper-plus@<2.0.0"];
+    const unknownMatch = makeMatch("CVE-2026-25594", "helper-plus", "unknown");
+    unknownMatch.matchedAffected = ["helper-plus@<2.0.0"];
+    const missingMatch = makeMatch("CVE-2026-25595", "helper-plus", null);
+    missingMatch.matchedAffected = ["helper-plus@<2.0.0"];
+
+    const candidateMatch = affectedSpecifierMatchesSkill("helper-plus@<2.0.0", skill);
+    const unparseableCandidateMatch = affectedSpecifierMatchesSkill(
+      "helper-plus@<2.0.0",
+      { ...skill, version: "dev" },
+    );
+    const knownSafeDoesNotMatch = affectedSpecifierMatchesSkill(
+      "helper-plus@<2.0.0",
+      { ...skill, version: "2.0.0" },
+    ) === false;
+    const alert = buildAlertMessage([unparseableMatch, unknownMatch, missingMatch], "/tmp/skills");
+
+    if (
+      candidateMatch
+      && unparseableCandidateMatch
+      && knownSafeDoesNotMatch
+      && alert.includes("INDETERMINATE: installed version unparseable")
+      && alert.includes("INDETERMINATE: installed version unknown")
+      && alert.includes("INDETERMINATE: installed version missing")
+      && alert.includes("Version confirmation needed")
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, `Expected an explicit indeterminate alert, got: ${alert}`);
+    }
+  } catch (error) {
+    fail(testName, error);
+  }
+}
+
+async function testHermesDateBuildIdentityMatchesExactly() {
+  const testName = "matching: Hermes date-build identities match exactly without SemVer alias inference";
+  try {
+    const hermes = { name: "hermes-agent", dirName: "hermes-agent", version: "2026.5.29.2" };
+    const exactMatch = affectedSpecifierMatchesSkill("hermes-agent@2026.5.29.2", hermes);
+    const differentBuildDoesNotMatch = affectedSpecifierMatchesSkill(
+      "hermes-agent@2026.5.29.1",
+      hermes,
+    ) === false;
+    const semverAliasIsNotInferred = versionMatches(hermes.version, "0.15.2") === false;
+    const semverIdentityMismatchIsSurfaced = affectedSpecifierMatchesSkill(
+      "hermes-agent@0.15.2",
+      hermes,
+    );
+    const exactIdentityIsKnown = installedVersionIndeterminateReason(
+      hermes.version,
+      hermes.name,
+    ) === null;
+    const dateInstalledAgainstSemverScope = affectedSpecifierMatchesSkill(
+      "hermes-agent@<0.16.0",
+      hermes,
+    );
+    const dateInstalledReason = installedVersionIndeterminateReason(
+      hermes.version,
+      hermes.name,
+      ["hermes-agent@<0.16.0"],
+    );
+    const semverHermes = { name: "hermes-agent", dirName: "hermes-agent", version: "0.15.2" };
+    const semverInstalledAgainstDateScope = affectedSpecifierMatchesSkill(
+      "hermes-agent@2026.5.29.2",
+      semverHermes,
+    );
+    const semverInstalledReason = installedVersionIndeterminateReason(
+      semverHermes.version,
+      semverHermes.name,
+      ["hermes-agent@2026.5.29.2"],
+    );
+
+    if (
+      exactMatch
+      && differentBuildDoesNotMatch
+      && semverAliasIsNotInferred
+      && semverIdentityMismatchIsSurfaced
+      && exactIdentityIsKnown
+      && dateInstalledAgainstSemverScope
+      && dateInstalledReason === "identity-unmapped"
+      && semverInstalledAgainstDateScope
+      && semverInstalledReason === "identity-unmapped"
+    ) {
+      pass(testName);
+    } else {
+      fail(testName, "Expected exact date-build matching with no implicit SemVer alias");
     }
   } catch (error) {
     fail(testName, error);
@@ -373,6 +567,11 @@ async function runAllTests() {
     // isAdvisorySuppressed tests
     await testExactMatch();
     await testCaseInsensitiveSkillMatch();
+    await testAlternateIdentifiersMatch();
+    await testNotificationDedupeAcrossCanonicalMigration();
+    await testNewNotificationRecordsAllIdentifiers();
+    await testUnknownInstalledVersionIsIndeterminate();
+    await testHermesDateBuildIdentityMatchesExactly();
     await testCheckIdMismatch();
     await testSkillMismatch();
     await testEmptySuppressions();

@@ -1,6 +1,6 @@
 {
   "name": "clawsec-suite",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "ClawSec suite manager with embedded advisory-feed monitoring, cryptographic signature verification, approval-gated malicious-skill response, and guided setup for additional security skills.",
   "author": "prompt-security",
   "license": "AGPL-3.0-or-later",
@@ -89,6 +89,11 @@
         "path": "hooks/clawsec-advisory-guardian/lib/advisory_scope.mjs",
         "required": true,
         "description": "Advisory application-scope filtering helper for OpenClaw-facing flows"
+      },
+      {
+        "path": "hooks/clawsec-advisory-guardian/lib/advisory_identity.mjs",
+        "required": true,
+        "description": "Canonical CVE and GHSA alias identity helpers for suppression and notification deduplication"
       },
       {
         "path": "hooks/clawsec-advisory-guardian/lib/feed.mjs",

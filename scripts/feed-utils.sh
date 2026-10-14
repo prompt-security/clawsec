@@ -38,6 +38,9 @@ sync_feed_to_mirrors() {
 }
 
 nvd_query_specs() {
+  # Keyword searches are discovery-only. Publication requires allowlisted,
+  # machine-readable product identity and explicit version scope in
+  # scripts/nvd-advisory-transform.jq.
   cat <<'EOF'
 keyword|OpenClaw
 keyword|clawdbot
@@ -45,28 +48,83 @@ keyword|Moltbot
 keyword|NanoClaw
 keyword|WhatsApp-bot
 keyword|baileys
-keyword|hermes workflow
 keyword|hermes-agent
+keyword|Hermes Agent
 keyword|Picoclaw
-virtualMatchString|cpe:2.3:a:software-metadata.pub:hermes
-virtualMatchString|cpe:2.3:a:picoclaw:picoclaw
+keyword|NemoClaw
+keyword|NVIDIA OpenShell
+virtualMatchString|cpe:2.3:a:openclaw:openclaw
+virtualMatchString|cpe:2.3:a:nanoco:nanoclaw
+virtualMatchString|cpe:2.3:a:sipeed:picoclaw
+virtualMatchString|cpe:2.3:a:nvidia:nemoclaw
+virtualMatchString|cpe:2.3:a:nvidia:openshell
 EOF
 }
 
-nvd_summary_keywords() {
-  echo 'openclaw, nanoclaw, hermes, picoclaw'
+nvd_query_specs_for_scan() {
+  local force_full_scan="$1"
+
+  # Both modes run the same discovery queries; an incremental scan adds a
+  # lastMod window. Inventorying every modified NVD record instead is not
+  # viable: a 119-day window held about 388k records (2026-10-13) and shrinks
+  # while it is paginated. A CVE that leaves every discovery query (rejected,
+  # or re-scoped away from every keyword and CPE) is therefore removed by the
+  # scheduled weekly full rebuild, not by an incremental run.
+  case "$force_full_scan" in
+    true|false|'')
+      nvd_query_specs
+      ;;
+    *)
+      echo "Error: force_full_scan must be true or false" >&2
+      return 1
+      ;;
+  esac
 }
 
-nvd_keyword_pattern() {
-  echo 'OpenClaw|clawdbot|Moltbot|openclaw|NanoClaw|nanoclaw|WhatsApp-bot|baileys|HERMES workflow|hermes-agent|software publication with rich metadata|Picoclaw|picoclaw'
+nvd_drop_review_limit() {
+  # A batch this large is unusual enough to require explicit operator review,
+  # even when it is a small fraction of a very large feed.
+  echo '20'
 }
 
-nvd_github_ref_pattern() {
-  echo 'github\.com/openclaw/openclaw|github\.com/qwibitai/nanoclaw|github\.com/softwarepub/hermes|github\.com/nousresearch/hermes-agent|github\.com/[^/]+/picoclaw'
+nvd_is_material_drop() {
+  local dropped_count="$1"
+  local existing_count="$2"
+  local limit
+
+  if ! [[ "$dropped_count" =~ ^[0-9]+$ ]] || ! [[ "$existing_count" =~ ^[0-9]+$ ]]; then
+    echo "Error: dropped_count and existing_count must be non-negative integers" >&2
+    return 2
+  fi
+
+  limit="$(nvd_drop_review_limit)"
+  [ "$dropped_count" -gt 0 ] && {
+    [ "$dropped_count" -ge "$limit" ] ||
+      { [ "$existing_count" -gt 0 ] && [ "$((dropped_count * 4))" -ge "$existing_count" ]; }
+  }
 }
 
-nvd_cpe_pattern() {
-  echo 'cpe:2\.3:a:software-metadata\.pub:hermes(?::|$)|cpe:2\.3:[aho]:[^:]*:picoclaw(?::|$)'
+nvd_summary_components() {
+  echo 'openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell'
+}
+
+nvd_assert_no_conflicting_duplicates() {
+  local input_file="$1"
+  local conflicting_ids
+
+  conflicting_ids="$(jq -r '
+    .vulnerabilities
+    | group_by(.cve.id)[]
+    | select(length > 1)
+    | select((map(.cve) | unique | length) > 1)
+    | .[0].cve.id
+  ' "$input_file")" || return 1
+
+  if [ -n "$conflicting_ids" ]; then
+    echo "Error: NVD returned conflicting snapshots for duplicate CVE IDs:" >&2
+    printf '%s\n' "$conflicting_ids" | sed 's/^/  - /' >&2
+    return 1
+  fi
 }
 
 nvd_query_slug() {
