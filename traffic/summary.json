@@ -1,9 +1,9 @@
 {
   "version": 1,
   "repository": "prompt-security/clawsec",
-  "generated_at": "2026-10-19T03:35:57.434Z",
+  "generated_at": "2026-10-20T03:33:07.310Z",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-10-19T03:35:57.434Z",
+  "updated_at": "2026-10-20T03:33:07.310Z",
   "source": {
     "api": "GitHub REST repository traffic endpoints",
     "retention_limit": "GitHub exposes roughly the last 14 days; this archive keeps daily snapshots long term.",
@@ -13,83 +13,83 @@
     "views": {
       "last_14_days": {
         "days": 14,
-        "count": 383,
-        "sum_daily_uniques": 197,
+        "count": 363,
+        "sum_daily_uniques": 199,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-10-06",
-        "last_date": "2026-10-17"
+        "first_date": "2026-10-07",
+        "last_date": "2026-10-18"
       },
       "last_30_days": {
         "days": 30,
-        "count": 1065,
+        "count": 1058,
         "sum_daily_uniques": 538,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-09-20",
-        "last_date": "2026-10-17"
+        "first_date": "2026-09-21",
+        "last_date": "2026-10-18"
       },
       "last_90_days": {
         "days": 90,
-        "count": 3447,
-        "sum_daily_uniques": 1894,
+        "count": 3415,
+        "sum_daily_uniques": 1882,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-07-22",
-        "last_date": "2026-10-17"
+        "first_date": "2026-07-23",
+        "last_date": "2026-10-18"
       },
       "last_365_days": {
         "days": 365,
-        "count": 6594,
-        "sum_daily_uniques": 3688,
+        "count": 6619,
+        "sum_daily_uniques": 3704,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-10-17"
+        "last_date": "2026-10-18"
       },
       "all_time": {
-        "count": 6594,
-        "sum_daily_uniques": 3688,
+        "count": 6619,
+        "sum_daily_uniques": 3704,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-10-17"
+        "last_date": "2026-10-18"
       }
     },
     "clones": {
       "last_14_days": {
         "days": 14,
-        "count": 3243,
-        "sum_daily_uniques": 1220,
+        "count": 3314,
+        "sum_daily_uniques": 1234,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-10-06",
-        "last_date": "2026-10-17"
+        "first_date": "2026-10-07",
+        "last_date": "2026-10-18"
       },
       "last_30_days": {
         "days": 30,
-        "count": 6106,
-        "sum_daily_uniques": 2081,
+        "count": 6269,
+        "sum_daily_uniques": 2133,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-09-20",
-        "last_date": "2026-10-17"
+        "first_date": "2026-09-21",
+        "last_date": "2026-10-18"
       },
       "last_90_days": {
         "days": 90,
-        "count": 18597,
-        "sum_daily_uniques": 5780,
+        "count": 18388,
+        "sum_daily_uniques": 5769,
         "unique_semantics": "sum_of_daily_uniques",
-        "first_date": "2026-07-22",
-        "last_date": "2026-10-17"
+        "first_date": "2026-07-23",
+        "last_date": "2026-10-18"
       },
       "last_365_days": {
         "days": 365,
-        "count": 33395,
-        "sum_daily_uniques": 9809,
+        "count": 33629,
+        "sum_daily_uniques": 9908,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-10-17"
+        "last_date": "2026-10-18"
       },
       "all_time": {
-        "count": 33395,
-        "sum_daily_uniques": 9809,
+        "count": 33629,
+        "sum_daily_uniques": 9908,
         "unique_semantics": "sum_of_daily_uniques",
         "first_date": "2026-05-26",
-        "last_date": "2026-10-17"
+        "last_date": "2026-10-18"
       }
     }
   },
@@ -819,6 +819,11 @@
         "timestamp": "2026-10-17T00:00:00Z",
         "count": 20,
         "uniques": 11
+      },
+      {
+        "timestamp": "2026-10-18T00:00:00Z",
+        "count": 25,
+        "uniques": 16
       }
     ],
     "clones": [
@@ -1546,28 +1551,33 @@
         "timestamp": "2026-10-17T00:00:00Z",
         "count": 153,
         "uniques": 95
+      },
+      {
+        "timestamp": "2026-10-18T00:00:00Z",
+        "count": 234,
+        "uniques": 99
       }
     ]
   },
   "latest_snapshots": {
     "referrers": {
-      "captured_at": "2026-10-19T03:35:57.434Z",
-      "date": "2026-10-19",
+      "captured_at": "2026-10-20T03:33:07.310Z",
+      "date": "2026-10-20",
       "entries": [
         {
           "referrer": "github.com",
-          "count": 49,
-          "uniques": 35
+          "count": 48,
+          "uniques": 36
         },
         {
           "referrer": "Google",
-          "count": 20,
-          "uniques": 18
+          "count": 19,
+          "uniques": 17
         },
         {
           "referrer": "prompt.security",
-          "count": 5,
-          "uniques": 4
+          "count": 7,
+          "uniques": 5
         },
         {
           "referrer": "Bing",
@@ -1597,26 +1607,20 @@
       ]
     },
     "paths": {
-      "captured_at": "2026-10-19T03:35:57.434Z",
-      "date": "2026-10-19",
+      "captured_at": "2026-10-20T03:33:07.310Z",
+      "date": "2026-10-20",
       "entries": [
         {
           "path": "/prompt-security/clawsec",
           "title": "Overview",
-          "count": 219,
+          "count": 215,
           "uniques": 142
         },
         {
           "path": "/prompt-security/clawsec/discussions",
           "title": "/discussions",
-          "count": 29,
+          "count": 27,
           "uniques": 4
-        },
-        {
-          "path": "/prompt-security/clawsec/pulls",
-          "title": "/pulls",
-          "count": 14,
-          "uniques": 5
         },
         {
           "path": "/prompt-security/clawsec/issues",
@@ -1625,22 +1629,22 @@
           "uniques": 7
         },
         {
+          "path": "/prompt-security/clawsec/pulls",
+          "title": "/pulls",
+          "count": 12,
+          "uniques": 5
+        },
+        {
           "path": "/prompt-security/clawsec/releases",
           "title": "/releases",
-          "count": 9,
-          "uniques": 7
+          "count": 7,
+          "uniques": 6
         },
         {
           "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
           "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
-          "count": 8,
+          "count": 6,
           "uniques": 2
-        },
-        {
-          "path": "/prompt-security/clawsec/blob/main/CONTRIBUTING.md",
-          "title": "/blob/main/CONTRIBUTING.md",
-          "count": 5,
-          "uniques": 3
         },
         {
           "path": "/prompt-security/clawsec/blob/main/img/Black+Color.png",
@@ -1659,13 +1663,19 @@
           "title": "/blob/main/public/video/soul-guardian-demo.mp4",
           "count": 4,
           "uniques": 3
+        },
+        {
+          "path": "/prompt-security/clawsec/pull/242",
+          "title": "/pull/242",
+          "count": 4,
+          "uniques": 3
         }
       ]
     }
   },
   "snapshot_counts": {
-    "referrers": 131,
-    "paths": 131,
-    "captures": 131
+    "referrers": 132,
+    "paths": 132,
+    "captures": 132
   }
 }
