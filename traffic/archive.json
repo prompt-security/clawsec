@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-10-20T03:33:07.310Z",
+  "updated_at": "2026-10-21T03:33:40.121Z",
   "daily": {
     "views": [
       {
@@ -734,6 +734,11 @@
         "timestamp": "2026-10-18T00:00:00Z",
         "count": 25,
         "uniques": 16
+      },
+      {
+        "timestamp": "2026-10-19T00:00:00Z",
+        "count": 19,
+        "uniques": 13
       }
     ],
     "clones": [
@@ -1466,6 +1471,11 @@
         "timestamp": "2026-10-18T00:00:00Z",
         "count": 234,
         "uniques": 99
+      },
+      {
+        "timestamp": "2026-10-19T00:00:00Z",
+        "count": 175,
+        "uniques": 94
       }
     ]
   },
@@ -8615,6 +8625,52 @@
             "referrer": "github.com",
             "count": 48,
             "uniques": 36
+          },
+          {
+            "referrer": "Google",
+            "count": 19,
+            "uniques": 17
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 7,
+            "uniques": 5
+          },
+          {
+            "referrer": "Bing",
+            "count": 4,
+            "uniques": 3
+          },
+          {
+            "referrer": "DuckDuckGo",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "com.slack",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "instagram.com",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "webkkk.net",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-10-21T03:33:40.121Z",
+        "date": "2026-10-21",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 45,
+            "uniques": 33
           },
           {
             "referrer": "Google",
@@ -17366,6 +17422,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-10-21T03:33:40.121Z",
+        "date": "2026-10-21",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 207,
+            "uniques": 139
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 26,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 12,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 12,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/328",
+            "title": "/pull/328",
+            "count": 5,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/img/Black+Color.png",
+            "title": "/blob/main/img/Black+Color.png",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/img/prompt-icon.svg",
+            "title": "/blob/main/img/prompt-icon.svg",
+            "count": 4,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -18952,6 +19074,18 @@
       "clones_window": {
         "count": 4158,
         "uniques": 1131
+      }
+    },
+    {
+      "captured_at": "2026-10-21T03:33:40.121Z",
+      "date": "2026-10-21",
+      "views_window": {
+        "count": 427,
+        "uniques": 173
+      },
+      "clones_window": {
+        "count": 3652,
+        "uniques": 1117
       }
     }
   ]
