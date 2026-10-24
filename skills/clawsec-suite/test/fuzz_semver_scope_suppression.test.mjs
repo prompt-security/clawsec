@@ -19,8 +19,8 @@ const semverCoreArb = fc.tuple(
 );
 
 const semverArb = semverCoreArb.map(([major, minor, patch]) => `${major}.${minor}.${patch}`);
-const idArb = fc.string({ minLength: 1, maxLength: 24 });
-const skillArb = fc.string({ minLength: 1, maxLength: 24 });
+const idArb = fc.string({ minLength: 1, maxLength: 24 }).filter((value) => value.trim() !== "");
+const skillArb = fc.string({ minLength: 1, maxLength: 24 }).filter((value) => value.trim() !== "");
 
 function runSemverProperties() {
   fc.assert(
@@ -70,6 +70,12 @@ function runConsolidatedFeedRangeRegressions() {
   assert.equal(versionMatches("1.2.3", ">= 1.0.0 <"), false);
   assert.equal(compareSemver("1.2.3-beta.2", "1.2.3-beta.10"), -1);
   assert.equal(compareSemver("1.2.3", "1.2.3-beta.10"), 1);
+  assert.equal(versionMatches("2026.5.29.2", "2026.5.29.2"), true);
+  assert.equal(versionMatches("v2026.5.29.2", "=2026.5.29.2"), true);
+  assert.equal(versionMatches("2026.5.29.1", "2026.5.29.2"), false);
+  assert.equal(versionMatches("0.15.2", "2026.5.29.2"), false);
+  assert.equal(versionMatches("2026.5.29.2", "<=2026.5.29.2"), false);
+  assert.equal(parseSemver("2026.5.29.2"), null);
 }
 
 function runAdvisoryScopeProperties() {
@@ -107,7 +113,7 @@ function runSuppressionProperties() {
       };
       const suppressions = [
         {
-          checkId: id,
+          checkId: id.trim(),
           skill: skill.toLowerCase(),
           reason: "fuzz",
           suppressedAt: "2026-02-25",

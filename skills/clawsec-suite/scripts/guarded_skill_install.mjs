@@ -5,7 +5,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { normalizeSkillName, uniqueStrings, resolveUserPath } from "../hooks/clawsec-advisory-guardian/lib/utils.mjs";
-import { versionMatches } from "../hooks/clawsec-advisory-guardian/lib/version.mjs";
+import {
+  hermesVersionIdentitiesAreIncomparable,
+  versionMatches,
+} from "../hooks/clawsec-advisory-guardian/lib/version.mjs";
 import {
   defaultChecksumsUrl,
   parseAffectedSpecifier,
@@ -95,11 +98,22 @@ function parseArgs(argv) {
   return parsed;
 }
 
-function affectedSpecifierMatches(specifier, skillName, version) {
+function affectedSpecifierMatch(specifier, skillName, version) {
   const parsed = parseAffectedSpecifier(specifier);
-  if (!parsed) return false;
-  if (normalizeSkillName(parsed.name) !== normalizeSkillName(skillName)) return false;
-  return versionMatches(version, parsed.versionSpec);
+  if (!parsed) return null;
+
+  const normalizedName = normalizeSkillName(parsed.name);
+  if (normalizedName !== normalizeSkillName(skillName)) return null;
+  if (versionMatches(version, parsed.versionSpec)) {
+    return { specifier, indeterminate: false };
+  }
+  if (
+    (normalizedName === "hermes" || normalizedName === "hermes-agent")
+    && hermesVersionIdentitiesAreIncomparable(version, parsed.versionSpec)
+  ) {
+    return { specifier, indeterminate: true };
+  }
+  return null;
 }
 
 function affectedSpecifierMatchesWithoutVersion(specifier, skillName) {
@@ -180,16 +194,18 @@ function findMatches(feed, skillName, version) {
     const affected = Array.isArray(advisory.affected) ? advisory.affected : [];
     if (affected.length === 0) continue;
 
-    const matchedAffected = uniqueStrings(
-      affected.filter((specifier) =>
-        version
-          ? affectedSpecifierMatches(specifier, skillName, version)
-          : affectedSpecifierMatchesWithoutVersion(specifier, skillName),
-      ),
+    const affectedMatches = version
+      ? affected.map((specifier) => affectedSpecifierMatch(specifier, skillName, version)).filter(Boolean)
+      : affected
+        .filter((specifier) => affectedSpecifierMatchesWithoutVersion(specifier, skillName))
+        .map((specifier) => ({ specifier, indeterminate: false }));
+    const matchedAffected = uniqueStrings(affectedMatches.map((entry) => entry.specifier));
+    const indeterminateAffected = uniqueStrings(
+      affectedMatches.filter((entry) => entry.indeterminate).map((entry) => entry.specifier),
     );
 
     if (matchedAffected.length > 0) {
-      matches.push({ advisory, matchedAffected });
+      matches.push({ advisory, matchedAffected, indeterminateAffected });
     }
   }
 
@@ -207,6 +223,12 @@ function printMatches(matches, skillName, version) {
     const title = advisory.title ?? "Untitled advisory";
     process.stdout.write(`- [${severity}] ${advisoryId}: ${title}\n`);
     process.stdout.write(`  matched: ${entry.matchedAffected.join(", ")}\n`);
+    for (const specifier of entry.indeterminateAffected) {
+      process.stdout.write(
+        `  INDETERMINATE: Hermes SemVer/date-build identity mismatch for ${specifier}; `
+          + "requested and advisory version identities are not directly comparable.\n",
+      );
+    }
     if (advisory.action) {
       process.stdout.write(`  action: ${advisory.action}\n`);
     }

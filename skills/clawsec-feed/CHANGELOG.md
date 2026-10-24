@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.12] - 2026-09-28
+
+### Security
+
+- Required exact protected-product and affected-version scope before treating an advisory as actionable.
+- Kept matured GHSA identifiers enforceable as aliases of their canonical CVEs, including stale GHSA records.
+- Added OpenShell and NemoClaw infrastructure inventory guidance while excluding ClawHub as a protected runtime.
+- Added a fail-closed signed-feed downloader and routed standalone feed examples through it.
+
 ## [0.0.11] - 2026-06-23
 
 ### Changed

@@ -12,7 +12,8 @@ import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import { evaluateAdvisoryRisk, normalizeExploitabilityScore } from '../lib/risk.js';
-import { matchesAffectedSpecifier } from '../lib/advisories.js';
+import { findAdvisoryMatches as findSkillAdvisoryMatches } from '../lib/advisories.js';
+import type { Advisory, AdvisoryFeed, AdvisoryMatch } from '../lib/types.js';
 
 // These variables are provided by the host environment (ipc-mcp-stdio.ts)
 // when this code is integrated into the NanoClaw container agent.
@@ -25,15 +26,25 @@ const CACHE_FILE = '/workspace/project/data/clawsec-advisory-cache.json';
 const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 const exploitabilityOrder: Record<string, number> = { high: 0, medium: 1, low: 2, unknown: 3 };
 
-/**
- * Discover installed skills in a directory
- */
-async function discoverInstalledSkills(installRoot: string): Promise<Array<{
+type InstalledSkill = {
   name: string;
   version: string | null;
   dirName: string;
-}>> {
-  const skills: Array<{ name: string; version: string | null; dirName: string }> = [];
+};
+
+type InstalledAdvisoryMatch = {
+  advisory: Advisory;
+  skill: InstalledSkill;
+  matchedAffected: string[];
+  indeterminateAffected: string[];
+  versionIndeterminate: boolean;
+};
+
+/**
+ * Discover installed skills in a directory
+ */
+async function discoverInstalledSkills(installRoot: string): Promise<InstalledSkill[]> {
+  const skills: InstalledSkill[] = [];
 
   try {
     const entries = fs.readdirSync(installRoot, { withFileTypes: true });
@@ -69,32 +80,55 @@ async function discoverInstalledSkills(installRoot: string): Promise<Array<{
 /**
  * Find advisory matches for installed skills
  */
-function findAdvisoryMatches(
-  advisories: any[],
-  skills: Array<{ name: string; version: string | null; dirName: string }>
-): Array<{
-  advisory: any;
-  skill: { name: string; version: string | null; dirName: string };
-  matchedAffected: string[];
-}> {
-  const matches: Array<{
-    advisory: any;
-    skill: { name: string; version: string | null; dirName: string };
-    matchedAffected: string[];
-  }> = [];
+function matchAffectedSpecifier(
+  feed: AdvisoryFeed,
+  advisory: Advisory,
+  affected: string,
+  skill: InstalledSkill
+): AdvisoryMatch | null {
+  const scopedFeed: AdvisoryFeed = {
+    ...feed,
+    advisories: [{ ...advisory, affected: [affected] }],
+  };
 
-  for (const advisory of advisories) {
+  const names = skill.dirName === skill.name ? [skill.name] : [skill.name, skill.dirName];
+  for (const name of names) {
+    const [match] = findSkillAdvisoryMatches(scopedFeed, name, skill.version);
+    if (match) return match;
+  }
+
+  return null;
+}
+
+function findAdvisoryMatches(
+  feed: AdvisoryFeed,
+  skills: InstalledSkill[]
+): InstalledAdvisoryMatch[] {
+  const matches: InstalledAdvisoryMatch[] = [];
+
+  for (const advisory of feed.advisories) {
     for (const skill of skills) {
       const matchedAffected: string[] = [];
+      const indeterminateAffected: string[] = [];
+      let hasDeterminateMatch = false;
 
       for (const affected of advisory.affected || []) {
-        if (matchesAffectedSpecifier(affected, skill.name, skill.version, skill.dirName)) {
-          matchedAffected.push(affected);
-        }
+        const match = matchAffectedSpecifier(feed, advisory, affected, skill);
+        if (!match) continue;
+
+        matchedAffected.push(affected);
+        if (match.versionIndeterminate) indeterminateAffected.push(affected);
+        else hasDeterminateMatch = true;
       }
 
       if (matchedAffected.length > 0) {
-        matches.push({ advisory, skill, matchedAffected });
+        matches.push({
+          advisory,
+          skill,
+          matchedAffected,
+          indeterminateAffected,
+          versionIndeterminate: indeterminateAffected.length > 0 && !hasDeterminateMatch,
+        });
       }
     }
   }
@@ -132,7 +166,7 @@ server.tool(
       const skills = await discoverInstalledSkills(installRoot);
 
       // Find matches
-      const matches = findAdvisoryMatches(cacheData.feed.advisories, skills);
+      const matches = findAdvisoryMatches(cacheData.feed, skills);
 
       // Calculate cache age
       const cacheAge = Date.now() - Date.parse(cacheData.fetchedAt);
@@ -157,6 +191,8 @@ server.tool(
           },
           skill: m.skill,
           matchedAffected: m.matchedAffected,
+          indeterminateAffected: m.indeterminateAffected,
+          versionIndeterminate: m.versionIndeterminate,
         })),
         cacheAge: `${cacheAgeMinutes} minutes`,
         cacheTimestamp: cacheData.fetchedAt,
@@ -191,12 +227,14 @@ server.tool(
     try {
       const cacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
 
-      // Find matching advisories for this skill
-      const matchingAdvisories = cacheData.feed.advisories.filter((advisory: any) =>
-        advisory.affected.some((affected: string) => {
-          return matchesAffectedSpecifier(affected, args.skillName, args.skillVersion || null);
-        })
-      );
+      // Find matching advisories for this skill. The shared matcher preserves
+      // fail-closed Hermes identity comparisons and marks them indeterminate.
+      const matchingResults = findAdvisoryMatches(cacheData.feed, [{
+        name: args.skillName,
+        version: args.skillVersion || null,
+        dirName: args.skillName,
+      }]);
+      const matchingAdvisories = matchingResults.map(result => result.advisory);
 
       if (matchingAdvisories.length === 0) {
         return {
@@ -219,23 +257,28 @@ server.tool(
           type: 'text' as const,
           text: JSON.stringify({
             safe: risk.safe,
-            advisories: matchingAdvisories.map((a: any) => ({
-              id: a.id,
-              severity: a.severity,
-              type: a.type,
-              title: a.title,
-              description: a.description,
-              action: a.action,
-              published: a.published,
-              affected: a.affected,
-              exploitability_score: normalizeExploitabilityScore(a.exploitability_score),
-              exploitability_rationale: a.exploitability_rationale || null,
+            advisories: matchingResults.map(result => ({
+              id: result.advisory.id,
+              severity: result.advisory.severity,
+              type: result.advisory.type,
+              title: result.advisory.title,
+              description: result.advisory.description,
+              action: result.advisory.action,
+              published: result.advisory.published,
+              affected: result.advisory.affected,
+              matchedAffected: result.matchedAffected,
+              indeterminateAffected: result.indeterminateAffected,
+              versionIndeterminate: result.versionIndeterminate,
+              exploitability_score: normalizeExploitabilityScore(result.advisory.exploitability_score),
+              exploitability_rationale: result.advisory.exploitability_rationale || null,
             })),
             recommendation: risk.recommendation,
             reason: risk.reason,
             skillName: args.skillName,
             skillVersion: args.skillVersion || null,
             advisoryCount: matchingAdvisories.length,
+            versionIndeterminate: matchingResults.some(result => result.versionIndeterminate),
+            indeterminateAffected: matchingResults.flatMap(result => result.indeterminateAffected),
           }, null, 2),
         }],
       };

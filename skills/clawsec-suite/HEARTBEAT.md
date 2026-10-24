@@ -1,6 +1,6 @@
 # ClawSec Suite — Heartbeat Check
 
-Run this periodically (cron/systemd/CI/agent scheduler). It assumes POSIX shell, `curl`, and `jq`.
+Run this periodically (cron/systemd/CI/agent scheduler). It assumes POSIX shell, `curl`, `jq`, and `openssl`.
 
 ## Goals
 
@@ -18,6 +18,10 @@ SUITE_DIR="$INSTALL_ROOT/clawsec-suite"
 GITHUB_RELEASES_API="${GITHUB_RELEASES_API:-https://api.github.com/repos/prompt-security/clawsec/releases?per_page=100}"
 RELEASE_DOWNLOAD_BASE_URL="${RELEASE_DOWNLOAD_BASE_URL:-https://github.com/prompt-security/clawsec/releases/download}"
 FEED_URL="${CLAWSEC_FEED_URL:-https://clawsec.prompt.security/advisories/feed.json}"
+FEED_SIG_URL="${CLAWSEC_FEED_SIG_URL:-${FEED_URL}.sig}"
+FEED_PUBLIC_KEY="${CLAWSEC_FEED_PUBLIC_KEY:-$SUITE_DIR/advisories/feed-signing-public.pem}"
+LOCAL_FEED="${CLAWSEC_LOCAL_FEED:-$SUITE_DIR/advisories/feed.json}"
+LOCAL_FEED_SIG="${CLAWSEC_LOCAL_FEED_SIG:-${LOCAL_FEED}.sig}"
 STATE_FILE="${CLAWSEC_SUITE_STATE_FILE:-$HOME/.openclaw/clawsec-suite-feed-state.json}"
 MIN_FEED_INTERVAL_SECONDS="${MIN_FEED_INTERVAL_SECONDS:-300}"
 ```
@@ -104,17 +108,33 @@ if [ $((now_epoch - last_epoch)) -lt "$MIN_FEED_INTERVAL_SECONDS" ]; then
   echo "Feed check skipped (rate limit: ${MIN_FEED_INTERVAL_SECONDS}s)."
 else
   FEED_TMP="$TMP/feed.json"
+  FEED_SIG_TMP="$TMP/feed.json.sig"
   FEED_SOURCE="$FEED_URL"
 
-  if ! curl -fsSLo "$FEED_TMP" "$FEED_URL"; then
-    if [ -f "$SUITE_DIR/advisories/feed.json" ]; then
-      cp "$SUITE_DIR/advisories/feed.json" "$FEED_TMP"
-      FEED_SOURCE="$SUITE_DIR/advisories/feed.json (local fallback)"
-      echo "WARNING: Remote feed unavailable, using local fallback."
+  if ! curl -fsSLo "$FEED_TMP" "$FEED_URL" || ! curl -fsSLo "$FEED_SIG_TMP" "$FEED_SIG_URL"; then
+    if [ -f "$LOCAL_FEED" ] && [ -f "$LOCAL_FEED_SIG" ]; then
+      cp "$LOCAL_FEED" "$FEED_TMP"
+      cp "$LOCAL_FEED_SIG" "$FEED_SIG_TMP"
+      FEED_SOURCE="$LOCAL_FEED (signed local fallback)"
+      echo "WARNING: Remote signed feed unavailable, using signed local fallback."
     else
-      echo "ERROR: Remote feed unavailable and no local fallback feed found."
+      echo "ERROR: Remote feed/signature unavailable and no signed local fallback found."
       exit 1
     fi
+  fi
+
+  if [ ! -f "$FEED_PUBLIC_KEY" ]; then
+    echo "ERROR: Pinned feed public key not found: $FEED_PUBLIC_KEY"
+    exit 1
+  fi
+
+  if ! openssl base64 -d -A -in "$FEED_SIG_TMP" -out "$TMP/feed.sig.bin" \
+    || ! openssl pkeyutl -verify -rawin -pubin \
+      -inkey "$FEED_PUBLIC_KEY" \
+      -sigfile "$TMP/feed.sig.bin" \
+      -in "$FEED_TMP" >/dev/null 2>&1; then
+    echo "ERROR: Advisory feed signature verification failed."
+    exit 1
   fi
 
   if ! jq -e '.version and (.advisories | type == "array")' "$FEED_TMP" >/dev/null 2>&1; then
@@ -123,10 +143,21 @@ else
   fi
 
   echo "Feed source: $FEED_SOURCE"
+  echo "Feed signature: verified"
   echo "Feed updated: $(jq -r '.updated // "unknown"' "$FEED_TMP")"
 
   NEW_IDS_FILE="$TMP/new_ids.txt"
-  jq -r --argfile state "$STATE_FILE" '($state.known_advisories // []) as $known | [.advisories[]?.id | select(. != null and ($known | index(.) | not))] | .[]?' "$FEED_TMP" > "$NEW_IDS_FILE"
+  jq -r --argfile state "$STATE_FILE" '
+    def identifiers:
+      ([.id, .cve_id, .ghsa_id] + (.ghsa_ids // []) + (.aliases // []))
+      | map(select(type == "string" and length > 0))
+      | unique;
+    ($state.known_advisories // []) as $known
+    | [.advisories[]?
+       | select(any(identifiers[]; . as $identifier | $known | index($identifier)) | not)
+       | .id]
+    | .[]?
+  ' "$FEED_TMP" > "$NEW_IDS_FILE"
 
   if [ -s "$NEW_IDS_FILE" ]; then
     echo "New advisories:"
@@ -140,7 +171,7 @@ else
     echo "FEED_OK - no new advisories"
   fi
 
-  echo "Affected installed skills (if any):"
+  echo "Installed skills named by advisories (version evaluation required):"
   found_affected=0
   removal_recommended=0
   for skill_path in "$INSTALL_ROOT"/*; do
@@ -156,7 +187,7 @@ else
 
     if [ -n "$skill_hits" ]; then
       found_affected=1
-      echo "- $skill_name is referenced by advisory feed entries"
+      echo "- $skill_name is referenced by advisory feed entries; confirm its installed version before deciding impact"
       printf "%s\n" "$skill_hits"
 
       if jq -e --arg skill_prefix "${skill_name}@" '
@@ -177,8 +208,12 @@ else
   done
 
   if [ "$found_affected" -eq 0 ]; then
-    echo "- none"
+    echo "- no installed skill-name candidates"
   fi
+
+  echo "Protected runtime/infrastructure inventory:"
+  echo "- This portable scan cannot prove versions for arbitrary local, containerized, or remote OpenClaw, NanoClaw, Hermes, Picoclaw, OpenShell, or NemoClaw deployments."
+  echo "- Inventory those deployments with read-only version evidence before reporting not affected; a present component with unknown version is indeterminate."
 
   if [ "$removal_recommended" -eq 1 ]; then
     echo "Approval required: ask the user for explicit approval before removing any skill."
@@ -192,7 +227,13 @@ else
   jq --arg t "$current_utc" --arg updated "$(jq -r '.updated // ""' "$FEED_TMP")" --argfile feed "$FEED_TMP" '
     .last_feed_check = $t
     | .last_feed_updated = (if $updated == "" then .last_feed_updated else $updated end)
-    | .known_advisories = ((.known_advisories // []) + [$feed.advisories[]?.id] | map(select(. != null)) | unique)
+    | .known_advisories = (
+        (.known_advisories // [])
+        + [$feed.advisories[]?
+           | ([.id, .cve_id, .ghsa_id] + (.ghsa_ids // []) + (.aliases // []))[]]
+        | map(select(type == "string" and length > 0))
+        | unique
+      )
   ' "$STATE_FILE" > "$state_tmp"
 
   mv "$state_tmp" "$STATE_FILE"
@@ -208,7 +249,8 @@ Heartbeat output should include:
 - suite version status,
 - advisory feed status,
 - new advisory list (if any) with exploitability scores,
-- installed skills that appear in advisory `affected` lists,
+- installed skills that appear in advisory `affected` lists, with unknown or unevaluated versions reported as indeterminate rather than safe,
+- an explicit warning when protected runtime or infrastructure inventory is incomplete,
 - and a double-confirmation reminder before risky install/remove actions.
 
 ### Exploitability-Based Prioritization

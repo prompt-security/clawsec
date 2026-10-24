@@ -153,6 +153,54 @@ assert.match(
   'PR release dry-runs must sign advisory artifacts inside the staged package',
 );
 
+const dryRunSignerStart = workflow.indexOf('          sign_advisory_artifacts() {');
+const dryRunSignerEnd = workflow.indexOf('          get_md_version() {', dryRunSignerStart);
+assert.ok(dryRunSignerStart !== -1 && dryRunSignerEnd > dryRunSignerStart, 'PR release dry-run signer must exist');
+const dryRunSigner = workflow.slice(dryRunSignerStart, dryRunSignerEnd);
+const dryRunValidationIndex = dryRunSigner.indexOf(
+  'node scripts/ci/validate_advisory_feed.mjs "$advisory_dir/feed.json"',
+);
+const dryRunSigningIndex = dryRunSigner.indexOf('openssl pkeyutl -sign -rawin');
+assert.ok(
+  dryRunValidationIndex !== -1 && dryRunValidationIndex < dryRunSigningIndex,
+  'PR release dry-runs must strictly validate an embedded advisory feed before signing it',
+);
+assert.match(
+  dryRunSigner,
+  /git diff --quiet "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" -- "\$tracked_feed"[\s\S]*validate_advisory_feed\.mjs "\$advisory_dir\/feed\.json"[\s\S]*strict validation is deferred for the legacy baseline/,
+  'PR release dry-runs must validate changed feed bytes but explicitly defer the unchanged legacy baseline during rollout',
+);
+
+const liveValidationMarker = '      - name: Validate embedded advisory feed before signing';
+const liveReleaseGateMarker = '      - name: Verify embedded advisory consumer releases';
+const liveSigningMarker = '      - name: Sign embedded advisory feed and verify';
+const liveValidationIndex = workflow.indexOf(liveValidationMarker);
+const liveReleaseGateIndex = workflow.indexOf(liveReleaseGateMarker);
+const liveSigningIndex = workflow.indexOf(liveSigningMarker);
+assert.ok(
+  liveValidationIndex !== -1
+    && liveValidationIndex < liveReleaseGateIndex
+    && liveReleaseGateIndex < liveSigningIndex,
+  'Tag releases must strictly validate and consumer-gate an embedded advisory feed before signing it',
+);
+const liveValidationStep = workflow.slice(liveValidationIndex, liveSigningIndex);
+assert.match(
+  liveValidationStep,
+  /if: hashFiles\(format\('skills\/\{0\}\/advisories\/feed\.json', steps\.parse\.outputs\.skill_name\)\) != ''[\s\S]*node scripts\/ci\/validate_advisory_feed\.mjs "\$\{STEPS_PARSE_OUTPUTS_SKILL_PATH\}\/advisories\/feed\.json"/,
+  'Tag releases must use the same feed-existence guard and strict validator before signing',
+);
+assert.match(
+  workflow.slice(liveReleaseGateIndex, liveSigningIndex),
+  /if: hashFiles\(format\('skills\/\{0\}\/advisories\/feed\.json', steps\.parse\.outputs\.skill_name\)\) != ''[\s\S]*GH_TOKEN: \$\{\{ github\.token \}\}[\s\S]*node scripts\/ci\/verify_advisory_consumer_releases\.mjs "\$\{STEPS_PARSE_OUTPUTS_SKILL_PATH\}\/advisories\/feed\.json"/,
+  'Tag releases must use the shared authenticated consumer gate under the same feed-existence guard',
+);
+
+assert.match(
+  workflow,
+  /Simulate tag release build[\s\S]*BASE_SHA: \$\{\{ github\.event\.pull_request\.base\.sha \}\}[\s\S]*git diff --quiet "\$\{BASE_SHA\}\.\.\.\$\{HEAD_SHA\}" -- "\$\{skill_dir\}\/advisories\/feed\.json"[\s\S]*advisory_validation_args\+=\(--validate-advisory-feed\)[\s\S]*"\$\{advisory_validation_args\[@\]\}"/,
+  'PR tag simulation must request strict validation only when the embedded feed bytes changed',
+);
+
 assert.doesNotMatch(
   workflow,
   /Removed test signatures from release staging|rm -f "\$\{inner_dir\}\/advisories\/(?:feed\.json\.sig|checksums\.json|checksums\.json\.sig|feed-signing-public\.pem)"/,
@@ -463,6 +511,27 @@ assert.ok(
   'Skill release workflow must accept every prerelease version format that release-skill.sh accepts',
 );
 
+const createReleaseIndex = workflow.indexOf('      - name: Create GitHub Release');
+const deleteSupersededIndex = workflow.indexOf('      - name: Delete superseded releases');
+const publishClawhubJobIndex = workflow.indexOf('\n  publish-clawhub:', deleteSupersededIndex);
+assert.ok(
+  createReleaseIndex !== -1
+    && deleteSupersededIndex > createReleaseIndex
+    && publishClawhubJobIndex > deleteSupersededIndex,
+  'GitHub release creation and superseded-release cleanup must remain ordered in the release-tag job',
+);
+const releaseRetentionBlock = workflow.slice(createReleaseIndex, publishClawhubJobIndex);
+assert.match(
+  releaseRetentionBlock,
+  /prerelease: \$\{\{ contains\(steps\.parse\.outputs\.version, '-'\) \}\}/,
+  'Every SemVer prerelease suffix must produce a GitHub prerelease, including non-alpha/beta/rc labels',
+);
+assert.match(
+  releaseRetentionBlock,
+  /- name: Delete superseded releases\n\s+if: \$\{\{ !contains\(steps\.parse\.outputs\.version, '-'\) \}\}/,
+  'Prerelease publication must skip same-major cleanup so the stable compatibility floor survives for the next stable release gate',
+);
+
 assert.ok(
   releaseSkillScript.includes(`VERSION_ASSIGNMENT_PATTERN='^VERSION="[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.]+)?"$'`),
   'release-skill.sh must detect hardcoded release verification VERSION assignments in SKILL.md',
@@ -615,6 +684,32 @@ assert.match(
   workflow,
   /cp scripts\/ci\/patch_clawhub_trust_extensions\.mjs "\$RUNNER_TEMP\/patch_clawhub_trust_extensions\.mjs"/,
   'Manual ClawHub republish must preserve the current trust-extension patch across tag checkout',
+);
+
+assert.match(
+  workflow,
+  /cp scripts\/ci\/validate_advisory_feed\.mjs "\$RUNNER_TEMP\/clawsec-current\/scripts\/ci\/validate_advisory_feed\.mjs"[\s\S]*cp skills\/hermes-attestation-guardian\/lib\/semver\.mjs "\$RUNNER_TEMP\/clawsec-current\/skills\/hermes-attestation-guardian\/lib\/semver\.mjs"/,
+  'Manual ClawHub republish must preserve the current strict validator and its version parser across tag checkout',
+);
+assert.match(
+  workflow,
+  /cp scripts\/ci\/verify_advisory_consumer_releases\.mjs "\$RUNNER_TEMP\/clawsec-current\/scripts\/ci\/verify_advisory_consumer_releases\.mjs"/,
+  'Manual ClawHub republish must preserve the current consumer release gate across tag checkout',
+);
+
+const republishPrepareIndex = workflow.indexOf('      - name: Prepare verified ClawHub release package');
+const republishValidationIndex = workflow.indexOf('      - name: Validate embedded advisory feed before ClawHub republish');
+const republishPublishIndex = workflow.indexOf('      - name: Publish to ClawHub', republishValidationIndex);
+assert.ok(
+  republishPrepareIndex !== -1
+    && republishValidationIndex > republishPrepareIndex
+    && republishPublishIndex > republishValidationIndex,
+  'Manual ClawHub republish must strictly validate the prepared historical package before publishing it',
+);
+assert.match(
+  workflow.slice(republishValidationIndex, republishPublishIndex),
+  /FEED_PATH="\$\{STEPS_CLAWHUB_PACKAGE_OUTPUTS_SKILL_PATH\}\/advisories\/feed\.json"[\s\S]*node "\$RUNNER_TEMP\/clawsec-current\/scripts\/ci\/validate_advisory_feed\.mjs" "\$FEED_PATH"[\s\S]*node "\$RUNNER_TEMP\/clawsec-current\/scripts\/ci\/verify_advisory_consumer_releases\.mjs" "\$FEED_PATH"[\s\S]*GH_TOKEN: \$\{\{ github\.token \}\}/,
+  'Manual ClawHub republish must validate and consumer-gate the exact embedded feed extracted from the signed release',
 );
 
 assert.match(

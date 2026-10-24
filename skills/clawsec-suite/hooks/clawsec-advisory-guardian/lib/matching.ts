@@ -2,8 +2,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { isObject, normalizeSkillName, uniqueStrings } from "./utils.mjs";
 import { advisoryAppliesToOpenclaw } from "./advisory_scope.mjs";
-import { versionMatches } from "./version.mjs";
+import {
+  hermesVersionIdentitiesAreIncomparable,
+  isExactDateBuildVersion,
+  parseSemver,
+  versionMatches,
+} from "./version.mjs";
 import { parseAffectedSpecifier } from "./feed.mjs";
+import { advisoryIdentifiers } from "./advisory_identity.mjs";
 import type { Advisory, FeedPayload, InstalledSkill, AdvisoryMatch } from "./types.ts";
 
 export async function discoverInstalledSkills(installRoot: string): Promise<InstalledSkill[]> {
@@ -48,6 +54,36 @@ export async function discoverInstalledSkills(installRoot: string): Promise<Inst
   return skills;
 }
 
+export function installedVersionIndeterminateReason(
+  version: string | null,
+  productName = "",
+  affectedSpecifiers: string[] = [],
+): "missing" | "unknown" | "unparseable" | "identity-unmapped" | null {
+  const normalized = typeof version === "string" ? version.trim() : "";
+  if (!normalized) return "missing";
+  if (normalized.toLowerCase() === "unknown") return "unknown";
+  const normalizedProduct = normalizeSkillName(productName);
+  const isHermes = normalizedProduct === "hermes" || normalizedProduct === "hermes-agent";
+  if (!isHermes || !isExactDateBuildVersion(normalized)) {
+    if (parseSemver(normalized) === null) return "unparseable";
+  }
+  if (isHermes && affectedSpecifiers.length > 0) {
+    const versionSpecs = affectedSpecifiers
+      .map((specifier) => parseAffectedSpecifier(specifier)?.versionSpec)
+      .filter((value): value is string => typeof value === "string");
+    if (versionSpecs.some((versionSpec) => versionMatches(normalized, versionSpec))) return null;
+    if (versionSpecs.some((versionSpec) =>
+      hermesVersionIdentitiesAreIncomparable(normalized, versionSpec))) {
+      return "identity-unmapped";
+    }
+  }
+  return null;
+}
+
+export function installedVersionIsIndeterminate(version: string | null, productName = ""): boolean {
+  return installedVersionIndeterminateReason(version, productName) !== null;
+}
+
 export function affectedSpecifierMatchesSkill(rawSpecifier: string, skill: InstalledSkill): boolean {
   const parsed = parseAffectedSpecifier(rawSpecifier);
   if (!parsed) return false;
@@ -56,7 +92,17 @@ export function affectedSpecifierMatchesSkill(rawSpecifier: string, skill: Insta
   const skillName = normalizeSkillName(skill.name);
   if (specName !== skillName) return false;
 
-  return versionMatches(skill.version, parsed.versionSpec);
+  // The product is installed, but a missing version cannot prove safety.
+  // Surface the advisory as indeterminate so the user can resolve the version.
+  if (installedVersionIsIndeterminate(skill.version, parsed.name)) {
+    return true;
+  }
+
+  if (versionMatches(skill.version, parsed.versionSpec)) return true;
+  return (
+    (specName === "hermes" || specName === "hermes-agent")
+    && hermesVersionIdentitiesAreIncomparable(skill.version, parsed.versionSpec)
+  );
 }
 
 export function advisoryMatchesSkill(advisory: Advisory, skill: InstalledSkill): string[] {
@@ -84,13 +130,41 @@ export function findMatches(feed: FeedPayload, installedSkills: InstalledSkill[]
   return matches;
 }
 
-export function matchKey(match: AdvisoryMatch): string {
+export function matchKeys(match: AdvisoryMatch): string[] {
   const normalizedSkillName = normalizeSkillName(match.skill.name);
   const version = match.skill.version ?? "unknown";
-  const advisoryId =
-    match.advisory.id ??
+  const identifiers = advisoryIdentifiers(match.advisory);
+  const fallbackIdentifier =
     `${match.advisory.title ?? "untitled"}::${match.advisory.published ?? match.advisory.updated ?? "unknown-ts"}`;
-  return `${advisoryId}::${normalizedSkillName}@${version}`;
+  const identityKeys = identifiers.length > 0 ? identifiers : [fallbackIdentifier];
+  return identityKeys.map((identifier) => `${identifier}::${normalizedSkillName}@${version}`);
+}
+
+export function matchKey(match: AdvisoryMatch): string {
+  return matchKeys(match)[0];
+}
+
+/**
+ * Record a notification under every known identifier for the advisory.
+ * Returns false when any identifier was already notified, while backfilling
+ * the other keys so future canonical/alias changes remain deduplicated.
+ */
+export function recordMatchNotification(
+  match: AdvisoryMatch,
+  notifiedMatches: Record<string, string>,
+  timestamp: string,
+): boolean {
+  const keys = matchKeys(match);
+  const previousNotification = keys
+    .map((key) => notifiedMatches[key])
+    .find((value): value is string => typeof value === "string" && value.length > 0);
+  const effectiveTimestamp = previousNotification ?? timestamp;
+
+  for (const key of keys) {
+    notifiedMatches[key] = effectiveTimestamp;
+  }
+
+  return previousNotification === undefined;
 }
 
 export function looksMalicious(advisory: Advisory): boolean {
@@ -118,8 +192,14 @@ export function buildAlertMessage(matches: AdvisoryMatch[], installRoot: string)
     const advisoryId = match.advisory.id ?? "unknown-id";
     const version = match.skill.version ?? "unknown";
     const matched = match.matchedAffected.join(", ");
+    const indeterminateReason = installedVersionIndeterminateReason(
+      match.skill.version,
+      match.skill.name,
+      match.matchedAffected,
+    );
     lines.push(
       `- [${severity}] ${advisoryId} -> ${match.skill.name}@${version}` +
+        (indeterminateReason ? ` [INDETERMINATE: installed version ${indeterminateReason}]` : "") +
         (matched ? ` (matched: ${matched})` : ""),
     );
     if (match.advisory.action) {
@@ -129,6 +209,15 @@ export function buildAlertMessage(matches: AdvisoryMatch[], installRoot: string)
 
   if (matches.length > MAX_LISTED) {
     lines.push(`- ... ${matches.length - MAX_LISTED} additional match(es) not shown`);
+  }
+
+  if (matches.some((entry) => installedVersionIndeterminateReason(
+    entry.skill.version,
+    entry.skill.name,
+    entry.matchedAffected,
+  ) !== null)) {
+    lines.push("");
+    lines.push("Version confirmation needed: verify each indeterminate installed component before deciding whether it is affected.");
   }
 
   const removalMatches = matches.filter((entry) => looksMalicious(entry.advisory) || looksRemovalRecommended(entry.advisory));

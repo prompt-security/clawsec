@@ -5,6 +5,11 @@ const workflowPath = new URL('../.github/workflows/poll-ghsa-without-cve.yml', i
 const workflow = await readFile(workflowPath, 'utf8');
 
 assert.match(workflow, /workflow_dispatch:/, 'GHSA poll workflow must remain runnable as a manual fallback');
+assert.match(
+  workflow,
+  /allow_large_rebuild_drop:[\s\S]*type: boolean/,
+  'GHSA poll workflow must expose an explicit reviewed-drop override',
+);
 assert.doesNotMatch(
   workflow,
   /\n\s+schedule:/,
@@ -24,6 +29,49 @@ assert.match(
   workflow,
   /--consolidated-feed "\$FEED_PATH"/,
   'GHSA poll workflow must merge GHSA advisories into the agent-facing feed',
+);
+assert.match(
+  workflow,
+  /ALLOW_LARGE_REBUILD_DROP: \$\{\{ inputs\.allow_large_rebuild_drop \|\| false \}\}[\s\S]*GHSA_DROP_ARGS=\(\)[\s\S]*GHSA_DROP_ARGS\+=\(--allow-large-drop\)[\s\S]*"\$\{GHSA_DROP_ARGS\[@\]\}"/,
+  'GHSA poll workflow must pass its reviewed-drop override to the GHSA CLI and default scheduled-style missing input to false',
+);
+const baselineIndex = workflow.indexOf('- name: Require canonical advisory baseline');
+const pollIndex = workflow.indexOf('- name: Poll GitHub Security Advisories');
+assert.ok(
+  baselineIndex !== -1 && baselineIndex < pollIndex,
+  'GHSA polling must require a non-empty canonical baseline before any network fetch or feed write',
+);
+assert.match(
+  workflow.slice(baselineIndex, pollIndex),
+  /\[ ! -f "\$FEED_PATH" \][\s\S]*jq -e 'type == "object" and \(\.advisories \| type == "array" and length > 0\)' "\$FEED_PATH"/,
+  'GHSA polling must fail closed when the canonical baseline is missing, malformed, or empty',
+);
+assert.match(
+  workflow,
+  /node scripts\/ci\/validate_advisory_feed\.mjs "\$FEED_PATH"/,
+  'GHSA poll workflow must validate the complete consolidated feed before signing',
+);
+assert.match(
+  workflow,
+  /name: Verify advisory consumer releases\n\s+env:\n\s+GH_TOKEN: \$\{\{ github\.token \}\}\n\s+run: node scripts\/ci\/verify_advisory_consumer_releases\.mjs "\$FEED_PATH"/,
+  'GHSA poll workflow must run the shared authenticated advisory consumer release gate',
+);
+const validateIndex = workflow.indexOf('- name: Validate consolidated advisory feed');
+const releaseGateIndex = workflow.indexOf('- name: Verify advisory consumer releases');
+const detectChangesIndex = workflow.indexOf('- name: Detect feed changes');
+const signConsolidatedIndex = workflow.indexOf('- name: Sign consolidated agent feed and verify');
+assert.ok(
+  validateIndex < releaseGateIndex && releaseGateIndex < detectChangesIndex,
+  'GHSA poll workflow must gate consumer releases after validation and before change publication',
+);
+assert.ok(
+  releaseGateIndex < signConsolidatedIndex,
+  'GHSA poll workflow must not sign the consolidated feed before consumer release verification',
+);
+assert.match(
+  workflow,
+  /name: Validate GHSA source feed before signing\n\s+if: steps\.changes\.outputs\.ghsa_changed == 'true'\n\s+run: node scripts\/ci\/validate_advisory_feed\.mjs "\$GHSA_FEED_PATH"[\s\S]*name: Sign GHSA feed and verify/,
+  'GHSA poll workflow must validate the exact provisional feed bytes before signing them',
 );
 assert.match(
   workflow,

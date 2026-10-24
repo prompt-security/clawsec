@@ -1,4 +1,4 @@
-import type { AdvisoryPlatformFilter } from '../types';
+import type { AdvisoryPlatformFilter, SkillPlatformFilter } from '../types';
 
 export type FilterTabOption<T extends string> = {
   value: T;
@@ -20,6 +20,17 @@ export const PLATFORM_TABS = [
   { value: 'nanoclaw', label: 'NanoClaw' },
   { value: 'hermes', label: 'Hermes' },
   { value: 'picoclaw', label: 'Picoclaw' },
+  { value: 'other', label: 'Other' },
+] as const satisfies ReadonlyArray<FilterTabOption<SkillPlatformFilter>>;
+
+export const ADVISORY_COMPONENT_TABS = [
+  { value: 'all', label: 'All Components' },
+  { value: 'openclaw', label: 'OpenClaw' },
+  { value: 'nanoclaw', label: 'NanoClaw' },
+  { value: 'hermes', label: 'Hermes' },
+  { value: 'picoclaw', label: 'Picoclaw' },
+  { value: 'openshell', label: 'OpenShell' },
+  { value: 'nemoclaw', label: 'NemoClaw' },
   { value: 'other', label: 'Other' },
 ] as const satisfies ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>;
 

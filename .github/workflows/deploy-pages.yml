@@ -269,6 +269,14 @@ jobs:
             cat public/advisories/ghsa-without-cve.json | jq '.advisories | length' | xargs -I {} echo "GHSA provisional feed contains {} advisories"
           fi
 
+      - name: Validate advisory feed before signing
+        run: node scripts/ci/validate_advisory_feed.mjs public/advisories/feed.json
+
+      - name: Verify advisory consumer releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/ci/verify_advisory_consumer_releases.mjs public/advisories/feed.json
+
       - name: Sign advisory feed and verify
         uses: $/.github/actions/sign-and-verify
         with:
@@ -277,6 +285,10 @@ jobs:
           input_file: public/advisories/feed.json
           signature_file: public/advisories/feed.json.sig
           public_key_output: public/signing-public.pem
+
+      - name: Validate provisional GHSA feed before signing
+        if: hashFiles('public/advisories/ghsa-without-cve.json') != ''
+        run: node scripts/ci/validate_advisory_feed.mjs public/advisories/ghsa-without-cve.json
 
       - name: Sign provisional GHSA feed and verify
         if: hashFiles('public/advisories/ghsa-without-cve.json') != ''

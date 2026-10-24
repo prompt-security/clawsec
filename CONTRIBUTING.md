@@ -580,15 +580,18 @@ Found a prompt injection vector, malicious skill, or security vulnerability affe
 3. Fill out all required sections:
 
 **Required Fields:**
+
 - **Opener Type** - Are you a human or an AI agent reporting this?
 - **Report Type** - What kind of issue is this?
 - **Severity** - How severe is the threat?
 - **Title** - Brief descriptive title
 - **Description** - Detailed explanation of the vulnerability
-- **Affected** - Which skill(s) and version(s) are affected
+- **Affected Product and Version Scope** - Exact skill/runtime name and one supported exact version or comparator range
+- **Protected Components** - At least one explicit runtime or infrastructure family such as OpenClaw, OpenShell, or NemoClaw
 - **Recommended Action** - What should users do?
 
 **Optional but Helpful:**
+
 - Evidence (sanitized payloads, indicators)
 - Reporter information (for follow-up questions)
 
@@ -647,11 +650,14 @@ domain not mentioned in the skill description.
 
 ## Affected
 
-### Skill Name
+### Component or Skill Name
 helper-plus
 
-### Skill Version
-0.0.1, 1.0.0, 1.0.1
+### Affected Version Scope
+>=0.0.1 <=1.0.1
+
+### Protected Components
+- [x] OpenClaw (agent runtime)
 
 ## Recommended Action
 Remove helper-plus immediately. Do not use versions 0.0.1, 1.0.0 or 1.0.1.
@@ -668,6 +674,27 @@ Once your advisory is published:
 1. **Agents receive it** - The feed is served at `https://clawsec.prompt.security/advisories/feed.json` (with signature/checksum artifacts), so agents see it on their next feed check
 2. **You're credited** - Your issue is linked in the advisory
 3. **Community is protected** - Agents using ClawSec Feed will be alerted
+
+### Maintainer Rollout: Strict Feed Validation
+
+The checked-in legacy feed predates the strict product-and-version scope contract. After merging the pipeline hardening change, the following are expected to fail closed until the canonical feed is rebuilt:
+
+- Pages deploys
+- community and GHSA publication
+- advisory-bearing skill releases (`clawsec-suite`, `clawsec-feed`)
+- the scheduled NVD poll, which stops at its retraction check
+
+To complete the rollout:
+
+1. Manually run **Poll NVD CVEs** with `force_full_scan=true` and `allow_large_rebuild_drop=false`. It stops at the full-rebuild identity check and lists every existing CVE ID the rebuild would remove. Review that list.
+2. Rerun with `allow_large_rebuild_drop=true` only when the removals are intentional. The job opens or updates the automated PR from `automated/nvd-cve-update`. Review it and merge it.
+3. Release the advisory consumers from `main`: `clawsec-suite`, `hermes-attestation-guardian`, `clawsec-nanoclaw` and `clawsec-feed`. Their releases validate the embedded rebuilt feed.
+
+Do not bypass validation or re-sign the legacy feed.
+
+Until `clawsec-suite` 0.1.17, `hermes-attestation-guardian` 0.1.8 and `clawsec-nanoclaw` 0.0.11 are published, the poll withholds CVEs whose only scope is an exact four-component date build, and logs a warning. The first poll after those releases publishes them. Withholding instead of failing avoids a deadlock: `clawsec-suite` cannot be released before it embeds the rebuilt feed.
+
+After the rollout, the poll runs incrementally every day except Monday, when it does a full rebuild. The full rebuild removes CVEs that no longer match any discovery query, such as rejected or re-scoped records. If a full rebuild would remove 20 or more CVE IDs, or 25% of the feed, it stops for review. Rerun it by dispatch with the override once the listed removals are confirmed.
 
 ### Questions?
 
