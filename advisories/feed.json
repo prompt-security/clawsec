@@ -1,8 +1,436 @@
 {
   "version": "0.0.3",
-  "updated": "2026-10-13T08:52:29Z",
+  "updated": "2026-10-28T06:07:13Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "CVE-2026-110689",
+      "severity": "medium",
+      "type": "unknown_cwe_693",
+      "nvd_category_id": "CWE-693",
+      "title": "A security flaw has been discovered in OpenClaw ClawScan up to 0.1.6. This impacts the function shou...",
+      "description": "A security flaw has been discovered in OpenClaw ClawScan up to 0.1.6. This impacts the function shouldSkipTargetPath of the file internal/runner/runner.go of the component Static Scanner. Performing a manipulation results in protection mechanism failure. Attacking locally is a requirement. The exploit has been released to the public and may be used for attacks. Upgrading to version 0.1.7 will fix this issue. The patch is named 9f6a6fbb9f1137345566d0ab44c73893dfe112fa. The affected component should be upgraded.",
+      "affected": [
+        "openclaw@*"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-10-14T21:17:36.433",
+      "references": [
+        "https://github.com/nedlir/skills-scanner-bypass",
+        "https://github.com/openclaw/clawscan/",
+        "https://github.com/openclaw/clawscan/commit/9f6a6fbb9f1137345566d0ab44c73893dfe112fa"
+      ],
+      "cvss_score": 5.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-110689",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.3); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "GHSA-vwj5-j44r-v364",
+      "ghsa_id": "GHSA-vwj5-j44r-v364",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-59",
+      "title": "Session inbox directory was not checked again between the attachments of one message",
+      "description": "Impact When a message arrived with several attachments, the host checked the session's inbox directory once and reused that result for every file in the message. The agent's container can write to its own session folder and runs at the same time as the host. A compromised or prompt-injected agent could replace the inbox directory with a symlink between two attachment writes. The host then created a later attachment outside the agent's own folders, with the rights of the user running NanoClaw, and still recorded it as saved in the inbox. The attack depends on timing. Affected versions: 2.0.33 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. The host now opens the inbox directory once, refuses symlinks, and keeps it open for the whole message. Every attachment is written through that open directory, so swapping the directory afterwards has no effect. Run /update-nanoclaw to update. No configuration change is needed. On macOS the fix needs an APFS or HFS+ volume. On any other volume type the host refuses these operations. Workarounds None. Update to 2026.10.0. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4063 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @prathish-ks.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "patched": [],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:35:58Z",
+      "updated": "2026-10-13T17:35:58Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-vwj5-j44r-v364"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-vwj5-j44r-v364",
+      "nvd_url": null,
+      "cvss_score": 7.8,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-59",
+        "CWE-367"
+      ],
+      "credits": [
+        "prathish-ks"
+      ],
+      "aliases": [
+        "GHSA-vwj5-j44r-v364"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-hcfx-vmj7-xcx8",
+      "ghsa_id": "GHSA-hcfx-vmj7-xcx8",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "ncl groups create accepted a folder value outside the groups directory",
+      "description": "Impact In NanoClaw 2.2.0 and earlier, ncl groups create did not check the folder value it was given. A value that pointed outside the groups directory made the new agent group's workspace resolve to another host directory, such as the NanoClaw project directory. That directory was then mounted into the new group's container with write access. A container with that mount could read and change everything in the directory, including .env and the secrets stored in it. To use this, an attacker needed an agent that can send ncl requests (the default group scope is enough), an admin who approved the create request, and a way to run inside the new group's container. Prompt injection through an incoming message is one way to steer an agent into sending the request. Affected versions: 2.2.0 and earlier. Versions 2.3.0, 2.4.0 and 2026.10.0 are not affected. Patches Fixed in 2.3.0. The create command now checks the folder name before anything else. It accepts only letters, digits, and -, with a letter or digit at both ends. Run /update-nanoclaw to update to the current release. Workarounds No setting closes this on older versions. Until you update, do not approve a group create request whose folder value is not a plain name. References - Fix: https://github.com/nanocoai/nanoclaw/commit/a951e74b767a56e317504bcb6a8adaec0146c919 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2.3.0 Credits Reported by @roisec.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "patched": [],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:34:07Z",
+      "updated": "2026-10-13T17:34:07Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-hcfx-vmj7-xcx8"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-hcfx-vmj7-xcx8",
+      "nvd_url": null,
+      "cvss_score": 8.2,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-22"
+      ],
+      "credits": [
+        "roisec"
+      ],
+      "aliases": [
+        "GHSA-hcfx-vmj7-xcx8"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-r7fr-2v6h-rhqf",
+      "ghsa_id": "GHSA-r7fr-2v6h-rhqf",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-436",
+      "title": "Group-scoped agents could read other agent groups through ncl argument spellings",
+      "description": "Impact An agent group's CLI scope (cliscope, default group) is meant to keep its agent inside its own agent group when it uses ncl. The check that enforces this read the arguments as the agent sent them. The command itself read a cleaned-up copy, in which dashes and underscores in argument names mean the same thing. Two inputs got past the check: - A group argument with an empty value. The check skipped it, and the command then listed every agent group's destinations. - The same group argument given twice with different spellings and different values. The check read one, and the command used the other. The exposed data could only be read: other groups' connected chats, target ids and local destination names. It needs an install with more than one agent group and an agent that is steered into running such a command, for example through prompt injection in an incoming message. Installs with one agent group were not affected. The same mismatch had a second form, fixed by the same change. An argument named proto reached the command but not the check. Through it, a request that waits for admin approval could change the agent's own cliscope, which group-scoped agents are never allowed to do, once an admin approved it. Affected versions: 2.1.54 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. ncl arguments are now cleaned up once, before the group check, so the check and the command read the same values. Two spellings of one argument with different values are rejected, and so is an argument named proto. In group scope, every group argument must equal the agent's own group. An empty or missing value is refused. Run /update-nanoclaw to update. No configuration change is needed. Workarounds Until you update, set cliscope to disabled for agent groups that do not need ncl: run ncl groups config update --id <group-id --cli-scope disabled, then ncl groups restart. Installs with one agent group need nothing. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4061 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @sajdakabir.",
+      "affected": [
+        "nanoclaw@>= 2.1.54, < 2026.10.0"
+      ],
+      "patched": [
+        "nanoclaw@2026.10.0"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:33:48Z",
+      "updated": "2026-10-13T17:33:48Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-r7fr-2v6h-rhqf"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-r7fr-2v6h-rhqf",
+      "nvd_url": null,
+      "cvss_score": 5.5,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-436",
+        "CWE-863"
+      ],
+      "credits": [
+        "sajdakabir"
+      ],
+      "aliases": [
+        "GHSA-r7fr-2v6h-rhqf"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-g3gp-6777-8p9g",
+      "ghsa_id": "GHSA-g3gp-6777-8p9g",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-436",
+      "title": "Non-admin group members could run /clear and /upload-trace by adding a suffix",
+      "description": "Impact NanoClaw checks admin-only slash commands on the host before a message reaches the agent. The host matched the command's first word exactly, but the agent's container matched /clear and /upload-trace by how the word started. A command with extra text on the end, such as the @botname that Telegram adds in group chats, got past the host check and the container still ran it. Any member of a group chat connected to an agent could use this, with no admin role. - /clear reset the agent's conversation for everyone in that chat. It could be repeated at will. - /upload-trace uploaded the session trace to the operator's own private dataset. The data did not go to the person who sent the command. A related gap had the same cause and is fixed by the same change. The Claude SDK accepts other names for some admin-only commands, and the host check did not know them. /reset and /new (for /clear) reset the conversation. /usage and /stats (for /cost) made the agent post the session's cost and usage figures into the chat. The other admin-only commands (/compact, /context, /files) could not be reached this way. The host, other agent groups, the credential gateway and admin roles were not affected. Affected versions: 2.0.33 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. The host check and the container now read commands with the same code and compare exact names, so they always agree on which command a message is. /name@botname counts as /name in both places: admins can still use it, and non-admins are refused. The Claude SDK's other names for these commands are now admin-only too. Run /update-nanoclaw to update. No configuration change is needed. Workarounds No setting turns this off. Until you update, keep group chats that are connected to an agent to people you would trust with admin commands. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4062 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @sajdakabir.",
+      "affected": [
+        "nanoclaw@>= 2.0.33, < 2026.10.0"
+      ],
+      "patched": [
+        "nanoclaw@2026.10.0"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:33:25Z",
+      "updated": "2026-10-13T17:33:25Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-g3gp-6777-8p9g"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-g3gp-6777-8p9g",
+      "nvd_url": null,
+      "cvss_score": 6.3,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+      "cwe_ids": [
+        "CWE-436",
+        "CWE-863"
+      ],
+      "credits": [
+        "sajdakabir"
+      ],
+      "aliases": [
+        "GHSA-g3gp-6777-8p9g"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-8w49-2gv4-3x6w",
+      "ghsa_id": "GHSA-8w49-2gv4-3x6w",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "Mattermost setup used a server-supplied user ID in a setup command without checking it",
+      "description": "Impact Exploitation requires connecting NanoClaw to a Mattermost server the attacker controls, or to a plain-HTTP server with an attacker on the network path. Installs that use a trusted server over HTTPS, or their own server on the same machine, are not exposed. During Mattermost setup (/add-mattermost or the setup wizard), NanoClaw looks up the owner's Mattermost user ID on the selected server. Setup used that ID in its next command without checking it. That command runs in a shell as the user running setup, so a malicious server could run commands as that user, who usually has Docker access. This can happen only while the Mattermost setup step runs: a first install or a rerun. Ordinary Mattermost users on an honest server cannot choose their user ID, and chat messages do not reach this code. Running agents and the NanoClaw service are not affected. Affected versions: 2.4.0 and the 2026.10.0 release candidates. Earlier versions do not include Mattermost setup. Patches Fixed in 2026.10.0. Setup now accepts the owner ID only if it has the form of a Mattermost user ID, and stops before any later command uses anything else. Setup failure messages also no longer repeat what the server returned. Run /update-nanoclaw to update. Existing installs need nothing else. Workarounds Until you update, run Mattermost setup only against a server you trust, and use https:// for any server that is not on your own machine. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4060 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @ShaharGigi.",
+      "affected": [
+        "nanoclaw@>= 2.4.0, < 2026.10.0"
+      ],
+      "patched": [
+        "nanoclaw@2026.10.0"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:32:59Z",
+      "updated": "2026-10-13T17:32:59Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-8w49-2gv4-3x6w"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-8w49-2gv4-3x6w",
+      "nvd_url": null,
+      "cvss_score": 7.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-78"
+      ],
+      "credits": [
+        "ShaharGigi"
+      ],
+      "aliases": [
+        "GHSA-8w49-2gv4-3x6w"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-628g-jj3x-6mp9",
+      "ghsa_id": "GHSA-628g-jj3x-6mp9",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-494",
+      "title": "OneCLI setup downloaded its installer over plain HTTP and ran it",
+      "description": "Impact NanoClaw's OneCLI setup step downloaded the OneCLI installer from an address that had no https://. The download went over plain HTTP, and setup ran the script in a shell as the user running setup. Someone who could intercept or redirect traffic on that network during setup could replace the script and run commands as that user, who usually has Docker access. The exposure is limited to the moment the OneCLI setup step runs: a first install, or a rerun of that step. It needs an attacker on the network path. Running agents and the NanoClaw service are not affected. Affected versions: 2.0.33 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. Setup now downloads the installer from a full https:// address and tells curl to refuse any other protocol, also after a redirect. Run /update-nanoclaw to update. Existing installs need nothing else: the installer is only downloaded when the OneCLI setup step runs. Workarounds Until you update, run setup only on a network you trust. Am I affected? Only if you ran the OneCLI setup step on a network you do not trust, such as public Wi-Fi. A past download cannot be checked afterwards. If that applies to you, treat the setup user's account and what it can reach (Docker, the OneCLI vault) as exposed: reinstall from a trusted network and rotate the credentials stored in OneCLI. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4059 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @ShaharGigi.",
+      "affected": [
+        "nanoclaw@>= 2.0.33, < 2026.10.0"
+      ],
+      "patched": [
+        "nanoclaw@2026.10.0"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:32:37Z",
+      "updated": "2026-10-13T17:32:37Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-628g-jj3x-6mp9"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-628g-jj3x-6mp9",
+      "nvd_url": null,
+      "cvss_score": 7.1,
+      "cvss_vector": "CVSS:3.1/AV:A/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-494"
+      ],
+      "credits": [
+        "ShaharGigi"
+      ],
+      "aliases": [
+        "GHSA-628g-jj3x-6mp9"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-9j3v-9hwg-v896",
+      "ghsa_id": "GHSA-9j3v-9hwg-v896",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "Task run-log read built a host file path from a series id without checking it",
+      "description": "Impact The host function that reads a scheduled task's run log built a file path from the task's series id. It did not apply the character check that the functions for adding to and deleting the same log already applied. A series id that contained path segments could make the read return the contents of a .md file outside the agent group's tasks folder, such as another agent group's instructions or memory files. The read could not change anything, and it was limited to files whose name ends in .md. Affected versions: 2.1.54 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. The read now applies the same check as the other two run-log functions. All three also open the tasks folder once, refuse symlinks, and work through that open directory. Run /update-nanoclaw to update. No configuration change is needed. Workarounds None. Update to 2026.10.0. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4063 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @sajdakabir.",
+      "affected": [
+        "nanoclaw@>= 2.1.54, < 2026.10.0"
+      ],
+      "patched": [
+        "nanoclaw@2026.10.0"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:30:15Z",
+      "updated": "2026-10-13T17:30:15Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-9j3v-9hwg-v896"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-9j3v-9hwg-v896",
+      "nvd_url": null,
+      "cvss_score": 5.5,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-22"
+      ],
+      "credits": [
+        "sajdakabir"
+      ],
+      "aliases": [
+        "GHSA-9j3v-9hwg-v896"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-7wx5-9p7v-wvhp",
+      "ghsa_id": "GHSA-7wx5-9p7v-wvhp",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-59",
+      "title": "Race between the check and the write when saving inbound attachments to the session inbox",
+      "description": "Impact When a message arrived with attachments, the host checked the session's inbox directory and then wrote the files in a separate step. The agent's container can write to its own session folder and runs at the same time as the host. A compromised or prompt-injected agent could replace the inbox directory with a symlink between the check and the write. The host then created the attachment file outside the agent's own folders, with the rights of the user running NanoClaw. The attack depends on timing. Affected versions: 2.0.33 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. The host now opens the inbox directory once, refuses symlinks, and writes every attachment through that open directory. Swapping the directory afterwards has no effect. Run /update-nanoclaw to update. No configuration change is needed. On macOS the fix needs an APFS or HFS+ volume. On any other volume type the host refuses these operations. Workarounds None. Update to 2026.10.0. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4063 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @roisec.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "patched": [],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:23:42Z",
+      "updated": "2026-10-13T17:23:42Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-7wx5-9p7v-wvhp"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-7wx5-9p7v-wvhp",
+      "nvd_url": null,
+      "cvss_score": 7.8,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-59",
+        "CWE-367"
+      ],
+      "credits": [
+        "roisec"
+      ],
+      "aliases": [
+        "GHSA-7wx5-9p7v-wvhp"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-frvf-5rf5-89fq",
+      "ghsa_id": "GHSA-frvf-5rf5-89fq",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-59",
+      "title": "Host followed symlinks in agent-writable session and skill directories",
+      "description": "Impact NanoClaw mounts each agent's session folder, group folder and provider state into its container with write access. Host code that worked inside those folders followed directory names that the agent could replace with symlinks. A compromised or prompt-injected agent could make the host read a file outside the agent's own folders and deliver it to a chat, or delete a directory outside them. Both happened with the rights of the user running NanoClaw. The affected host operations were outbox delivery and cleanup, file forwarding between agents, and the sync of shared and template skills. No setting turns these operations off. Affected versions: 2.0.33 through 2.4.0, and the 2026.10.0 release candidates. Patches Fixed in 2026.10.0. The host now opens each of these directories once, refuses symlinks, and does every read, write and delete through that open directory instead of through the path. Run /update-nanoclaw to update. No configuration change is needed. On macOS the fix needs an APFS or HFS+ volume. On any other volume type the host refuses these operations. Workarounds None. Update to 2026.10.0. References - Fix: https://github.com/nanocoai/nanoclaw/pull/4063 - Release: https://github.com/nanocoai/nanoclaw/releases/tag/v2026.10.0 Credits Reported by @KyleCard.",
+      "affected": [
+        "nanoclaw@*"
+      ],
+      "patched": [],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-10-13T17:19:18Z",
+      "updated": "2026-10-13T17:19:18Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-frvf-5rf5-89fq"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-frvf-5rf5-89fq",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-59",
+        "CWE-61"
+      ],
+      "credits": [
+        "KyleCard"
+      ],
+      "aliases": [
+        "GHSA-frvf-5rf5-89fq"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
     {
       "id": "CVE-2026-108757",
       "severity": "medium",
