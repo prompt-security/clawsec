@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-10-28T06:07:13Z",
+  "updated": "2026-10-31T06:05:39Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -18321,8 +18321,8 @@
       "severity": "high",
       "type": "unknown_cwe_61",
       "nvd_category_id": "CWE-61",
-      "title": "OpenClaw through 2026.2.22 contains a symlink traversal vulnerability in agents.create and agents.up...",
-      "description": "OpenClaw through 2026.2.22 contains a symlink traversal vulnerability in agents.create and agents.update handlers that use fs.appendFile on IDENTITY.md without symlink containment checks. Attackers with workspace access can plant symlinks to append attacker-controlled content to arbitrary files, enabling remote code execution via crontab injection or unauthorized access via SSH key manipulation.",
+      "title": "OpenClaw before 2026.3.24 contains a symlink traversal vulnerability in agents.create and agents.upd...",
+      "description": "OpenClaw before 2026.3.24 contains a symlink traversal vulnerability in agents.create and agents.update handlers that use fs.appendFile on IDENTITY.md without symlink containment checks. Attackers with workspace access can plant symlinks to append attacker-controlled content to arbitrary files, enabling remote code execution via crontab injection or unauthorized access via SSH key manipulation.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
@@ -18788,8 +18788,8 @@
       "severity": "medium",
       "type": "open_redirect",
       "nvd_category_id": "CWE-601",
-      "title": "OpenClaw before 2026.3.31 (patched in 2026.4.8) contains a request body replay vulnerability in fetc...",
-      "description": "OpenClaw before 2026.3.31 (patched in 2026.4.8) contains a request body replay vulnerability in fetchWithSsrFGuard that allows unsafe request bodies to be resent across cross-origin redirects. Attackers can exploit this by triggering redirects to exfiltrate sensitive request data or headers to unintended origins.",
+      "title": "OpenClaw before 2026.4.8 contains a request body replay vulnerability in fetchWithSsrFGuard that all...",
+      "description": "OpenClaw before 2026.4.8 contains a request body replay vulnerability in fetchWithSsrFGuard that allows unsafe request bodies to be resent across cross-origin redirects. Attackers can exploit this by triggering redirects to exfiltrate sensitive request data or headers to unintended origins.",
       "affected": [
         "cpe:2.3:a:openclaw:openclaw:*:*:*:*:*:node.js:*:*",
         "openclaw@*"
