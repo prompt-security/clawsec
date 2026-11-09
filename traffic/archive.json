@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-11-08T03:22:48.548Z",
+  "updated_at": "2026-11-09T03:25:00.192Z",
   "daily": {
     "views": [
       {
@@ -829,6 +829,11 @@
         "timestamp": "2026-11-06T00:00:00Z",
         "count": 18,
         "uniques": 14
+      },
+      {
+        "timestamp": "2026-11-07T00:00:00Z",
+        "count": 10,
+        "uniques": 8
       }
     ],
     "clones": [
@@ -1656,6 +1661,11 @@
         "timestamp": "2026-11-06T00:00:00Z",
         "count": 281,
         "uniques": 113
+      },
+      {
+        "timestamp": "2026-11-07T00:00:00Z",
+        "count": 231,
+        "uniques": 94
       }
     ]
   },
@@ -9774,6 +9784,62 @@
             "referrer": "prompt.security",
             "count": 13,
             "uniques": 11
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 6,
+            "uniques": 5
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "referrer": "com.linkedin.android",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "Baidu",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "Bing",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-11-09T03:25:00.192Z",
+        "date": "2026-11-09",
+        "entries": [
+          {
+            "referrer": "aocr.org",
+            "count": 205,
+            "uniques": 205
+          },
+          {
+            "referrer": "github.com",
+            "count": 62,
+            "uniques": 47
+          },
+          {
+            "referrer": "Google",
+            "count": 30,
+            "uniques": 25
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 12,
+            "uniques": 10
           },
           {
             "referrer": "youtube.com",
@@ -19774,6 +19840,72 @@
             "uniques": 5
           }
         ]
+      },
+      {
+        "captured_at": "2026-11-09T03:25:00.192Z",
+        "date": "2026-11-09",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 214,
+            "uniques": 165
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 20,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/wiki",
+            "title": "/wiki",
+            "count": 19,
+            "uniques": 19
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 16,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 12,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 12,
+            "uniques": 8
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 12,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 10,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/.claude-plugin",
+            "title": "/tree/main/.claude-plugin",
+            "count": 9,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/wiki/ko-dependencies",
+            "title": "/wiki/ko-dependencies",
+            "count": 7,
+            "uniques": 7
+          }
+        ]
       }
     ]
   },
@@ -21588,6 +21720,18 @@
       "clones_window": {
         "count": 3758,
         "uniques": 1301
+      }
+    },
+    {
+      "captured_at": "2026-11-09T03:25:00.192Z",
+      "date": "2026-11-09",
+      "views_window": {
+        "count": 671,
+        "uniques": 429
+      },
+      "clones_window": {
+        "count": 3745,
+        "uniques": 1284
       }
     }
   ]
