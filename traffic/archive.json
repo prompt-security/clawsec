@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-11-14T03:21:55.387Z",
+  "updated_at": "2026-11-15T03:23:09.747Z",
   "daily": {
     "views": [
       {
@@ -859,6 +859,11 @@
         "timestamp": "2026-11-12T00:00:00Z",
         "count": 19,
         "uniques": 16
+      },
+      {
+        "timestamp": "2026-11-13T00:00:00Z",
+        "count": 25,
+        "uniques": 14
       }
     ],
     "clones": [
@@ -1716,6 +1721,11 @@
         "timestamp": "2026-11-12T00:00:00Z",
         "count": 275,
         "uniques": 101
+      },
+      {
+        "timestamp": "2026-11-13T00:00:00Z",
+        "count": 213,
+        "uniques": 87
       }
     ]
   },
@@ -10199,6 +10209,62 @@
           {
             "referrer": "Bing",
             "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-11-15T03:23:09.747Z",
+        "date": "2026-11-15",
+        "entries": [
+          {
+            "referrer": "aocr.org",
+            "count": 75,
+            "uniques": 75
+          },
+          {
+            "referrer": "github.com",
+            "count": 52,
+            "uniques": 45
+          },
+          {
+            "referrer": "Google",
+            "count": 35,
+            "uniques": 23
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 10,
+            "uniques": 9
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 8,
+            "uniques": 8
+          },
+          {
+            "referrer": "Baidu",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "rentamac.io",
+            "count": 2,
             "uniques": 1
           }
         ]
@@ -20566,6 +20632,72 @@
             "uniques": 4
           }
         ]
+      },
+      {
+        "captured_at": "2026-11-15T03:23:09.747Z",
+        "date": "2026-11-15",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 176,
+            "uniques": 138
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/hermes-attestation-guardian/SKILL.md",
+            "title": "/blob/main/skills/hermes-attestation-guardian/SKILL.md",
+            "count": 15,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 9,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 8,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 7,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 6,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "title": "/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/commit/ea16ce7e1150bb5e295432e5e94888f2e739edb8",
+            "title": "/commit/ea16ce7e1150bb5e295432e5e94888f2e739edb8",
+            "count": 4,
+            "uniques": 4
+          }
+        ]
       }
     ]
   },
@@ -22452,6 +22584,18 @@
       "clones_window": {
         "count": 4226,
         "uniques": 1277
+      }
+    },
+    {
+      "captured_at": "2026-11-15T03:23:09.747Z",
+      "date": "2026-11-15",
+      "views_window": {
+        "count": 412,
+        "uniques": 257
+      },
+      "clones_window": {
+        "count": 4239,
+        "uniques": 1243
       }
     }
   ]
