@@ -454,6 +454,66 @@ test_request_traps_do_not_leak_the_api_key() {
     pass "request temp paths are cleared after a normal request"
   fi
 
+  trap 'echo caller-int' INT
+  trap 'echo caller-term' TERM
+  local int_before term_before
+  int_before="$(trap -p INT)"
+  term_before="$(trap -p TERM)"
+  reset_transport
+  queue_response "200" '{"ok":true}'
+  if nvd_http_get "https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=OpenClaw" "$WORKDIR/trap.json"; then
+    pass "request used for signal-trap restoration succeeded"
+  else
+    fail "request used for signal-trap restoration failed"
+  fi
+  assert_eq "$(trap -p INT)" "$int_before" "nvd_curl restores the caller INT trap"
+  assert_eq "$(trap -p TERM)" "$term_before" "nvd_curl restores the caller TERM trap"
+  assert_eq "$(trap -p EXIT)" "$before" "signal-trap restoration leaves the EXIT trap in place"
+  trap - INT TERM
+
+  local config_file
+  config_file="$(mktemp)"
+  printf 'header = "apiKey: marker"\n' >"$config_file"
+  chmod 600 "$config_file"
+  NVD_CURL_CONFIG_FILE="$config_file"
+  nvd_install_request_traps
+  # shellcheck disable=SC2034
+  value="$(echo still-here)"
+  ( exit 0 )
+  if [ -f "$config_file" ]; then
+    pass "subshells do not delete the in-flight API key file"
+  else
+    fail "a subshell deleted the in-flight API key file"
+  fi
+  nvd_restore_request_traps
+  if [ -e "$config_file" ]; then
+    rm -f "$config_file"
+    fail "normal cleanup left the API key config file"
+  else
+    pass "normal cleanup removes the API key config file"
+  fi
+  assert_eq "$(trap -p EXIT)" "$before" "direct cleanup restores the caller EXIT trap"
+
+  local status_snippet="$WORKDIR/exit-status.sh"
+  cat >"$status_snippet" <<'EOF'
+set -euo pipefail
+source "$1"
+trap 'echo caller-exit' EXIT
+nvd_install_request_traps
+exit 4
+EOF
+  local exit_status=0
+  set +e
+  bash "$status_snippet" "$SCRIPT_DIR/feed-utils.sh" >"$WORKDIR/exit-status.out"
+  exit_status=$?
+  set -e
+  assert_eq "$exit_status" "4" "EXIT cleanup preserves the shell exit status"
+  if grep -F -q "caller-exit" "$WORKDIR/exit-status.out"; then
+    pass "EXIT cleanup runs the caller EXIT trap"
+  else
+    fail "EXIT cleanup did not run the caller EXIT trap"
+  fi
+
   local secret="nvd-test-key-5941-do-not-log"
   local snippet="$WORKDIR/interrupt.sh"
   local path_file="$WORKDIR/config-path"

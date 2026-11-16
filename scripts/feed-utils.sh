@@ -119,6 +119,8 @@ NVD_FAILED_QUERIES=()
 NVD_CURL_CONFIG_FILE=""
 NVD_CURL_CODE_FILE=""
 NVD_SAVED_EXIT_TRAP=""
+NVD_SAVED_INT_TRAP=""
+NVD_SAVED_TERM_TRAP=""
 
 nvd_remove_request_temps() {
   if [ -n "${NVD_CURL_CONFIG_FILE:-}" ]; then
@@ -131,52 +133,92 @@ nvd_remove_request_temps() {
   fi
 }
 
+# trap -p output is itself a trap command. Re-eval it to restore the caller.
+nvd_restore_one_trap() {
+  local saved="$1"
+  local signal="$2"
+  if [ -n "$saved" ]; then
+    # shellcheck disable=SC2294
+    eval "$saved"
+  else
+    trap - "$signal"
+  fi
+}
+
 nvd_run_saved_exit_trap() {
   local saved="$1"
+  local quoted=""
   local command=""
   [ -n "$saved" ] || return 0
-  command="${saved#trap -- }"
-  command="${command% EXIT}"
+  quoted="${saved#trap -- }"
+  quoted="${quoted% EXIT}"
+  # trap -p stores the action as one shell-quoted word. Decode it, then run it.
+  # shellcheck disable=SC2086
+  command="$(eval "printf '%s' ${quoted}")"
   # shellcheck disable=SC2294
   eval "$command"
 }
 
 nvd_install_request_traps() {
   NVD_SAVED_EXIT_TRAP="$(trap -p EXIT || true)"
+  NVD_SAVED_INT_TRAP="$(trap -p INT || true)"
+  NVD_SAVED_TERM_TRAP="$(trap -p TERM || true)"
   trap 'nvd_request_exit_cleanup' EXIT
   trap 'nvd_request_interrupted INT' INT
   trap 'nvd_request_interrupted TERM' TERM
 }
 
 nvd_restore_request_traps() {
-  local saved="${NVD_SAVED_EXIT_TRAP:-}"
+  local saved_exit="${NVD_SAVED_EXIT_TRAP:-}"
+  local saved_int="${NVD_SAVED_INT_TRAP:-}"
+  local saved_term="${NVD_SAVED_TERM_TRAP:-}"
   NVD_SAVED_EXIT_TRAP=""
+  NVD_SAVED_INT_TRAP=""
+  NVD_SAVED_TERM_TRAP=""
   nvd_remove_request_temps
-  trap - INT TERM
-  if [ -n "$saved" ]; then
-    # shellcheck disable=SC2294
-    eval "$saved"
-  else
-    trap - EXIT
-  fi
+  nvd_restore_one_trap "$saved_int" INT
+  nvd_restore_one_trap "$saved_term" TERM
+  nvd_restore_one_trap "$saved_exit" EXIT
 }
 
+# Command-substitution subshells inherit this trap. They must not delete the
+# parent's temp files or run the parent's EXIT action. The shell's own exit
+# status is left alone: an EXIT trap does not replace it unless it calls exit.
 nvd_request_exit_cleanup() {
-  local saved="${NVD_SAVED_EXIT_TRAP:-}"
-  NVD_SAVED_EXIT_TRAP=""
-  nvd_remove_request_temps
-  trap - EXIT INT TERM
-  nvd_run_saved_exit_trap "$saved"
+  # Do not return from an EXIT trap: bash can drop the function context and
+  # replace the shell's exit status. Falling off the end leaves that status.
+  if [ "${BASH_SUBSHELL:-0}" -eq 0 ]; then
+    local saved_exit="${NVD_SAVED_EXIT_TRAP:-}"
+    local saved_int="${NVD_SAVED_INT_TRAP:-}"
+    local saved_term="${NVD_SAVED_TERM_TRAP:-}"
+    NVD_SAVED_EXIT_TRAP=""
+    NVD_SAVED_INT_TRAP=""
+    NVD_SAVED_TERM_TRAP=""
+    nvd_remove_request_temps
+    trap - EXIT INT TERM
+    nvd_restore_one_trap "$saved_int" INT
+    nvd_restore_one_trap "$saved_term" TERM
+    nvd_run_saved_exit_trap "$saved_exit"
+  fi
 }
 
 nvd_request_interrupted() {
   local signal="$1"
-  local saved="${NVD_SAVED_EXIT_TRAP:-}"
-  NVD_SAVED_EXIT_TRAP=""
-  nvd_remove_request_temps
-  trap - EXIT INT TERM
-  nvd_run_saved_exit_trap "$saved"
-  kill -s "$signal" "$$"
+  if [ "${BASH_SUBSHELL:-0}" -eq 0 ]; then
+    local saved_exit="${NVD_SAVED_EXIT_TRAP:-}"
+    local saved_int="${NVD_SAVED_INT_TRAP:-}"
+    local saved_term="${NVD_SAVED_TERM_TRAP:-}"
+    NVD_SAVED_EXIT_TRAP=""
+    NVD_SAVED_INT_TRAP=""
+    NVD_SAVED_TERM_TRAP=""
+    nvd_remove_request_temps
+    trap - EXIT INT TERM
+    nvd_restore_one_trap "$saved_int" INT
+    nvd_restore_one_trap "$saved_term" TERM
+    # Restoring EXIT makes the caller's handler run once as the process dies.
+    nvd_restore_one_trap "$saved_exit" EXIT
+    kill -s "$signal" "$$"
+  fi
 }
 
 nvd_prepare_api_key() {
@@ -359,8 +401,9 @@ nvd_curl() {
   nvd_install_request_traps
   if [ "$NVD_API_KEY_IS_SET" -eq 1 ]; then
     config_file="$(mktemp)"
-    chmod 600 "$config_file"
+    # Track the path before the key is written so a signal cannot leave it behind.
     NVD_CURL_CONFIG_FILE="$config_file"
+    chmod 600 "$config_file"
     escaped_key="${NVD_API_KEY//\\/\\\\}"
     escaped_key="${escaped_key//\"/\\\"}"
     printf 'header = "apiKey: %s"\n' "$escaped_key" >"$config_file"
