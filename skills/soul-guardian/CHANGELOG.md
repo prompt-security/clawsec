@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.10] - 2026-11-16
+
+### Changed
+
+- Removed unused code with no runtime changes.
+
 ## [0.0.9] - 2026-06-23
 
 ### Changed
