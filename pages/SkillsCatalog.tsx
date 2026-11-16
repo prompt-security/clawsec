@@ -4,7 +4,7 @@ import { SkillCard } from '../components/SkillCard';
 import { Footer } from '../components/Footer';
 import { FilterTabs, PLATFORM_TABS, type FilterTabOption } from '../components/FilterTabs';
 import type { AdvisoryPlatformFilter, SkillMetadata, SkillsIndex } from '../types';
-import { hasNonCorePlatform, matchesPlatformFilter } from '../utils/advisoryPlatforms';
+import { hasNonCorePlatform, matchesPlatformFilter, readPlatformSlugs } from '../utils/advisoryPlatforms';
 
 const SKILLS_INDEX_PATH = '/skills/index.json';
 
@@ -104,10 +104,17 @@ export const SkillsCatalog: React.FC = () => {
     return result;
   }, [searchTerm, categoryFilter, selectedPlatform, skills]);
 
-  // "Other" only earns a tab once a skill actually targets a non-core harness
+  // NemoClaw and OpenShell are advisory feeds without skill packages. Keep the
+  // existing harness tabs, and add an advisory platform only when a skill declares it.
   const platformTabs = useMemo<ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>>(() => {
+    const present = new Set(skills.flatMap((skill) => readPlatformSlugs(skill.platforms)));
     const hasNonCore = skills.some((skill) => hasNonCorePlatform(skill.platforms));
-    return hasNonCore ? PLATFORM_TABS : PLATFORM_TABS.filter((tab) => tab.value !== 'other');
+    return PLATFORM_TABS.filter((tab) => {
+      if (tab.value === 'all') return true;
+      if (tab.value === 'other') return hasNonCore;
+      if (tab.value === 'nemoclaw' || tab.value === 'openshell') return present.has(tab.value);
+      return true;
+    });
   }, [skills]);
 
   // Get unique categories from skills (used in commented filter UI)

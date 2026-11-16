@@ -272,6 +272,8 @@ jq --slurpfile existing "$TEMP_DIR/existing_ids.json" '
           + (if ($blob | test("github\\.com/qwibitai/nanoclaw|\\bnanoclaw\\b|whatsapp-bot|\\bbaileys\\b")) then ["nanoclaw@*"] else [] end)
           + (if ($blob | test("github\\.com/softwarepub/hermes|cpe:2\\.3:a:software-metadata\\.pub:hermes|\\bhermes workflow\\b|software publication with rich metadata")) then ["hermes@*"] else [] end)
           + (if ($blob | test("github\\.com/[^/]+/picoclaw|\\bpicoclaw\\b|cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)")) then ["picoclaw@*"] else [] end)
+          + (if ($blob | test("github\\.com/nvidia/nemoclaw|\\bnemoclaw\\b|cpe:2\\.3:a:nvidia:nemoclaw(?::|$)")) then ["nemoclaw@*"] else [] end)
+          + (if ($blob | test("github\\.com/nvidia/openshell|nvidia openshell|cpe:2\\.3:a:nvidia:openshell(?::|$)")) then ["openshell@*"] else [] end)
         )
     );
 
@@ -288,7 +290,9 @@ jq --slurpfile existing "$TEMP_DIR/existing_ids.json" '
         (if ($targets | map(strings | ascii_downcase | select(startswith("openclaw@") or test("^cpe:2\\.3:[aho]:openclaw:openclaw(?::|$)"))) | length > 0) then "openclaw" else empty end),
         (if ($targets | map(strings | ascii_downcase | select(startswith("nanoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:nanoclaw(?::|$)"))) | length > 0) then "nanoclaw" else empty end),
         (if ($targets | map(strings | ascii_downcase | select(startswith("hermes@") or test("^cpe:2\\.3:[aho]:software-metadata\\.pub:hermes(?::|$)"))) | length > 0) then "hermes" else empty end),
-        (if ($targets | map(strings | ascii_downcase | select(startswith("picoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)"))) | length > 0) then "picoclaw" else empty end)
+        (if ($targets | map(strings | ascii_downcase | select(startswith("picoclaw@") or test("^cpe:2\\.3:[aho]:[^:]*:picoclaw(?::|$)"))) | length > 0) then "picoclaw" else empty end),
+        (if ($targets | map(strings | ascii_downcase | select(startswith("nemoclaw@") or test("^cpe:2\\.3:a:nvidia:nemoclaw(?::|$)"))) | length > 0) then "nemoclaw" else empty end),
+        (if ($targets | map(strings | ascii_downcase | select(startswith("openshell@") or test("^cpe:2\\.3:a:nvidia:openshell(?::|$)"))) | length > 0) then "openshell" else empty end)
       ]
     );
 

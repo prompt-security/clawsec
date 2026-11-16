@@ -20,6 +20,8 @@ export const PLATFORM_TABS = [
   { value: 'nanoclaw', label: 'NanoClaw' },
   { value: 'hermes', label: 'Hermes' },
   { value: 'picoclaw', label: 'Picoclaw' },
+  { value: 'nemoclaw', label: 'NemoClaw' },
+  { value: 'openshell', label: 'OpenShell' },
   { value: 'other', label: 'Other' },
 ] as const satisfies ReadonlyArray<FilterTabOption<AdvisoryPlatformFilter>>;
 

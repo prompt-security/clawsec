@@ -130,7 +130,7 @@ The full package comparison is preserved in the wiki, including shipped, limited
 
 ## Query the signed advisory channel
 
-The consolidated feed can contain relevant NVD CVEs, approved community reports, and provisional GitHub advisories that do not yet have CVE identifiers.
+The consolidated feed can contain relevant NVD CVEs, approved community reports, and provisional GitHub advisories that do not yet have CVE identifiers. Daily NVD and GitHub advisory polling covers OpenClaw, NanoClaw, Hermes, Picoclaw, NVIDIA NemoClaw, and NVIDIA OpenShell. NVIDIA OpenShell is matched by its NVD CPE (`cpe:2.3:a:nvidia:openshell`), the `NVIDIA/OpenShell` repository, and the phrase "NVIDIA OpenShell". A bare OpenShell mention is not enough, so OpenClaw's OpenShell component and unrelated projects that use the same word stay in their own buckets.
 
 ```bash
 curl -fsSL https://clawsec.prompt.security/advisories/feed.json \
