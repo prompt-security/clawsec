@@ -50,21 +50,18 @@ jobs:
       - name: Get last poll date from feed
         id: last_poll
         run: |
+          set -euo pipefail
           if [ -f "$FEED_PATH" ]; then
-            LAST_UPDATED=$(jq -r '.updated // empty' "$FEED_PATH")
-            if [ -n "$LAST_UPDATED" ] && [ "${{ inputs.force_full_scan }}" != "true" ]; then
-              echo "last_date=$LAST_UPDATED" >> $GITHUB_OUTPUT
+            LAST_UPDATED="$(jq -r '.updated // empty' "$FEED_PATH")"
+            echo "last_date=$LAST_UPDATED" >> "$GITHUB_OUTPUT"
+            if [ -n "$LAST_UPDATED" ]; then
               echo "Found last updated: $LAST_UPDATED"
             else
-              # Default to 120 days ago if no date found or force scan
-              LAST_UPDATED=$(date -u -d '120 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-120d +%Y-%m-%dT%H:%M:%S.000Z)
-              echo "last_date=$LAST_UPDATED" >> $GITHUB_OUTPUT
-              echo "Using default date: $LAST_UPDATED"
+              echo "Feed has no updated timestamp."
             fi
           else
-            LAST_UPDATED=$(date -u -d '120 days ago' +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -v-120d +%Y-%m-%dT%H:%M:%S.000Z)
-            echo "last_date=$LAST_UPDATED" >> $GITHUB_OUTPUT
-            echo "No feed found, using default: $LAST_UPDATED"
+            echo "last_date=" >> "$GITHUB_OUTPUT"
+            echo "No feed found."
           fi
 
       - name: Set date window
@@ -72,155 +69,46 @@ jobs:
         env:
           STEPS_LAST_POLL_OUTPUTS_LAST_DATE: ${{ steps.last_poll.outputs.last_date }}
         run: |
-          START_DATE="${STEPS_LAST_POLL_OUTPUTS_LAST_DATE}"
-          END_DATE=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
-          
-          # Convert to epoch for comparison
-          START_EPOCH=$(date -d "$START_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${START_DATE%.*}" +%s)
-          END_EPOCH=$(date -d "$END_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${END_DATE%.*}" +%s)
-          
-          # Ensure start date is before end date (NVD returns 404 if start > end)
-          if [ "$START_EPOCH" -ge "$END_EPOCH" ]; then
-            echo "Warning: Start date ($START_DATE) is not before end date ($END_DATE)"
-            echo "Adjusting start date to 24 hours before end date"
-            START_EPOCH=$((END_EPOCH - 86400))
-            START_DATE=$(date -u -d "@$START_EPOCH" +%Y-%m-%dT%H:%M:%S.000Z 2>/dev/null || date -u -r "$START_EPOCH" +%Y-%m-%dT%H:%M:%S.000Z)
-          fi
-          
-          echo "start_date=$START_DATE" >> $GITHUB_OUTPUT
-          echo "end_date=$END_DATE" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          # shellcheck source=scripts/feed-utils.sh
+          source scripts/feed-utils.sh
+          END_DATE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          # Missing or stale feed timestamps clamp to 90 days. NVD still rejects
+          # lastMod ranges longer than 120 days, including requests that send an API key.
+          START_DATE="$(nvd_clamp_start_date "${STEPS_LAST_POLL_OUTPUTS_LAST_DATE}" "$END_DATE")"
+          echo "start_date=$START_DATE" >> "$GITHUB_OUTPUT"
+          echo "end_date=$END_DATE" >> "$GITHUB_OUTPUT"
           echo "Polling window: $START_DATE to $END_DATE"
 
       - name: Fetch CVEs from NVD
         id: fetch
         env:
+          # Header only. scripts/feed-utils.sh turns xtrace off before this value is expanded.
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
           STEPS_DATES_OUTPUTS_START_DATE: ${{ steps.dates.outputs.start_date }}
           STEPS_DATES_OUTPUTS_END_DATE: ${{ steps.dates.outputs.end_date }}
         run: |
           set -euo pipefail
+          # shellcheck source=scripts/feed-utils.sh
           source scripts/feed-utils.sh
           mkdir -p tmp
+          nvd_warn_if_unauthenticated
+
           FORCE_FULL_SCAN="${{ inputs.force_full_scan }}"
-          NVD_QUERY_SPECS="$(nvd_query_specs)"
-          
           START_DATE="${STEPS_DATES_OUTPUTS_START_DATE}"
           END_DATE="${STEPS_DATES_OUTPUTS_END_DATE}"
-          
-          # URL encode the dates
-          START_ENC=$(echo "$START_DATE" | sed 's/:/%3A/g')
-          END_ENC=$(echo "$END_DATE" | sed 's/:/%3A/g')
-          
-          echo "=== Fetching CVEs from NVD ==="
-
-          FAILED_QUERIES=()
-          
-          while IFS='|' read -r QUERY_KIND QUERY_VALUE; do
-            [ -n "$QUERY_KIND" ] || continue
-
-            QUERY_SLUG="$(nvd_query_slug "$QUERY_KIND" "$QUERY_VALUE")"
-            echo "Fetching $QUERY_KIND query: $QUERY_VALUE"
-
-            keyword_ok=false
-            last_http_code=""
-
-            if [ "$FORCE_FULL_SCAN" = "true" ]; then
-              echo "Full scan mode enabled: paginating complete NVD history for '$QUERY_KIND:$QUERY_VALUE'"
-              echo '{"vulnerabilities":[]}' > "tmp/nvd_${QUERY_SLUG}.json"
-              START_INDEX=0
-              RESULTS_PER_PAGE=2000
-
-              while true; do
-                URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&startIndex=${START_INDEX}&resultsPerPage=${RESULTS_PER_PAGE}")"
-                PAGE_FILE="tmp/nvd_${QUERY_SLUG}_${START_INDEX}.json"
-                echo "URL: $URL"
-
-                page_ok=false
-                for i in 1 2 3; do
-                  HTTP_CODE=$(curl -sS -w "%{http_code}" -o "$PAGE_FILE" "$URL" || true)
-                  if [ -z "$HTTP_CODE" ]; then
-                    HTTP_CODE="000"
-                  fi
-                  last_http_code="$HTTP_CODE"
-                  if [ "$HTTP_CODE" = "200" ]; then
-                    if jq -e . "$PAGE_FILE" >/dev/null 2>&1; then
-                      page_ok=true
-                      break
-                    fi
-                    echo "Invalid JSON for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
-                    sleep 5
-                  elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
-                    echo "Rate limited, waiting 30s before retry $i..."
-                    sleep 30
-                  else
-                    echo "HTTP $HTTP_CODE for $QUERY_KIND:$QUERY_VALUE page $START_INDEX, retry $i..."
-                    sleep 5
-                  fi
-                done
-
-                if [ "$page_ok" != "true" ]; then
-                  break
-                fi
-
-                jq -s '.[0].vulnerabilities += .[1].vulnerabilities | .[0]' \
-                  "tmp/nvd_${QUERY_SLUG}.json" "$PAGE_FILE" > "tmp/nvd_${QUERY_SLUG}_merged.json"
-                mv "tmp/nvd_${QUERY_SLUG}_merged.json" "tmp/nvd_${QUERY_SLUG}.json"
-
-                PAGE_COUNT=$(jq '.vulnerabilities | length' "$PAGE_FILE")
-                TOTAL_RESULTS=$(jq '.totalResults // 0' "$PAGE_FILE")
-                echo "Fetched $PAGE_COUNT results at startIndex=$START_INDEX (totalResults=$TOTAL_RESULTS)"
-
-                START_INDEX=$((START_INDEX + RESULTS_PER_PAGE))
-                if [ "$START_INDEX" -ge "$TOTAL_RESULTS" ] || [ "$PAGE_COUNT" -eq 0 ]; then
-                  keyword_ok=true
-                  break
-                fi
-
-                # NVD recommends 6 second delay between requests
-                sleep 6
-              done
-            else
-              URL="$(nvd_build_url "$QUERY_KIND" "$QUERY_VALUE" "&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}")"
-              echo "URL: $URL"
-
-              # Fetch with retry logic
-              for i in 1 2 3; do
-                HTTP_CODE=$(curl -sS -w "%{http_code}" -o "tmp/nvd_${QUERY_SLUG}.json" "$URL" || true)
-                if [ -z "$HTTP_CODE" ]; then
-                  HTTP_CODE="000"
-                fi
-                last_http_code="$HTTP_CODE"
-                if [ "$HTTP_CODE" = "200" ]; then
-                  if jq -e . "tmp/nvd_${QUERY_SLUG}.json" >/dev/null 2>&1; then
-                    echo "Success for $QUERY_KIND:$QUERY_VALUE"
-                    keyword_ok=true
-                    break
-                  fi
-                  echo "Invalid JSON for $QUERY_KIND:$QUERY_VALUE, retry $i..."
-                  sleep 5
-                elif [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "429" ]; then
-                  echo "Rate limited, waiting 30s before retry $i..."
-                  sleep 30
-                else
-                  echo "HTTP $HTTP_CODE for $QUERY_KIND:$QUERY_VALUE, retry $i..."
-                  sleep 5
-                fi
-              done
-            fi
-
-            if [ "$keyword_ok" != "true" ]; then
-              echo "::error::Failed to fetch valid NVD response for '$QUERY_KIND:$QUERY_VALUE' (last HTTP code: ${last_http_code:-unknown})."
-              FAILED_QUERIES+=("${QUERY_KIND}:${QUERY_VALUE}")
-            fi
-            
-            # NVD recommends 6 second delay between requests
-            sleep 6
-          done <<< "$NVD_QUERY_SPECS"
-          
-          if [ "${#FAILED_QUERIES[@]}" -gt 0 ]; then
-            echo "::error::NVD fetch failed for query spec(s): ${FAILED_QUERIES[*]}"
-            exit 1
+          DATE_SUFFIX=""
+          if [ "$FORCE_FULL_SCAN" != "true" ]; then
+            START_ENC="$(printf '%s' "$START_DATE" | sed 's/:/%3A/g')"
+            END_ENC="$(printf '%s' "$END_DATE" | sed 's/:/%3A/g')"
+            DATE_SUFFIX="&lastModStartDate=${START_ENC}&lastModEndDate=${END_ENC}"
+            echo "Polling window: ${START_DATE} to ${END_DATE}"
+          else
+            echo "Full scan mode enabled: paginating complete NVD history."
           fi
 
+          echo "=== Fetching CVEs from NVD ==="
+          nvd_fetch_all_queries "$(nvd_query_specs)" tmp "$DATE_SUFFIX"
           echo "=== Fetch complete ==="
           ls -la tmp/
 
@@ -299,6 +187,9 @@ jobs:
 
       - name: Check for updates to existing advisories
         id: updates
+        env:
+          # Same secret as the CVE fetch. repair_stale_exploitability.mjs sends it as an apiKey header.
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
           if [ "${{ inputs.force_full_scan }}" = "true" ]; then
             echo "Full scan mode enabled: skipping delta update detection."
