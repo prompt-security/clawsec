@@ -174,3 +174,37 @@ assert.ok(
 assert.ok(detectChangesIndex < signGhsaIndex, 'GHSA signing must run after change detection');
 assert.ok(detectChangesIndex < signAgentIndex, 'Agent feed signing must run after change detection');
 assert.ok(signAgentIndex < upsertPrIndex, 'The PR must be created after feed signing');
+
+assert.match(
+  workflow,
+  /name: Fetch CVEs from NVD[\s\S]*?NVD_API_KEY: \$\{\{ secrets\.NVD_API_KEY \}\}[\s\S]*?nvd_warn_if_unauthenticated[\s\S]*?nvd_fetch_all_queries/,
+  'NVD fetch must pass NVD_API_KEY into the shared helper and keep going when the secret is empty',
+);
+assert.match(
+  workflow,
+  /name: Check for updates to existing advisories[\s\S]*?NVD_API_KEY: \$\{\{ secrets\.NVD_API_KEY \}\}[\s\S]*?repair_stale_exploitability\.mjs/,
+  'Stale exploitability repair must authenticate its direct NVD requests with the same secret',
+);
+assert.match(
+  workflow,
+  /nvd_clamp_start_date/,
+  'The poll window must clamp a missing or stale lastMod start',
+);
+assert.doesNotMatch(
+  workflow,
+  /120 days ago/,
+  'The poll must not request a 120-day window that NVD rejects',
+);
+
+const feedUtils = await readFile(new URL('../scripts/feed-utils.sh', import.meta.url), 'utf8');
+assert.match(feedUtils, /NVD_MAX_LOOKBACK_DAYS=90/, 'NVD lookback must stay inside the 120-day API cap');
+assert.match(
+  feedUtils,
+  /header = "apiKey: %s"/,
+  'The NVD API key must be sent as a request header',
+);
+assert.doesNotMatch(
+  feedUtils,
+  /apiKey=\$\{?NVD_API_KEY\}?/,
+  'The NVD API key must not be placed in the request URL',
+);
