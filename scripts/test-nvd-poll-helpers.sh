@@ -323,9 +323,10 @@ test_retry_pass() {
   local dest="$WORKDIR/fetch-ok"
   reset_transport
   NVD_API_KEY="nvd-test-key-5941-do-not-log"
-  local attempt
-  for attempt in 1 2 3 4 5; do
+  local n=0
+  while [ "$n" -lt 5 ]; do
     queue_response "503" "unavailable"
+    n=$((n + 1))
   done
   queue_response "200" '{"vulnerabilities":[],"totalResults":0}'
   queue_response "200" '{"vulnerabilities":[{"cve":{"id":"CVE-9"}}],"totalResults":1}'
@@ -340,8 +341,10 @@ test_retry_pass() {
 
   local failed="$WORKDIR/fetch-fail"
   reset_transport
-  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  n=0
+  while [ "$n" -lt 10 ]; do
     queue_response "503" "unavailable"
+    n=$((n + 1))
   done
   if nvd_fetch_all_queries "keyword|NanoClaw" "$failed" "&lastModStartDate=2026-10-28T00%3A00%3A00.000Z&lastModEndDate=2026-11-16T00%3A00%3A00.000Z"; then
     fail "a query that fails both passes must fail the fetch"
