@@ -435,8 +435,104 @@ EOF
   fi
 }
 
+test_request_traps_do_not_leak_the_api_key() {
+  local before after
+  before="$(trap -p EXIT)"
+  reset_transport
+  NVD_API_KEY="nvd-test-key-5941-do-not-log"
+  queue_response "200" '{"ok":true}'
+  if nvd_http_get "https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=OpenClaw" "$WORKDIR/trap.json"; then
+    pass "request used for trap restoration succeeded"
+  else
+    fail "request used for trap restoration failed"
+  fi
+  after="$(trap -p EXIT)"
+  assert_eq "$after" "$before" "nvd_curl restores the caller EXIT trap"
+  if [ -n "${NVD_CURL_CONFIG_FILE:-}" ] || [ -n "${NVD_CURL_CODE_FILE:-}" ]; then
+    fail "request temp paths were not cleared"
+  else
+    pass "request temp paths are cleared after a normal request"
+  fi
+
+  local secret="nvd-test-key-5941-do-not-log"
+  local snippet="$WORKDIR/interrupt.sh"
+  local path_file="$WORKDIR/config-path"
+  cat >"$snippet" <<'EOF'
+set -euo pipefail
+source "$1"
+path_out="$2"
+curl() {
+  local config=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --config)
+        config="$2"
+        shift 2
+        ;;
+      -o | -w | --max-time | --connect-timeout)
+        shift 2
+        ;;
+      -sS | -s | -S)
+        shift
+        ;;
+      https://* | http://*)
+        shift
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+  printf '%s\n' "$config" >"$path_out"
+  # A builtin loop, not an external sleep: bash defers traps until an
+  # external command finishes, which would hide the cleanup.
+  while true; do
+    :
+  done
+}
+export NVD_API_KEY="$3"
+nvd_http_get "https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=OpenClaw" "$4"
+EOF
+  bash "$snippet" "$SCRIPT_DIR/feed-utils.sh" "$path_file" "$secret" "$WORKDIR/interrupt-out.json" &
+  local pid=$!
+  local config_path=""
+  local i=0
+  while [ "$i" -lt 50 ]; do
+    if [ -s "$path_file" ]; then
+      config_path="$(cat "$path_file")"
+      break
+    fi
+    command sleep 0.1
+    i=$((i + 1))
+  done
+  if [ -z "$config_path" ] || [ ! -f "$config_path" ]; then
+    kill -TERM "$pid" 2>/dev/null || true
+    wait "$pid" || true
+    fail "interrupt test did not observe the API key config file"
+    return
+  fi
+  kill -TERM "$pid" 2>/dev/null || true
+  local waited=0
+  while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt 30 ]; do
+    command sleep 0.1
+    waited=$((waited + 1))
+  done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" || true
+    fail "NVD request survived SIGTERM"
+  fi
+  if [ -e "$config_path" ]; then
+    rm -f "$config_path"
+    fail "API key config file survived SIGTERM"
+  else
+    pass "SIGTERM removes the API key config file"
+  fi
+}
+
 test_clamp
 test_backoff_and_transient
+test_request_traps_do_not_leak_the_api_key
 test_authenticated_retry_and_header
 test_rate_limit_and_permanent_errors
 test_connection_error_and_invalid_json

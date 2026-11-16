@@ -114,6 +114,70 @@ NVD_RETRY_PASS_DELAY_SECONDS=30
 NVD_API_KEY_IS_SET=0
 NVD_LAST_HTTP_CODE=""
 NVD_FAILED_QUERIES=()
+# Paths for the in-flight NVD request. A signal trap removes them so a killed
+# curl cannot leave the API key behind in the temp directory.
+NVD_CURL_CONFIG_FILE=""
+NVD_CURL_CODE_FILE=""
+NVD_SAVED_EXIT_TRAP=""
+
+nvd_remove_request_temps() {
+  if [ -n "${NVD_CURL_CONFIG_FILE:-}" ]; then
+    rm -f "$NVD_CURL_CONFIG_FILE"
+    NVD_CURL_CONFIG_FILE=""
+  fi
+  if [ -n "${NVD_CURL_CODE_FILE:-}" ]; then
+    rm -f "$NVD_CURL_CODE_FILE"
+    NVD_CURL_CODE_FILE=""
+  fi
+}
+
+nvd_run_saved_exit_trap() {
+  local saved="$1"
+  local command=""
+  [ -n "$saved" ] || return 0
+  command="${saved#trap -- }"
+  command="${command% EXIT}"
+  # shellcheck disable=SC2294
+  eval "$command"
+}
+
+nvd_install_request_traps() {
+  NVD_SAVED_EXIT_TRAP="$(trap -p EXIT || true)"
+  trap 'nvd_request_exit_cleanup' EXIT
+  trap 'nvd_request_interrupted INT' INT
+  trap 'nvd_request_interrupted TERM' TERM
+}
+
+nvd_restore_request_traps() {
+  local saved="${NVD_SAVED_EXIT_TRAP:-}"
+  NVD_SAVED_EXIT_TRAP=""
+  nvd_remove_request_temps
+  trap - INT TERM
+  if [ -n "$saved" ]; then
+    # shellcheck disable=SC2294
+    eval "$saved"
+  else
+    trap - EXIT
+  fi
+}
+
+nvd_request_exit_cleanup() {
+  local saved="${NVD_SAVED_EXIT_TRAP:-}"
+  NVD_SAVED_EXIT_TRAP=""
+  nvd_remove_request_temps
+  trap - EXIT INT TERM
+  nvd_run_saved_exit_trap "$saved"
+}
+
+nvd_request_interrupted() {
+  local signal="$1"
+  local saved="${NVD_SAVED_EXIT_TRAP:-}"
+  NVD_SAVED_EXIT_TRAP=""
+  nvd_remove_request_temps
+  trap - EXIT INT TERM
+  nvd_run_saved_exit_trap "$saved"
+  kill -s "$signal" "$$"
+}
 
 nvd_prepare_api_key() {
   local tracing=0
@@ -288,21 +352,24 @@ nvd_curl() {
 
   # xtrace is off before the key is expanded. Curl reads it from a
   # mode-600 config file, so the value is not part of the command line.
+  # The signal trap removes that file if curl is killed mid-request.
   nvd_prepare_api_key
   code_file="$(mktemp)"
+  NVD_CURL_CODE_FILE="$code_file"
+  nvd_install_request_traps
   if [ "$NVD_API_KEY_IS_SET" -eq 1 ]; then
     config_file="$(mktemp)"
     chmod 600 "$config_file"
+    NVD_CURL_CONFIG_FILE="$config_file"
     escaped_key="${NVD_API_KEY//\\/\\\\}"
     escaped_key="${escaped_key//\"/\\\"}"
     printf 'header = "apiKey: %s"\n' "$escaped_key" >"$config_file"
     curl --config "$config_file" -sS --connect-timeout 30 --max-time 180 -w "%{http_code}" -o "$output_file" "$url" >"$code_file" || true
-    rm -f "$config_file"
   else
     curl -sS --connect-timeout 30 --max-time 180 -w "%{http_code}" -o "$output_file" "$url" >"$code_file" || true
   fi
   http_code="$(tr -cd '0-9' <"$code_file" || true)"
-  rm -f "$code_file"
+  nvd_restore_request_traps
 
   if [ "$tracing" -eq 1 ]; then
     set -x
