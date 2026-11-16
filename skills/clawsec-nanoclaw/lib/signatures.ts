@@ -474,24 +474,3 @@ export function defaultChecksumsUrl(feedUrl: string): string {
     return `${fallbackBase}/checksums.json`;
   }
 }
-
-/**
- * Safely extracts the basename from a URL or file path.
- */
-function _safeBasename(urlOrPath: string, fallback: string): string {
-  try {
-    const parsed = new URL(urlOrPath);
-    const pathname = parsed.pathname;
-    const lastSlash = pathname.lastIndexOf('/');
-    if (lastSlash >= 0 && lastSlash < pathname.length - 1) {
-      return pathname.slice(lastSlash + 1);
-    }
-  } catch {
-    const normalized = urlOrPath.trim();
-    const lastSlash = normalized.lastIndexOf('/');
-    if (lastSlash >= 0 && lastSlash < normalized.length - 1) {
-      return normalized.slice(lastSlash + 1);
-    }
-  }
-  return fallback;
-}
