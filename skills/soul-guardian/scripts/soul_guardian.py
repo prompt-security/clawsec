@@ -37,10 +37,9 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import shutil
 import stat
 import sys
-from typing import Any, Iterable
+from typing import Any
 
 
 WORKSPACE_ROOT = Path.cwd()

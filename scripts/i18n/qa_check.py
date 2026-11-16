@@ -13,7 +13,6 @@ This script checks only pairs that already exist (partial translation is allowed
 from __future__ import annotations
 
 import re
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
