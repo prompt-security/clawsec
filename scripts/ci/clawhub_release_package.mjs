@@ -396,11 +396,14 @@ export async function verifyClawhubClientSelection({ packageDir, cliPrefix }) {
     "skills.js",
   );
   const skillsModule = await import(`${pathToFileURL(skillsModulePath).href}?selection=${Date.now()}`);
-  if (typeof skillsModule.listTextFiles !== "function") {
-    throw new Error(`ClawHub client does not export listTextFiles: ${skillsModulePath}`);
+  // clawhub 0.7 selected an extension allowlist via listTextFiles. 0.26 publishes
+  // the same directory through listSkillFiles, which includes .pem and .sig.
+  const listPackageFiles = skillsModule.listTextFiles ?? skillsModule.listSkillFiles;
+  if (typeof listPackageFiles !== "function") {
+    throw new Error(`ClawHub client does not export listTextFiles or listSkillFiles: ${skillsModulePath}`);
   }
 
-  const selectedFiles = await skillsModule.listTextFiles(resolvedPackageDir);
+  const selectedFiles = await listPackageFiles(resolvedPackageDir);
   for (const entry of selectedFiles) {
     const extension = entry.relPath.split(".").at(-1)?.toLowerCase() ?? "";
     if (

@@ -1879,7 +1879,7 @@ jobs:
         run: node scripts/ci/patch_clawhub_publish_payload.mjs
 
       - name: Allow signed trust artifacts in ClawHub packages
-        # ClawHub's text-file allowlist omits .sig and .pem, which silently drops verification assets.
+        # clawhub 0.26 includes .sig and .pem, but labels them application/*, so force text/plain.
         if: needs.release-tag.outputs.publish_clawhub == 'true'
         run: node scripts/ci/patch_clawhub_trust_extensions.mjs
 
