@@ -97,7 +97,6 @@ if (!raw.trim() || contentType.includes('text/html') || isProbablyHtmlDocument(r
 - pages/FeedSetup.tsx
 - pages/AdvisoryDetail.tsx
 - pages/WikiBrowser.tsx
-- pages/Checksums.tsx
 - components/Layout.tsx
 - components/Header.tsx
 - constants.ts

@@ -1,21 +1,3 @@
-export interface Skill {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  installCommand: string;
-  hash: string;
-  tags: string[];
-}
-
-export interface FeedItem {
-  id: string;
-  date: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  title: string;
-  description: string;
-}
-
 export type AdvisoryType =
   | 'malicious_skill'
   | 'vulnerable_skill'
@@ -70,12 +52,6 @@ export interface AdvisoryFeed {
   updated: string;
   description: string;
   advisories: Advisory[];
-}
-
-export interface NavItem {
-  label: string;
-  path: string;
-  external?: boolean;
 }
 
 // Multi-skill distribution types

@@ -10,7 +10,6 @@ This is a lightweight integration test using a temp workspace.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 import subprocess
 import tempfile
