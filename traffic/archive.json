@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-11-16T03:28:38.193Z",
+  "updated_at": "2026-11-17T03:23:15.553Z",
   "daily": {
     "views": [
       {
@@ -10282,6 +10282,62 @@
       {
         "captured_at": "2026-11-16T03:28:38.193Z",
         "date": "2026-11-16",
+        "entries": [
+          {
+            "referrer": "aocr.org",
+            "count": 75,
+            "uniques": 75
+          },
+          {
+            "referrer": "github.com",
+            "count": 53,
+            "uniques": 45
+          },
+          {
+            "referrer": "Google",
+            "count": 39,
+            "uniques": 27
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 11,
+            "uniques": 10
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 9,
+            "uniques": 9
+          },
+          {
+            "referrer": "Baidu",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "search.brave.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "rentamac.io",
+            "count": 2,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-11-17T03:23:15.553Z",
+        "date": "2026-11-17",
         "entries": [
           {
             "referrer": "aocr.org",
@@ -20830,6 +20886,72 @@
             "uniques": 4
           }
         ]
+      },
+      {
+        "captured_at": "2026-11-17T03:23:15.553Z",
+        "date": "2026-11-17",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 182,
+            "uniques": 143
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/hermes-attestation-guardian/SKILL.md",
+            "title": "/blob/main/skills/hermes-attestation-guardian/SKILL.md",
+            "count": 15,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 9,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 8,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 8,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 7,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "title": "/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/commit/ea16ce7e1150bb5e295432e5e94888f2e739edb8",
+            "title": "/commit/ea16ce7e1150bb5e295432e5e94888f2e739edb8",
+            "count": 4,
+            "uniques": 4
+          }
+        ]
       }
     ]
   },
@@ -22733,6 +22855,18 @@
     {
       "captured_at": "2026-11-16T03:28:38.193Z",
       "date": "2026-11-16",
+      "views_window": {
+        "count": 419,
+        "uniques": 263
+      },
+      "clones_window": {
+        "count": 4310,
+        "uniques": 1223
+      }
+    },
+    {
+      "captured_at": "2026-11-17T03:23:15.553Z",
+      "date": "2026-11-17",
       "views_window": {
         "count": 419,
         "uniques": 263
