@@ -1,6 +1,6 @@
 {
   "version": "0.0.3",
-  "updated": "2026-11-12T06:06:47Z",
+  "updated": "2026-11-17T07:29:23Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
     {
@@ -3959,6 +3959,671 @@
         "requires_authentication": true,
         "requires_user_interaction": false,
         "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65105",
+      "severity": "high",
+      "type": "missing_authentication_for_critical_function",
+      "nvd_category_id": "CWE-306",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its inference server setup, where a remote att...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its inference server setup, where a remote attacker may access the inference service without authentication. A successful exploit of this vulnerability may lead to information disclosure and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.933",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65105",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65105"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65105",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65099",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its command-line interface, where an attacker ...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its command-line interface, where an attacker could cause OS command injection. A successful exploit of this vulnerability might lead to code execution, data tampering, information disclosure, and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:0.0.1:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.817",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65099",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65099"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65099",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65098",
+      "severity": "high",
+      "type": "unknown_cwe_1390",
+      "nvd_category_id": "CWE-1390",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its remote-access helper workflow, where an at...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its remote-access helper workflow, where an attacker could cause weak authentication. A successful exploit of this vulnerability might lead to code execution, information disclosure, and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.687",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65098",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65098"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65098",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65097",
+      "severity": "high",
+      "type": "unknown_cwe_494",
+      "nvd_category_id": "CWE-494",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its installation scripts, where an attacker co...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its installation scripts, where an attacker could cause a download of code without integrity check. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, information disclosure, and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.560",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65097",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65097"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65097",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65096",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in the Telegram bridge component, where an attack...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in the Telegram bridge component, where an attacker could cause an OS command injection. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, information disclosure, and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:0.0.1:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.433",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65096",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65096"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65096",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65093",
+      "severity": "critical",
+      "type": "unknown_cwe_427",
+      "nvd_category_id": "CWE-427",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability where an attacker could cause a sandbox escape. ...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability where an attacker could cause a sandbox escape. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, data tampering, and information disclosure.",
+      "affected": [
+        "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.300",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65093",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65093"
+      ],
+      "cvss_score": 9.9,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65093",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.9); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65092",
+      "severity": "high",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "NVIDIA OpenShell Sandbox for Linux contains a vulnerability where an attacker could cause a path tra...",
+      "description": "NVIDIA OpenShell Sandbox for Linux contains a vulnerability where an attacker could cause a path traversal bypass of L7 REST network policy. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.177",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65092",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65092"
+      ],
+      "cvss_score": 8.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65092",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.5); network accessible; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65091",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA OpenShell for all platforms contains a vulnerability where a malicious gateway could cause OS...",
+      "description": "NVIDIA OpenShell for all platforms contains a vulnerability where a malicious gateway could cause OS command injection. A successful exploit of this vulnerability might lead to code execution, data tampering, and information disclosure.",
+      "affected": [
+        "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:29.050",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65091",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65091"
+      ],
+      "cvss_score": 8.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65091",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.8); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65090",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its NIM management component, where an attacke...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its NIM management component, where an attacker could cause OS command injection. A successful exploit of this vulnerability might lead to code execution, data tampering, information disclosure, and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.927",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65090",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65090"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65090",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65089",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its status and logs plugin commands, where an ...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its status and logs plugin commands, where an attacker could cause OS command injection. A successful exploit of this vulnerability might lead to code execution, data tampering, information disclosure, and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.803",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65089",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65089"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65089",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65088",
+      "severity": "medium",
+      "type": "unknown_cwe_214",
+      "nvd_category_id": "CWE-214",
+      "title": "NVIDIA NemoClaw contains a vulnerability where an attacker could cause\ninvocation of process using v...",
+      "description": "NVIDIA NemoClaw contains a vulnerability where an attacker could cause\ninvocation of process using visible sensitive information. A successful exploit of this vulnerability might lead to information disclosure.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.680",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65088",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65088"
+      ],
+      "cvss_score": 5.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65088",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.5); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65087",
+      "severity": "medium",
+      "type": "unknown_cwe_522",
+      "nvd_category_id": "CWE-522",
+      "title": "NVIDIA NemoClaw contains a vulnerability where an attacker could cause\ninsufficiently protected cred...",
+      "description": "NVIDIA NemoClaw contains a vulnerability where an attacker could cause\ninsufficiently protected credentials . A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:0.0.1:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.553",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65087",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65087"
+      ],
+      "cvss_score": 5.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65087",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.6); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65086",
+      "severity": "medium",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its sandbox exec handler, where an attacker c...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its sandbox exec handler, where an attacker could cause an OS command injection. A successful exploit of this vulnerability might lead to code execution, information disclosure, and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.430",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65086",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65086"
+      ],
+      "cvss_score": 6.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65086",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.8); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65085",
+      "severity": "medium",
+      "type": "unknown_cwe_116",
+      "nvd_category_id": "CWE-116",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its inference proxy, where an attacker could ...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its inference proxy, where an attacker could cause an improper encoding or escaping of output. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.307",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65085",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65085"
+      ],
+      "cvss_score": 5.2,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65085",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (5.2); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65084",
+      "severity": "high",
+      "type": "improper_certificate_validation",
+      "nvd_category_id": "CWE-295",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its deployment process, where an attacker coul...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its deployment process, where an attacker could cause improper certificate validation. A successful exploit of this vulnerability might lead to information disclosure, data tampering, code execution, and escalation of privileges.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:0.0.1:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.177",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65084",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65084"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65084",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65083",
+      "severity": "critical",
+      "type": "unknown_cwe_184",
+      "nvd_category_id": "CWE-184",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its sandbox provisioning API, where an attack...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its sandbox provisioning API, where an attacker could cause an incomplete list of disallowed inputs. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:28.050",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65083",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65083"
+      ],
+      "cvss_score": 9.9,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65083",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Critical CVSS score (9.9); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65082",
+      "severity": "high",
+      "type": "code_injection",
+      "nvd_category_id": "CWE-94",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its migration command, where a local attacker ...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its migration command, where a local attacker could cause code injection. A successful exploit of this vulnerability might lead to code execution, data tampering, information disclosure, and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:27.923",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65082",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65082"
+      ],
+      "cvss_score": 7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65082",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.0); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-65081",
+      "severity": "high",
+      "type": "unknown_cwe_494",
+      "nvd_category_id": "CWE-494",
+      "title": "NVIDIA NemoClaw for Linux contains a vulnerability in its installation process, where an attacker co...",
+      "description": "NVIDIA NemoClaw for Linux contains a vulnerability in its installation process, where an attacker could cause execution of untrusted code. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, data tampering, information disclosure, and denial of service.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-08-25T21:17:27.793",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5872",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-65081",
+        "https://www.cve.org/CVERecord?id=CVE-2026-65081"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-65081",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
+        "requires_user_interaction": false,
+        "complexity": "high"
       },
       "exploit_detection": {
         "exploit_available": false,
@@ -14379,6 +15044,78 @@
       "attack_vector_analysis": {
         "is_network_accessible": false,
         "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-24231",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "NVIDIA NemoClaw contains a vulnerability in the validateEndpointUrl() SSRF protection component, whe...",
+      "description": "NVIDIA NemoClaw contains a vulnerability in the validateEndpointUrl() SSRF protection component, where an attacker could cause a server-side request forgery by supplying a crafted endpoint URL referencing the 0.0.0.0/8 address range through a blueprint configuration file or CLI flag. A successful exploit of this vulnerability may lead to information disclosure.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:36:45.637",
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-24231",
+        "https://nvidia.custhelp.com/app/answers/detail/a_id/5837",
+        "https://www.cve.org/CVERecord?id=CVE-2026-24231"
+      ],
+      "cvss_score": 6.3,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24231",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.3); requires local access; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": false,
+        "requires_user_interaction": true,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-24222",
+      "severity": "high",
+      "type": "unknown_cwe_497",
+      "nvd_category_id": "CWE-497",
+      "title": "NVIDIA NeMoClaw contains a vulnerability in the sandbox environment initialization component, where ...",
+      "description": "NVIDIA NeMoClaw contains a vulnerability in the sandbox environment initialization component, where a remote attacker could cause improper access control by sending prompt-injected content that causes the agent to read and exfiltrate host environment variables not properly restricted during sandbox creation. A successful exploit of this vulnerability might lead to information disclosure.",
+      "affected": [
+        "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*",
+        "nemoclaw@*"
+      ],
+      "platforms": [
+        "nemoclaw"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-04-28T19:36:45.517",
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-24222",
+        "https://nvidia.custhelp.com/app/answers/detail/a_id/5837",
+        "https://www.cve.org/CVERecord?id=CVE-2026-24222"
+      ],
+      "cvss_score": 8.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-24222",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.6); remotely exploitable without authentication",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": false,
         "requires_user_interaction": false,
         "complexity": "low"
       },
