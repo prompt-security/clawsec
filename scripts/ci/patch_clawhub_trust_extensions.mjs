@@ -33,11 +33,13 @@ function extensionPattern(extension) {
   return new RegExp(`["']${extension}["']\\s*,`);
 }
 
-function patchTextFileExtensions(original, textFilesPath) {
+function patchTextFileExtensions(original, _textFilesPath) {
   const listPattern = /(const RAW_TEXT_FILE_EXTENSIONS\s*=\s*\[)([\s\S]*?)(\n\s*\];)/;
   const match = original.match(listPattern);
   if (!match) {
-    throw new Error(`Could not find ClawHub text extension allowlist in ${textFilesPath}`);
+    // clawhub 0.26 publishes every non-dot file, so .pem and .sig are already
+    // included. Older clients kept an explicit text-extension allowlist.
+    return { source: original, patched: false };
   }
 
   const entries = match[2];
@@ -66,22 +68,44 @@ function patchTextFileExtensions(original, textFilesPath) {
   return { source: patched, patched: true };
 }
 
-function patchTrustMimeTypes(original, skillsPath) {
-  const originalAssignment = /const contentType = mime\.getType\(relPath\) \?\? (["'])text\/plain\1;/;
+function trustContentTypeAssignment(fallback) {
   const extensions = JSON.stringify(REQUIRED_TRUST_EXTENSIONS);
-  // ClawHub validates upload MIME types separately from its extension allowlist.
-  // The mime package classifies .sig/.pem as non-text even though these files are ASCII here.
-  const patchedAssignment = `const contentType = ${extensions}.includes(ext) ? "${REQUIRED_TRUST_CONTENT_TYPE}" : (mime.getType(relPath) ?? "text/plain");`;
+  return `const contentType = ${extensions}.includes(ext) ? "${REQUIRED_TRUST_CONTENT_TYPE}" : (mime.getType(relPath) ?? "${fallback}");`;
+}
 
-  if (original.includes(patchedAssignment)) {
+function patchTrustMimeTypes(original, skillsPath) {
+  const legacyAssignment = trustContentTypeAssignment("text/plain");
+  const currentAssignment = trustContentTypeAssignment("application/octet-stream");
+  // The mime package classifies .sig/.pem as application/pgp-signature and
+  // application/x-x509-ca-cert. Those files are ASCII trust artifacts, so the
+  // upload must keep a text content type.
+  if (original.includes(legacyAssignment) || original.includes(currentAssignment)) {
     return { source: original, patched: false };
   }
-  if (!originalAssignment.test(original)) {
+
+  const legacyPattern = /const contentType = mime\.getType\(relPath\) \?\? (["'])text\/plain\1;/;
+  if (legacyPattern.test(original)) {
+    const patched = original.replace(legacyPattern, legacyAssignment);
+    if (!patched.includes(legacyAssignment)) {
+      throw new Error(`Failed to force trust artifacts to ${REQUIRED_TRUST_CONTENT_TYPE}`);
+    }
+    return { source: patched, patched: true };
+  }
+
+  const currentPattern = /const contentType = mime\.getType\(relPath\) \?\? (["'])application\/octet-stream\1;/;
+  if (!currentPattern.test(original)) {
     throw new Error(`Could not find ClawHub MIME assignment in ${skillsPath}`);
   }
 
-  const patched = original.replace(originalAssignment, patchedAssignment);
-  if (!patched.includes(patchedAssignment)) {
+  const patched = original.replace(currentPattern, (_match, _quote, offset) => {
+    const lineStart = original.lastIndexOf("\n", offset) + 1;
+    const indent = original.slice(lineStart, offset);
+    const nearby = original.slice(Math.max(0, offset - 400), offset);
+    const contentLine = currentAssignment;
+    if (nearby.includes("const ext =")) return contentLine;
+    return `const ext = relPath.split(".").at(-1)?.toLowerCase() ?? "";\n${indent}${contentLine}`;
+  });
+  if (!patched.includes(currentAssignment)) {
     throw new Error(`Failed to force trust artifacts to ${REQUIRED_TRUST_CONTENT_TYPE}`);
   }
   return { source: patched, patched: true };

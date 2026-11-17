@@ -137,7 +137,8 @@ try {
     const installedSkills = await import(
       `${pathToFileURL(path.join(installedClientCopy, "node_modules", "clawhub", "dist", "skills.js")).href}?mime=${Date.now()}`
     );
-    const trustFiles = (await installedSkills.listTextFiles(packageDir))
+    const listPackageFiles = installedSkills.listSkillFiles ?? installedSkills.listTextFiles;
+    const trustFiles = (await listPackageFiles(packageDir))
       .filter((entry) => /\.(?:pem|sig)$/.test(entry.relPath));
     assert.deepEqual(
       trustFiles
