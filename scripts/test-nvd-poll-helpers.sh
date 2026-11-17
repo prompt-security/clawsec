@@ -590,6 +590,126 @@ EOF
   fi
 }
 
+test_nvidia_query_coverage() {
+  local specs keywords pattern github_pattern cpe_pattern
+  local repo_root
+  repo_root="$(cd "$SCRIPT_DIR/.." && pwd)"
+  specs="$(nvd_query_specs)"
+  keywords="$(nvd_summary_keywords)"
+  pattern="$(nvd_keyword_pattern)"
+  github_pattern="$(nvd_github_ref_pattern)"
+  cpe_pattern="$(nvd_cpe_pattern)"
+
+  for expected in \
+    'keyword|NemoClaw' \
+    'keyword|NVIDIA OpenShell' \
+    'virtualMatchString|cpe:2.3:a:nvidia:nemoclaw' \
+    'virtualMatchString|cpe:2.3:a:nvidia:openshell'
+  do
+    if printf '%s\n' "$specs" | grep -F -x -q -- "$expected"; then
+      pass "NVD query spec includes ${expected}"
+    else
+      fail "NVD query spec missing ${expected}"
+    fi
+  done
+
+  if printf '%s\n' "$specs" | grep -E -x -q 'keyword\|OpenShell'; then
+    fail "bare keyword|OpenShell query would pull unrelated OpenShell mentions"
+  else
+    pass "NVD queries do not use a bare OpenShell keyword"
+  fi
+
+  if printf '%s' "$pattern" | tr '|' '\n' | grep -E -i -x -q 'openshell'; then
+    fail "post-filter keyword pattern contains a bare OpenShell alternative"
+  else
+    pass "post-filter keyword pattern has no bare OpenShell alternative"
+  fi
+
+  assert_eq "$keywords" "openclaw, nanoclaw, hermes, picoclaw, nemoclaw, openshell" "summary keywords include NVIDIA projects"
+
+  local kept
+  kept="$(jq -nc \
+    --arg kw "$pattern" \
+    --arg gh "$github_pattern" \
+    --arg cpe "$cpe_pattern" \
+    '
+      def cve($id; $description; $url; $criteria): {
+        cve: {
+          id: $id,
+          descriptions: [{lang: "en", value: $description}],
+          references: (if $url == "" then [] else [{url: $url}] end),
+          configurations: [{nodes: [{cpeMatch: [{criteria: $criteria}]}]}]
+        }
+      };
+      [
+        cve("CVE-NEMO"; "NVIDIA NeMoClaw contains a vulnerability in sandbox initialization."; ""; "cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*"),
+        cve("CVE-SHELL"; "NVIDIA OpenShell for Linux contains a vulnerability in its sandbox provisioning API."; "https://github.com/NVIDIA/product-security/tree/main/2026/5872"; "cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:*"),
+        cve("CVE-SHELL-REF"; "Sandbox policy bypass."; "https://github.com/NVIDIA/OpenShell/security/advisories/GHSA-test"; ""),
+        cve("CVE-OPENCLAW-SHELL"; "OpenClaw before 2026.4.22 contains a race in the OpenShell filesystem bridge."; "https://github.com/openclaw/openclaw/security/advisories/GHSA-test"; ""),
+        cve("CVE-SAP-SHELL"; "Kubernetes and OpenShell deployments are not affected because the relevant backend is unused."; "https://github.com/SAP/astonish/security/advisories/GHSA-test"; ""),
+        cve("CVE-BARE-SHELL"; "OpenShell sandbox escape."; ""; "")
+      ]
+      | map(select(
+          (.cve.descriptions[]? | select(.lang == "en") | .value | test($kw; "i"))
+          or (.cve.references[]? | .url | test($gh; "i"))
+          or ([.cve.configurations[]? | .. | objects | .criteria? | strings | test($cpe; "i")] | any)
+        ) | .cve.id)
+    ')"
+
+  assert_eq "$kept" '["CVE-NEMO","CVE-SHELL","CVE-SHELL-REF","CVE-OPENCLAW-SHELL"]' "post-filter keeps NVIDIA records and drops unrelated OpenShell mentions"
+
+  # Source files store the jq string escapes. The classifier below uses the
+  # regex jq actually evaluates.
+  local nemoclaw_source='github\\.com/nvidia/nemoclaw|\\bnemoclaw\\b|cpe:2\\.3:a:nvidia:nemoclaw(?::|$)'
+  local openshell_source='github\\.com/nvidia/openshell|nvidia openshell|cpe:2\\.3:a:nvidia:openshell(?::|$)'
+  local nemoclaw_pattern='github\.com/nvidia/nemoclaw|\bnemoclaw\b|cpe:2\.3:a:nvidia:nemoclaw(?::|$)'
+  local openshell_pattern='github\.com/nvidia/openshell|nvidia openshell|cpe:2\.3:a:nvidia:openshell(?::|$)'
+  local source_file
+  for source_file in \
+    "$repo_root/.github/workflows/poll-nvd-cves.yml" \
+    "$repo_root/scripts/populate-local-feed.sh"
+  do
+    if grep -F -q -- "$nemoclaw_source" "$source_file" && grep -F -q -- "$openshell_source" "$source_file"; then
+      pass "platform tagging in ${source_file##*/} names NemoClaw and NVIDIA OpenShell"
+    else
+      fail "platform tagging in ${source_file##*/} is missing an NVIDIA pattern"
+    fi
+    if grep -F -q '\bopenshell\b' "$source_file"; then
+      fail "${source_file##*/} uses a bare OpenShell word match"
+    else
+      pass "${source_file##*/} does not use a bare OpenShell word match"
+    fi
+  done
+
+  local workflow_hits
+  workflow_hits="$(grep -F -c -- "$openshell_source" "$repo_root/.github/workflows/poll-nvd-cves.yml")"
+  assert_eq "$workflow_hits" "2" "NVD workflow tags OpenShell in both transform copies"
+
+  local classified
+  classified="$(jq -nc \
+    --arg nemoclaw "$nemoclaw_pattern" \
+    --arg openshell "$openshell_pattern" \
+    '
+      def platforms($blob):
+        [
+          (if ($blob | test("github\\.com/openclaw/openclaw|\\bopenclaw\\b|\\bclawdbot\\b|\\bmoltbot\\b")) then "openclaw" else empty end),
+          (if ($blob | test($nemoclaw)) then "nemoclaw" else empty end),
+          (if ($blob | test($openshell)) then "openshell" else empty end)
+        ];
+      {
+        nemoclaw: platforms("nvidia nemoclaw sandbox cpe:2.3:a:nvidia:nemoclaw:*:*:*:*:*:*:*:*"),
+        openshell: platforms("nvidia openshell for linux cpe:2.3:a:nvidia:openshell:*:*:*:*:*:*:*:* cpe:2.3:o:linux:linux_kernel:-:*:*:*:*:*:*:*"),
+        openclaw_shell: platforms("openclaw before 2026.4.22 openshell filesystem bridge github.com/openclaw/openclaw"),
+        sap: platforms("kubernetes and openshell deployments are not affected")
+      }
+    ')"
+  assert_eq "$(jq -c .nemoclaw <<<"$classified")" '["nemoclaw"]' "NeMoClaw text and CPE map only to nemoclaw"
+  assert_eq "$(jq -c .openshell <<<"$classified")" '["openshell"]' "NVIDIA OpenShell text and CPE map only to openshell"
+  assert_eq "$(jq -c .openclaw_shell <<<"$classified")" '["openclaw"]' "OpenClaw OpenShell text stays on openclaw"
+  assert_eq "$(jq -c .sap <<<"$classified")" '[]' "an unrelated OpenShell mention maps to no NVIDIA platform"
+}
+
+test_nvidia_query_coverage
 test_clamp
 test_backoff_and_transient
 test_request_traps_do_not_leak_the_api_key

@@ -24,6 +24,14 @@ const PLATFORM_DESCRIPTOR_BY_SLUG: Record<string, PlatformDescriptor> = {
     label: 'Picoclaw',
     classes: 'bg-clawd-800 text-cyan-300 border border-cyan-400/40',
   },
+  nemoclaw: {
+    label: 'NemoClaw',
+    classes: 'bg-clawd-800 text-amber-300 border border-amber-400/40',
+  },
+  openshell: {
+    label: 'OpenShell',
+    classes: 'bg-clawd-800 text-violet-300 border border-violet-400/40',
+  },
 };
 
 const CORE_PLATFORM_SET = new Set<string>(CORE_PLATFORM_SLUGS);

@@ -28,7 +28,7 @@ export type AdvisoryType =
   // Keep this open for new categories without requiring type updates.
   | string;
 
-export const CORE_PLATFORM_SLUGS = ['openclaw', 'nanoclaw', 'hermes', 'picoclaw'] as const;
+export const CORE_PLATFORM_SLUGS = ['openclaw', 'nanoclaw', 'hermes', 'picoclaw', 'nemoclaw', 'openshell'] as const;
 export type CorePlatformSlug = (typeof CORE_PLATFORM_SLUGS)[number];
 export type AdvisoryPlatformSlug = CorePlatformSlug | (string & {});
 export type AdvisoryPlatformFilter = 'all' | CorePlatformSlug | 'other';
@@ -145,4 +145,6 @@ export interface SkillJson {
   hermes?: SkillPlatformMetadata | null;
   nanoclaw?: SkillPlatformMetadata | null;
   picoclaw?: SkillPlatformMetadata | null;
+  nemoclaw?: SkillPlatformMetadata | null;
+  openshell?: SkillPlatformMetadata | null;
 }
