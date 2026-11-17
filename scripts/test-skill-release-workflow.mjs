@@ -375,13 +375,13 @@ assert.match(
 
 assert.match(
   workflow,
-  /Upload SkillSpector PR reports[\s\S]*actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7\.0\.1[\s\S]*name: skillspector-pr-reports/,
+  /Upload SkillSpector PR reports[\s\S]*actions\/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7\.0\.2[\s\S]*name: skillspector-pr-reports/,
   'PR dry-run must upload generated SkillSpector reports as workflow artifacts',
 );
 
 assert.match(
   workflow,
-  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8\.0\.1/,
+  /comment-skillspector-report:[\s\S]*needs: release[\s\S]*issues: write[\s\S]*actions\/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8\.0\.2/,
   'Skill release workflow must download generated SkillSpector reports in a separate PR comment job with issue-comment permissions',
 );
 
