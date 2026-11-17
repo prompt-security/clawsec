@@ -33,6 +33,16 @@
       "repository": "sipeed/picoclaw",
       "platform": "picoclaw",
       "url": "https://github.com/sipeed/picoclaw/security/advisories"
+    },
+    {
+      "repository": "nvidia/nemoclaw",
+      "platform": "nemoclaw",
+      "url": "https://github.com/nvidia/nemoclaw/security/advisories"
+    },
+    {
+      "repository": "nvidia/openshell",
+      "platform": "openshell",
+      "url": "https://github.com/nvidia/openshell/security/advisories"
     }
   ],
   "advisories": [
