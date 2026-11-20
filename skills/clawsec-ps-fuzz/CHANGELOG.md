@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to `clawsec-ps-fuzz` are documented here.
+
+## [0.1.0] - 2026-08-18
+
+### Added
+
+- Public, harness-neutral wrapper for the reviewed `ps-fuzz` v2.1.0 release.
+- Authorization-gated wheel/source provisioning, direct-model runs, isolated runtime state, and redacted aggregate reports.
+- Pinned upstream manifest, hash-locked dependency set, capability snapshot, third-party notice, and offline boundary tests.
+- Standalone, confirmation-gated signed-release verifier using a trusted Python 3 runtime and a system OpenSSL executable with Ed25519 support.
+- Optional local-first Gemma smoke resources pinned by immutable revision, exact size, and SHA-256, with loopback-only `llama-server` and one-attempt wrapper guidance.
+
+### Security
+
+- Requires a fresh authorization confirmation for provisioning and every active run.
+- Rejects unapproved endpoint URLs and excludes generic agent HTTP, MCP, tool execution, scheduling, remediation, and real vector-store operations.
+- Pins the canonical ClawSec Ed25519 public-key fingerprint, verifies the signed release manifest before trusting identity or hashes, rejects unsafe ZIP layouts and incomplete SBOM payloads, and publishes only through a no-clobber atomic install.
+- Documents that first-install trust must come from an out-of-band verifier source; candidate instructions, candidate keys, convenience registries, and the optional suite cannot attest the candidate package.
+- Keeps the local smoke user-controlled: no automatic server/model lifecycle, no persistent placeholder credential, no prompt logging, and no interpretation as a security assessment.
+- Requires an empty private state root, records and verifies a provision receipt before sensitive input, and reads bounded system prompts through no-follow file descriptors.
+- Treats missing or malformed aggregates and runs with upstream errors or skipped tests as nonzero invalid or incomplete assessments while persisting only redacted counts.
+- Rejects approval-only endpoint flags and fails closed for Windows provision/run until a current-user-private DACL can be verified.
+- Uses ClawHub-compatible `.txt` names for the reviewed dependency input and hash lock so neither signed SBOM file is omitted by registry packaging.

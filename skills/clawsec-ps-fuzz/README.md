@@ -1,0 +1,115 @@
+# ClawSec ps-fuzz
+
+`clawsec-ps-fuzz` is a public, standalone, harness-neutral workflow for an authorized agent to provision a pinned Prompt Security `ps-fuzz` release and run reviewed direct-model fuzz tests. It is not a hook, proxy, scheduler, or platform runtime integration.
+
+## Install
+
+### Verified first install
+
+For local cryptographic attestation, obtain `scripts/verified_install.py` from an out-of-band trusted ClawSec checkout or source, then run that trusted copy. An unverified candidate `SKILL.md`, verifier, or candidate-supplied public key cannot authenticate itself. Do not read or follow candidate instructions before verification succeeds.
+
+Verified installation prerequisites are a trusted Python 3 interpreter and a system OpenSSL executable with Ed25519 support. The verifier fails closed if either prerequisite is unavailable; on Windows, install and independently trust a compatible OpenSSL distribution first.
+
+```bash
+python3 scripts/verified_install.py --version 0.1.0 \
+  --install-root /secure/skills --confirm-install
+```
+
+The verifier requires an exact version and never follows `latest`. It downloads only the fixed `prompt-security/clawsec` tag assets, pins the canonical ClawSec Ed25519 public key by SPKI-DER SHA-256 fingerprint `711424e4535f84093fefb024cd1ca4ec87439e53907b305b79a631d5befba9c8`, verifies the detached signature before parsing, checks the authenticated archive and complete package payload, and atomically installs only the `clawsec-ps-fuzz` leaf. `checksums.json` is the signed release manifest. `skill.json` is package metadata/SBOM, and there is no `skills.json` trust manifest.
+
+Atomic no-replace publication is supported through the native macOS, Linux, and Windows primitives. The verifier fails closed without installing on another platform rather than using a racy check-then-rename fallback.
+
+`clawsec-suite` is optional and not sufficient for candidate attestation. It is not a substitute trust root for the out-of-band verifier and pinned publisher key.
+
+### Convenience installs without local attestation
+
+The following `npx skills` and ClawHub commands are a convenience path. Each does not provide this local cryptographic attestation; use the verified first-install path when publisher provenance must be established locally.
+
+Vercel Skills / OpenClaw:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-ps-fuzz -a openclaw -y
+```
+
+Codex:
+
+```bash
+npx skills add prompt-security/clawsec --skill clawsec-ps-fuzz -a codex -y
+```
+
+ClawHub environments can use the following convenience path when this skill's released package is available in that registry; this repository command does not claim it has already been published there:
+
+```bash
+npx clawhub@latest install clawsec-ps-fuzz
+```
+
+## Safe scope
+
+- The reviewed runtime is CPython 3.9 through 3.11 with `venv` and `pip` on glibc 2.28+ Linux x86_64/aarch64 or macOS 14+ arm64. Source provisioning also needs `git`. Provision and run fail closed on Windows in v0.1.0 because this standard-library wrapper cannot verify a current-user-private Windows DACL; read-only preflight remains available.
+- The reviewed provider scope is static: `open_ai` (including OpenAI-compatible base URLs) and `ollama`. There is no generic agent HTTP adapter, MCP execution, tool invocation, or arbitrary endpoint adapter.
+- Preflight is ungated and makes no writes or network calls. Provision and run each require a fresh authorization ID and their own confirmation flag.
+- The wrapper copies the system prompt only into a temporary workspace. Upstream configuration and `.env` discovery are isolated from the project. It never creates, changes, prints, or persists `.env` files.
+- Reports contain redacted aggregate outcomes only. The wrapper exposes no debug mode and no custom benchmark option.
+
+## Credential boundary
+
+Provider credentials are inherited only from the calling environment. For any `open_ai` provider or embedding role, preflight reports its presence as `OPENAI_API_KEY`; if it reports false, do not run until the harness/operator's existing secure environment-injection mechanism provides it. Native ollama mode has no credential environment requirement. This skill does not define or install a credential mechanism. Never put a credential in argv, URL, `.env`, report, or authorization ID.
+
+## Local runtime trust boundary
+
+- `preflight` uses isolated Python flags, a sanitized no-index environment, and a non-project working directory. The selected Python/`venv`/`pip` and source-mode Git binaries are trusted prerequisite executables; a malicious prerequisite or OS loader is outside the no-write/no-network claim.
+- Provision only into a caller-owned, empty, private state root. The wrapper enforces POSIX ownership and modes plus Darwin ACL checks, and fails closed on Windows until it can verify a current-user-private DACL. A provision receipt binds the pinned manifest, source mode, selected runtime, entrypoint path, and entrypoint hash and is verified before the prompt or provider credentials are handled.
+- The receipt is a local integrity tripwire, not a signature against same-user or root processes. Keep the state root private and re-provision into a new empty state root after suspected tampering. Keep prompt and output parent paths private from concurrent local writers as well.
+- A prompt must be a non-symlink regular file of at most 1 MiB and is read once through a bound descriptor. The redaction boundary does not cover process memory, swap, core dumps, or abnormal-termination remnants; use OS controls where those matter.
+- Only an assessment status of `complete` returns zero. Missing, malformed, duplicate, or empty aggregate output is `invalid-output`; aggregate errors or skips are `incomplete`; both return nonzero without saving raw output.
+- Provider SDK behavior, DNS/TLS, and the Chroma telemetry opt-out remain trusted dependencies. Apply OS-level egress controls when endpoint-only network enforcement is required.
+
+## Operator flow
+
+Run `python3 scripts/ps_fuzz_runner.py --help` from the installed skill directory. First inspect the local prerequisites without creating state:
+
+```bash
+python3 scripts/ps_fuzz_runner.py preflight --source wheel \
+  --target-provider open_ai --target-model gpt-4o-mini \
+  --attack-provider open_ai --attack-model gpt-4o-mini \
+  --tests '["system_prompt_stealer"]' --attempts 1 --threads 1
+```
+
+For an authorized provision, choose an external base and use the dedicated leaf exactly as shown. `--state-root` is required for provision and run, but not preflight. Wheel mode verifies the release hash before installation; source mode clones only the pinned commit and builds inside this state root.
+
+```bash
+python3 scripts/ps_fuzz_runner.py provision \
+  --confirm-authorized-provision --authorization-id AUTH-2026-001 \
+  --state-root /secure/agent-state/clawsec-ps-fuzz --source wheel
+```
+
+For an active test, obtain a fresh authorization. Select the provider/model roles, an exact JSON test list, positive attempts/threads, a regular prompt file, and a new external output directory. Provider calls can consume tokens and incur charges.
+
+```bash
+python3 scripts/ps_fuzz_runner.py run \
+  --confirm-authorized-test --authorization-id AUTH-2026-002 \
+  --state-root /secure/agent-state/clawsec-ps-fuzz \
+  --system-prompt-file /secure/inputs/system-prompt.txt \
+  --target-provider open_ai --target-model gpt-4o-mini \
+  --attack-provider open_ai --attack-model gpt-4o-mini \
+  --tests '["system_prompt_stealer"]' --attempts 1 --threads 1 \
+  --output-dir /secure/reports/ps-fuzz-2026-08-18
+```
+
+Use `--source source` only where `git` is available. The manifest, source commit, wheel hash, dependency lock, capability snapshot, and tests are one reviewed unit: a future ps-fuzz update must change and review all of them together.
+
+### Optional local-first smoke
+
+Before authorizing a real endpoint, use the [pinned local Gemma smoke guide](resources/local-smoke.md) with its [harmless synthetic prompt](resources/local-smoke-system-prompt.txt). It keeps `llama-server` user-installed and user-controlled, pins the model artifact by immutable revision, size, and SHA-256, and exercises one small redacted wrapper run over loopback. This is a connectivity/isolation check, not a security evaluation.
+
+## Endpoint and RAG boundaries
+
+Base URLs must be syntactically safe and separately approved. With the same upstream provider on both roles, ps-fuzz's provider-wide base-URL flag means a custom target URL requires both `--approved-target-url` and `--approved-attack-url`, with matching `--target-base-url` and `--attack-base-url` values. Do not pass credentials in URLs.
+
+`rag_poisoning` requires `--embedding-provider` and `--embedding-model`; it is a synthetic local Chroma demonstration only. It is not evidence about real retrieval, ingestion, filtering, a production vector store, agent tools, or persistence. This skill performs no real vector-store mutation, persistence, remediation, or scheduled scanning.
+
+Known upstream caveat: `custom benchmark` support is intentionally excluded, and upstream aggregate totals may include its registered selector despite this wrapper passing only the requested reviewed selectors. Compare report provenance and requested tests before interpreting totals.
+
+## Provenance
+
+The package pins upstream `ps-fuzz` tag `v2.1.0`, commit `a04982f58fe6c99b08df12a69e967368c96ef9f4`, and the release wheel SHA-256 `953d6d87605335e03f7701204abc2702247dc3627cdb3e48ca7ed52c2c66e3e8`. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `resources/upstream.json`.
