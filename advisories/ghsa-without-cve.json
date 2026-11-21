@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "updated": "2026-11-12T06:06:47Z",
+  "updated": "2026-11-21T06:05:22Z",
   "description": "Provisional ClawSec advisory feed for public GitHub Security Advisories that do not yet have CVE identifiers.",
   "stale_after_days": 60,
   "semantics": {
@@ -46,6 +46,93 @@
     }
   ],
   "advisories": [
+    {
+      "id": "GHSA-pw3x-g8v8-fvj2",
+      "ghsa_id": "GHSA-pw3x-g8v8-fvj2",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw delegation could skip approval for restricted agents",
+      "description": "Summary OpenClaw delegation could skip approval for restricted agents. In affected versions, the openclaw tool could apply persistent configuration changes without approval when tool policy denied execution and file writes. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact This could let a restricted agent enable host command execution through configuration changes. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.11.4. Extended-stable users can update to 2026.10.33. Mitigations Upgrade to a patched version. Before upgrading, set tools.exec.mode to ask and deny untrusted delegated changes. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
+      "affected": [
+        "openclaw@>= 2026.9.2, < 2026.10.33",
+        "openclaw@>= 2026.11.1, < 2026.11.4"
+      ],
+      "patched": [
+        "openclaw@2026.10.33",
+        "openclaw@2026.11.4"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-19T02:01:59Z",
+      "updated": "2026-11-19T02:01:59Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-pw3x-g8v8-fvj2"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-pw3x-g8v8-fvj2",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "doctoroakin"
+      ],
+      "aliases": [
+        "GHSA-pw3x-g8v8-fvj2"
+      ]
+    },
+    {
+      "id": "GHSA-j39m-796j-gjm3",
+      "ghsa_id": "GHSA-j39m-796j-gjm3",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "critical",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-1188",
+      "title": "Agent containers can log in to OneCLI's Postgres database with the default password",
+      "description": "Summary NanoClaw's setup installs OneCLI with Docker Compose and never sets POSTGRESPASSWORD. OneCLI's compose file then falls back to a fixed password, so OneCLI's Postgres database runs with the publicly known login onecli / onecli. Setup publishes that database on the Docker bridge address, so code in any agent container can log in. That includes an agent steered by prompt injection from an email or web page. The login is a Postgres superuser. It can read the gateway tokens of every agent and the admin API keys, which are stored in plain text, and it can change any row. That gives full control of OneCLI, including re-pointing a stored secret at another host so the gateway sends the credential there. It can also run programs inside the Postgres container. This is separate from GHSA-jh2q-3h97-pg55. It does not use the admin API on port 10254, and it still works on OneCLI 2.20, where the admin API needs a key. Details Tested versions - NanoClaw main at f3f445e6 (2026-11-15), setup with OneCLI. - OneCLI 1.45.0 (the version NanoClaw pins) and 2.20.0. - Ubuntu 24.04, Docker 29, Compose 2.40. Agent containers on the default bridge with host.docker.internal mapped to the host gateway, as NanoClaw starts them. How an agent container reaches the database - Direct: setup binds OneCLI's ports to the docker0 address. Postgres answers on 172.17.0.1:5432 (host.docker.internal:5432 from a container). - Through the gateway (1.45): the gateway's proxy on port 10255 accepts a CONNECT postgres:5432 with no agent token. So binding the ports to loopback, or turning on egress lockdown, does not remove the path. - Docker Desktop (macOS, Windows/WSL): host.docker.internal reaches the host's loopback, so the direct path is expected there too. Not tested. What the login can do (test data only; writes rolled back or reverted) - rolsuper = true, and a member of pgexecuteserverprogram. COPY … FROM PROGRAM 'id' ran as uid=70(postgres) in the Postgres container. - agents.accesstoken holds every agent's gateway token (aoc…) in plain text. They match the tokens the gateway gives agents. Any agent can take another agent's identity and its secret grants. - apikeys.key holds admin API keys (oc…) in plain text, and sessions.token holds dashboard session tokens. - Inserting a row into apikeys gave a working admin key on OneCLI 2.20: GET /v1/agents returned 401 before, 200 after, and 401 again once the row was deleted. - UPDATE secrets SET hostpattern = … and UPDATE agents SET accesstoken = … both succeed. Re-pointing hostpattern is the same change GHSA-jh2q-3h97-pg55 showed leaks a credential to an attacker's host. - Vault values (secrets.encryptedvalue) are encrypted, and the key is not in the database. So the plain secret values are not read directly; they leave through the gateway after a re-point. PoC From a fresh container on a default NanoClaw + OneCLI install: Impact Code in an agent container can take full control of the OneCLI gateway: read and forge agent and admin credentials, change which secrets each agent holds, and send stored credentials to a host it picks. It can also delete the vault or run commands in the Postgres container. Every NanoClaw install that uses a local OneCLI set up by NanoClaw is affected, with egress lockdown on or off. Patches NanoClaw 2026.11.0-rc.1 (beta update channel; stable installs get it with 2026.11.0): setup gives OneCLI's database a random password in ~/.onecli/.env (mode 0600) before OneCLI first starts. On an existing install still using the default, setup changes the password in place: data is kept and OneCLI restarts once. To do only that step after updating: Workarounds Before the patched release, from the machine running OneCLI: Check that ~/.onecli/.env also has ONECLIVERSION, so up keeps your OneCLI version. References - GHSA-jh2q-3h97-pg55: agent containers can reach OneCLI's unauthenticated admin API. Same reach, different service. - OneCLI's compose files: POSTGRESPASSWORD: ${POSTGRESPASSWORD:-onecli}.",
+      "affected": [
+        "nanoclaw@<= 2026.11.0-beta.4"
+      ],
+      "patched": [
+        "nanoclaw@2026.11.0-rc.1"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-17T18:51:52Z",
+      "updated": "2026-11-17T18:51:53Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j39m-796j-gjm3"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j39m-796j-gjm3",
+      "nvd_url": null,
+      "cvss_score": 9,
+      "cvss_vector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-1188",
+        "CWE-1392"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-j39m-796j-gjm3"
+      ]
+    },
     {
       "id": "GHSA-vwj5-j44r-v364",
       "ghsa_id": "GHSA-vwj5-j44r-v364",
