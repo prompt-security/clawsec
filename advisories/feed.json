@@ -1,8 +1,552 @@
 {
   "version": "0.0.3",
-  "updated": "2026-11-17T07:29:23Z",
+  "updated": "2026-11-21T06:05:22Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "GHSA-pw3x-g8v8-fvj2",
+      "ghsa_id": "GHSA-pw3x-g8v8-fvj2",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw delegation could skip approval for restricted agents",
+      "description": "Summary OpenClaw delegation could skip approval for restricted agents. In affected versions, the openclaw tool could apply persistent configuration changes without approval when tool policy denied execution and file writes. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact This could let a restricted agent enable host command execution through configuration changes. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.11.4. Extended-stable users can update to 2026.10.33. Mitigations Upgrade to a patched version. Before upgrading, set tools.exec.mode to ask and deny untrusted delegated changes. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
+      "affected": [
+        "openclaw@>= 2026.9.2, < 2026.10.33",
+        "openclaw@>= 2026.11.1, < 2026.11.4"
+      ],
+      "patched": [
+        "openclaw@2026.10.33",
+        "openclaw@2026.11.4"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-19T02:01:59Z",
+      "updated": "2026-11-19T02:01:59Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-pw3x-g8v8-fvj2"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-pw3x-g8v8-fvj2",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "doctoroakin"
+      ],
+      "aliases": [
+        "GHSA-pw3x-g8v8-fvj2"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-j39m-796j-gjm3",
+      "ghsa_id": "GHSA-j39m-796j-gjm3",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "critical",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-1188",
+      "title": "Agent containers can log in to OneCLI's Postgres database with the default password",
+      "description": "Summary NanoClaw's setup installs OneCLI with Docker Compose and never sets POSTGRESPASSWORD. OneCLI's compose file then falls back to a fixed password, so OneCLI's Postgres database runs with the publicly known login onecli / onecli. Setup publishes that database on the Docker bridge address, so code in any agent container can log in. That includes an agent steered by prompt injection from an email or web page. The login is a Postgres superuser. It can read the gateway tokens of every agent and the admin API keys, which are stored in plain text, and it can change any row. That gives full control of OneCLI, including re-pointing a stored secret at another host so the gateway sends the credential there. It can also run programs inside the Postgres container. This is separate from GHSA-jh2q-3h97-pg55. It does not use the admin API on port 10254, and it still works on OneCLI 2.20, where the admin API needs a key. Details Tested versions - NanoClaw main at f3f445e6 (2026-11-15), setup with OneCLI. - OneCLI 1.45.0 (the version NanoClaw pins) and 2.20.0. - Ubuntu 24.04, Docker 29, Compose 2.40. Agent containers on the default bridge with host.docker.internal mapped to the host gateway, as NanoClaw starts them. How an agent container reaches the database - Direct: setup binds OneCLI's ports to the docker0 address. Postgres answers on 172.17.0.1:5432 (host.docker.internal:5432 from a container). - Through the gateway (1.45): the gateway's proxy on port 10255 accepts a CONNECT postgres:5432 with no agent token. So binding the ports to loopback, or turning on egress lockdown, does not remove the path. - Docker Desktop (macOS, Windows/WSL): host.docker.internal reaches the host's loopback, so the direct path is expected there too. Not tested. What the login can do (test data only; writes rolled back or reverted) - rolsuper = true, and a member of pgexecuteserverprogram. COPY … FROM PROGRAM 'id' ran as uid=70(postgres) in the Postgres container. - agents.accesstoken holds every agent's gateway token (aoc…) in plain text. They match the tokens the gateway gives agents. Any agent can take another agent's identity and its secret grants. - apikeys.key holds admin API keys (oc…) in plain text, and sessions.token holds dashboard session tokens. - Inserting a row into apikeys gave a working admin key on OneCLI 2.20: GET /v1/agents returned 401 before, 200 after, and 401 again once the row was deleted. - UPDATE secrets SET hostpattern = … and UPDATE agents SET accesstoken = … both succeed. Re-pointing hostpattern is the same change GHSA-jh2q-3h97-pg55 showed leaks a credential to an attacker's host. - Vault values (secrets.encryptedvalue) are encrypted, and the key is not in the database. So the plain secret values are not read directly; they leave through the gateway after a re-point. PoC From a fresh container on a default NanoClaw + OneCLI install: Impact Code in an agent container can take full control of the OneCLI gateway: read and forge agent and admin credentials, change which secrets each agent holds, and send stored credentials to a host it picks. It can also delete the vault or run commands in the Postgres container. Every NanoClaw install that uses a local OneCLI set up by NanoClaw is affected, with egress lockdown on or off. Patches NanoClaw 2026.11.0-rc.1 (beta update channel; stable installs get it with 2026.11.0): setup gives OneCLI's database a random password in ~/.onecli/.env (mode 0600) before OneCLI first starts. On an existing install still using the default, setup changes the password in place: data is kept and OneCLI restarts once. To do only that step after updating: Workarounds Before the patched release, from the machine running OneCLI: Check that ~/.onecli/.env also has ONECLIVERSION, so up keeps your OneCLI version. References - GHSA-jh2q-3h97-pg55: agent containers can reach OneCLI's unauthenticated admin API. Same reach, different service. - OneCLI's compose files: POSTGRESPASSWORD: ${POSTGRESPASSWORD:-onecli}.",
+      "affected": [
+        "nanoclaw@<= 2026.11.0-beta.4"
+      ],
+      "patched": [
+        "nanoclaw@2026.11.0-rc.1"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-17T18:51:52Z",
+      "updated": "2026-11-17T18:51:53Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j39m-796j-gjm3"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j39m-796j-gjm3",
+      "nvd_url": null,
+      "cvss_score": 9,
+      "cvss_vector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-1188",
+        "CWE-1392"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-j39m-796j-gjm3"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "CVE-2026-100982",
+      "severity": "medium",
+      "type": "unknown_cwe_190",
+      "nvd_category_id": "CWE-190",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its inference-interception request parser whe...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its inference-interception request parser where a sandboxed actor could exhaust processing resources by sending a chunked request that lacks body-size and chunk-count limits, causing excessive parsing work. A successful exploit of this vulnerability might lead to denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.447",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100982",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100982"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100982",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100981",
+      "severity": "medium",
+      "type": "unknown_cwe_444",
+      "nvd_category_id": "CWE-444",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its layer-7 REST proxy where a sandboxed acto...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its layer-7 REST proxy where a sandboxed actor could bypass the proxy's policy enforcement by sending a request whose body framing is interpreted differently by the proxy and the upstream server, allowing a second request to be smuggled past policy checks. A successful exploit of this vulnerability might lead to data tampering and information disclosure.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.320",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100981",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100981"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100981",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.4); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100980",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its command-line diagnostic interface where a...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its command-line diagnostic interface where an attacker could cause OS command injection because user- or configuration-supplied values are incorporated into a command that is interpreted by two successive shell layers in the remote path while being escaped for only one layer. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.193",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100980",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100980"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100980",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100979",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway connection-proxy component where ...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway connection-proxy component where an attacker who can manipulate a sandbox's status metadata could cause the control-plane server to initiate connections to arbitrary internal hosts because the connection target is derived from that metadata and used without validation against the expected address range. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.070",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100979",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100979"
+      ],
+      "cvss_score": 6.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100979",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.6); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100978",
+      "severity": "medium",
+      "type": "improper_certificate_validation",
+      "nvd_category_id": "CWE-295",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway-to-sandbox transport where a netw...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway-to-sandbox transport where a network attacker positioned on the internal path could intercept credentials and tamper with commands and data because the transport accepts any host key without verification, permitting a machine-in-the-middle to impersonate the sandbox endpoint. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and code execution.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.940",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100978",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100978"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100978",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.4); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100977",
+      "severity": "high",
+      "type": "unknown_cwe_444",
+      "nvd_category_id": "CWE-444",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in L7 REST policy enforcement where a local atta...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in L7 REST policy enforcement where a local attacker with low privileges could exploit inconsistent HTTP interpretation by using cleartext HTTP/2 (h2c) over an HTTP CONNECT tunnel to bypass policy restrictions. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.810",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100977",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100977"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100977",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100976",
+      "severity": "medium",
+      "type": "unknown_cwe_290",
+      "nvd_category_id": "CWE-290",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in Kubernetes network policy enforcement where a...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in Kubernetes network policy enforcement where a local attacker with low privileges could cause the proxy to attribute network traffic to a different process due to TCP source-port identity confusion, allowing the attacker to bypass process-based network policy restrictions. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.680",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100976",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100976"
+      ],
+      "cvss_score": 5.2,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100976",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.2); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100975",
+      "severity": "high",
+      "type": "unknown_cwe_526",
+      "nvd_category_id": "CWE-526",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the Kubernetes sandbox SSH authentication con...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the Kubernetes sandbox SSH authentication configuration where a local attacker with low privileges could obtain sensitive authentication information by accessing an SSH handshake secret stored in a plaintext environment variable and reuse the shared secret to gain unauthorized access to other sandboxes. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.550",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100975",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100975"
+      ],
+      "cvss_score": 7.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100975",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100974",
+      "severity": "medium",
+      "type": "hard_coded_credentials",
+      "nvd_category_id": "CWE-798",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the sandbox SSH authentication component wher...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the sandbox SSH authentication component where a remote attacker with high privileges could gain unauthorized access to other sandboxes by using an SSH handshake secret shared across sandboxes. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.427",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100974",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100974"
+      ],
+      "cvss_score": 6.7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100974",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.7); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100973",
+      "severity": "medium",
+      "type": "unknown_cwe_636",
+      "nvd_category_id": "CWE-636",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in L7 policy enforcement for HTTP CONNECT tunnel...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in L7 policy enforcement for HTTP CONNECT tunnels where a local attacker with low privileges could cause a protection mechanism failure by using nonstandard HTTP methods to bypass policy restrictions. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.300",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100973",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100973"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100973",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.4); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100972",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in resource-level authorization for create, read...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in resource-level authorization for create, read, update, and delete operations where an authenticated remote attacker with low privileges could access or modify resources without the required authorization checks. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.173",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100972",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100972"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100972",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100971",
+      "severity": "high",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the L7 path allowlist enforcement component w...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the L7 path allowlist enforcement component where a local attacker with low privileges could cause path traversal by using semicolon-dot path sequences to bypass allowlist restrictions. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.043",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100971",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100971"
+      ],
+      "cvss_score": 8.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100971",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.4); requires local access; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100970",
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the network policy hot-reload component where...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the network policy hot-reload component where a local attacker with low privileges could bypass updated network policy restrictions through existing L7-inspected tunnels that continue to use the previous policy after a reload. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:33.900",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100970",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100970"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100970",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.4); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-110689",
       "severity": "medium",
@@ -547,8 +1091,8 @@
       "severity": "medium",
       "type": "server_side_request_forgery",
       "nvd_category_id": "CWE-918",
-      "title": "OpenClaw Windows Node through 2026.9.4 contains a server-side request forgery vulnerability in the c...",
-      "description": "OpenClaw Windows Node through 2026.9.4 contains a server-side request forgery vulnerability in the canvas.present capability that bypasses URL risk evaluation enforced by canvas.navigate. Attackers with gateway or agent access can issue canvas.present to make the node's WebView send requests to localhost, private networks, or tailnet services from the user's machine.",
+      "title": "OpenClaw Windows Node through 2026.11.3 contains a server-side request forgery vulnerability in the ...",
+      "description": "OpenClaw Windows Node through 2026.11.3 contains a server-side request forgery vulnerability in the canvas.present capability that bypasses URL risk evaluation enforced by canvas.navigate. Attackers with gateway or agent access can issue canvas.present to make the node's WebView send requests to localhost, private networks, or tailnet services from the user's machine.",
       "affected": [
         "openclaw@*"
       ],
