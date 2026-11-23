@@ -1,0 +1,269 @@
+{
+  "contract": "clawsec.lifecycle-semver.fixtures/v1",
+  "valid_versions": [
+    {
+      "input": "0.0.0",
+      "core": ["0", "0", "0"],
+      "prerelease": [],
+      "build": []
+    },
+    {
+      "input": "0.1.0-beta.1",
+      "core": ["0", "1", "0"],
+      "prerelease": ["beta", "1"],
+      "build": []
+    },
+    {
+      "input": "1.2.3-01alpha.7+build.001.sha-1",
+      "core": ["1", "2", "3"],
+      "prerelease": ["01alpha", "7"],
+      "build": ["build", "001", "sha-1"]
+    },
+    {
+      "input": "18446744073709551616.99999999999999999999.0",
+      "core": ["18446744073709551616", "99999999999999999999", "0"],
+      "prerelease": [],
+      "build": []
+    },
+    {
+      "input": "1.0.0-x-y-z.--+meta",
+      "core": ["1", "0", "0"],
+      "prerelease": ["x-y-z", "--"],
+      "build": ["meta"]
+    }
+  ],
+  "invalid_versions": [
+    "",
+    "1",
+    "1.2",
+    "1.2.3.4",
+    "01.2.3",
+    "1.02.3",
+    "1.2.03",
+    "1.2.3-",
+    "1.2.3-alpha..1",
+    "1.2.3-alpha_1",
+    "1.2.3-01",
+    "1.2.3+",
+    "1.2.3+build..1",
+    "v1.2.3",
+    " 1.2.3",
+    "1.2.3 ",
+    "1.2.3\n",
+    "1.2.3-β",
+    null,
+    123,
+    [],
+    {}
+  ],
+  "precedence_chains": [
+    [
+      "1.0.0-alpha",
+      "1.0.0-alpha.1",
+      "1.0.0-alpha.beta",
+      "1.0.0-beta",
+      "1.0.0-beta.2",
+      "1.0.0-beta.11",
+      "1.0.0-rc.1",
+      "1.0.0"
+    ],
+    [
+      "0.1.0-beta.1",
+      "0.1.0-beta.2",
+      "0.1.0-rc.1",
+      "0.1.0"
+    ],
+    [
+      "1.99999999999999999999.0",
+      "2.0.0",
+      "18446744073709551615.0.0",
+      "18446744073709551616.0.0"
+    ],
+    [
+      "1.0.0-99999999999999999999",
+      "1.0.0-100000000000000000000",
+      "1.0.0-alpha"
+    ]
+  ],
+  "equal_precedence": [
+    ["1.0.0+build.1", "1.0.0+build.2"],
+    ["1.0.0-alpha+one", "1.0.0-alpha+two"]
+  ],
+  "package_tags": {
+    "valid": [
+      {
+        "input": "clawsec-core-openclaw-v0.1.0",
+        "package_name": "clawsec-core-openclaw",
+        "version": "0.1.0"
+      },
+      {
+        "input": "agent-v-tools-v1.2.3-rc.1",
+        "package_name": "agent-v-tools",
+        "version": "1.2.3-rc.1"
+      },
+      {
+        "input": "clawsec-v1.2.3+build.7",
+        "package_name": "clawsec",
+        "version": "1.2.3+build.7"
+      }
+    ],
+    "invalid": [
+      "",
+      "clawsec-1.2.3",
+      "-v1.2.3",
+      "ClawSec-v1.2.3",
+      "clawsec--core-v1.2.3",
+      "clawsec-vv1.2.3",
+      "clawsec-v1.2",
+      "clawsec-v01.2.3",
+      null,
+      123
+    ]
+  },
+  "format_tags": {
+    "valid": [
+      {
+        "package_name": "clawsec-core-hermes",
+        "version": "0.1.0-beta.1",
+        "expected": "clawsec-core-hermes-v0.1.0-beta.1"
+      },
+      {
+        "package_name": "agent-v-tools",
+        "version": "1.2.3+build.1",
+        "expected": "agent-v-tools-v1.2.3+build.1"
+      }
+    ],
+    "invalid_package_names": ["", "ClawSec", "clawsec_kit", "-clawsec", "clawsec-", "clawsec--core", "clawsec\n"]
+  },
+  "classifications": [
+    {"version": "0.1.0-beta.0", "expected": "beta"},
+    {"version": "0.1.0-beta.12", "expected": "beta"},
+    {"version": "0.1.0-rc.1", "expected": "rc"},
+    {"version": "0.1.0", "expected": "final"},
+    {"version": "0.1.0+build.1", "expected": "final"},
+    {"version": "0.0.1-beta5", "expected": "legacy_prerelease"},
+    {"version": "0.1.0-rc1", "expected": "legacy_prerelease"},
+    {"version": "0.1.0-alpha.1", "expected": "legacy_prerelease"},
+    {"version": "0.1.0-preview", "expected": "legacy_prerelease"}
+  ],
+  "publication_evaluations": [
+    {
+      "version": "0.1.0",
+      "lifecycle_class": "final",
+      "eligible": true,
+      "reason_code": "final_version_eligible_not_authorized"
+    },
+    {
+      "version": "0.1.0-beta.1",
+      "lifecycle_class": "beta",
+      "eligible": false,
+      "reason_code": "candidate_prerelease_lab_only"
+    },
+    {
+      "version": "0.1.0-rc.1",
+      "lifecycle_class": "rc",
+      "eligible": false,
+      "reason_code": "candidate_prerelease_lab_only"
+    },
+    {
+      "version": "0.1.0-beta5",
+      "lifecycle_class": "legacy_prerelease",
+      "eligible": false,
+      "reason_code": "legacy_prerelease_non_authorized"
+    },
+    {
+      "version": "0.1.0+build.1",
+      "lifecycle_class": "final",
+      "eligible": false,
+      "reason_code": "build_metadata_disallowed"
+    }
+  ],
+  "lifecycle_bindings": {
+    "valid": [
+      {
+        "stage": "beta",
+        "artifactVersion": "0.1.0-beta.1",
+        "intendedVersion": "0.1.0",
+        "activeCatalogAuthorized": false
+      },
+      {
+        "stage": "rc",
+        "artifactVersion": "0.1.0-rc.2",
+        "intendedVersion": "0.1.0",
+        "activeCatalogAuthorized": false
+      },
+      {
+        "stage": "stable_intent",
+        "artifactVersion": "0.1.0",
+        "intendedVersion": "0.1.0",
+        "activeCatalogAuthorized": false
+      },
+      {
+        "stage": "stable",
+        "artifactVersion": "0.1.0",
+        "intendedVersion": "0.1.0",
+        "activeCatalogAuthorized": true
+      }
+    ],
+    "invalid": [
+      {
+        "input": {
+          "stage": "beta",
+          "artifactVersion": "0.1.0-beta5",
+          "intendedVersion": "0.1.0"
+        },
+        "error": "canonical beta.N"
+      },
+      {
+        "input": {
+          "stage": "rc",
+          "artifactVersion": "0.1.0-rc.1",
+          "intendedVersion": "0.2.0"
+        },
+        "error": "same core version"
+      },
+      {
+        "input": {
+          "stage": "stable_intent",
+          "artifactVersion": "0.1.0-rc.1",
+          "intendedVersion": "0.1.0"
+        },
+        "error": "equal the final intendedVersion"
+      },
+      {
+        "input": {
+          "stage": "stable_intent",
+          "artifactVersion": "0.1.0",
+          "intendedVersion": "0.1.0",
+          "activeCatalogAuthorized": true
+        },
+        "error": "outside the active public catalog"
+      },
+      {
+        "input": {
+          "stage": "stable",
+          "artifactVersion": "0.1.0",
+          "intendedVersion": "0.1.0",
+          "activeCatalogAuthorized": false
+        },
+        "error": "active signed-catalog authorization"
+      },
+      {
+        "input": {
+          "stage": "stable",
+          "artifactVersion": "0.1.0+build.1",
+          "intendedVersion": "0.1.0"
+        },
+        "error": "must not contain build metadata"
+      },
+      {
+        "input": {
+          "stage": "preview",
+          "artifactVersion": "0.1.0-preview.1",
+          "intendedVersion": "0.1.0"
+        },
+        "error": "Unknown lifecycle stage"
+      }
+    ]
+  }
+}

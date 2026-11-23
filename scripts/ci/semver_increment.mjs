@@ -2,6 +2,7 @@
 
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { compareSemverV2, parseSemverV2 } from "./lifecycle_semver.mjs";
 
 function parseIdentifier(identifier) {
   if (/^\d+$/.test(identifier)) {
@@ -13,51 +14,55 @@ function parseIdentifier(identifier) {
   return identifier;
 }
 
+function incrementDecimalString(value) {
+  const normalized = value.replace(/^0+(?=\d)/, "");
+  const digits = normalized.split("");
+  let carry = 1;
+
+  for (let index = digits.length - 1; index >= 0 && carry === 1; index -= 1) {
+    if (digits[index] === "9") {
+      digits[index] = "0";
+    } else {
+      digits[index] = String(Number(digits[index]) + 1);
+      carry = 0;
+    }
+  }
+
+  if (carry === 1) digits.unshift("1");
+  return digits.join("");
+}
+
 export function parseSemver(version) {
   const normalized = String(version ?? "").trim();
-  const match = normalized.match(
+  const legacyShape = normalized.match(
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/,
   );
-  if (!match) {
+  if (legacyShape?.[4]) {
+    for (const identifier of legacyShape[4].split(".")) {
+      parseIdentifier(identifier);
+    }
+  }
+
+  let parsed;
+  try {
+    parsed = parseSemverV2(normalized);
+  } catch {
+    throw new Error(`Invalid semantic version: ${version}`);
+  }
+  if (parsed.build.length > 0) {
     throw new Error(`Invalid semantic version: ${version}`);
   }
   return {
     raw: normalized,
-    core: [Number(match[1]), Number(match[2]), Number(match[3])],
-    prerelease: match[4] ? match[4].split(".").map(parseIdentifier) : [],
+    core: parsed.core.map(Number),
+    prerelease: parsed.prerelease.map(parseIdentifier),
   };
 }
 
 export function compareSemver(leftVersion, rightVersion) {
   const left = parseSemver(leftVersion);
   const right = parseSemver(rightVersion);
-
-  for (let index = 0; index < left.core.length; index += 1) {
-    if (left.core[index] !== right.core[index]) {
-      return left.core[index] < right.core[index] ? -1 : 1;
-    }
-  }
-
-  if (left.prerelease.length === 0 && right.prerelease.length === 0) return 0;
-  if (left.prerelease.length === 0) return 1;
-  if (right.prerelease.length === 0) return -1;
-
-  const length = Math.max(left.prerelease.length, right.prerelease.length);
-  for (let index = 0; index < length; index += 1) {
-    const leftIdentifier = left.prerelease[index];
-    const rightIdentifier = right.prerelease[index];
-    if (leftIdentifier === undefined) return -1;
-    if (rightIdentifier === undefined) return 1;
-    if (leftIdentifier === rightIdentifier) continue;
-    if (typeof leftIdentifier === "number" && typeof rightIdentifier === "number") {
-      return leftIdentifier < rightIdentifier ? -1 : 1;
-    }
-    if (typeof leftIdentifier === "number") return -1;
-    if (typeof rightIdentifier === "number") return 1;
-    return leftIdentifier < rightIdentifier ? -1 : 1;
-  }
-
-  return 0;
+  return compareSemverV2(left.raw, right.raw);
 }
 
 export function assertSemverIncrement(baseVersion, nextVersion) {
@@ -72,11 +77,9 @@ export function assertSemverIncrement(baseVersion, nextVersion) {
     return true;
   }
 
-  const coreComparison = next.core.findIndex(
-    (identifier, index) => identifier !== base.core[index],
-  );
-  const coreIncreases = coreComparison !== -1
-    && next.core[coreComparison] > base.core[coreComparison];
+  const baseCoreVersion = parseSemverV2(base.raw).core.join(".");
+  const nextCoreVersion = parseSemverV2(next.raw).core.join(".");
+  const coreIncreases = compareSemverV2(nextCoreVersion, baseCoreVersion) > 0;
   if (!coreIncreases) {
     throw new Error(
       `Skill core version must increase by at least a patch: base=${baseVersion}, next=${nextVersion}`,
@@ -87,15 +90,26 @@ export function assertSemverIncrement(baseVersion, nextVersion) {
 
 export function nextSimulatedReleaseVersion(version) {
   const parsed = parseSemver(version);
-  const [major, minor, patch] = parsed.core;
+  const strict = parseSemverV2(parsed.raw);
+  const [major, minor, patch] = strict.core;
   if (parsed.prerelease.length === 0) {
-    return `${major}.${minor}.${patch + 1}`;
+    return `${major}.${minor}.${incrementDecimalString(patch)}`;
   }
 
   const rawPrerelease = parsed.raw.slice(parsed.raw.indexOf("-") + 1);
-  const numberedPrerelease = rawPrerelease.match(/^(.*?)(\d+)$/);
-  if (numberedPrerelease) {
-    return `${major}.${minor}.${patch}-${numberedPrerelease[1]}${Number(numberedPrerelease[2]) + 1}`;
+  let trailingDigitsStart = rawPrerelease.length;
+  while (
+    trailingDigitsStart > 0
+    && rawPrerelease[trailingDigitsStart - 1] >= "0"
+    && rawPrerelease[trailingDigitsStart - 1] <= "9"
+  ) {
+    trailingDigitsStart -= 1;
+  }
+
+  if (trailingDigitsStart < rawPrerelease.length) {
+    const prefix = rawPrerelease.slice(0, trailingDigitsStart);
+    const digits = rawPrerelease.slice(trailingDigitsStart);
+    return `${major}.${minor}.${patch}-${prefix}${incrementDecimalString(digits)}`;
   }
   return `${major}.${minor}.${patch}-${rawPrerelease}1`;
 }
