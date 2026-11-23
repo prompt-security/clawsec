@@ -1,0 +1,27 @@
+{
+  "name": "clawsec-analyst",
+  "version": "0.1.0",
+  "description": "AI-powered security analyst using Claude API for automated triage, risk assessment, and policy parsing",
+  "type": "module",
+  "main": "handler.ts",
+  "author": "ClawSec Team",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "for f in test/*.test.mjs; do node \"$f\" || exit 1; done",
+    "test:unit": "for f in test/*.test.mjs; do [ \"$f\" != *integration* ] && node \"$f\" || exit 1; done",
+    "test:integration": "for f in test/integration-*.test.mjs; do node \"$f\" || exit 1; done",
+    "typecheck": "tsc --noEmit",
+    "lint": "cd ../.. && npx eslint skills/clawsec-analyst --max-warnings 0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
