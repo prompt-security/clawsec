@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-11-24T03:24:17.943Z",
+  "updated_at": "2026-11-25T03:25:05.965Z",
   "daily": {
     "views": [
       {
@@ -909,6 +909,11 @@
         "timestamp": "2026-11-22T00:00:00Z",
         "count": 40,
         "uniques": 16
+      },
+      {
+        "timestamp": "2026-11-23T00:00:00Z",
+        "count": 23,
+        "uniques": 19
       }
     ],
     "clones": [
@@ -1816,6 +1821,11 @@
         "timestamp": "2026-11-22T00:00:00Z",
         "count": 321,
         "uniques": 103
+      },
+      {
+        "timestamp": "2026-11-23T00:00:00Z",
+        "count": 425,
+        "uniques": 111
       }
     ]
   },
@@ -10858,6 +10868,62 @@
           },
           {
             "referrer": "alimabsoute.github.io",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-11-25T03:25:05.965Z",
+        "date": "2026-11-25",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 70,
+            "uniques": 55
+          },
+          {
+            "referrer": "Google",
+            "count": 27,
+            "uniques": 26
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 7,
+            "uniques": 7
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 6,
+            "uniques": 6
+          },
+          {
+            "referrer": "link.zhihu.com",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "referrer": "Baidu",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "rentamac.io",
+            "count": 2,
+            "uniques": 1
+          },
+          {
+            "referrer": "alimabsoute.github.io",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "code.wlsir.top",
             "count": 1,
             "uniques": 1
           }
@@ -21886,6 +21952,72 @@
             "uniques": 3
           }
         ]
+      },
+      {
+        "captured_at": "2026-11-25T03:25:05.965Z",
+        "date": "2026-11-25",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 191,
+            "uniques": 152
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 18,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/415",
+            "title": "/pull/415",
+            "count": 12,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 8,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "title": "/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "count": 7,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 7,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 5,
+            "uniques": 3
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/public/video/soul-guardian-demo.mp4",
+            "title": "/blob/main/public/video/soul-guardian-demo.mp4",
+            "count": 4,
+            "uniques": 3
+          }
+        ]
       }
     ]
   },
@@ -23892,6 +24024,18 @@
       "clones_window": {
         "count": 4834,
         "uniques": 1229
+      }
+    },
+    {
+      "captured_at": "2026-11-25T03:25:05.965Z",
+      "date": "2026-11-25",
+      "views_window": {
+        "count": 375,
+        "uniques": 203
+      },
+      "clones_window": {
+        "count": 4483,
+        "uniques": 1218
       }
     }
   ]
