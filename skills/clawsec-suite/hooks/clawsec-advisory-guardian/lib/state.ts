@@ -11,10 +11,16 @@ export const DEFAULT_STATE: AdvisoryState = {
   last_hook_scan: null,
   notified_matches: {},
 };
+// Fresh containers per call: a shallow copy of DEFAULT_STATE would share its
+// known_advisories/notified_matches objects, so writes to one fallback state
+// would leak into DEFAULT_STATE and every later fallback in the same process.
+function defaultState(): AdvisoryState {
+  return { ...DEFAULT_STATE, known_advisories: [], notified_matches: {} };
+}
 
 export function normalizeState(raw: unknown): AdvisoryState {
   if (!isObject(raw)) {
-    return { ...DEFAULT_STATE };
+    return defaultState();
   }
 
   const knownAdvisories = Array.isArray(raw.known_advisories)
@@ -45,7 +51,7 @@ export async function loadState(stateFile: string): Promise<AdvisoryState> {
     const raw = await fs.readFile(stateFile, "utf8");
     return normalizeState(JSON.parse(raw));
   } catch {
-    return { ...DEFAULT_STATE };
+    return defaultState();
   }
 }
 
