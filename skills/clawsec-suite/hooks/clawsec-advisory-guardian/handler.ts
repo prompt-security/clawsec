@@ -237,6 +237,7 @@ const handler = async (event: HookEvent): Promise<void> => {
       matches.push(match);
     }
   }
+
   const unseenMatches: AdvisoryMatch[] = [];
   const unseenKeys = new Set<string>();
   for (const match of matches) {
