@@ -230,6 +230,8 @@ jobs:
         run: node skills/clawsec-suite/test/fuzz_semver_scope_suppression.test.mjs
       - name: Advisory Application Scope Tests
         run: node skills/clawsec-suite/test/advisory_application_scope.test.mjs
+            - name: Advisory Guardian Notification Dedup Tests
+        run: node skills/clawsec-suite/test/advisory_guardian_notification_state.test.mjs
 
   hermes-attestation-guardian-tests:
     name: Hermes Attestation Guardian Tests
