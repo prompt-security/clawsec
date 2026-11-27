@@ -72,3 +72,44 @@ export async function persistState(stateFile: string, state: AdvisoryState): Pro
     }
   }
 }
+
+// In-process commit queue per state file. Each entry resolves (never rejects),
+// so a failed commit cannot block later scans.
+const commitQueues = new Map<string, Promise<void>>();
+
+async function withStateCommitLock<T>(stateFile: string, fn: () => Promise<T>): Promise<T> {
+  const previous = commitQueues.get(stateFile) ?? Promise.resolve();
+  let releaseLock!: () => void;
+  const current = new Promise<void>((resolve) => {
+    releaseLock = resolve;
+  });
+  const tail = previous.then(() => current);
+  commitQueues.set(stateFile, tail);
+  await previous;
+  try {
+    return await fn();
+  } finally {
+    releaseLock();
+    if (commitQueues.get(stateFile) === tail) {
+      commitQueues.delete(stateFile);
+    }
+  }
+}
+
+/**
+ * Persist a scan's state without discarding notification records that another
+ * scan in this process committed after this scan loaded its snapshot.
+ * Under a per-file in-process lock, re-reads the file and keeps every
+ * notified_matches key and known_advisories id already on disk (existing
+ * timestamps win); other fields come from `state`. Does not coordinate
+ * across processes.
+ */
+export async function persistStateMerged(stateFile: string, state: AdvisoryState): Promise<void> {
+  await withStateCommitLock(stateFile, async () => {
+    const onDisk = await loadState(stateFile);
+    const merged = normalizeState(state);
+    merged.known_advisories = uniqueStrings([...onDisk.known_advisories, ...merged.known_advisories]);
+    merged.notified_matches = { ...merged.notified_matches, ...onDisk.notified_matches };
+    await persistState(stateFile, merged);
+  });
+}

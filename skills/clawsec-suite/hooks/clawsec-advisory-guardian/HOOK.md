@@ -20,6 +20,15 @@ and asks for user approval first.
 - The hook does not delete or modify skills.
 - It only reports findings and requests explicit approval before removal.
 - Alerts are deduplicated using `~/.openclaw/clawsec-suite-feed-state.json`.
+- Dedup keys are recorded only when an alert is appended on `command:new`.
+  OpenClaw never routes `event.messages` for `agent:bootstrap`, so alerts
+  appended there do not consume a key. A later `/new` can append the alert if
+  the scan succeeds and the match is still present, unsuppressed, and unrecorded.
+- A recorded key means the alert was appended on `command:new`, not that it was
+    delivered. OpenClaw only attempts to route those messages for chat `/new`;
+    Gateway session RPCs, webchat, a missing recipient, or a send failure can
+    still drop the alert after its key is recorded. Keys recorded by earlier
+    versions are kept as-is.
 
 ## Optional Environment Variables
 
