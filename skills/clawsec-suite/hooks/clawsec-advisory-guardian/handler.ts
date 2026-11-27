@@ -37,9 +37,9 @@ function shouldHandleEvent(event: HookEvent): boolean {
  * Whether this event is a reply-routing candidate: among the events this hook
   * handles, OpenClaw only attempts to route event.messages for command:new (chat
    * /new). That is a routing opportunity, not confirmed delivery: Gateway RPCs,
-    * webchat, missing recipients and send failures can still drop the reply.
-     * agent:bootstrap never routes event.messages.
-      */
+ * webchat, missing recipients and send failures can still drop the reply.
+ * agent:bootstrap never routes event.messages.
+ */
 function eventIsReplyRoutingCandidate(event: HookEvent): boolean {
   return toEventName(event) === "command:new";
 }
