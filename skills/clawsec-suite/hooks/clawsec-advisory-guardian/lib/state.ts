@@ -11,6 +11,7 @@ export const DEFAULT_STATE: AdvisoryState = {
   last_hook_scan: null,
   notified_matches: {},
 };
+
 // Fresh containers per call: a shallow copy of DEFAULT_STATE would share its
 // known_advisories/notified_matches objects, so writes to one fallback state
 // would leak into DEFAULT_STATE and every later fallback in the same process.
