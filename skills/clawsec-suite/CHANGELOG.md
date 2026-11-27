@@ -6,6 +6,7 @@
 
 - Advisory guardian state fallbacks (missing, malformed, or non-object state files) now get their own `known_advisories` and `notified_matches` containers. Previously they shared `DEFAULT_STATE`'s objects, so notification keys recorded in one fallback leaked into later fallbacks in the same process, and deleting or corrupting the state file did not reset alert deduplication until restart.
 
+
 ## [0.1.16] - 2026-07-14
 
 ### Fixed
