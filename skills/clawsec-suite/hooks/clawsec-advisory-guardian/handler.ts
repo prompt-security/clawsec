@@ -4,7 +4,7 @@ import path from "node:path";
 import { uniqueStrings, resolveConfiguredPath } from "./lib/utils.mjs";
 import { defaultChecksumsUrl, loadLocalFeed, loadRemoteFeed } from "./lib/feed.mjs";
 import type { HookEvent, FeedPayload, AdvisoryMatch } from "./lib/types.ts";
-import { loadState, persistState } from "./lib/state.ts";
+import { loadState, persistStateMerged } from "./lib/state.ts";
 import { discoverInstalledSkills, findMatches, matchKey, buildAlertMessage } from "./lib/matching.ts";
 import { loadAdvisorySuppression, isAdvisorySuppressed } from "./lib/suppression.mjs";
 
@@ -31,6 +31,17 @@ function toEventName(event: HookEvent): string {
 function shouldHandleEvent(event: HookEvent): boolean {
   const eventName = toEventName(event);
   return eventName === "agent:bootstrap" || eventName === "command:new";
+}
+
+/**
+ * Whether this event is a reply-routing candidate: among the events this hook
+  * handles, OpenClaw only attempts to route event.messages for command:new (chat
+   * /new). That is a routing opportunity, not confirmed delivery: Gateway RPCs,
+    * webchat, missing recipients and send failures can still drop the reply.
+     * agent:bootstrap never routes event.messages.
+      */
+function eventIsReplyRoutingCandidate(event: HookEvent): boolean {
+  return toEventName(event) === "command:new";
 }
 
 function epochMs(isoTimestamp: string | null): number {
@@ -203,7 +214,7 @@ const handler = async (event: HookEvent): Promise<void> => {
   const allMatches = findMatches(feed, installedSkills);
 
   if (allMatches.length === 0) {
-    await persistState(stateFile, state);
+    await persistStateMerged(stateFile, state);
     return;
   }
 
@@ -226,19 +237,28 @@ const handler = async (event: HookEvent): Promise<void> => {
       matches.push(match);
     }
   }
-
   const unseenMatches: AdvisoryMatch[] = [];
+  const unseenKeys = new Set<string>();
   for (const match of matches) {
     const key = matchKey(match);
-    if (state.notified_matches[key]) {
+    if (state.notified_matches[key] || unseenKeys.has(key)) {
       continue;
     }
+    unseenKeys.add(key);
     unseenMatches.push(match);
-    state.notified_matches[key] = nowIso;
   }
 
   if (unseenMatches.length > 0 && Array.isArray(event.messages)) {
     event.messages.push(buildAlertMessage(unseenMatches, installRoot));
+    // Record dedup keys only when the alert was appended on a reply-routing
+    // candidate. Recording on agent:bootstrap (whose messages OpenClaw never
+    // routes) would consume the key before /new could surface the alert.
+    // A recorded key means "appended on command:new", not "delivered".
+    if (eventIsReplyRoutingCandidate(event)) {
+      for (const key of unseenKeys) {
+        state.notified_matches[key] = nowIso;
+      }
+    }
   }
 
   if (suppressedMatches.length > 0 && Array.isArray(event.messages)) {
@@ -247,7 +267,7 @@ const handler = async (event: HookEvent): Promise<void> => {
     );
   }
 
-  await persistState(stateFile, state);
+  await persistStateMerged(stateFile, state);
 };
 
 export default handler;
