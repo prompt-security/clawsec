@@ -5,7 +5,7 @@
 ### Fixed
 
 - Advisory guardian no longer records notification dedup keys during `agent:bootstrap` scans. OpenClaw never routes `event.messages` for bootstrap, so recording there suppressed the alert before a later `/new` could append it. Keys are now recorded only when the alert is appended on `command:new`; this does not confirm delivery (Gateway session RPCs, webchat, missing recipients, or send failures can still drop it), and keys recorded by earlier versions are not cleared.
--  Advisory guardian state commits are serialized per state file within a process and merged with the on-disk notification records, so a scan holding an older snapshot no longer discards a key another scan already persisted. Cross-process writers are not coordinated.
+- Advisory guardian state commits are serialized per state file within a process and merged with the on-disk notification records, so a scan holding an older snapshot no longer discards a key another scan already persisted. Cross-process writers are not coordinated.
 
 ## [0.1.16] - 2026-07-14
 
