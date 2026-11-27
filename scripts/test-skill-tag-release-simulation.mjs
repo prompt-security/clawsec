@@ -433,8 +433,8 @@ process.stdout.write(readFileSync(inspectFile, "utf8"));
   await runSimulation({
     skillDir: "skills/clawsec-suite",
     outputDir: path.join(tempRoot, "stable"),
-    expectedOriginal: "0.1.16",
-    expectedSimulated: "0.1.17",
+    expectedOriginal: "0.1.17",
+    expectedSimulated: "0.1.18",
     expectedAgent: "openclaw",
     verifyEmbeddedAdvisory: true,
   });
