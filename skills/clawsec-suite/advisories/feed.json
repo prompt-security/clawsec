@@ -1,8 +1,869 @@
 {
   "version": "0.0.3",
-  "updated": "2026-11-17T07:29:23Z",
+  "updated": "2026-11-28T06:07:57Z",
   "description": "Community-driven security advisory feed for ClawSec. Automatically updated with OpenClaw-related CVEs from NVD and community-reported security incidents.",
   "advisories": [
+    {
+      "id": "GHSA-ph5m-9489-x9qm",
+      "ghsa_id": "GHSA-ph5m-9489-x9qm",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "exposure_of_sensitive_information",
+      "nvd_category_id": "CWE-200",
+      "title": "Credential boundary bypass: provider secrets resolved into any request location and reflected to the sandboxed agent",
+      "description": "Summary and impact A sandboxed workload could recover a provider's bearer credential by placing its opaque placeholder in a request field that an allowed service echoed. The supervisor substituted the real secret outside its declared location, and the workload could read the full value in the response. Scope and prerequisites OpenShell Supervisor and sandbox runtime versions v0.1.5 through v0.1.7 are known affected. The first affected release is unknown. Upgrade the supervisor and sandbox runtime images to v0.1.8 or later. The workload needs an attached credential and access to an endpoint that reflects the chosen field. Upgrading the gateway alone leaves an older runtime exposed. Reproduction and evidence Verification status: Reproduced locally with official v0.1.7 and v0.1.8 runtime images and the same v0.1.9 gateway. 1. Operator setup: Declare a dummy bearer for the Authorization header. Allow a test service that echoes the URL and a custom header but omits Authorization. 2. Attacker action: Send the placeholder in a query value, a path segment, or the custom header. As a control, send it only in Authorization. 3. Check: Inspect the workload's response for the dummy secret and the service log for the request. Expected: Only the declared location can carry the secret. Observed: v0.1.7 returned the secret in all three attack responses. v0.1.8 returned HTTP 403 before the service received any of them. The control succeeded on both versions. The fix enforces request placement; a trusted service can still echo a credential it was authorized to receive. Fix #4886",
+      "affected": [
+        "OpenShell Supervisor@>= 0.1.5, <= 0.1.7"
+      ],
+      "patched": [
+        "OpenShell Supervisor@0.1.8"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-27T14:18:45Z",
+      "updated": "2026-11-27T14:18:45Z",
+      "references": [
+        "https://github.com/ai-openshell/openshell/security/advisories/GHSA-ph5m-9489-x9qm"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "nvidia/openshell",
+      "github_advisory_url": "https://github.com/ai-openshell/openshell/security/advisories/GHSA-ph5m-9489-x9qm",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+      "cwe_ids": [
+        "CWE-200",
+        "CWE-522",
+        "CWE-669"
+      ],
+      "credits": [
+        "dibsy"
+      ],
+      "aliases": [
+        "GHSA-ph5m-9489-x9qm"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-rh98-cmrc-mr4w",
+      "ghsa_id": "GHSA-rh98-cmrc-mr4w",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "Policy DNS destination authorization",
+      "description": "Summary and impact A sandbox process could read data from a private service that its own network policy did not authorize. This affected advisor-proposed hostnames resolving to private addresses and overlapping rules where only another executable had the private-address grant. Scope and prerequisites OpenShell v0.1.6 is confirmed affected. The first affected release is unknown. Upgrade to v0.1.7 or later. Exploitation requires control of a process matching an existing endpoint rule, policy DNS with direct TCP mediation, and a private destination reachable from the supervisor. Reproduction and evidence Verification status: Reproduced in local Linux component tests. 1. Operator setup: Point a test hostname at a private HTTP service that returns a marker. Approve an advisor-proposed endpoint for that hostname without granting its private IP. 2. Attacker action: From the permitted process, resolve the hostname and request the marker over direct TCP. 3. Check: Repeat with a wildcard rule for the caller and a private grant restricted to another executable. Use an explicit private grant for the caller as the positive control. Expected: Only the positive control reads the marker. Observed: All three cases read it on v0.1.6. On v0.1.7, DNS denied the first case, TCP authorization denied the second, and the positive control still succeeded. Fix #5004",
+      "affected": [
+        "OpenShell@= 0.1.6"
+      ],
+      "patched": [
+        "OpenShell@0.1.7"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-27T14:18:43Z",
+      "updated": "2026-11-27T14:18:43Z",
+      "references": [
+        "https://github.com/ai-openshell/openshell/security/advisories/GHSA-rh98-cmrc-mr4w"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "nvidia/openshell",
+      "github_advisory_url": "https://github.com/ai-openshell/openshell/security/advisories/GHSA-rh98-cmrc-mr4w",
+      "nvd_url": null,
+      "cvss_score": 5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:L/I:N/A:N",
+      "cwe_ids": [
+        "CWE-863",
+        "CWE-918"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-rh98-cmrc-mr4w"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-94c7-w546-2p4f",
+      "ghsa_id": "GHSA-94c7-w546-2p4f",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-59",
+      "title": "Sandbox Landlock policy follows a workload-planted symlink at the working directory on later exec sessions",
+      "description": "Summary and impact The sandbox runtime re-opens every user Landlock policy path, including the workload's working directory added through includeworkdir, with a symlink-following open(OPATH) at each exec session. A workload that can write the parent directory of its working directory replaces that directory with a symlink; the next exec session's Landlock rule then grants read-write access to the link target. Demonstrated impact: a path listed as readonly in the sandbox policy became writable, and a link to / widened the user layer to the whole root except /.openshell. Ordinary DAC still applies, and the capability-free baseline keeps /.openshell hidden, so this weakens the user filesystem policy rather than the container boundary. Scope and prerequisites - Product and tested version: OpenShell sandbox runtime (openshell-sandbox), commit 00528d24a6c3 on main (audit worktree aede5a2d5503, identical for the audited crate). Images built from that commit: openshell/sandbox:dev sha256:c794eb83c4743ad5f47e94964aa759ab960d77977e58896b9c1dd18fbb573296, openshell/supervisor:dev sha256:0182974b3664b8b32916d8029b68c7d4913671767c1433d268592b3ecf2eba08. - Affected versions: crates/openshell-sandbox/src/sandbox/linux/landlock.rs is byte-identical in release v0.1.6 (ac7f615c) and in the tested commit. Not executed against the v0.1.6 build. Earlier releases: Unknown — needs the same file comparison. - Environment and configuration: Fedora 44, kernel 7.2.14-200.fc44.x8664, rootless Podman compute driver, Landlock hardrequirement, includeworkdir: true (default in the built-in policy), workload image nvcr.io/nvidia/base/ubuntu:24.04 (uid 1000) with its OCI WorkingDir set to /sandbox/project. The default WorkingDir /sandbox is a managed volume whose parent / is root-owned and outside every rule, so it is not affected; any image whose working directory is nested under a workload-writable directory is. - Attacker access: code running as the workload user inside the sandbox (the agent itself or anything it runs). No additional privileges. Reproduction and evidence Verification status: Reproduced by the reporter on 2026-11-02 (two runs). A negative control confirmed exec --workdir is not a route: the gateway rewrites it as a cd prefix (crates/openshell-server/src/grpc/sandbox.rs, buildremoteexeccommand) and SSH exec sessions send ExecSpec.workdir = None, so only the creation-time working directory reaches Landlock. 1. Operator setup: build the derived image and create a sandbox with a policy that keeps /var/tmp read-only: 2. Attacker actions: inside the sandbox, as the workload user: 3. Check: start a new exec session (its Landlock ruleset is built now) and write to the read-only path: Expected: the policy keeps /var/tmp read-only in every session. The working-directory rule should bind to the directory that was validated at start (validateociworkspaceaseffectiveidentity, crates/openshell-sandbox/src/process.rs, refuses symlink components once at agent start) or fail closed when it no longer resolves to it. Observed: step 1 touch /var/tmp/before → Permission denied, exit 1. Step 3 → pwd printed /var/tmp, touch /var/tmp/after exit 0, file listed. A follow-up ln -s / /sandbox/project made the next session's rule cover /: a further /var/tmp write succeeded, touch /var/log/x was refused by DAC (root-owned), and /.openshell stayed unreadable (baseline). Code path: preparewithpathopenmode (landlock.rs) appends the workdir to readwrite and calls tryopenpath → PathFd::new(path), which follows symlinks; preparechildsandbox runs it for every exec session (boundaryexec.rs, spawnpiped/spawnpty). The managed /sandbox volume exists only for the default workspace root (crates/openshell-driver-podman/src/container.rs, managedworkspacevolume), so a custom WorkingDir is a plain image directory. Reporter's private artifacts: audit notes and run logs (live-r14-all.log) kept locally; available on request. Additional details - Provisional severity: Medium. Full write access to any policy path the workload user can write by DAC, within one sandbox; no container escape; requires an image whose working directory is nested under a workload-writable directory (common for images that set WORKDIR /workspace/project or /home/<user/app). - Suggested fix: resolve policy paths with openat2(RESOLVENOSYMLINKS) or a component-wise ONOFOLLOW walk, or pin the working directory's (dev, ino) at the start-time validation and fail closed when a later open does not match.",
+      "affected": [
+        "openshell-sandbox@>= 0.1.0, <= 0.1.7"
+      ],
+      "patched": [
+        "openshell-sandbox@0.1.8"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-24T08:17:02Z",
+      "updated": "2026-11-24T08:17:02Z",
+      "references": [
+        "https://github.com/ai-openshell/openshell/security/advisories/GHSA-94c7-w546-2p4f"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "nvidia/openshell",
+      "github_advisory_url": "https://github.com/ai-openshell/openshell/security/advisories/GHSA-94c7-w546-2p4f",
+      "nvd_url": null,
+      "cvss_score": null,
+      "cvss_vector": null,
+      "cwe_ids": [
+        "CWE-59"
+      ],
+      "credits": [
+        "EmilienM"
+      ],
+      "aliases": [
+        "GHSA-94c7-w546-2p4f"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "CVE-2026-130164",
+      "severity": "high",
+      "type": "unknown_cwe_15",
+      "nvd_category_id": "CWE-15",
+      "title": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using wor...",
+      "description": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using workflows across CLI, desktop, and messaging interfaces. From 0.21.6 to 0.23.1, when Bot Desktop is hosted inside a non-local terminal backend, the agent process reads a backend-writable screen environment file without validating keys or values and merges its entries into the environment of processes started on the agent machine. Specifically, when terminal.backend is set to docker or ssh (or a plugin backend declaring supports_streams) with placement auto or terminal, _published() in tools/bot_desktop/sandbox_host.py accepts arbitrary KEY=VALUE lines from the hermes-bot-desktop env file and propagates them via tools/bot_desktop/runtime.py into the browser harness, computer-use helpers, and local terminal children. Code running inside the terminal backend can therefore set variables such as LD_PRELOAD, DYLD_INSERT_LIBRARIES, or PATH and gain code execution on the agent machine as the gateway user upon a subsequent browser or computer-use spawn, exposing credentials, tokens, and session history under the Hermes home directory. The default local backend, backends that cannot host a screen (Modal, Daytona, and Vercel), and Hermes Cloud in its default configuration are not affected. This issue is fixed in version 0.23.2.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-23T21:16:56.123",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/commit/9c44c34ac74bec800ca25c32e7d5e9b1dd47168d",
+        "https://github.com/NousResearch/hermes-agent/pull/154487",
+        "https://github.com/NousResearch/hermes-agent/security/advisories/GHSA-p22p-9ph6-gmrh"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-130164",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-130164",
+      "severity": "high",
+      "type": "unknown_cwe_15",
+      "nvd_category_id": "CWE-15",
+      "title": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using wor...",
+      "description": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using workflows across CLI, desktop, and messaging interfaces. From 0.21.6 to 0.23.1, when Bot Desktop is hosted inside a non-local terminal backend, the agent process reads a backend-writable screen environment file without validating keys or values and merges its entries into the environment of processes started on the agent machine. Specifically, when terminal.backend is set to docker or ssh (or a plugin backend declaring supports_streams) with placement auto or terminal, _published() in tools/bot_desktop/sandbox_host.py accepts arbitrary KEY=VALUE lines from the hermes-bot-desktop env file and propagates them via tools/bot_desktop/runtime.py into the browser harness, computer-use helpers, and local terminal children. Code running inside the terminal backend can therefore set variables such as LD_PRELOAD, DYLD_INSERT_LIBRARIES, or PATH and gain code execution on the agent machine as the gateway user upon a subsequent browser or computer-use spawn, exposing credentials, tokens, and session history under the Hermes home directory. The default local backend, backends that cannot host a screen (Modal, Daytona, and Vercel), and Hermes Cloud in its default configuration are not affected. This issue is fixed in version 0.23.2.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-23T21:16:56.123",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/commit/9c44c34ac74bec800ca25c32e7d5e9b1dd47168d",
+        "https://github.com/NousResearch/hermes-agent/pull/154487",
+        "https://github.com/NousResearch/hermes-agent/security/advisories/GHSA-p22p-9ph6-gmrh"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-130164",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-130164",
+      "severity": "high",
+      "type": "unknown_cwe_15",
+      "nvd_category_id": "CWE-15",
+      "title": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using wor...",
+      "description": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using workflows across CLI, desktop, and messaging interfaces. From 0.21.6 to 0.23.1, when Bot Desktop is hosted inside a non-local terminal backend, the agent process reads a backend-writable screen environment file without validating keys or values and merges its entries into the environment of processes started on the agent machine. Specifically, when terminal.backend is set to docker or ssh (or a plugin backend declaring supports_streams) with placement auto or terminal, _published() in tools/bot_desktop/sandbox_host.py accepts arbitrary KEY=VALUE lines from the hermes-bot-desktop env file and propagates them via tools/bot_desktop/runtime.py into the browser harness, computer-use helpers, and local terminal children. Code running inside the terminal backend can therefore set variables such as LD_PRELOAD, DYLD_INSERT_LIBRARIES, or PATH and gain code execution on the agent machine as the gateway user upon a subsequent browser or computer-use spawn, exposing credentials, tokens, and session history under the Hermes home directory. The default local backend, backends that cannot host a screen (Modal, Daytona, and Vercel), and Hermes Cloud in its default configuration are not affected. This issue is fixed in version 0.23.2.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-23T21:16:56.123",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/commit/9c44c34ac74bec800ca25c32e7d5e9b1dd47168d",
+        "https://github.com/NousResearch/hermes-agent/pull/154487",
+        "https://github.com/NousResearch/hermes-agent/security/advisories/GHSA-p22p-9ph6-gmrh"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-130164",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-130164",
+      "severity": "high",
+      "type": "unknown_cwe_15",
+      "nvd_category_id": "CWE-15",
+      "title": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using wor...",
+      "description": "Hermes Agent is an open-source autonomous AI agent built by Nous Research for running tool-using workflows across CLI, desktop, and messaging interfaces. From 0.21.6 to 0.23.1, when Bot Desktop is hosted inside a non-local terminal backend, the agent process reads a backend-writable screen environment file without validating keys or values and merges its entries into the environment of processes started on the agent machine. Specifically, when terminal.backend is set to docker or ssh (or a plugin backend declaring supports_streams) with placement auto or terminal, _published() in tools/bot_desktop/sandbox_host.py accepts arbitrary KEY=VALUE lines from the hermes-bot-desktop env file and propagates them via tools/bot_desktop/runtime.py into the browser harness, computer-use helpers, and local terminal children. Code running inside the terminal backend can therefore set variables such as LD_PRELOAD, DYLD_INSERT_LIBRARIES, or PATH and gain code execution on the agent machine as the gateway user upon a subsequent browser or computer-use spawn, exposing credentials, tokens, and session history under the Hermes home directory. The default local backend, backends that cannot host a screen (Modal, Daytona, and Vercel), and Hermes Cloud in its default configuration are not affected. This issue is fixed in version 0.23.2.",
+      "affected": [
+        "hermes@*"
+      ],
+      "platforms": [
+        "hermes"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-23T21:16:56.123",
+      "references": [
+        "https://github.com/NousResearch/hermes-agent/commit/9c44c34ac74bec800ca25c32e7d5e9b1dd47168d",
+        "https://github.com/NousResearch/hermes-agent/pull/154487",
+        "https://github.com/NousResearch/hermes-agent/security/advisories/GHSA-p22p-9ph6-gmrh"
+      ],
+      "cvss_score": 7.8,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-130164",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.8); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "GHSA-j5mj-3gjr-xpwj",
+      "ghsa_id": "GHSA-j5mj-3gjr-xpwj",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "medium",
+      "type": "uncontrolled_resource_consumption",
+      "nvd_category_id": "CWE-400",
+      "title": "A compromised agent can hang the whole NanoClaw host by putting a named pipe where the host reads a file on every spawn",
+      "description": "Summary The NanoClaw host reads two files from folders that the agent container can write to. It reads them with a blocking call on its single event loop. If an agent replaces either file with a named pipe (FIFO), the read waits forever. Every agent group and every channel on the install stops answering. After a restart it happens again, until someone deletes the pipe by hand. Details 1. readGroupPersona (src/group-persona.ts) opens groups/<folder/instructions.prepend.md without ONONBLOCK every time the group starts. The container mounts that folder read-write at /workspace/agent. 2. prepareSpawnFile (src/provider-contracts/realize.ts) opens append-open-close files without ONONBLOCK every time a group starts. These files live in provider state folders the container can write to, for example Codex's auth.json. ONOFOLLOW stops symlinks, but not named pipes. The check for a regular file only runs after the open returns, and here the open never returns. PoC Inside an agent container, with no extra capabilities: mkfifo /workspace/agent/instructions.prepend.md The next time that group starts, the host blocks and stops serving every group. Impact One agent can stop the whole host, for example an agent steered by prompt injection. No data is read or written. The hang survives restarts. Fix Fixed in 2026.11.0 by https://github.com/nanocoai/nanoclaw/pull/4440, and already in 2026.11.0-rc.1. Both files are now opened with ONONBLOCK. The host leaves out a persona file that is not a regular file. For a provider file that is a named pipe, only that group's start fails (ENXIO); the other groups keep running. Workaround Update to 2026.11.0. Until you can, delete the named pipe and restart the host.",
+      "affected": [
+        "nanoclaw@>= 2.1.54, < 2026.11.0"
+      ],
+      "patched": [
+        "nanoclaw@2026.11.0"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-21T08:16:53Z",
+      "updated": "2026-11-21T08:16:54Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j5mj-3gjr-xpwj"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j5mj-3gjr-xpwj",
+      "nvd_url": null,
+      "cvss_score": 6.5,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+      "cwe_ids": [
+        "CWE-400"
+      ],
+      "credits": [
+        "amit-shafnir"
+      ],
+      "aliases": [
+        "GHSA-j5mj-3gjr-xpwj"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-pw3x-g8v8-fvj2",
+      "ghsa_id": "GHSA-pw3x-g8v8-fvj2",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "high",
+      "type": "incorrect_authorization",
+      "nvd_category_id": "CWE-863",
+      "title": "OpenClaw delegation could skip approval for restricted agents",
+      "description": "Summary OpenClaw delegation could skip approval for restricted agents. In affected versions, the openclaw tool could apply persistent configuration changes without approval when tool policy denied execution and file writes. This advisory is scoped to the named feature and configuration. It does not change OpenClaw's trusted-operator model: authenticated Gateway operators, installed plugins, and intentional local execution surfaces remain trusted unless a separate policy, approval, allowlist, sandbox, or auth boundary is crossed. Impact This could let a restricted agent enable host command execution through configuration changes. Practical impact depends on the operator's configuration and whether lower-trust input can reach that path. Patched Versions The first stable patched version is 2026.11.4. Extended-stable users can update to 2026.10.33. Mitigations Upgrade to a patched version. Before upgrading, set tools.exec.mode to ask and deny untrusted delegated changes. As general hardening, keep channel and tool allowlists narrow, avoid sharing one Gateway between mutually untrusted users, and disable the affected feature when it is not needed.",
+      "affected": [
+        "openclaw@>= 2026.9.2, < 2026.10.33",
+        "openclaw@>= 2026.11.1, < 2026.11.4"
+      ],
+      "patched": [
+        "openclaw@2026.10.33",
+        "openclaw@2026.11.4"
+      ],
+      "platforms": [
+        "openclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-19T02:01:59Z",
+      "updated": "2026-11-19T02:01:59Z",
+      "references": [
+        "https://github.com/openclaw/openclaw/security/advisories/GHSA-pw3x-g8v8-fvj2"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "openclaw/openclaw",
+      "github_advisory_url": "https://github.com/openclaw/openclaw/security/advisories/GHSA-pw3x-g8v8-fvj2",
+      "nvd_url": null,
+      "cvss_score": 8.8,
+      "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-863"
+      ],
+      "credits": [
+        "doctoroakin"
+      ],
+      "aliases": [
+        "GHSA-pw3x-g8v8-fvj2"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "GHSA-j39m-796j-gjm3",
+      "ghsa_id": "GHSA-j39m-796j-gjm3",
+      "cve_id": null,
+      "status": "active",
+      "stale": false,
+      "stale_after_days": 60,
+      "severity": "critical",
+      "type": "github_security_advisory",
+      "nvd_category_id": "CWE-1188",
+      "title": "Agent containers can log in to OneCLI's Postgres database with the default password",
+      "description": "Summary NanoClaw's setup installs OneCLI with Docker Compose and never sets POSTGRESPASSWORD. OneCLI's compose file then falls back to a fixed password, so OneCLI's Postgres database runs with the publicly known login onecli / onecli. Setup publishes that database on the Docker bridge address, so code in any agent container can log in. That includes an agent steered by prompt injection from an email or web page. The login is a Postgres superuser. It can read the gateway tokens of every agent and the admin API keys, which are stored in plain text, and it can change any row. That gives full control of OneCLI, including re-pointing a stored secret at another host so the gateway sends the credential there. It can also run programs inside the Postgres container. This is separate from GHSA-jh2q-3h97-pg55. It does not use the admin API on port 10254, and it still works on OneCLI 2.20, where the admin API needs a key. Details Tested versions - NanoClaw main at f3f445e6 (2026-11-15), setup with OneCLI. - OneCLI 1.45.0 (the version NanoClaw pins) and 2.20.0. - Ubuntu 24.04, Docker 29, Compose 2.40. Agent containers on the default bridge with host.docker.internal mapped to the host gateway, as NanoClaw starts them. How an agent container reaches the database - Direct: setup binds OneCLI's ports to the docker0 address. Postgres answers on 172.17.0.1:5432 (host.docker.internal:5432 from a container). - Through the gateway (1.45): the gateway's proxy on port 10255 accepts a CONNECT postgres:5432 with no agent token. So binding the ports to loopback, or turning on egress lockdown, does not remove the path. - Docker Desktop (macOS, Windows/WSL): host.docker.internal reaches the host's loopback, so the direct path is expected there too. Not tested. What the login can do (test data only; writes rolled back or reverted) - rolsuper = true, and a member of pgexecuteserverprogram. COPY … FROM PROGRAM 'id' ran as uid=70(postgres) in the Postgres container. - agents.accesstoken holds every agent's gateway token (aoc…) in plain text. They match the tokens the gateway gives agents. Any agent can take another agent's identity and its secret grants. - apikeys.key holds admin API keys (oc…) in plain text, and sessions.token holds dashboard session tokens. - Inserting a row into apikeys gave a working admin key on OneCLI 2.20: GET /v1/agents returned 401 before, 200 after, and 401 again once the row was deleted. - UPDATE secrets SET hostpattern = … and UPDATE agents SET accesstoken = … both succeed. Re-pointing hostpattern is the same change GHSA-jh2q-3h97-pg55 showed leaks a credential to an attacker's host. - Vault values (secrets.encryptedvalue) are encrypted, and the key is not in the database. So the plain secret values are not read directly; they leave through the gateway after a re-point. PoC From a fresh container on a default NanoClaw + OneCLI install: Impact Code in an agent container can take full control of the OneCLI gateway: read and forge agent and admin credentials, change which secrets each agent holds, and send stored credentials to a host it picks. It can also delete the vault or run commands in the Postgres container. Every NanoClaw install that uses a local OneCLI set up by NanoClaw is affected, with egress lockdown on or off. Patches NanoClaw 2026.11.0-rc.1 (beta update channel; stable installs get it with 2026.11.0): setup gives OneCLI's database a random password in ~/.onecli/.env (mode 0600) before OneCLI first starts. On an existing install still using the default, setup changes the password in place: data is kept and OneCLI restarts once. To do only that step after updating: Workarounds Before the patched release, from the machine running OneCLI: Check that ~/.onecli/.env also has ONECLIVERSION, so up keeps your OneCLI version. References - GHSA-jh2q-3h97-pg55: agent containers can reach OneCLI's unauthenticated admin API. Same reach, different service. - OneCLI's compose files: POSTGRESPASSWORD: ${POSTGRESPASSWORD:-onecli}.",
+      "affected": [
+        "nanoclaw@<= 2026.11.0-beta.4"
+      ],
+      "patched": [
+        "nanoclaw@2026.11.0-rc.1"
+      ],
+      "platforms": [
+        "nanoclaw"
+      ],
+      "action": "Review the GitHub Security Advisory and update affected components; no CVE is assigned yet.",
+      "published": "2026-11-17T18:51:52Z",
+      "updated": "2026-11-17T18:51:53Z",
+      "references": [
+        "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j39m-796j-gjm3"
+      ],
+      "source": "GitHub Security Advisory",
+      "repository": "qwibitai/nanoclaw",
+      "github_advisory_url": "https://github.com/nanocoai/nanoclaw/security/advisories/GHSA-j39m-796j-gjm3",
+      "nvd_url": null,
+      "cvss_score": 9,
+      "cvss_vector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+      "cwe_ids": [
+        "CWE-1188",
+        "CWE-1392"
+      ],
+      "credits": [],
+      "aliases": [
+        "GHSA-j39m-796j-gjm3"
+      ],
+      "source_feed": "ghsa-without-cve"
+    },
+    {
+      "id": "CVE-2026-100982",
+      "severity": "medium",
+      "type": "unknown_cwe_190",
+      "nvd_category_id": "CWE-190",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its inference-interception request parser whe...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its inference-interception request parser where a sandboxed actor could exhaust processing resources by sending a chunked request that lacks body-size and chunk-count limits, causing excessive parsing work. A successful exploit of this vulnerability might lead to denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.447",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100982",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100982"
+      ],
+      "cvss_score": 6.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100982",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.5); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100981",
+      "severity": "medium",
+      "type": "unknown_cwe_444",
+      "nvd_category_id": "CWE-444",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its layer-7 REST proxy where a sandboxed acto...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its layer-7 REST proxy where a sandboxed actor could bypass the proxy's policy enforcement by sending a request whose body framing is interpreted differently by the proxy and the upstream server, allowing a second request to be smuggled past policy checks. A successful exploit of this vulnerability might lead to data tampering and information disclosure.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.320",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100981",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100981"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100981",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.4); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100980",
+      "severity": "high",
+      "type": "os_command_injection",
+      "nvd_category_id": "CWE-78",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its command-line diagnostic interface where a...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its command-line diagnostic interface where an attacker could cause OS command injection because user- or configuration-supplied values are incorporated into a command that is interpreted by two successive shell layers in the remote path while being escaped for only one layer. A successful exploit of this vulnerability might lead to code execution, escalation of privileges, information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.193",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100980",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100980"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100980",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": true,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100979",
+      "severity": "medium",
+      "type": "server_side_request_forgery",
+      "nvd_category_id": "CWE-918",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway connection-proxy component where ...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway connection-proxy component where an attacker who can manipulate a sandbox's status metadata could cause the control-plane server to initiate connections to arbitrary internal hosts because the connection target is derived from that metadata and used without validation against the expected address range. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:35.070",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100979",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100979"
+      ],
+      "cvss_score": 6.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100979",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.6); network accessible; SSRF affects agents making external requests",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100978",
+      "severity": "medium",
+      "type": "improper_certificate_validation",
+      "nvd_category_id": "CWE-295",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway-to-sandbox transport where a netw...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in its gateway-to-sandbox transport where a network attacker positioned on the internal path could intercept credentials and tamper with commands and data because the transport accepts any host key without verification, permitting a machine-in-the-middle to impersonate the sandbox endpoint. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and code execution.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.940",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100978",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100978"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100978",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.4); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100977",
+      "severity": "high",
+      "type": "unknown_cwe_444",
+      "nvd_category_id": "CWE-444",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in L7 REST policy enforcement where a local atta...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in L7 REST policy enforcement where a local attacker with low privileges could exploit inconsistent HTTP interpretation by using cleartext HTTP/2 (h2c) over an HTTP CONNECT tunnel to bypass policy restrictions. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.810",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100977",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100977"
+      ],
+      "cvss_score": 7.5,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100977",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.5); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100976",
+      "severity": "medium",
+      "type": "unknown_cwe_290",
+      "nvd_category_id": "CWE-290",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in Kubernetes network policy enforcement where a...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in Kubernetes network policy enforcement where a local attacker with low privileges could cause the proxy to attribute network traffic to a different process due to TCP source-port identity confusion, allowing the attacker to bypass process-based network policy restrictions. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.680",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100976",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100976"
+      ],
+      "cvss_score": 5.2,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100976",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (5.2); requires local access; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100975",
+      "severity": "high",
+      "type": "unknown_cwe_526",
+      "nvd_category_id": "CWE-526",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the Kubernetes sandbox SSH authentication con...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the Kubernetes sandbox SSH authentication configuration where a local attacker with low privileges could obtain sensitive authentication information by accessing an SSH handshake secret stored in a plaintext environment variable and reuse the shared secret to gain unauthorized access to other sandboxes. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.550",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100975",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100975"
+      ],
+      "cvss_score": 7.6,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100975",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (7.6); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100974",
+      "severity": "medium",
+      "type": "hard_coded_credentials",
+      "nvd_category_id": "CWE-798",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the sandbox SSH authentication component wher...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the sandbox SSH authentication component where a remote attacker with high privileges could gain unauthorized access to other sandboxes by using an SSH handshake secret shared across sandboxes. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.427",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100974",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100974"
+      ],
+      "cvss_score": 6.7,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100974",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.7); network accessible",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100973",
+      "severity": "medium",
+      "type": "unknown_cwe_636",
+      "nvd_category_id": "CWE-636",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in L7 policy enforcement for HTTP CONNECT tunnel...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in L7 policy enforcement for HTTP CONNECT tunnels where a local attacker with low privileges could cause a protection mechanism failure by using nonstandard HTTP methods to bypass policy restrictions. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.300",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100973",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100973"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100973",
+      "exploitability_score": "high",
+      "exploitability_rationale": "Medium CVSS score (6.4); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100972",
+      "severity": "high",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in resource-level authorization for create, read...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in resource-level authorization for create, read, update, and delete operations where an authenticated remote attacker with low privileges could access or modify resources without the required authorization checks. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.173",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100972",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100972"
+      ],
+      "cvss_score": 8.1,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100972",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.1); network accessible; RCE is critical in agent deployments",
+      "attack_vector_analysis": {
+        "is_network_accessible": true,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100971",
+      "severity": "high",
+      "type": "path_traversal",
+      "nvd_category_id": "CWE-22",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the L7 path allowlist enforcement component w...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the L7 path allowlist enforcement component where a local attacker with low privileges could cause path traversal by using semicolon-dot path sequences to bypass allowlist restrictions. A successful exploit of this vulnerability might lead to information disclosure, data tampering, and denial of service.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:34.043",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100971",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100971"
+      ],
+      "cvss_score": 8.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100971",
+      "exploitability_score": "high",
+      "exploitability_rationale": "High CVSS score (8.4); requires local access; path traversal affects agents with file access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "low"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
+    {
+      "id": "CVE-2026-100970",
+      "severity": "medium",
+      "type": "missing_authorization",
+      "nvd_category_id": "CWE-862",
+      "title": "NVIDIA OpenShell for Linux contains a vulnerability in the network policy hot-reload component where...",
+      "description": "NVIDIA OpenShell for Linux contains a vulnerability in the network policy hot-reload component where a local attacker with low privileges could bypass updated network policy restrictions through existing L7-inspected tunnels that continue to use the previous policy after a reload. A successful exploit of this vulnerability might lead to information disclosure and data tampering.",
+      "affected": [
+        "openshell@*"
+      ],
+      "platforms": [
+        "openshell"
+      ],
+      "action": "Review and update affected components. See NVD for remediation details.",
+      "published": "2026-11-17T16:17:33.900",
+      "references": [
+        "https://github.com/NVIDIA/product-security/tree/main/2026/5929",
+        "https://nvd.nist.gov/vuln/detail/CVE-2026-100970",
+        "https://www.cve.org/CVERecord?id=CVE-2026-100970"
+      ],
+      "cvss_score": 6.4,
+      "nvd_url": "https://nvd.nist.gov/vuln/detail/CVE-2026-100970",
+      "exploitability_score": "medium",
+      "exploitability_rationale": "Medium CVSS score (6.4); requires local access",
+      "attack_vector_analysis": {
+        "is_network_accessible": false,
+        "requires_authentication": true,
+        "requires_user_interaction": false,
+        "complexity": "high"
+      },
+      "exploit_detection": {
+        "exploit_available": false,
+        "exploit_sources": []
+      }
+    },
     {
       "id": "CVE-2026-110689",
       "severity": "medium",
@@ -547,8 +1408,8 @@
       "severity": "medium",
       "type": "server_side_request_forgery",
       "nvd_category_id": "CWE-918",
-      "title": "OpenClaw Windows Node through 2026.9.4 contains a server-side request forgery vulnerability in the c...",
-      "description": "OpenClaw Windows Node through 2026.9.4 contains a server-side request forgery vulnerability in the canvas.present capability that bypasses URL risk evaluation enforced by canvas.navigate. Attackers with gateway or agent access can issue canvas.present to make the node's WebView send requests to localhost, private networks, or tailnet services from the user's machine.",
+      "title": "OpenClaw Windows Node through 2026.11.3 contains a server-side request forgery vulnerability in the ...",
+      "description": "OpenClaw Windows Node through 2026.11.3 contains a server-side request forgery vulnerability in the canvas.present capability that bypasses URL risk evaluation enforced by canvas.navigate. Attackers with gateway or agent access can issue canvas.present to make the node's WebView send requests to localhost, private networks, or tailnet services from the user's machine.",
       "affected": [
         "openclaw@*"
       ],
