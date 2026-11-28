@@ -2,7 +2,7 @@
   "version": 1,
   "repository": "prompt-security/clawsec",
   "archive_started_at": "2026-06-11T05:30:48.094Z",
-  "updated_at": "2026-11-27T03:24:19.521Z",
+  "updated_at": "2026-11-28T03:23:24.550Z",
   "daily": {
     "views": [
       {
@@ -924,6 +924,11 @@
         "timestamp": "2026-11-25T00:00:00Z",
         "count": 23,
         "uniques": 15
+      },
+      {
+        "timestamp": "2026-11-26T00:00:00Z",
+        "count": 20,
+        "uniques": 19
       }
     ],
     "clones": [
@@ -1846,6 +1851,11 @@
         "timestamp": "2026-11-25T00:00:00Z",
         "count": 228,
         "uniques": 102
+      },
+      {
+        "timestamp": "2026-11-26T00:00:00Z",
+        "count": 352,
+        "uniques": 128
       }
     ]
   },
@@ -11056,6 +11066,62 @@
           },
           {
             "referrer": "code.wlsir.top",
+            "count": 1,
+            "uniques": 1
+          }
+        ]
+      },
+      {
+        "captured_at": "2026-11-28T03:23:24.550Z",
+        "date": "2026-11-28",
+        "entries": [
+          {
+            "referrer": "github.com",
+            "count": 67,
+            "uniques": 51
+          },
+          {
+            "referrer": "Google",
+            "count": 24,
+            "uniques": 23
+          },
+          {
+            "referrer": "link.zhihu.com",
+            "count": 7,
+            "uniques": 7
+          },
+          {
+            "referrer": "prompt.security",
+            "count": 4,
+            "uniques": 4
+          },
+          {
+            "referrer": "youtube.com",
+            "count": 3,
+            "uniques": 3
+          },
+          {
+            "referrer": "Bing",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "alimabsoute.github.io",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "linkedin.com",
+            "count": 2,
+            "uniques": 2
+          },
+          {
+            "referrer": "Baidu",
+            "count": 1,
+            "uniques": 1
+          },
+          {
+            "referrer": "waytoagi.feishu.cn",
             "count": 1,
             "uniques": 1
           }
@@ -22282,6 +22348,72 @@
             "uniques": 4
           }
         ]
+      },
+      {
+        "captured_at": "2026-11-28T03:23:24.550Z",
+        "date": "2026-11-28",
+        "entries": [
+          {
+            "path": "/prompt-security/clawsec",
+            "title": "Overview",
+            "count": 179,
+            "uniques": 142
+          },
+          {
+            "path": "/prompt-security/clawsec/issues",
+            "title": "/issues",
+            "count": 18,
+            "uniques": 10
+          },
+          {
+            "path": "/prompt-security/clawsec/pull/415",
+            "title": "/pull/415",
+            "count": 12,
+            "uniques": 2
+          },
+          {
+            "path": "/prompt-security/clawsec/discussions",
+            "title": "/discussions",
+            "count": 11,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills",
+            "title": "/tree/main/skills",
+            "count": 9,
+            "uniques": 7
+          },
+          {
+            "path": "/prompt-security/clawsec/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "title": "/blob/main/skills/openclaw-audit-watchdog/SKILL.md",
+            "count": 6,
+            "uniques": 6
+          },
+          {
+            "path": "/prompt-security/clawsec/pulls",
+            "title": "/pulls",
+            "count": 6,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "title": "/releases/tag/nanoclaw-traffic-guardian-v0.0.2",
+            "count": 6,
+            "uniques": 4
+          },
+          {
+            "path": "/prompt-security/clawsec/releases",
+            "title": "/releases",
+            "count": 5,
+            "uniques": 5
+          },
+          {
+            "path": "/prompt-security/clawsec/tree/main/skills/clawsec-suite",
+            "title": "/tree/main/skills/clawsec-suite",
+            "count": 4,
+            "uniques": 4
+          }
+        ]
       }
     ]
   },
@@ -24324,6 +24456,18 @@
       "clones_window": {
         "count": 4545,
         "uniques": 1245
+      }
+    },
+    {
+      "captured_at": "2026-11-28T03:23:24.550Z",
+      "date": "2026-11-28",
+      "views_window": {
+        "count": 364,
+        "uniques": 197
+      },
+      "clones_window": {
+        "count": 4622,
+        "uniques": 1273
       }
     }
   ]
